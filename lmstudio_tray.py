@@ -88,9 +88,8 @@ class TrayIcon:
         if result.returncode == 0 and result.stdout.strip():
             appimage_path = result.stdout.strip().split('\n')[0]
             logging.info(f"Starte LM Studio AppImage: {appimage_path}")
-            proc = subprocess.run([appimage_path], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            logging.info(f"AppImage stdout: {proc.stdout}")
-            logging.info(f"AppImage stderr: {proc.stderr}")
+            proc = subprocess.Popen([appimage_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            logging.info("LM Studio AppImage gestartet")
             import time
             time.sleep(3)
             subprocess.run(["notify-send", "LM Studio", "LM Studio gestartet"])
