@@ -5,6 +5,7 @@ import sys
 import os
 import signal
 import logging
+import json
 from datetime import datetime
 
 gi.require_version('Gtk', '3.0')
@@ -20,7 +21,18 @@ logging.basicConfig(
 
 # === Modellname aus Argument oder Default ===
 MODEL = sys.argv[1] if len(sys.argv) > 1 else "kein-modell-übergeben"
-INTERVAL = int(sys.argv[2]) if len(sys.argv) > 2 else 10
+script_dir = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
+INTERVAL = 10
+
+config_path = os.path.join(script_dir, "config.json")
+
+try:
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+        appdir = config['appdir']
+except:
+    logging.error("Konfiguration config.json nicht gefunden oder ungültig. Skript beenden.")
+    sys.exit(1)
 
 # === GTK-Iconnamen aus dem Icon Browser ===
 ICON_OK = "emblem-default"         # ✅ Modell aktiv
@@ -28,7 +40,7 @@ ICON_FAIL = "emblem-unreadable"    # ❌ Modell nicht geladen
 ICON_WARN = "dialog-warning"       # ⚠️ Fehlerstatus
 
 # === Pfad zur lms-CLI ===
-LMS_CLI = "/home/robby/.lmstudio/bin/lms"
+LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 # === Beende andere Instanzen dieses Skripts ===
 def kill_existing_instances():
@@ -49,6 +61,7 @@ logging.info("Tray-Skript gestartet")
 
 class TrayIcon:
     def __init__(self):
+        self.appdir = appdir
         self.status_icon = Gtk.StatusIcon()
         self.status_icon.set_visible(True)
         self.status_icon.set_tooltip_text("LM Studio Monitor")
@@ -83,7 +96,7 @@ class TrayIcon:
         menu.popup(None, None, None, None, button, time)
 
     def start_lm_studio(self):
-        appdir = "/home/robby/Apps"
+        appdir = self.appdir
         result = subprocess.run(["find", appdir, "-name", "LM-Studio*.AppImage", "-type", "f"], stdout=subprocess.PIPE, text=True)
         if result.returncode == 0 and result.stdout.strip():
             appimage_path = result.stdout.strip().split('\n')[0]

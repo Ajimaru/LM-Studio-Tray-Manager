@@ -2,8 +2,38 @@
 set -e
 
 # === Einstellungen ===
-APPDIR="/home/robby/Apps"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# === Logdatei im Skriptverzeichnis ===
+LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
+
+# === Konfiguration laden oder Setup ===
+CONFIG_FILE="$SCRIPT_DIR/config.json"
+echo "DEBUG: SCRIPT_DIR='$SCRIPT_DIR'" >&2
+echo "DEBUG: CONFIG_FILE='$CONFIG_FILE'" >&2
+
+setup_config() {
+    echo "Konfiguration nicht gefunden. Setup wird gestartet."
+    echo "Geben Sie den Pfad zum Ordner ein, in dem die LM Studio AppImage gespeichert ist (Tab für Autovervollständigung):"
+    read -e -p "AppImage-Ordner: " APPDIR_INPUT
+    if [ -z "$APPDIR_INPUT" ]; then
+        echo "Fehler: Pfad darf nicht leer sein." >&2
+        exit 1
+    fi
+    if [ ! -d "$APPDIR_INPUT" ]; then
+        echo "Fehler: Ordner existiert nicht." >&2
+        exit 1
+    fi
+    echo "{\"appdir\": \"$APPDIR_INPUT\"}" > "$CONFIG_FILE"
+    echo "DEBUG: CONFIG_FILE='$CONFIG_FILE'" >&2
+    echo "Konfiguration gespeichert in $CONFIG_FILE"
+}
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    setup_config
+fi
+
+APPDIR=$(grep -o '"appdir": "[^"]*"' "$CONFIG_FILE" | sed 's/"appdir": "//;s/"//')
 
 # === Logdatei im Skriptverzeichnis ===
 LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
@@ -258,7 +288,7 @@ else
     exec > >(sed 's/\x1b\[[0-9;]*m//g' >> "$LOGFILE") 2>&1
 fi
 LMSTUDIO_APPIMAGE=$(ls -t "$APPDIR"/LM-Studio-*.AppImage | head -n 1)
-LMS_CLI="/home/robby/.lmstudio/bin/lms"
+LMS_CLI="$HOME/.lmstudio/bin/lms"
 GPU="1.0"
 MAX_WAIT=30
 INTERVAL=1
@@ -533,7 +563,7 @@ if [ -n "$RESOLVED_MODEL" ] && [ "$RESOLVED_MODEL" != "$MODEL" ]; then
 fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starte Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py mit Modell '$TRAY_MODEL'"
 if have python3; then
-    python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" &
+    python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
 else
     echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray nicht gestartet – python3 nicht gefunden."
 fi

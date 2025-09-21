@@ -2,4 +2,5 @@
 *.pid
 *.seed
 *.pid.lock
+*.json
 __pycache__
