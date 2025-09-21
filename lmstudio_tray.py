@@ -67,7 +67,6 @@ class TrayIcon:
         self.status_icon.set_tooltip_text("LM Studio Monitor")
         self.status_icon.connect("activate", self.on_click)
         self.status_icon.connect("popup-menu", self.on_right_click)
-
         self.last_status = None
         self.check_model()
         GLib.timeout_add_seconds(INTERVAL, self.check_model)
@@ -85,6 +84,10 @@ class TrayIcon:
         reload_item = Gtk.MenuItem(label="Modell neu laden")
         reload_item.connect("activate", self.reload_model)
         menu.append(reload_item)
+
+        status_item = Gtk.MenuItem(label="Status anzeigen")
+        status_item.connect("activate", self.show_status_dialog)
+        menu.append(status_item)
 
         menu.append(Gtk.SeparatorMenuItem())
 
@@ -137,6 +140,27 @@ class TrayIcon:
     def quit_app(self, widget):
         logging.info("Tray-Icon beendet")
         Gtk.main_quit()
+
+    def show_status_dialog(self, widget):
+        try:
+            result = subprocess.run([LMS_CLI, "ps"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
+            if result.returncode == 0 and result.stdout.strip():
+                text = result.stdout.strip()
+            else:
+                text = "Keine Modelle geladen oder Fehler."
+        except Exception as e:
+            text = f"Fehler beim Abrufen des Status: {str(e)}"
+        
+        dialog = Gtk.MessageDialog(
+            parent=None,
+            flags=0,
+            type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            message_format="LM Studio Status"
+        )
+        dialog.format_secondary_text(text)
+        dialog.run()
+        dialog.destroy()
 
     def check_model(self):
         try:

@@ -475,6 +475,9 @@ if $is_running; then
 else
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🚀 Starte LM Studio GUI: $LMSTUDIO_APPIMAGE"
     "$LMSTUDIO_APPIMAGE" &
+    if have notify-send; then
+        notify-send "LM Studio" "LM Studio wird gestartet..." -i dialog-information || true
+    fi
 fi
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') 🔍 Warte auf LM Studio-Fenster..."
