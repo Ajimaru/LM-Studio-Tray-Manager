@@ -8,21 +8,115 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # === Logdatei im Skriptverzeichnis ===
 LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
 
+# === Hilfe ===
+usage() {
+        cat <<EOF
+Benutzung: $(basename "$0") [OPTIONEN] [MODELLNAME]
+
+Startet LM Studio (AppImage), minimiert das Fenster unter X11, lädt optional ein Modell über die lms-CLI
+mit GPU-Fallback und startet den Tray-Monitor. Die Logdatei wird pro Lauf neu erstellt:
+    $LOGFILE
+
+Optionen:
+    -d, --debug       Debug-Ausgabe und Bash-Trace aktivieren (auch Terminalausgabe)
+    -h, --help        Diese Hilfe anzeigen und beenden
+    -L, --list-models Lokale Modelle auflisten (kein LM Studio Start)
+
+Umgebungsvariablen:
+    LM_AUTOSTART_DEBUG=1   Debug-Modus erzwingen (entspricht --debug)
+
+Exit-Codes:
+    0  Erfolg
+    1  AppImage nicht gefunden
+    2  Ungültige Option/Benutzung
+
+Beispiele:
+    $(basename "$0")
+    $(basename "$0") --debug qwen2.5:7b-instruct
+EOF
+}
+
+# === Lokale Modelle auflisten (ohne LM Studio zu starten) ===
+list_models() {
+    echo "Lokale Modelle (ohne LM Studio Start):"
+    local found=0
+
+    local LMS_CANDIDATES=("$HOME/.lmstudio/bin/lms")
+    if command -v lms >/dev/null 2>&1; then LMS_CANDIDATES+=("$(command -v lms)"); fi
+
+    for cand in "${LMS_CANDIDATES[@]}"; do
+        [ -n "$cand" ] && [ -x "$cand" ] || continue
+        local out rc
+        set +e
+        out="$("$cand" models list 2>/dev/null)"; rc=$?
+        if [ $rc -ne 0 ] || [ -z "$out" ]; then
+            out="$("$cand" list 2>/dev/null)"; rc=$?
+        fi
+        set -e
+        if [ $rc -eq 0 ] && [ -n "$out" ]; then
+            echo "Quelle: lms ($cand)"
+            echo "$out"
+            found=1
+            break
+        fi
+    done
+
+    local dirs=(
+        "$HOME/.cache/lm-studio"
+        "$HOME/.cache/LM-Studio"
+        "$HOME/.lmstudio/models"
+        "$HOME/LM Studio/models"
+        "$SCRIPT_DIR/models"
+    )
+    for dir in "${dirs[@]}"; do
+        [ -d "$dir" ] || continue
+        local -a files=()
+        set +e
+        mapfile -t files < <(find "$dir" -maxdepth 6 -type f \( -iname "*.gguf" -o -iname "*.bin" -o -iname "*.safetensors" \) 2>/dev/null)
+        set -e
+        if [ ${#files[@]} -gt 0 ]; then
+            echo "Quelle: $dir"
+            for f in "${files[@]}"; do
+                echo " - $(basename "$f")  [$f]"
+            done
+            found=1
+        fi
+    done
+
+    if [ "$found" -eq 0 ]; then
+        echo "Keine lokalen Modelle gefunden."
+        return 3
+    fi
+    return 0
+}
+
 # === Argumente parsen (Debug-Flag, Modellname) ===
 DEBUG_FLAG=0
 MODEL=""
+LIST_MODELS=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --debug|-d)
             DEBUG_FLAG=1; shift ;;
+                --help|-h)
+                        usage; exit 0 ;;
+        --list-models|-L)
+            LIST_MODELS=1; shift ;;
         --)
             shift; break ;;
         -*)
-            echo "Unbekannte Option: $1" ; shift ;;
+                        echo "Fehler: Unbekannte Option: $1" >&2
+                        usage >&2
+            exit 2 ;;
         *)
             if [ -z "$MODEL" ]; then MODEL="$1"; shift; else shift; fi ;;
     esac
 done
+
+if [ "$LIST_MODELS" = "1" ]; then
+    list_models
+    exit $?
+fi
 
 if [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
     DEBUG_FLAG=1
