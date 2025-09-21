@@ -10,8 +10,8 @@ LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
 
 # === Hilfe ===
 usage() {
-        cat <<EOF
-Benutzung: $(basename "$0") [OPTIONEN] [MODELLNAME]
+    cat <<EOF
+Benutzung: $(basename "$0") [OPTIONEN]
 
 Startet LM Studio (AppImage), minimiert das Fenster unter X11, lädt optional ein Modell über die lms-CLI
 mit GPU-Fallback und startet den Tray-Monitor. Die Logdatei wird pro Lauf neu erstellt:
@@ -21,6 +21,7 @@ Optionen:
     -d, --debug       Debug-Ausgabe und Bash-Trace aktivieren (auch Terminalausgabe)
     -h, --help        Diese Hilfe anzeigen und beenden
     -L, --list-models Lokale Modelle auflisten (kein LM Studio Start)
+    -m, --model NAME  Angegebenes Modell laden (wenn NAME fehlt, wird kein Modell geladen)
 
 Umgebungsvariablen:
     LM_AUTOSTART_DEBUG=1   Debug-Modus erzwingen (entspricht --debug)
@@ -32,7 +33,10 @@ Exit-Codes:
 
 Beispiele:
     $(basename "$0")
-    $(basename "$0") --debug qwen2.5:7b-instruct
+    $(basename "$0") --debug
+    $(basename "$0") --model qwen2.5:7b-instruct
+    $(basename "$0") -m qwen2.5:7b-instruct
+    $(basename "$0") -m   # Flag ohne Namen: lädt kein Modell, Rest läuft normal
 EOF
 }
 
@@ -102,6 +106,14 @@ while [ $# -gt 0 ]; do
                         usage; exit 0 ;;
         --list-models|-L)
             LIST_MODELS=1; shift ;;
+        --model|-m)
+            if [ -n "${2:-}" ] && [ "${2#-}" != "$2" ]; then
+                shift
+            elif [ -n "${2:-}" ]; then
+                MODEL="$2"; shift 2
+            else
+                shift
+            fi ;;
         --)
             shift; break ;;
         -*)
@@ -109,7 +121,10 @@ while [ $# -gt 0 ]; do
                         usage >&2
             exit 2 ;;
         *)
-            if [ -z "$MODEL" ]; then MODEL="$1"; shift; else shift; fi ;;
+            if [ "$DEBUG_FLAG" = "1" ] || [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
+                echo "Hinweis: Positionsargument '$1' wird ignoriert. Bitte --model/-m NAME verwenden." >&2
+            fi
+            shift ;;
     esac
 done
 
