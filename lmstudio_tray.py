@@ -45,6 +45,8 @@ def kill_existing_instances():
 
 kill_existing_instances()
 
+logging.info("Tray-Skript gestartet")
+
 class TrayIcon:
     def __init__(self):
         self.status_icon = Gtk.StatusIcon()
@@ -80,13 +82,33 @@ class TrayIcon:
         menu.show_all()
         menu.popup(None, None, None, None, button, time)
 
+    def start_lm_studio(self):
+        appdir = "/home/robby/Apps"
+        result = subprocess.run(["find", appdir, "-name", "LM-Studio*.AppImage", "-type", "f"], stdout=subprocess.PIPE, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            appimage_path = result.stdout.strip().split('\n')[0]
+            logging.info(f"Starte LM Studio AppImage: {appimage_path}")
+            proc = subprocess.run([appimage_path], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            logging.info(f"AppImage stdout: {proc.stdout}")
+            logging.info(f"AppImage stderr: {proc.stderr}")
+            import time
+            time.sleep(3)
+            subprocess.run(["notify-send", "LM Studio", "LM Studio gestartet"])
+        else:
+            logging.warning("Keine AppImage gefunden")
+            subprocess.run(["notify-send", "Fehler", "LM Studio AppImage nicht gefunden"])
+
     def open_lm_studio(self, widget):
         try:
-            subprocess.run(["xdg-open", "lmstudio://"], check=False)
-            logging.info("LM Studio über xdg-open gestartet")
+            pgrep_result = subprocess.run(["pgrep", "-f", "LM Studio"], stdout=subprocess.PIPE, text=True)
+            if pgrep_result.returncode == 0:
+                logging.info("LM Studio läuft bereits")
+                subprocess.run(["notify-send", "LM Studio", "LM Studio läuft schon"])
+            else:
+                self.start_lm_studio()
         except Exception as e:
             logging.error(f"Fehler beim Öffnen von LM Studio: {e}")
-            subprocess.run(["notify-send", "Fehler", f"LM Studio konnte nicht geöffnet werden: {e}"])
+            subprocess.run(["notify-send", "Fehler", f"Fehler: {e}"])
 
     def reload_model(self, widget):
         if MODEL != "kein-modell-übergeben":
@@ -138,7 +160,6 @@ class TrayIcon:
                 logging.info(f"Statusänderung: {self.last_status} -> {current_status}")
 
             self.last_status = current_status
-            logging.debug(f"Status geprüft: {current_status}")
 
         except subprocess.TimeoutExpired:
             self.status_icon.set_from_icon_name(ICON_WARN)
