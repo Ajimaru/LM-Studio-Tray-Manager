@@ -50,18 +50,19 @@ class TrayIcon:
     def check_model(self):
         try:
             result = subprocess.run([LMS_CLI, "ps"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if MODEL in result.stdout:
-                self.status_icon.set_from_icon_name(ICON_OK)
-                self.status_icon.set_tooltip_text(f"✅ Modell aktiv: {MODEL}")
-            elif result.stderr:
-                self.status_icon.set_from_icon_name(ICON_WARN)
-                self.status_icon.set_tooltip_text(f"⚠️ Fehler: {result.stderr.strip()}")
+            if result.returncode == 0:
+                if MODEL in result.stdout:
+                    self.status_icon.set_from_icon_name(ICON_OK)
+                    self.status_icon.set_tooltip_text(f"✅ Modell aktiv: {MODEL}")
+                else:
+                    self.status_icon.set_from_icon_name(ICON_WARN)
+                    self.status_icon.set_tooltip_text(f"⚠️ Anderes/kein Modell geladen (erwartet: {MODEL})")
             else:
                 self.status_icon.set_from_icon_name(ICON_FAIL)
-                self.status_icon.set_tooltip_text(f"❌ Modell nicht aktiv: {MODEL}")
+                self.status_icon.set_tooltip_text("❌ LM Studio läuft nicht")
         except Exception as e:
-            self.status_icon.set_from_icon_name(ICON_WARN)
-            self.status_icon.set_tooltip_text(f"⚠️ Ausnahmefehler: {str(e)}")
+            self.status_icon.set_from_icon_name(ICON_FAIL)
+            self.status_icon.set_tooltip_text(f"❌ Fehler beim Prüfen: {str(e)}")
         return True
 
 TrayIcon()

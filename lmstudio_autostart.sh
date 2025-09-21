@@ -527,9 +527,13 @@ else
 fi
 
 # === Starte Tray-Monitor mit Modellname (auch Platzhalter) ===
-echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starte Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py mit Modell '$MODEL'"
+TRAY_MODEL="$MODEL"
+if [ -n "$RESOLVED_MODEL" ] && [ "$RESOLVED_MODEL" != "$MODEL" ]; then
+    TRAY_MODEL="$RESOLVED_MODEL"
+fi
+echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starte Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py mit Modell '$TRAY_MODEL'"
 if have python3; then
-    python3 "$SCRIPT_DIR/lmstudio_tray.py" "$MODEL" &
+    python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" &
 else
     echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray nicht gestartet – python3 nicht gefunden."
 fi
