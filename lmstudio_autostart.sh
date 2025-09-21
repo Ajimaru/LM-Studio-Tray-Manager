@@ -89,7 +89,7 @@ check_dependencies() {
 
 check_dependencies
 
-# === Logdatei im Skriptverzeichnis ===
+# === Log file in script directory ===
 LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
 
 # === Help ===
@@ -182,7 +182,7 @@ list_models() {
     return 0
 }
 
-# === Argumente parsen (Debug-Flag, Modellname) ===
+# === Parse arguments (Debug flag, Model name) ===
 DEBUG_FLAG=0
 MODEL=""
 LIST_MODELS=0
@@ -352,11 +352,11 @@ WAIT_FOR_LMS=60
 LMS_RETRIES=3
 LMS_RETRY_SLEEP=5
 
-# === Modellname (falls nicht via Args gesetzt bleibt er leer) ===
+# === Model name (if not set via args, it remains empty) ===
 
 export LMSTUDIO_DISABLE_AUTO_LAUNCH=true
 
-# === Abhängigkeiten prüfen (interaktiv vorschlagen) ===
+# === Check dependencies (interactive suggestions) ===
 have() { command -v "$1" >/dev/null 2>&1; }
 
 resolve_model_arg() {
@@ -507,7 +507,7 @@ fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') ⏳ Waiting 10 seconds for LM Studio to be ready..."
 sleep 10
 
-# === API-Server-Warte-Logik: Warte bis HTTP-API erreichbar ist (stabil) ===
+# === API server wait logic: wait until the HTTP API is reachable (stable) ===
 HTTP_CFG="$HOME/.lmstudio/.internal/http-server-config.json"
 API_PORT=""
 if [ -f "$HTTP_CFG" ]; then
