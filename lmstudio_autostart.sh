@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
 set -e
 
-# === Einstellungen ===
+# === Settings ===
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# === Logdatei im Skriptverzeichnis ===
+# === Log file in script directory ===
 LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
 
-# === Konfiguration laden oder Setup ===
+# === Configuration load or setup ===
 CONFIG_FILE="$SCRIPT_DIR/config.json"
 
 setup_config() {
-    echo "Konfiguration nicht gefunden. Setup wird gestartet."
-    echo "Geben Sie den Pfad zum Ordner ein, in dem die LM Studio AppImage gespeichert ist (Tab für Autovervollständigung):"
-    read -e -p "AppImage-Ordner: " APPDIR_INPUT
+    echo "Configuration not found. Starting setup."
+    echo "Enter the path to the folder where the LM Studio AppImage is stored (Tab for autocompletion):"
+    read -e -p "AppImage folder: " APPDIR_INPUT
     if [ -z "$APPDIR_INPUT" ]; then
-        echo "Fehler: Pfad darf nicht leer sein." >&2
+        echo "Error: Path cannot be empty." >&2
         exit 1
     fi
     if [ ! -d "$APPDIR_INPUT" ]; then
-        echo "Fehler: Ordner existiert nicht." >&2
+        echo "Error: Folder does not exist." >&2
         exit 1
     fi
     echo "{\"appdir\": \"$APPDIR_INPUT\"}" > "$CONFIG_FILE"
-    echo "Konfiguration gespeichert in $CONFIG_FILE"
+    echo "Configuration saved in $CONFIG_FILE"
 }
 
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -32,7 +32,7 @@ fi
 
 APPDIR=$(grep -o '"appdir": "[^"]*"' "$CONFIG_FILE" | sed 's/"appdir": "//;s/"//')
 
-# === Abhängigkeiten prüfen ===
+# === Check dependencies ===
 check_dependencies() {
     local missing=()
     local to_install=()
@@ -55,33 +55,33 @@ check_dependencies() {
     fi
 
     if [ ${#missing[@]} -gt 0 ]; then
-        echo "Folgende Abhängigkeiten fehlen: ${missing[*]}"
-        echo "Möchten Sie sie installieren? (J/n) [J]"
+        echo "The following dependencies are missing: ${missing[*]}"
+        echo "Do you want to install them? (Y/n) [Y]"
         read -r answer
-        answer=${answer:-J}
-        if [[ "$answer" =~ ^[jJyYJ] ]]; then
+        answer=${answer:-Y}
+        if [[ "$answer" =~ ^[yYnN] ]]; then
             for cmd in "${to_install[@]}"; do
-                echo "Führe: $cmd"
+                echo "Running: $cmd"
                 eval "$cmd"
             done
         else
-            echo "Abhängigkeiten sind erforderlich. Beende."
+            echo "Dependencies are required. Exiting."
             exit 1
         fi
     fi
 
     if ! ls "$APPDIR"/LM-Studio-*.AppImage >/dev/null 2>&1; then
-        echo "LM Studio AppImage nicht gefunden in $APPDIR."
-        echo "Möchten Sie LM Studio herunterladen? (J/n) [J]"
+        echo "LM Studio AppImage not found in $APPDIR."
+        echo "Do you want to download LM Studio? (Y/n) [Y]"
         read -r answer
-        answer=${answer:-J}
-        if [[ "$answer" =~ ^[jJyYJ] ]]; then
-            echo "Öffne Browser für Download..."
-            xdg-open "https://lmstudio.ai/" 2>/dev/null || echo "Bitte öffnen Sie https://lmstudio.ai/ manuell."
-            echo "Nach dem Download legen Sie die AppImage in $APPDIR und führen Sie das Skript erneut aus."
+        answer=${answer:-Y}
+        if [[ "$answer" =~ ^[yYnN] ]]; then
+            echo "Opening browser for download..."
+            xdg-open "https://lmstudio.ai/" 2>/dev/null || echo "Please open https://lmstudio.ai/ manually."
+            echo "After downloading, place the AppImage in $APPDIR and run the script again."
             exit 0
         else
-            echo "LM Studio AppImage ist erforderlich. Beende."
+            echo "LM Studio AppImage is required. Exiting."
             exit 1
         fi
     fi
@@ -92,43 +92,45 @@ check_dependencies
 # === Logdatei im Skriptverzeichnis ===
 LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
 
-# === Hilfe ===
+# === Help ===
 usage() {
     cat <<EOF
-Benutzung: $(basename "$0") [OPTIONEN]
+Usage: $(basename "$0") [OPTIONS]
 
-Startet LM Studio (AppImage), minimiert das Fenster unter X11, lädt optional ein Modell über die lms-CLI
-mit GPU-Fallback und startet den Tray-Monitor. Die Logdatei wird pro Lauf neu erstellt:
-    $LOGFILE
+Starts LM Studio (AppImage) after initial setup (configuration of AppImage folder),
+checks and installs dependencies (xdotool, curl, notify-send, python3), minimizes the window under X11,
+optionally loads a model via lms-CLI with GPU fallback and starts the tray monitor with status monitoring.
+The log file is created anew per run: $LOGFILE
 
-Optionen:
-    -d, --debug       Debug-Ausgabe und Bash-Trace aktivieren (auch Terminalausgabe)
-    -h, --help        Diese Hilfe anzeigen und beenden
-    -L, --list-models Lokale Modelle auflisten; bei TTY: interaktive Auswahl mit 30s Auto-Skip (kein LM Studio Start vor Auswahl)
-    -m, --model NAME  Angegebenes Modell laden (wenn NAME fehlt, wird kein Modell geladen)
+Options:
+    -d, --debug       Enable debug output and Bash trace (also terminal output)
+    -h, --help        Show this help and exit
+    -L, --list-models List local models; in TTY: interactive selection with 30s auto-skip (no LM Studio start before selection)
+    -m, --model NAME  Load specified model (if NAME is missing, no model is loaded)
 
-Umgebungsvariablen:
-    LM_AUTOSTART_DEBUG=1            Debug-Modus erzwingen (entspricht --debug)
-    LM_AUTOSTART_SELECT_TIMEOUT=30  Timeout (Sekunden) für interaktive -L Auswahl; nach Ablauf wird automatisch "Skip" gewählt
+Environment variables:
+    LM_AUTOSTART_DEBUG=1            Force debug mode (equivalent to --debug)
+    LM_AUTOSTART_SELECT_TIMEOUT=30  Timeout (seconds) for interactive -L selection; after expiry, "Skip" is automatically selected
 
-Exit-Codes:
-    0  Erfolg
-    1  AppImage nicht gefunden
-    2  Ungültige Option/Benutzung
+Exit codes:
+    0  Success
+    1  AppImage not found or setup failed
+    2  Invalid option/usage
+    3  No models found (-L mode)
 
-Beispiele:
-    $(basename "$0")
-    $(basename "$0") --debug
-    $(basename "$0") --model qwen2.5:7b-instruct
-    $(basename "$0") -m qwen2.5:7b-instruct
-    $(basename "$0") -m   # Flag ohne Namen: lädt kein Modell, Rest läuft normal
-    $(basename "$0") -L   # Interaktive Modellauswahl (bei TTY) oder reine Liste (ohne TTY)
+Examples:
+    $(basename "$0")                             # Normal start with setup/dependency check
+    $(basename "$0") --debug                     # With debug output
+    $(basename "$0") --model qwen2.5:7b-instruct # Load model
+    $(basename "$0") -m qwen2.5:7b-instruct      # Short form
+    $(basename "$0") -m                          # Flag without name: loads no model
+    $(basename "$0") -L                          # Interactive model selection (in TTY) or list (without TTY)
 EOF
 }
 
-# === Lokale Modelle auflisten (ohne LM Studio zu starten) ===
+# === List local models (without starting LM Studio) ===
 list_models() {
-    echo "Lokale Modelle (ohne LM Studio Start):"
+    echo "Local models (without starting LM Studio):"
     local found=0
 
     local LMS_CANDIDATES=("$HOME/.lmstudio/bin/lms")
@@ -144,7 +146,7 @@ list_models() {
         fi
         set -e
         if [ $rc -eq 0 ] && [ -n "$out" ]; then
-            echo "Quelle: lms ($cand)"
+            echo "Source: lms ($cand)"
             echo "$out"
             found=1
             break
@@ -165,7 +167,7 @@ list_models() {
         mapfile -t files < <(find "$dir" -maxdepth 6 -type f \( -iname "*.gguf" -o -iname "*.bin" -o -iname "*.safetensors" \) 2>/dev/null)
         set -e
         if [ ${#files[@]} -gt 0 ]; then
-            echo "Quelle: $dir"
+            echo "Source: $dir"
             for f in "${files[@]}"; do
                 echo " - $(basename "$f")  [$f]"
             done
@@ -174,7 +176,7 @@ list_models() {
     done
 
     if [ "$found" -eq 0 ]; then
-        echo "Keine lokalen Modelle gefunden."
+        echo "No local models found."
         return 3
     fi
     return 0
@@ -205,12 +207,12 @@ while [ $# -gt 0 ]; do
         --)
             shift; break ;;
         -*)
-                        echo "Fehler: Unbekannte Option: $1" >&2
+                        echo "Error: Unknown option: $1" >&2
                         usage >&2
             exit 2 ;;
         *)
             if [ "$DEBUG_FLAG" = "1" ] || [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
-                echo "Hinweis: Positionsargument '$1' wird ignoriert. Bitte --model/-m NAME verwenden." >&2
+                echo "Note: Positional argument '$1' is ignored. Please use --model/-m NAME." >&2
             fi
             shift ;;
     esac
@@ -234,7 +236,7 @@ countdown_prompt() {
 
 if [ "$LIST_MODELS" = "1" ]; then
     if [ -t 0 ]; then
-        echo "Suche lokale Modelle ..."
+        echo "Searching for local models ..."
         MODEL_DIRS=(
             "$HOME/.cache/lm-studio"
             "$HOME/.cache/LM-Studio"
@@ -251,72 +253,72 @@ if [ "$LIST_MODELS" = "1" ]; then
         done
 
         if [ ${#MAPFILE_ARR[@]} -eq 0 ]; then
-            echo "Keine lokalen Modelle gefunden." >&2
+            echo "No local models found." >&2
             while true; do
-                cd_pid=$(countdown_prompt "$SELECT_TIMEOUT" "[S]kip ohne Modell, [Q]uit beenden:")
+                cd_pid=$(countdown_prompt "$SELECT_TIMEOUT" "[S]kip without model, [Q]uit exit:")
                 if read -r -t "$SELECT_TIMEOUT" ans < /dev/tty; then
                     kill "$cd_pid" 2>/dev/null || true; wait "$cd_pid" 2>/dev/null || true; echo; echo >&2
                     if [ "$DEBUG_FLAG" = "1" ] || [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
-                        echo "[DEBUG] Eingabe erkannt (no-models): '$ans'"
+                        echo "[DEBUG] Input detected (no-models): '$ans'"
                     fi
                 else
                     kill "$cd_pid" 2>/dev/null || true; wait "$cd_pid" 2>/dev/null || true; echo; echo >&2
                     ans="s"
-                    echo "Automatische Auswahl: Skip (Timeout ${SELECT_TIMEOUT}s)."
+                    echo "Automatic selection: Skip (Timeout ${SELECT_TIMEOUT}s)."
                 fi
                 case "${ans,,}" in
                     s|skip)
-                        echo "Kein Modell wird geladen."
+                        echo "No model will be loaded."
                         break ;;
                     q|quit)
-                        echo "Beendet."; exit 0 ;;
+                        echo "Exited."; exit 0 ;;
                     *)
-                        echo "Ungültige Eingabe." ;;
+                        echo "Invalid input." ;;
                 esac
             done
         else
-            echo "Gefundene Modelle:";
+            echo "Found models:";
             i=1
             for f in "${MAPFILE_ARR[@]}"; do
                 echo "  $i) $(basename "$f")"; i=$((i+1))
             done
-            echo "  s) Skip (kein Modell laden)"
-            echo "  q) Quit (Skript beenden)"
+            echo "  s) Skip (do not load model)"
+            echo "  q) Quit (terminate script)"
 
             attempts=0
             while true; do
-                cd_pid=$(countdown_prompt "$SELECT_TIMEOUT" "Auswahl [1-${#MAPFILE_ARR[@]}|s|q]:")
+                cd_pid=$(countdown_prompt "$SELECT_TIMEOUT" "Selection [1-${#MAPFILE_ARR[@]}|s|q]:")
                 if read -r -t "$SELECT_TIMEOUT" pick < /dev/tty; then
                     kill "$cd_pid" 2>/dev/null || true; wait "$cd_pid" 2>/dev/null || true; echo; echo >&2
                     if [ "$DEBUG_FLAG" = "1" ] || [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
-                        echo "[DEBUG] Eingabe erkannt (models): '$pick'"
+                        echo "[DEBUG] Input detected (models): '$pick'"
                     fi
                 else
                     kill "$cd_pid" 2>/dev/null || true; wait "$cd_pid" 2>/dev/null || true; echo; echo >&2
                     pick="s"
-                    echo "Automatische Auswahl: Skip (Timeout ${SELECT_TIMEOUT}s)."
+                    echo "Automatic selection: Skip (Timeout ${SELECT_TIMEOUT}s)."
                 fi
-                if [[ "${pick,,}" == "q" ]]; then echo "Beendet."; exit 0; fi
-                if [[ "${pick,,}" == "s" ]]; then echo "Kein Modell wird geladen."; break; fi
+                if [[ "${pick,,}" == "q" ]]; then echo "Exited."; exit 0; fi
+                if [[ "${pick,,}" == "s" ]]; then echo "No model will be loaded."; break; fi
                 if [[ "$pick" =~ ^[0-9]+$ ]] && [ "$pick" -ge 1 ] && [ "$pick" -le ${#MAPFILE_ARR[@]} ]; then
                     CHOSEN="${MAPFILE_ARR[$((pick-1))]}"
-                    echo "Ausgewählt: $CHOSEN"
+                    echo "Selected: $CHOSEN"
                     if [ "$MODEL_EXPLICIT" -eq 0 ]; then
                         MODEL="$CHOSEN"
                         if [ "$DEBUG_FLAG" = "1" ] || [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
                             base_name="$(basename "$CHOSEN")";
                             parent_dir="$(basename "$(dirname "$CHOSEN")")";
                             grand_dir="$(basename "$(dirname "$(dirname "$CHOSEN")")")";
-                            echo "[DEBUG] Auswahl-Datei: $CHOSEN (id-Kandidat: $grand_dir/$parent_dir/$base_name)"
+                            echo "[DEBUG] Selected file: $CHOSEN (id candidate: $grand_dir/$parent_dir/$base_name)"
                         fi
                     else
-                        echo "Hinweis: --model wurde bereits gesetzt und hat Vorrang; Auswahl wird ignoriert." >&2
+                        echo "Note: --model was already set and takes precedence; selection is ignored." >&2
                     fi
                     break
                 fi
-                echo "Ungültige Eingabe."; attempts=$((attempts+1));
+                echo "Invalid input."; attempts=$((attempts+1));
                 if [ $attempts -ge 5 ]; then
-                    echo "Zu viele ungültige Eingaben. Weiter ohne Modellauswahl."
+                    echo "Too many invalid inputs. Continuing without model selection."
                     break
                 fi
             done
@@ -331,13 +333,13 @@ if [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
     DEBUG_FLAG=1
 fi
 
-# === Logging konfigurieren ===
+# === Logging configuration ===
      : > "$LOGFILE"
 if [ "$DEBUG_FLAG" = "1" ]; then
     exec > >(tee -a >(sed 's/\x1b\[[0-9;]*m//g' >> "$LOGFILE")) \
          2> >(tee -a >(sed 's/\x1b\[[0-9;]*m//g' >> "$LOGFILE") >&2)
     set -x
-    echo "[DEBUG] Terminal- und Log-Ausgabe aktiviert. Log: $LOGFILE"
+    echo "[DEBUG] Terminal and log output enabled. Log: $LOGFILE"
 else
     exec > >(sed 's/\x1b\[[0-9;]*m//g' >> "$LOGFILE") 2>&1
 fi
@@ -428,7 +430,7 @@ ensure_model_registered() {
         fi
     fi
     if [ "$DEBUG_FLAG" = "1" ] || [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
-        echo "[DEBUG] Importiere Modell-Datei in LM Studio: $path" >&2
+        echo "[DEBUG] Importing model file into LM Studio: $path" >&2
     fi
     if printf 'y\n' | "$lmscmd" import --symbolic-link "$path" >/dev/null 2>&1; then
         sleep 1
@@ -450,7 +452,7 @@ ensure_model_registered() {
             fi
         fi
     else
-        echo "[WARN] Import schlug fehl für: $path" >&2
+        echo "[WARN] Import failed for: $path" >&2
     fi
     printf '%s\n' "$path"
 }
@@ -459,7 +461,7 @@ SESSION_TYPE="${XDG_SESSION_TYPE:-}"
 IS_WAYLAND=false; [ "${SESSION_TYPE,,}" = "wayland" ] && IS_WAYLAND=true || true
 
 if [ ! -f "$LMSTUDIO_APPIMAGE" ]; then
-    echo "❌ Keine LM Studio AppImage gefunden in $APPDIR"
+    echo "❌ No LM Studio AppImage found in $APPDIR"
     exit 1
 fi
 
@@ -471,16 +473,16 @@ if command -v pgrep >/dev/null 2>&1; then
 fi
 
 if $is_running; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') 🟢 LM Studio läuft bereits – überspringe Start."
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🟢 LM Studio is already running – skipping start."
 else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') 🚀 Starte LM Studio GUI: $LMSTUDIO_APPIMAGE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🚀 Starting LM Studio GUI: $LMSTUDIO_APPIMAGE"
     "$LMSTUDIO_APPIMAGE" &
     if have notify-send; then
-        notify-send "LM Studio" "LM Studio wird gestartet..." -i dialog-information || true
+        notify-send "LM Studio" "LM Studio is starting..." -i dialog-information || true
     fi
 fi
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') 🔍 Warte auf LM Studio-Fenster..."
+echo "$(date '+%Y-%m-%d %H:%M:%S') 🔍 Waiting for LM Studio window..."
 SECONDS_WAITED=0
 WINDOW_ID=""
 
@@ -488,7 +490,7 @@ if ! $IS_WAYLAND && have xdotool; then
     while [ "$SECONDS_WAITED" -lt "$MAX_WAIT" ]; do
         WINDOW_ID=$(xdotool search --onlyvisible --name "LM Studio" | head -n 1)
         if [ -n "$WINDOW_ID" ]; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ Fenster gefunden: $WINDOW_ID – minimiere..."
+            echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ Window found: $WINDOW_ID – minimizing..."
             xdotool windowminimize "$WINDOW_ID" || true
             break
         fi
@@ -496,13 +498,13 @@ if ! $IS_WAYLAND && have xdotool; then
         SECONDS_WAITED=$((SECONDS_WAITED + INTERVAL))
     done
     if [ -z "$WINDOW_ID" ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Fenster nicht gefunden – Minimierung übersprungen."
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Window not found – minimization skipped."
     fi
 else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Fenster-Minimierung übersprungen (Wayland oder xdotool nicht verfügbar)."
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Window minimization skipped (Wayland or xdotool not available)."
 fi
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') ⏳ Warte 10 Sekunden, bis LM Studio bereit ist..."
+echo "$(date '+%Y-%m-%d %H:%M:%S') ⏳ Waiting 10 seconds for LM Studio to be ready..."
 sleep 10
 
 # === API-Server-Warte-Logik: Warte bis HTTP-API erreichbar ist (stabil) ===
@@ -518,7 +520,7 @@ if have curl; then
     if [ "$API_PORT" = "1234" ]; then
         try_ports+=("41343")
     fi
-    echo "$(date '+%Y-%m-%d %H:%M:%S') 🌐 Warte auf LM Studio API (Ports: ${try_ports[*]}, bis zu ${API_WAIT}s)..."
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🌐 Waiting for LM Studio API (Ports: ${try_ports[*]}, up to ${API_WAIT}s)..."
     successes=0
     waited=0
     active_port=""
@@ -532,7 +534,7 @@ if have curl; then
             successes=0
         done
         if [ "$successes" -ge 2 ]; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ API erreichbar auf Port $active_port."
+            echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ API reachable on port $active_port."
             break
         fi
         sleep 1
@@ -543,18 +545,18 @@ if have curl; then
                 API_PORT="$new_port"
                 try_ports=("$API_PORT")
                 if [ "$API_PORT" = "1234" ]; then try_ports+=("41343"); fi
-                echo "[DEBUG] Aktualisierte API-Port-Erkennung: $API_PORT"
+                echo "[DEBUG] Updated API port detection: $API_PORT"
             fi
         fi
     done
     if [ "$successes" -lt 2 ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ API nicht stabil erreichbar – versuche trotzdem das Laden."
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ API not stably reachable – attempting loading anyway."
     fi
 fi
 
-# === Modell laden, wenn übergeben ===
+# === Load model if provided ===
 if [ -n "$MODEL" ]; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') 📦 Lade Modell: $MODEL ..."
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 📦 Loading model: $MODEL ..."
     SECONDS_WAITED=0
     LMS_CMD=""
     while [ "$SECONDS_WAITED" -lt "$WAIT_FOR_LMS" ]; do
@@ -567,10 +569,10 @@ if [ -n "$MODEL" ]; then
     done
 
     if [ -z "$LMS_CMD" ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') ❌ lms-CLI nicht gefunden nach ${WAIT_FOR_LMS}s – überspringe Laden."
-        MODEL="fehler-modell"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ❌ lms-CLI not found after ${WAIT_FOR_LMS}s – skipping loading."
+        MODEL="failed-model"
     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') 🔧 Verwende lms-CLI: $LMS_CMD"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') 🔧 Using lms-CLI: $LMS_CMD"
         if ! "$LMS_CMD" ps </dev/null >/dev/null 2>&1; then
             sleep 1
             "$LMS_CMD" ps </dev/null >/dev/null 2>&1 || true
@@ -584,7 +586,7 @@ if [ -n "$MODEL" ]; then
         fi
         RESOLVED_MODEL="$(printf '%s' "$RESOLVED_MODEL" | head -n 1 | sed 's/^\s\+//; s/\s\+$//')"
         while [ "$ATTEMPT" -le "$LMS_RETRIES" ]; do
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ▶️ Lade-Versuch $ATTEMPT/$LMS_RETRIES: '$MODEL' mit GPU=$GPU"
+            echo "$(date '+%Y-%m-%d %H:%M:%S') ▶️ Load attempt $ATTEMPT/$LMS_RETRIES: '$MODEL' with GPU=$GPU"
             if "$LMS_CMD" load "$RESOLVED_MODEL" --gpu="$GPU" </dev/null; then
                 LOAD_OK=true; break
             fi
@@ -592,36 +594,36 @@ if [ -n "$MODEL" ]; then
         done
 
         if ! $LOAD_OK; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Laden mit GPU=$GPU fehlgeschlagen – versuche CPU-Fallback (GPU=0.0)."
+            echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Loading with GPU=$GPU failed – trying CPU fallback (GPU=0.0)."
             if "$LMS_CMD" load "$RESOLVED_MODEL" --gpu="0.0" </dev/null; then
                 LOAD_OK=true; GPU="0.0"
             fi
         fi
 
         if $LOAD_OK; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ Modell geladen (GPU=$GPU)!"
+            echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ Model loaded (GPU=$GPU)!"
             if have notify-send; then
-                notify-send -i dialog-information -t 5000 "LM Studio" "✅ Modell '$MODEL' erfolgreich geladen! (GPU=$GPU)" || true
+                notify-send -i dialog-information -t 5000 "LM Studio" "✅ Model '$MODEL' loaded successfully! (GPU=$GPU)" || true
             fi
         else
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ❌ Modell '$MODEL' konnte nicht geladen werden – überspringe."
-            MODEL="fehler-modell"
+            echo "$(date '+%Y-%m-%d %H:%M:%S') ❌ Model '$MODEL' could not be loaded – skipping."
+            MODEL="failed-model"
         fi
     fi
 else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Kein Modell übergeben – überspringe Laden."
-    MODEL="kein-modell"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ No model provided – skipping loading."
+    MODEL="no-model"
 fi
 
-# === Starte Tray-Monitor mit Modellname (auch Platzhalter) ===
+# === Start tray monitor with model name (also placeholder) ===
 TRAY_MODEL="$MODEL"
 if [ -n "$RESOLVED_MODEL" ] && [ "$RESOLVED_MODEL" != "$MODEL" ]; then
     TRAY_MODEL="$RESOLVED_MODEL"
 fi
-echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starte Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py mit Modell '$TRAY_MODEL'"
+echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starting Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py with model '$TRAY_MODEL'"
 if have python3; then
     python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
 else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray nicht gestartet – python3 nicht gefunden."
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray not started – python3 not found."
 fi
 

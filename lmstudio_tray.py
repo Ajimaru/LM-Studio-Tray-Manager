@@ -10,7 +10,7 @@ import json
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib
 
-# === Logging einrichten ===
+# === Set up logging ===
 logging.basicConfig(
     filename=os.path.join(os.getcwd(), "lmstudio_tray.log"),
     level=logging.INFO,
@@ -18,8 +18,8 @@ logging.basicConfig(
     filemode='w'
 )
 
-# === Modellname aus Argument oder Default ===
-MODEL = sys.argv[1] if len(sys.argv) > 1 else "kein-modell-übergeben"
+# === Model name from argument or default ===
+MODEL = sys.argv[1] if len(sys.argv) > 1 else "no-model-passed"
 script_dir = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
 INTERVAL = 10
 
@@ -30,18 +30,18 @@ try:
         config = json.load(f)
         appdir = config['appdir']
 except:
-    logging.error("Konfiguration config.json nicht gefunden oder ungültig. Skript beenden.")
+    logging.error("Configuration config.json not found or invalid. Terminating script.")
     sys.exit(1)
 
-# === GTK-Iconnamen aus dem Icon Browser ===
-ICON_OK = "emblem-default"         # ✅ Modell aktiv
-ICON_FAIL = "emblem-unreadable"    # ❌ Modell nicht geladen
-ICON_WARN = "dialog-warning"       # ⚠️ Fehlerstatus
+# === GTK icon names from the icon browser ===
+ICON_OK = "emblem-default"         # ✅ Model active
+ICON_FAIL = "emblem-unreadable"    # ❌ Model not loaded
+ICON_WARN = "dialog-warning"       # ⚠️ Error status
 
-# === Pfad zur lms-CLI ===
+# === Path to lms-CLI ===
 LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
-# === Beende andere Instanzen dieses Skripts ===
+# === Terminate other instances of this script ===
 def kill_existing_instances():
     result = subprocess.run(["pgrep", "-f", "lmstudio_tray.py"], stdout=subprocess.PIPE, text=True)
     pids = [int(pid) for pid in result.stdout.strip().split("\n") if pid.isdigit()]
@@ -50,13 +50,13 @@ def kill_existing_instances():
         if pid != current_pid:
             try:
                 os.kill(pid, signal.SIGTERM)
-                logging.info(f"Beende alte Instanz: PID {pid}")
+                logging.info(f"Terminating old instance: PID {pid}")
             except Exception as e:
-                logging.warning(f"Fehler beim Beenden von PID {pid}: {e}")
+                logging.warning(f"Error terminating PID {pid}: {e}")
 
 kill_existing_instances()
 
-logging.info("Tray-Skript gestartet")
+logging.info("Tray script started")
 
 class TrayIcon:
     def __init__(self):
@@ -71,26 +71,26 @@ class TrayIcon:
         GLib.timeout_add_seconds(INTERVAL, self.check_model)
 
     def on_click(self, icon):
-        subprocess.run(["notify-send", "LM Studio", f"Modellstatus: {MODEL} wird überwacht"])
+        subprocess.run(["notify-send", "LM Studio", f"Model status: {MODEL} is being monitored"])
 
     def on_right_click(self, icon, button, time):
         menu = Gtk.Menu()
 
-        open_item = Gtk.MenuItem(label="LM Studio öffnen")
+        open_item = Gtk.MenuItem(label="Open LM Studio")
         open_item.connect("activate", self.open_lm_studio)
         menu.append(open_item)
 
-        reload_item = Gtk.MenuItem(label="Modell neu laden")
+        reload_item = Gtk.MenuItem(label="Reload model")
         reload_item.connect("activate", self.reload_model)
         menu.append(reload_item)
 
-        status_item = Gtk.MenuItem(label="Status anzeigen")
+        status_item = Gtk.MenuItem(label="Show status")
         status_item.connect("activate", self.show_status_dialog)
         menu.append(status_item)
 
         menu.append(Gtk.SeparatorMenuItem())
 
-        quit_item = Gtk.MenuItem(label="Tray beenden")
+        quit_item = Gtk.MenuItem(label="Quit tray")
         quit_item.connect("activate", self.quit_app)
         menu.append(quit_item)
 
@@ -102,42 +102,42 @@ class TrayIcon:
         result = subprocess.run(["find", appdir, "-name", "LM-Studio*.AppImage", "-type", "f"], stdout=subprocess.PIPE, text=True)
         if result.returncode == 0 and result.stdout.strip():
             appimage_path = result.stdout.strip().split('\n')[0]
-            logging.info(f"Starte LM Studio AppImage: {appimage_path}")
+            logging.info(f"Starting LM Studio AppImage: {appimage_path}")
             proc = subprocess.Popen([appimage_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            logging.info("LM Studio AppImage gestartet")
+            logging.info("LM Studio AppImage started")
             import time
             time.sleep(3)
-            subprocess.run(["notify-send", "LM Studio", "LM Studio gestartet"])
+            subprocess.run(["notify-send", "LM Studio", "LM Studio started"])
         else:
-            logging.warning("Keine AppImage gefunden")
-            subprocess.run(["notify-send", "Fehler", "LM Studio AppImage nicht gefunden"])
+            logging.warning("No AppImage found")
+            subprocess.run(["notify-send", "Error", "LM Studio AppImage not found"])
 
     def open_lm_studio(self, widget):
         try:
             pgrep_result = subprocess.run(["pgrep", "-f", "LM Studio"], stdout=subprocess.PIPE, text=True)
             if pgrep_result.returncode == 0:
-                logging.info("LM Studio läuft bereits")
-                subprocess.run(["notify-send", "LM Studio", "LM Studio läuft schon"])
+                logging.info("LM Studio is already running")
+                subprocess.run(["notify-send", "LM Studio", "LM Studio is already running"])
             else:
                 self.start_lm_studio()
         except Exception as e:
-            logging.error(f"Fehler beim Öffnen von LM Studio: {e}")
-            subprocess.run(["notify-send", "Fehler", f"Fehler: {e}"])
+            logging.error(f"Error opening LM Studio: {e}")
+            subprocess.run(["notify-send", "Error", f"Error: {e}"])
 
     def reload_model(self, widget):
-        if MODEL != "kein-modell-übergeben":
+        if MODEL != "no-model-passed":
             try:
                 subprocess.run([LMS_CLI, "load", MODEL], check=False)
-                logging.info(f"Modell neu geladen: {MODEL}")
-                subprocess.run(["notify-send", "LM Studio", f"Modell {MODEL} wird neu geladen"])
+                logging.info(f"Model reloaded: {MODEL}")
+                subprocess.run(["notify-send", "LM Studio", f"Model {MODEL} is being reloaded"])
             except Exception as e:
-                logging.error(f"Fehler beim Neuladen des Modells: {e}")
-                subprocess.run(["notify-send", "Fehler", f"Modell konnte nicht neu geladen werden: {e}"])
+                logging.error(f"Error reloading model: {e}")
+                subprocess.run(["notify-send", "Error", f"Model could not be reloaded: {e}"])
         else:
-            subprocess.run(["notify-send", "Info", "Kein Modell zum Neuladen angegeben"])
+            subprocess.run(["notify-send", "Info", "No model specified for reloading"])
 
     def quit_app(self, widget):
-        logging.info("Tray-Icon beendet")
+        logging.info("Tray icon terminated")
         Gtk.main_quit()
 
     def show_status_dialog(self, widget):
@@ -146,9 +146,9 @@ class TrayIcon:
             if result.returncode == 0 and result.stdout.strip():
                 text = result.stdout.strip()
             else:
-                text = "Keine Modelle geladen oder Fehler."
+                text = "No models loaded or error."
         except Exception as e:
-            text = f"Fehler beim Abrufen des Status: {str(e)}"
+            text = f"Error retrieving status: {str(e)}"
         
         dialog = Gtk.MessageDialog(
             parent=None,
@@ -169,41 +169,41 @@ class TrayIcon:
                 if MODEL in result.stdout:
                     current_status = "OK"
                     self.status_icon.set_from_icon_name(ICON_OK)
-                    self.status_icon.set_tooltip_text(f"✅ Modell aktiv: {MODEL}")
+                    self.status_icon.set_tooltip_text(f"✅ Model active: {MODEL}")
                 else:
                     current_status = "WARN"
                     lines = result.stdout.strip().split('\n')
                     if len(lines) > 1:
-                        loaded_models = [line.split()[1] if len(line.split()) > 1 else 'Unbekannt' for line in lines[1:]]
-                        tooltip = f"⚠️ Anderes/kein Modell geladen (erwartet: {MODEL})\nGeladen: {', '.join(loaded_models[:3])}"
+                        loaded_models = [line.split()[1] if len(line.split()) > 1 else 'Unknown' for line in lines[1:]]
+                        tooltip = f"⚠️ Different/no model loaded (expected: {MODEL})\nLoaded: {', '.join(loaded_models[:3])}"
                     else:
-                        tooltip = f"⚠️ Anderes/kein Modell geladen (erwartet: {MODEL})"
+                        tooltip = f"⚠️ Different/no model loaded (expected: {MODEL})"
                     self.status_icon.set_from_icon_name(ICON_WARN)
                     self.status_icon.set_tooltip_text(tooltip)
             else:
                 current_status = "FAIL"
                 self.status_icon.set_from_icon_name(ICON_FAIL)
-                self.status_icon.set_tooltip_text("❌ LM Studio läuft nicht")
+                self.status_icon.set_tooltip_text("❌ LM Studio is not running")
 
             if self.last_status != current_status and self.last_status is not None:
                 if current_status == "OK":
-                    subprocess.run(["notify-send", "LM Studio", f"✅ Modell {MODEL} ist jetzt aktiv"])
+                    subprocess.run(["notify-send", "LM Studio", f"✅ Model {MODEL} is now active"])
                 elif current_status == "WARN":
-                    subprocess.run(["notify-send", "LM Studio", f"⚠️ Modell {MODEL} nicht mehr aktiv"])
+                    subprocess.run(["notify-send", "LM Studio", f"⚠️ Model {MODEL} no longer active"])
                 elif current_status == "FAIL":
-                    subprocess.run(["notify-send", "LM Studio", "❌ LM Studio ist gestoppt"])
-                logging.info(f"Statusänderung: {self.last_status} -> {current_status}")
+                    subprocess.run(["notify-send", "LM Studio", "❌ LM Studio has stopped"])
+                logging.info(f"Status change: {self.last_status} -> {current_status}")
 
             self.last_status = current_status
 
         except subprocess.TimeoutExpired:
             self.status_icon.set_from_icon_name(ICON_WARN)
-            self.status_icon.set_tooltip_text("⚠️ Timeout bei Statusprüfung")
-            logging.warning("Timeout bei lms ps")
+            self.status_icon.set_tooltip_text("⚠️ Timeout during status check")
+            logging.warning("Timeout in lms ps")
         except Exception as e:
             self.status_icon.set_from_icon_name(ICON_FAIL)
-            self.status_icon.set_tooltip_text(f"❌ Fehler beim Prüfen: {str(e)}")
-            logging.error(f"Fehler bei Statusprüfung: {e}")
+            self.status_icon.set_tooltip_text(f"❌ Error checking: {str(e)}")
+            logging.error(f"Error in status check: {e}")
         return True
 
 TrayIcon()
