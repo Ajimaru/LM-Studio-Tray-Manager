@@ -610,7 +610,10 @@ if [ -n "$RESOLVED_MODEL" ] && [ "$RESOLVED_MODEL" != "$MODEL" ]; then
     TRAY_MODEL="$RESOLVED_MODEL"
 fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starting Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py with model '$TRAY_MODEL'"
-if have python3; then
+# Use Python 3.10 if available (PyGObject compatibility), fallback to python3
+if have python3.10; then
+    python3.10 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
+elif have python3; then
     python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
 else
     echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray not started – python3 not found."
