@@ -4,6 +4,8 @@
 *.pid.lock
 *.json
 __pycache__
+venv/
+.logs/
 
 #Ignore AI rules
 .github/instructions/codacy.instructions.md

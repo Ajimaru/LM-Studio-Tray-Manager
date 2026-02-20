@@ -2,6 +2,12 @@
 
 ![LM Studio Icon](assets/img/lm-studio-64x64.png)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/downloads/)
+[![LM Studio App](https://img.shields.io/badge/LM_Studio_App-v0.4.3+-green.svg)](https://lmstudio.ai/download)
+[![LM Studio Daemon v0.0.3+](https://img.shields.io/badge/LM_Studio_Daemon-v0.0.3+-green.svg)](https://lmstudio.ai)
+[![Made with Love in 🇪🇺](https://img.shields.io/badge/Made_with_❤️_in_🇪🇺-gray.svg)](https://europa.eu/)
+
 Automation scripts for LM Studio – a powerful desktop and server application for running Large Language Models locally on consumer hardware.
 
 ## Features
@@ -11,10 +17,72 @@ Automation scripts for LM Studio – a powerful desktop and server application f
 - **GUI Integration**: Support for launching the LM Studio desktop GUI while managing daemon lifecycle
 - **Flexible Model Management**: Interactive model selection, automatic model loading, and status tracking
 
-## Quick Start
+## Getting Started
+
+After cloning the repository, follow these steps to set up the automation environment:
+
+### 1. Run the Setup Script
 
 ```bash
-# Start daemon with default settings
+./setup.sh
+```
+
+This comprehensive setup script:
+
+- ✓ Checks for LM Studio daemon (llmster) – installs if missing
+- ✓ Checks for LM Studio desktop app – intelligently detects .deb or AppImage
+- ✓ Checks for Python 3.10 – installs via apt if missing
+- ✓ Creates Python 3.10 virtual environment with PyGObject/GTK3 support
+
+The script will guide you through interactive setup steps if needed.
+
+### 2. Run the Automation Script
+
+```bash
+# Start the LM Studio daemon and system tray monitor
+./lmstudio_autostart.sh
+```
+
+The script will:
+
+- Check and install system dependencies (curl, notify-send, python3)
+- Start the LM Studio daemon
+- Wait for the API to be available
+- Launch the system tray monitor in the background
+
+### 3. Verify It Works
+
+- Check that the LM Studio daemon is running: `lms ps`
+- Look for the system tray icon (should appear in your taskbar)
+- Check setup log: `cat .logs/setup.log`
+- Check daemon log: `tail -f .logs/lmstudio_autostart.log`
+
+## Project Structure
+
+```files
+.
+├── setup.sh                    # 👈 Run this FIRST after cloning
+├── lmstudio_autostart.sh       # Main automation script
+├── lmstudio_tray.py            # System tray monitor
+├── docs/
+│   ├── index.html              # Full documentation (open in browser)
+│   ├── VENV_SETUP.md           # Virtual environment guide
+│   └── README.md               # Docs overview
+├── .logs/                      # Log files (created automatically)
+│   ├── lmstudio_autostart.log
+│   └── lmstudio_tray.log
+├── venv/                       # Virtual environment (created by setup.sh)
+├── README.md                   # This file
+└── LICENSE                     # MIT License
+```
+
+## Quick Reference
+
+```bash
+# First time setup
+./setup.sh
+
+# Start daemon with defaults
 ./lmstudio_autostart.sh
 
 # Start daemon and load a specific model
@@ -28,11 +96,18 @@ Automation scripts for LM Studio – a powerful desktop and server application f
 
 # Debug mode with verbose output
 ./lmstudio_autostart.sh --debug
+
+# Check daemon status
+lms ps
+
+# Stop daemon manually
+lms daemon stop
 ```
 
 ## Documentation
 
-For detailed documentation, usage examples, and flow diagrams, see the [comprehensive documentation](docs/index.html).
+- **[Full Documentation](docs/index.html)** – Detailed usage examples, flow diagrams, and architecture
+- **[Virtual Environment Setup](docs/VENV_SETUP.md)** – Guide for Python environment configuration and troubleshooting
 
 ## Requirements
 

@@ -10,7 +10,7 @@ The script accepts optional command-line arguments:
     - sys.argv[1]: Model name to monitor (default: "no-model-passed")
     - sys.argv[2]: Script directory for logging (default: current working dir)
 
-Logging is written to "lmstudio_tray.log" in the script directory.
+Logging is written to ".logs/lmstudio_tray.log" in the script directory.
 """
 
 import subprocess
@@ -30,10 +30,14 @@ GLib = importlib.import_module("gi.repository.GLib")
 # === Model name from argument or default ===
 MODEL = sys.argv[1] if len(sys.argv) > 1 else "no-model-passed"
 script_dir = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
+logs_dir = os.path.join(script_dir, ".logs")
+
+# === Create logs directory if not exists ===
+os.makedirs(logs_dir, exist_ok=True)
 
 # === Set up logging ===
 logging.basicConfig(
-    filename=os.path.join(script_dir, "lmstudio_tray.log"),
+    filename=os.path.join(logs_dir, "lmstudio_tray.log"),
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     filemode='w'

@@ -3,9 +3,14 @@ set -e
 
 # === Settings ===
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VENV_DIR="${VENV_DIR:-$SCRIPT_DIR/venv}"
+LOGS_DIR="$SCRIPT_DIR/.logs"
 
-# === Log file in script directory ===
-LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
+# === Create logs directory if not exists ===
+mkdir -p "$LOGS_DIR"
+
+# === Log file in .logs directory ===
+LOGFILE="$LOGS_DIR/lmstudio_autostart.log"
 
 # === Check dependencies ===
 check_dependencies() {
@@ -54,9 +59,6 @@ check_dependencies() {
 
 check_dependencies
 
-# === Log file in script directory ===
-LOGFILE="$SCRIPT_DIR/lmstudio_autostart.log"
-
 # === Help ===
 usage() {
     cat <<EOF
@@ -64,7 +66,7 @@ Usage: $(basename "$0") [OPTIONS]
 
 Starts the LM Studio daemon, checks and installs dependencies (curl, notify-send, python3),
 optionally loads a model via lms-CLI with GPU fallback and starts the tray monitor with status monitoring.
-The log file is created anew per run: $LOGFILE
+The log file is created anew per run in .logs directory: lmstudio_autostart.log
 
 Options:
     -d, --debug       Enable debug output and Bash trace (also terminal output)
@@ -610,12 +612,14 @@ if [ -n "$RESOLVED_MODEL" ] && [ "$RESOLVED_MODEL" != "$MODEL" ]; then
     TRAY_MODEL="$RESOLVED_MODEL"
 fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starting Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py with model '$TRAY_MODEL'"
-# Use Python 3.10 if available (PyGObject compatibility), fallback to python3
-if have python3.10; then
+# Priority: venv > python3.10 > python3 (PyGObject compatibility)
+if [ -x "$VENV_DIR/bin/python3" ]; then
+    "$VENV_DIR/bin/python3" "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
+elif have python3.10; then
     python3.10 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
 elif have python3; then
     python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
 else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray not started – python3 not found."
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray not started – no Python interpreter found."
 fi
 
