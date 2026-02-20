@@ -46,8 +46,9 @@ jobs:
           # comma-separated list of paths (glob patterns supported) to exclude from scan (note that these are in addition to the excluded paths provided in the config file) (default: .svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.eggs,*.egg)
           # excluded_paths: # optional, default is DEFAULT
           # comma-separated list of test IDs to skip
-          # B603/B607/B404 are noisy for this project's controlled local process calls
-          skips: B603,B607,B404
+          # B603/B607/B404 are noisy for this project's controlled local process calls.
+          # B101 is expected in pytest test files where assert is idiomatic.
+          skips: B603,B607,B404,B101
           # path to a .bandit file that supplies command line arguments
           # ini_path: # optional, default is DEFAULT
 
