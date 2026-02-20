@@ -232,24 +232,24 @@ class TrayIcon:
         # === DAEMON CONTROL ===
         if daemon_status == "running":
             daemon_item = Gtk.MenuItem(
-                label=f"{daemon_indicator} Daemon (running)"
+                label=f"{daemon_indicator} Daemon (Running)"
             )
             daemon_item.set_sensitive(False)
             self.menu.append(daemon_item)
             stop_daemon_item = Gtk.MenuItem(
-                label="  → Stop daemon"
+                label="  → Stop Daemon"
             )
             stop_daemon_item.connect("activate", self.stop_daemon)
             self.menu.append(stop_daemon_item)
         elif daemon_status == "stopped":
             start_daemon_item = Gtk.MenuItem(
-                label=f"{daemon_indicator} Start Daemon (headless)"
+                label=f"{daemon_indicator} Start Daemon (Headless)"
             )
             start_daemon_item.connect("activate", self.start_daemon)
             self.menu.append(start_daemon_item)
         else:  # not_found
             not_found_item = Gtk.MenuItem(
-                label=f"{daemon_indicator} Daemon (not installed)"
+                label=f"{daemon_indicator} Daemon (Not Installed)"
             )
             not_found_item.set_sensitive(False)
             self.menu.append(not_found_item)
@@ -257,7 +257,7 @@ class TrayIcon:
         # === DESKTOP APP CONTROL ===
         if app_status == "running":
             app_item = Gtk.MenuItem(
-                label=f"{app_indicator} Desktop App (running)"
+                label=f"{app_indicator} Desktop App (Running)"
             )
             app_item.set_sensitive(False)
             self.menu.append(app_item)
@@ -266,30 +266,30 @@ class TrayIcon:
             self.menu.append(stop_app_item)
         elif app_status == "stopped":
             start_app_item = Gtk.MenuItem(
-                label=f"{app_indicator} Start Desktop App (with GUI)"
+                label=f"{app_indicator} Start Desktop App"
             )
             start_app_item.connect("activate", self.start_desktop_app)
             self.menu.append(start_app_item)
         elif app_status == "not_found":
             not_found_item = Gtk.MenuItem(
-                label=f"{app_indicator} Desktop App (not installed)"
+                label=f"{app_indicator} Desktop App (Not Installed)"
             )
             not_found_item.set_sensitive(False)
             self.menu.append(not_found_item)
 
         self.menu.append(Gtk.SeparatorMenuItem())
 
-        reload_item = Gtk.MenuItem(label="Reload model")
+        reload_item = Gtk.MenuItem(label="Reload Model")
         reload_item.connect("activate", self.reload_model)
         self.menu.append(reload_item)
 
-        status_item = Gtk.MenuItem(label="Show status")
+        status_item = Gtk.MenuItem(label="Show Status")
         status_item.connect("activate", self.show_status_dialog)
         self.menu.append(status_item)
 
         self.menu.append(Gtk.SeparatorMenuItem())
 
-        quit_item = Gtk.MenuItem(label="Quit tray")
+        quit_item = Gtk.MenuItem(label="Quit Tray")
         quit_item.connect("activate", self.quit_app)
         self.menu.append(quit_item)
 
@@ -321,7 +321,7 @@ class TrayIcon:
             return "not_found"
 
     def get_desktop_app_status(self):
-        """Check if LM Studio desktop app (GUI) is running.
+        """Check if LM Studio desktop app is running.
 
         The desktop app is started via lmstudio_autostart.sh --gui or directly,
         and runs WITHOUT the --run-as-service flag.
@@ -616,9 +616,8 @@ class TrayIcon:
         1. .deb package installation
         2. AppImage in common locations and script directory
 
-        Note: If the headless daemon is running, LM Studio GUI will show a
-        dialog asking to quit the daemon first. This is handled by the
-        GUI itself.
+        If the headless daemon is running, this action stops it first and
+        only then launches the GUI.
 
         If no desktop app is found, displays an error notification.
 
@@ -640,6 +639,77 @@ class TrayIcon:
                 check=False,
             )
             return
+
+        # Stop headless daemon first to avoid LM Studio conflict dialog
+        if is_llmster_running():
+            llmster_cmd = get_llmster_cmd()
+            stop_attempts = []
+            if lms_cmd:
+                stop_attempts.extend(
+                    [
+                        [lms_cmd, "daemon", "down"],
+                        [lms_cmd, "daemon", "stop"],
+                        [lms_cmd, "down"],
+                        [lms_cmd, "stop"],
+                    ]
+                )
+            if llmster_cmd:
+                stop_attempts.extend(
+                    [
+                        [llmster_cmd, "daemon", "down"],
+                        [llmster_cmd, "daemon", "stop"],
+                        [llmster_cmd, "down"],
+                        [llmster_cmd, "stop"],
+                    ]
+                )
+
+            for command in stop_attempts:
+                subprocess.run(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+                if not is_llmster_running():
+                    break
+
+            if is_llmster_running():
+                subprocess.run(
+                    ["pkill", "-x", "llmster"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                subprocess.run(
+                    ["pkill", "-f", "llmster"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+
+                for _ in range(8):
+                    if not is_llmster_running():
+                        break
+                    time.sleep(0.25)
+
+            if is_llmster_running():
+                logging.error(
+                    "Cannot start desktop app: llmster still running"
+                )
+                subprocess.run(
+                    [
+                        "notify-send",
+                        "Error",
+                        "Failed to stop daemon. Please stop it first.",
+                    ],
+                    check=False,
+                )
+                self.build_menu()
+                return
+
+            logging.info("llmster daemon stopped before GUI launch")
+            self.build_menu()
 
         # Step 1: Look for desktop app - prefer .deb, then AppImage
         app_found = False
