@@ -69,7 +69,7 @@ jobs:
           PKG_NAME="LM-Studio-Tray-Manager-${TAG}"
 
           tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "$PKG_NAME"
-          zip -rq "dist/${PKG_NAME}.zip" "dist/${PKG_NAME}"
+          (cd dist && zip -rq "${PKG_NAME}.zip" "$PKG_NAME")
 
           cp "dist/${PKG_NAME}.tar.gz" "dist/LM-Studio-Tray-Manager-latest.tar.gz"
           cp "dist/${PKG_NAME}.zip" "dist/LM-Studio-Tray-Manager-latest.zip"
