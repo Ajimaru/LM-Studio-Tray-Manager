@@ -142,6 +142,8 @@
 
         /* Utility classes */
         .nested-list { margin-top: 5px; font-size: 0.95em; color: var(--muted-text); }
+        .status-sublist { margin-top: 5px; font-size: 0.95em; }
+        .status-sublist-compact { margin-top: 5px; font-size: 0.95em; }
     </style>
 </head>
 <body>
@@ -255,21 +257,56 @@ grep -i error .logs/*.log</code></pre>
                 LM_AUTOSTART_DEBUG=1            Force debug mode
                 LM_AUTOSTART_SELECT_TIMEOUT=30  Timeout for interactive selection
                 LM_AUTOSTART_GUI_CMD="..."      Explicit GUI start command</code></pre>
+
+            <h3>System Autostart Integration</h3>
+            <p>To automatically start LM Studio daemon and tray monitor on login, create a desktop entry in <code>~/.config/autostart/</code>:</p>
+            <pre><code>mkdir -p ~/.config/autostart/
+cat > ~/.config/autostart/lmstudio-daemon.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=LM Studio Daemon
+Exec=/path/to/LM-Studio/lmstudio_autostart.sh
+X-GNOME-Autostart-enabled=true
+Hidden=false
+EOF</code></pre>
+            <p><strong>Recommended Setup:</strong> Run <code>./lmstudio_autostart.sh</code> without <code>--gui</code> flag in autostart. The daemon and tray monitor will start automatically. Users can then launch the desktop GUI on-demand via the tray monitor's <strong>"Start Desktop App"</strong> menu option.</p>
         </section>
 
         <section id="tray-script">
             <h2>Tray Monitor Script (<code>lmstudio_tray.py</code>)</h2>
             <p>This Python script creates a system tray icon for LM Studio monitoring. It provides:</p>
             <ul>
-                <li>Real-time model status monitoring</li>
+                <li>Real-time model status monitoring with visual indicators (🟢🟡🔴)</li>
+                <li>Live status display for daemon and desktop app in menu</li>
+                <li>Desktop app launcher (supports .deb and AppImage detection)</li>
                 <li>Tray icon with status indicators (active/warning/error)</li>
                 <li>Right-click menu for actions</li>
                 <li>Notifications for status changes</li>
                 <li>Automatic termination of duplicate instances</li>
             </ul>
+            <h3>Status Indicators (in Menu)</h3>
+            <p>When you right-click the tray icon, the menu shows live status for each option:</p>
+            <ul>
+                <li><strong>🟢 (Green Circle)</strong> – Component is currently running/active</li>
+                <li><strong>🟡 (Yellow Circle)</strong> – Component is installed but not running</li>
+                <li><strong>🔴 (Red Circle)</strong> – Component is not found/not installed</li>
+            </ul>
             <h3>Tray Menu Options</h3>
             <ul>
-                <li><strong>Start LM Studio Daemon:</strong> Ensures the LM Studio daemon is running</li>
+                <li><strong>🟢/🟡/🔴 Start Desktop App:</strong> Launch LM Studio GUI 
+                    <ul class="status-sublist">
+                        <li>🟢 App is currently running</li>
+                        <li>🟡 App is installed but not running (will start on click)</li>
+                        <li>🔴 App not found ({.deb or AppImage) – disabled</li>
+                    </ul>
+                </li>
+                <li><strong>🟢/🟡/🔴 Start LM Studio Daemon:</strong> Ensure daemon is running
+                    <ul class="status-sublist-compact">
+                        <li>🟢 Daemon is currently active</li>
+                        <li>🟡 Daemon is installed but stopped (will start on click)</li>
+                        <li>🔴 Daemon not found – install from lmstudio.ai</li>
+                    </ul>
+                </li>
                 <li><strong>Reload Model:</strong> Reloads the specified model</li>
                 <li><strong>Show Status:</strong> Displays current LM Studio status in a dialog</li>
                 <li><strong>Quit Tray:</strong> Terminates the tray monitor</li>

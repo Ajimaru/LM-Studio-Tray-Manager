@@ -4,26 +4,33 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
 
 ## Table of Contents
 
-- [What setup.sh Does](#what-setupsh-does)
-- [Quick Start](#quick-start)
-- [Setup Script Outputs](#setup-script-outputs)
-  - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
-  - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
-  - [If Python 3.10 is Missing](#if-python-310-is-missing)
-- [What's Inside the venv?](#whats-inside-the-venv)
-- [File Structure After Setup](#file-structure-after-setup)
-- [Environment Variables](#environment-variables)
-- [Troubleshooting](#troubleshooting)
-  - [venv not found](#venv-not-found)
-  - [Checking Logs](#checking-logs)
-- [PyGObject Import Errors](#pygobject-import-errors)
-- [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
-- [Why Python 3.10?](#why-python-310)
-- [Python 3.12+ Support](#python-312-support)
-  - [Option 1: Install Build Tools](#option-1-install-build-tools-not-recommended)
-  - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
-  - [Option 3: Use Docker](#option-3-use-docker-alternative)
-  - [Our Solution: Python 3.10 venv](#our-solution-python-310-venv)
+- [Virtual Environment Setup](#virtual-environment-setup)
+  - [Table of Contents](#table-of-contents)
+  - [What setup.sh Does](#what-setupsh-does)
+  - [Quick Start](#quick-start)
+  - [Setup Script Outputs](#setup-script-outputs)
+    - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
+    - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
+    - [If Python 3.10 is Missing](#if-python-310-is-missing)
+  - [What's Inside the venv?](#whats-inside-the-venv)
+  - [File Structure After Setup](#file-structure-after-setup)
+  - [Environment Variables](#environment-variables)
+  - [Desktop App Launch via Tray Monitor](#desktop-app-launch-via-tray-monitor)
+    - [Recommended Setup](#recommended-setup)
+    - [How "Start Desktop App" Works](#how-start-desktop-app-works)
+  - [Troubleshooting](#troubleshooting)
+    - [venv not found](#venv-not-found)
+    - [Checking Logs](#checking-logs)
+    - [View tray monitor logs](#view-tray-monitor-logs)
+    - [View both in real-time (in separate terminals)](#view-both-in-real-time-in-separate-terminals)
+  - [PyGObject Import Errors](#pygobject-import-errors)
+  - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
+  - [Why Python 3.10?](#why-python-310)
+  - [Python 3.12+ Support](#python-312-support)
+    - [Option 1: Install Build Tools (not recommended)](#option-1-install-build-tools-not-recommended)
+    - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
+    - [Option 3: Use Docker (alternative)](#option-3-use-docker-alternative)
+    - [Our Solution: Python 3.10 venv](#our-solution-python-310-venv)
 
 ## What setup.sh Does
 
@@ -159,6 +166,55 @@ export LM_AUTOSTART_SELECT_TIMEOUT=60
 ./lmstudio_autostart.sh -L  # Interactive model selection
 
 ```
+
+## Desktop App Launch via Tray Monitor
+
+The system tray monitor (`lmstudio_tray.py`) provides a convenient way to launch the LM Studio desktop GUI without stopping the daemon. This is especially useful for headless autostart setups.
+
+### Recommended Setup
+
+1. Place `./lmstudio_autostart.sh` (without `--gui` flag) in your system autostart:
+
+```bash
+mkdir -p ~/.config/autostart/
+cat > ~/.config/autostart/lmstudio-daemon.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=LM Studio Daemon
+Exec=/path/to/LM-Studio/lmstudio_autostart.sh
+X-GNOME-Autostart-enabled=true
+Hidden=false
+EOF
+```
+
+2. On login, the daemon and tray monitor will start automatically
+3. Click the tray icon (right-click) and select **"Start Desktop App"** to launch the GUI
+4. The daemon remains running in the background
+
+### How "Start Desktop App" Works
+
+The menu shows status indicators before each option when you right-click the tray:
+
+**Status Meanings:**
+
+- **🟢 (Green)** – Component is running/available and active
+- **🟡 (Yellow)** – Component is installed but not currently running
+- **🔴 (Red)** – Component is not installed/not found
+
+**For "Start Desktop App":**
+
+- **Priority 1**: Looks for installed `.deb` package
+- **Priority 2**: Searches for AppImage in common locations and script directory (preferred locations: `~/Apps`, `~/LM_Studio`, `$SCRIPT_DIR`, etc.)
+- **On Launch**: Automatically ensures daemon is running (`lms daemon up`)
+- **Notifications**: Desktop notifications confirm app start or display errors
+- **Logging**: All actions logged to `.logs/lmstudio_tray.log`
+
+**For "Start LM Studio Daemon":**
+
+- **Status Check**: Uses `lms ps` to verify if daemon is running
+- **🟢 Running**: Daemon is currently active and responding
+- **🟡 Stopped**: Daemon binary exists but is not running (click to start)
+- **🔴 Not Found**: Daemon (llmster) not installed (need to install from lmstudio.ai)
 
 ## Troubleshooting
 

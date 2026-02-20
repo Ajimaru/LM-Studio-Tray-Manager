@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.10
 """LM Studio Tray Icon Monitor.
 
 A GTK3-based system tray application that monitors the status of the LM Studio
@@ -23,25 +23,37 @@ import importlib
 import gi
 
 gi.require_version("Gtk", "3.0")
+gi.require_version("AyatanaAppIndicator3", "0.1")
 Gtk = importlib.import_module("gi.repository.Gtk")
 GLib = importlib.import_module("gi.repository.GLib")
+AppIndicator3 = importlib.import_module("gi.repository.AyatanaAppIndicator3")
 
 
 # === Model name from argument or default ===
 MODEL = sys.argv[1] if len(sys.argv) > 1 else "no-model-passed"
 script_dir = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
+DEBUG_MODE = sys.argv[3].lower() == "debug" if len(sys.argv) > 3 else False
 logs_dir = os.path.join(script_dir, ".logs")
 
 # === Create logs directory if not exists ===
 os.makedirs(logs_dir, exist_ok=True)
 
 # === Set up logging ===
+LOG_LEVEL = logging.DEBUG if DEBUG_MODE else logging.INFO
 logging.basicConfig(
     filename=os.path.join(logs_dir, "lmstudio_tray.log"),
-    level=logging.INFO,
+    level=LOG_LEVEL,
     format="%(asctime)s - %(levelname)s - %(message)s",
     filemode='w'
 )
+
+# Redirect Python warnings to log file in debug mode
+if DEBUG_MODE:
+    logging.captureWarnings(True)
+    warnings_logger = logging.getLogger('py.warnings')
+    warnings_logger.setLevel(logging.DEBUG)
+    logging.debug("Debug mode enabled - capturing warnings to log file")
+
 INTERVAL = 10
 
 # === GTK icon names from the icon browser ===
@@ -101,11 +113,19 @@ class TrayIcon:
     desktop notifications.
     """
     def __init__(self):
-        self.status_icon = Gtk.StatusIcon()
-        self.status_icon.set_visible(True)
-        self.status_icon.set_tooltip_text("LM Studio Monitor")
-        self.status_icon.connect("activate", self.on_click)
-        self.status_icon.connect("popup-menu", self.on_right_click)
+        # Use AppIndicator3 instead of deprecated StatusIcon
+        self.indicator = AppIndicator3.Indicator.new(
+            "lmstudio-monitor",
+            ICON_WARN,
+            AppIndicator3.IndicatorCategory.APPLICATION_STATUS
+        )
+        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+        self.indicator.set_title("LM Studio Monitor")
+
+        # Create persistent menu (AppIndicator requires static menu)
+        self.menu = Gtk.Menu()
+        self.build_menu()
+        self.indicator.set_menu(self.menu)
         self.last_status = None
         self.check_model()
         GLib.timeout_add_seconds(INTERVAL, self.check_model)
@@ -126,40 +146,213 @@ class TrayIcon:
             check=False,
         )
 
-    def on_right_click(self, _icon, button, time):
+    def build_menu(self):
+        """Build or rebuild the context menu with current status and
+        options.
         """
-        Handle right-click event on the system tray icon.
+        # Clear existing menu items
+        for item in self.menu.get_children():
+            self.menu.remove(item)
 
-        Args:
-            _icon: The tray icon object (unused).
-            button: The mouse button that was clicked.
-            time: The timestamp of the click event.
+        # Get current status indicators
+        daemon_status = self.get_daemon_status()
+        app_status = self.get_desktop_app_status()
+        daemon_indicator = self.get_status_indicator(daemon_status)
+        app_indicator = self.get_status_indicator(app_status)
 
-        Returns:
-            None
-        """
-        menu = Gtk.Menu()
+        # === DAEMON CONTROL ===
+        if daemon_status == "running":
+            daemon_item = Gtk.MenuItem(
+                label=f"{daemon_indicator} Daemon (running)"
+            )
+            daemon_item.set_sensitive(False)
+            self.menu.append(daemon_item)
+            stop_daemon_item = Gtk.MenuItem(
+                label="  → Stop daemon (switch to app)"
+            )
+            stop_daemon_item.connect("activate", self.stop_daemon)
+            self.menu.append(stop_daemon_item)
+        elif daemon_status == "stopped":
+            start_daemon_item = Gtk.MenuItem(
+                label=f"{daemon_indicator} Start Daemon (headless)"
+            )
+            start_daemon_item.connect("activate", self.start_daemon)
+            self.menu.append(start_daemon_item)
+        else:  # not_found
+            not_found_item = Gtk.MenuItem(
+                label=f"{daemon_indicator} Daemon (not installed)"
+            )
+            not_found_item.set_sensitive(False)
+            self.menu.append(not_found_item)
 
-        open_item = Gtk.MenuItem(label="Start LM Studio Daemon")
-        open_item.connect("activate", self.start_daemon)
-        menu.append(open_item)
+        # === DESKTOP APP CONTROL ===
+        if app_status == "running":
+            app_item = Gtk.MenuItem(
+                label=f"{app_indicator} Desktop App (running)"
+            )
+            app_item.set_sensitive(False)
+            self.menu.append(app_item)
+            stop_app_item = Gtk.MenuItem(label="  → Stop Desktop App")
+            stop_app_item.connect("activate", self.stop_desktop_app)
+            self.menu.append(stop_app_item)
+        elif app_status == "stopped":
+            start_app_item = Gtk.MenuItem(
+                label=f"{app_indicator} Start Desktop App (with GUI)"
+            )
+            start_app_item.connect("activate", self.start_desktop_app)
+            self.menu.append(start_app_item)
+        elif app_status == "not_found":
+            not_found_item = Gtk.MenuItem(
+                label=f"{app_indicator} Desktop App (not installed)"
+            )
+            not_found_item.set_sensitive(False)
+            self.menu.append(not_found_item)
+
+        self.menu.append(Gtk.SeparatorMenuItem())
 
         reload_item = Gtk.MenuItem(label="Reload model")
         reload_item.connect("activate", self.reload_model)
-        menu.append(reload_item)
+        self.menu.append(reload_item)
 
         status_item = Gtk.MenuItem(label="Show status")
         status_item.connect("activate", self.show_status_dialog)
-        menu.append(status_item)
+        self.menu.append(status_item)
 
-        menu.append(Gtk.SeparatorMenuItem())
+        self.menu.append(Gtk.SeparatorMenuItem())
 
         quit_item = Gtk.MenuItem(label="Quit tray")
         quit_item.connect("activate", self.quit_app)
-        menu.append(quit_item)
+        self.menu.append(quit_item)
 
-        menu.show_all()
-        menu.popup(None, None, None, None, button, time)
+        self.menu.show_all()
+
+    def get_daemon_status(self):
+        """Check if llmster headless daemon is running.
+
+        Returns:
+            str: "running" if daemon process is active,
+                 "stopped" if llmster is installed but daemon not running,
+                 "not_found" if llmster is not installed.
+        """
+        try:
+            llmster_cmd = shutil.which("llmster")
+            if not llmster_cmd:
+                return "not_found"
+
+            # Check if daemon process is running with --run-as-service flag
+            # This distinguishes headless daemon from desktop app
+            try:
+                result = subprocess.run(
+                    ["pgrep", "-f", "lm-studio.*--run-as-service"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False
+                )
+                if result.returncode == 0:
+                    return "running"
+            except (OSError, subprocess.SubprocessError):
+                pass
+
+            # llmster exists but daemon process is not active
+            return "stopped"
+        except (
+            OSError,
+            subprocess.SubprocessError,
+            subprocess.TimeoutExpired,
+        ):
+            return "not_found"
+
+    def get_desktop_app_status(self):
+        """Check if LM Studio desktop app (GUI) is running.
+
+        The desktop app is started via lmstudio_autostart.sh --gui or directly,
+        and runs WITHOUT the --run-as-service flag.
+
+        This is different from the headless daemon (--run-as-service).
+
+        Returns:
+            str: "running" if desktop app process is active,
+                 "stopped" if installed but not running,
+                 "not_found" if not installed.
+        """
+        # Check if LM Studio app process exists.
+        # On this system, LM Studio may run with --run-as-service while still
+        # representing the desktop app (minimized to tray), so count it as app
+        # running.
+        try:
+            result = subprocess.run(
+                ["ps", "-eo", "args="],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False
+            )
+            if result.returncode == 0:
+                for args in result.stdout.splitlines():
+                    if "--type=" in args:
+                        continue
+                    if (
+                        "/opt/LM Studio/lm-studio" in args
+                        or args.startswith("/usr/bin/lm-studio")
+                        or args.startswith("lm-studio ")
+                        or args == "lm-studio"
+                    ):
+                        return "running"
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+        # Check if app is available but not running
+        # Check for .deb package
+        try:
+            result = subprocess.run(
+                ["dpkg", "-l"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if "lm-studio" in result.stdout:
+                return "stopped"
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+        # Check for AppImage
+        script_dir_arg = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
+        search_paths = [
+            script_dir_arg,
+            os.path.expanduser("~/Apps"),
+            os.path.expanduser("~/LM_Studio"),
+            os.path.expanduser("~/Applications"),
+            os.path.expanduser("~/.local/bin"),
+            "/opt/lm-studio",
+        ]
+        for search_path in search_paths:
+            if not os.path.isdir(search_path):
+                continue
+            try:
+                for entry in os.listdir(search_path):
+                    if entry.endswith(".AppImage"):
+                        return "stopped"
+            except (OSError, PermissionError):
+                pass
+
+        return "not_found"
+
+    def get_status_indicator(self, status):
+        """Convert status string to emoji indicator.
+
+        Args:
+            status: "running", "stopped", or "not_found"
+
+        Returns:
+            str: Emoji indicator (🟢 running, 🟡 stopped, 🔴 not_found)
+        """
+        if status == "running":
+            return "🟢"
+        elif status == "stopped":
+            return "🟡"
+        else:
+            return "🔴"
 
     def start_daemon(self, _widget):
         """Start or ensure the LM Studio daemon is running.
@@ -214,6 +407,228 @@ class TrayIcon:
                 check=False,
             )
 
+    def stop_daemon(self, _widget):
+        """Stop the LM Studio daemon via lms CLI.
+
+        This will cleanly shut down the headless daemon process that was
+        started via 'lms daemon up'. After shutdown, you can start the
+        desktop app via the tray menu.
+
+        Args:
+            _widget: UI widget that triggered the action (unused).
+        """
+        lms_cmd = get_lms_cmd()
+        if not lms_cmd:
+            logging.error("lms CLI not found")
+            subprocess.run(
+                [
+                    "notify-send",
+                    "Error",
+                    "lms CLI not found. Run: lms daemon down",
+                ],
+                check=False,
+            )
+            return
+        try:
+            # Try 'daemon down' first (newer versions)
+            result = subprocess.run(
+                [lms_cmd, "daemon", "down"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            # If that doesn't work, try 'daemon stop'
+            if result.returncode != 0:
+                result = subprocess.run(
+                    [lms_cmd, "daemon", "stop"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+
+            if result.returncode == 0:
+                logging.info("LM Studio daemon stopped")
+                subprocess.run(
+                    [
+                        "notify-send",
+                        "LM Studio",
+                        "Daemon stopped. You can now start the desktop app.",
+                    ],
+                    check=False,
+                )
+            else:
+                err = result.stderr.strip() or "Unknown error"
+                logging.error("Failed to stop daemon: %s", err)
+                subprocess.run(
+                    ["notify-send", "Error", f"Daemon stop failed: {err}"],
+                    check=False,
+                )
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            logging.error("Error stopping daemon: %s", e)
+            subprocess.run(
+                ["notify-send", "Error", f"Error: {e}"],
+                check=False,
+            )
+
+    def start_desktop_app(self, _widget):
+        """Start the LM Studio desktop application.
+
+        Searches for the desktop app in order of preference:
+        1. .deb package installation
+        2. AppImage in common locations and script directory
+
+        Note: If the headless daemon is running, LM Studio GUI will show a
+        dialog asking to quit the daemon first. This is handled by the
+        GUI itself.
+
+        If no desktop app is found, displays an error notification.
+
+        Args:
+            _widget: The widget that triggered this callback (unused).
+        """
+        lms_cmd = get_lms_cmd()
+        if not lms_cmd:
+            logging.error("lms CLI not found")
+            subprocess.run(
+                [
+                    "notify-send",
+                    "Error",
+                    "lms CLI not found. Cannot launch app.",
+                ],
+                check=False,
+            )
+            return
+
+        # Step 1: Look for desktop app - prefer .deb, then AppImage
+        app_found = False
+        app_path = None
+
+        # Check for .deb package
+        try:
+            result = subprocess.run(
+                ["dpkg", "-l"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if "lm-studio" in result.stdout:
+                # Start via installed .deb package
+                app_path = "lm-studio"
+                app_found = True
+                logging.info("Found LM Studio .deb package")
+        except (OSError, subprocess.SubprocessError) as e:
+            logging.warning("Error checking for .deb package: %s", e)
+
+        # If .deb not found, search for AppImage
+        if not app_found:
+            script_dir_arg = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
+            search_paths = [
+                script_dir_arg,
+                os.path.expanduser("~/Apps"),
+                os.path.expanduser("~/LM_Studio"),
+                os.path.expanduser("~/Applications"),
+                os.path.expanduser("~/.local/bin"),
+                "/opt/lm-studio",
+            ]
+            for search_path in search_paths:
+                if not os.path.isdir(search_path):
+                    continue
+                try:
+                    for entry in os.listdir(search_path):
+                        if entry.endswith(".AppImage"):
+                            app_path = os.path.join(search_path, entry)
+                            app_found = True
+                            logging.info("Found AppImage: %s", app_path)
+                            break
+                    if app_found:
+                        break
+                except (OSError, PermissionError) as e:
+                    logging.warning("Error searching %s: %s", search_path, e)
+
+        # Step 2: Start the app if found
+        if app_found and app_path:
+            try:
+                subprocess.Popen(
+                    [app_path],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                logging.info("Started LM Studio desktop app: %s", app_path)
+                subprocess.run(
+                    [
+                        "notify-send",
+                        "LM Studio",
+                        "LM Studio GUI is starting...",
+                    ],
+                    check=False,
+                )
+            except (OSError, subprocess.SubprocessError) as e:
+                logging.error("Failed to start desktop app: %s", e)
+                subprocess.run(
+                    ["notify-send", "Error", f"Failed to start app: {e}"],
+                    check=False,
+                )
+        else:
+            logging.warning(
+                "No LM Studio desktop app found (.deb or AppImage)"
+            )
+            subprocess.run(
+                [
+                    "notify-send",
+                    "Error",
+                    "No LM Studio desktop app found.\n"
+                    "Please install from https://lmstudio.ai/download",
+                ],
+                check=False,
+            )
+
+
+    def stop_desktop_app(self, _widget):
+        """Stop LM Studio desktop app/background process completely.
+
+        This is useful when closing the window only minimizes to tray and the
+        process keeps running in the background.
+
+        Args:
+            _widget: The widget that triggered this callback (unused).
+        """
+        try:
+            result = subprocess.run(
+                ["pkill", "-f", "/opt/LM Studio/lm-studio"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                logging.info("LM Studio desktop app stopped")
+                subprocess.run(
+                    [
+                        "notify-send",
+                        "LM Studio",
+                        "Desktop App wurde beendet",
+                    ],
+                    check=False,
+                )
+            else:
+                logging.info("No LM Studio desktop app process found to stop")
+                subprocess.run(
+                    [
+                        "notify-send",
+                        "LM Studio",
+                        "Keine laufende Desktop App gefunden",
+                    ],
+                    check=False,
+                )
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            logging.error("Failed to stop desktop app: %s", e)
+            subprocess.run(
+                ["notify-send", "Error", f"Desktop App Stop fehlgeschlagen: {e}"],
+                check=False,
+            )
     def reload_model(self, _widget):
         """
         Reload the currently loaded model in LM Studio.
@@ -297,10 +712,10 @@ class TrayIcon:
 
         dialog = Gtk.MessageDialog(
             parent=None,
-            flags=0,
-            type=Gtk.MessageType.INFO,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.INFO,
             buttons=Gtk.ButtonsType.OK,
-            message_format="LM Studio Status"
+            text="LM Studio Status"
         )
         dialog.format_secondary_text(text)
         dialog.run()
@@ -321,50 +736,41 @@ class TrayIcon:
             callbacks).
         """
         try:
+            if not shutil.which("llmster"):
+                self.indicator.set_icon_full(
+                    ICON_WARN,
+                    "Monitoring only (llmster not installed)"
+                )
+                self.last_status = "MONITOR_ONLY"
+                self.build_menu()
+                return True
+
             lms_cmd = get_lms_cmd()
             if not lms_cmd:
-                self.status_icon.set_from_icon_name(ICON_FAIL)
-                self.status_icon.set_tooltip_text("❌ lms CLI not found")
+                self.indicator.set_icon_full(ICON_FAIL, "LM Studio not found")
                 return True
             result = subprocess.run(
                 [lms_cmd, "ps"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                timeout=5,
+                timeout=0.5,  # Reduced from 5s to prevent UI blocking
                 check=False
             )
             current_status = None
             if result.returncode == 0:
                 if MODEL in result.stdout:
                     current_status = "OK"
-                    self.status_icon.set_from_icon_name(ICON_OK)
-                    self.status_icon.set_tooltip_text(
-                        f"✅ Model active: {MODEL}"
-                    )
+                    self.indicator.set_icon_full(ICON_OK, "Model active")
                 elif result.stdout.strip():
                     current_status = "INFO"
-                    lines = result.stdout.strip().split('\n')
-                    loaded_models = [
-                        line.split()[1] if len(line.split()) > 1 else 'Unknown'
-                        for line in lines[1:]
-                    ]
-                    tooltip = (
-                        f"ℹ️ Loaded model changed (expected: {MODEL})\n"
-                        f"Loaded: {', '.join(loaded_models[:3])}"
-                    )
-                    self.status_icon.set_from_icon_name(ICON_INFO)
-                    self.status_icon.set_tooltip_text(tooltip)
+                    self.indicator.set_icon_full(ICON_INFO, "Model changed")
                 else:
                     current_status = "WARN"
-                    self.status_icon.set_from_icon_name(ICON_WARN)
-                    self.status_icon.set_tooltip_text(
-                        f"⚠️ No modell loaded (expected: {MODEL})"
-                    )
+                    self.indicator.set_icon_full(ICON_WARN, "No model loaded")
             else:
                 current_status = "FAIL"
-                self.status_icon.set_from_icon_name(ICON_FAIL)
-                self.status_icon.set_tooltip_text("❌ LM Studio is not running")
+                self.indicator.set_icon_full(ICON_FAIL, "Daemon not running")
 
             if (
                 self.last_status != current_status
@@ -408,16 +814,17 @@ class TrayIcon:
                     self.last_status,
                     current_status
                 )
+                # Update menu to reflect new status
+                self.build_menu()
 
             self.last_status = current_status
 
         except subprocess.TimeoutExpired:
-            self.status_icon.set_from_icon_name(ICON_WARN)
-            self.status_icon.set_tooltip_text("⚠️ Timeout during status check")
-            logging.warning("Timeout in lms ps")
+            # Timeout usually means lms ps is slow, not that daemon is down
+            # Keep previous status to avoid flashing tooltips
+            logging.debug("Timeout in lms ps check (keeping previous status)")
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
-            self.status_icon.set_from_icon_name(ICON_FAIL)
-            self.status_icon.set_tooltip_text(f"❌ Error checking: {str(e)}")
+            self.indicator.set_icon_full(ICON_FAIL, "Error checking status")
             logging.error("Error in status check: %s", e)
         return True
 

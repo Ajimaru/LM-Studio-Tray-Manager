@@ -138,7 +138,6 @@ fi
 echo -e "\n${BLUE}Step 2: Checking LM Studio Desktop App${NC}"
 
 FOUND_DEB=false
-FOUND_APPIMAGE=false
 APP_INSTALLED=false
 
 # Check for .deb package
@@ -155,7 +154,6 @@ for appimage_path in "$SCRIPT_DIR" "$HOME/LM_Studio" "$HOME/Applications" "$HOME
             if [ -f "$appimage_file" ]; then
                 print_step "LM Studio desktop app found (AppImage)"
                 APP_INSTALLED=true
-                FOUND_APPIMAGE=true
                 APPIMAGE_PATH="$appimage_path"
                 break 2
             fi

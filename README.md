@@ -13,7 +13,9 @@ Automation scripts for LM Studio – a powerful desktop and server application f
 ## Features
 
 - **Daemon Automation** (`lmstudio_autostart.sh`): Automatically start the LM Studio daemon, wait for API availability, and optionally load models
-- **System Tray Monitor** (`lmstudio_tray.py`): GTK3 system tray integration for real-time model status monitoring and quick daemon management
+- **System Tray Monitor** (`lmstudio_tray.py`): GTK3 system tray integration with real-time model status monitoring (🟢🟡🔴), daemon control, and desktop app launcher with live status indicators
+- **Smart Status Indicators**: Real-time status display for daemon and desktop app (🟢 running / 🟡 stopped / 🔴 not found)
+- **Desktop App Launcher**: One-click option in tray to start LM Studio desktop GUI (supports both .deb and AppImage), automatically ensuring daemon is running
 - **GUI Integration**: Support for launching the LM Studio desktop GUI while managing daemon lifecycle
 - **Flexible Model Management**: Interactive model selection, automatic model loading, and status tracking
 
@@ -101,7 +103,24 @@ The script will:
 lms ps
 
 # Stop daemon manually
-lms daemon stop
+lms daemon down
+```
+
+## Troubleshooting
+
+### WebSocket Authentication Error
+
+If you encounter the error `Invalid passkey for lms CLI client`, this is typically caused by stale daemon processes. The script automatically handles this by:
+
+- Cleaning up old daemon processes on startup
+- Clearing stale authentication tokens
+- Restarting the daemon fresh
+
+The fix runs automatically when you start the script. Check the logs if issues persist:
+
+```bash
+cat .logs/lmstudio_autostart.log
+cat .logs/lmstudio_tray.log
 ```
 
 ## Documentation

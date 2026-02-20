@@ -12,7 +12,7 @@ mkdir -p "$LOGS_DIR"
 # === Log file in .logs directory ===
 LOGFILE="$LOGS_DIR/lmstudio_autostart.log"
 
-# === Check dependencies ===
+# === Basic dependency checks ===
 check_dependencies() {
     local missing=()
     local to_install=()
@@ -30,7 +30,7 @@ check_dependencies() {
         to_install+=("sudo apt install python3")
     fi
     if ! command -v lms >/dev/null 2>&1 && [ ! -x "$HOME/.lmstudio/bin/lms" ]; then
-        missing+=("lms (LM Studio daemon CLI)")
+        missing+=("lms (LM Studio CLI)")
     fi
 
     if [ ${#missing[@]} -gt 0 ]; then
@@ -50,7 +50,7 @@ check_dependencies() {
             fi
         fi
         if ! command -v lms >/dev/null 2>&1 && [ ! -x "$HOME/.lmstudio/bin/lms" ]; then
-            echo "LM Studio daemon CLI (lms) is missing. Install LM Studio for Linux:" >&2
+            echo "LM Studio CLI (lms) is missing. Install LM Studio for Linux:" >&2
             echo "  https://lmstudio.ai/" >&2
             exit 1
         fi
@@ -64,16 +64,17 @@ usage() {
     cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
 
-Starts the LM Studio daemon, checks and installs dependencies (curl, notify-send, python3),
-optionally loads a model via lms-CLI with GPU fallback and starts the tray monitor with status monitoring.
+Starts the Python tray monitor for LM Studio status control.
+Default behavior (without --gui): monitor-only mode, does NOT start LM Studio.
+With --gui: starts LM Studio desktop app and the tray monitor.
 The log file is created anew per run in .logs directory: lmstudio_autostart.log
 
 Options:
     -d, --debug       Enable debug output and Bash trace (also terminal output)
     -h, --help        Show this help and exit
     -L, --list-models List local models; in TTY: interactive selection with 30s auto-skip (no LM Studio start before selection)
-    -m, --model NAME  Load specified model (if NAME is missing, no model is loaded)
-    -g, --gui         Start the LM Studio GUI (stops daemon first)
+    -m, --model NAME  Model label for tray monitoring only
+    -g, --gui         Start the LM Studio desktop app and tray monitor
 
 Environment variables:
     LM_AUTOSTART_DEBUG=1            Force debug mode (equivalent to --debug)
@@ -82,18 +83,18 @@ Environment variables:
 
 Exit codes:
     0  Success
-    1  Daemon not available or setup failed
+    1  Setup failed
     2  Invalid option/usage
     3  No models found (-L mode)
 
 Examples:
-    $(basename "$0")                             # Normal start with setup/dependency check
+    $(basename "$0")                             # Monitor-only (no LM Studio start)
     $(basename "$0") --debug                     # With debug output
-    $(basename "$0") --model qwen2.5:7b-instruct # Load model
+    $(basename "$0") --model qwen2.5:7b-instruct # Monitor this model label in tray
     $(basename "$0") -m qwen2.5:7b-instruct      # Short form
-    $(basename "$0") -m                          # Flag without name: loads no model
+    $(basename "$0") -m                          # Flag without name: uses default label
     $(basename "$0") -L                          # Interactive model selection (in TTY) or list (without TTY)
-    $(basename "$0") --gui                       # Start the GUI in addition to the daemon
+    $(basename "$0") --gui                       # Start LM Studio desktop app + tray monitor
 EOF
 }
 
@@ -306,25 +307,24 @@ if [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
 fi
 
 # === Logging configuration ===
-     : > "$LOGFILE"
+: > "$LOGFILE"
 if [ "$DEBUG_FLAG" = "1" ]; then
-    exec > >(tee -a >(sed 's/\x1b\[[0-9;]*m//g' >> "$LOGFILE")) \
-         2> >(tee -a >(sed 's/\x1b\[[0-9;]*m//g' >> "$LOGFILE") >&2)
+    # Debug mode: terminal + log file (with all traces)
+    exec > >(tee -a "$LOGFILE") 2>&1
     set -x
-    echo "[DEBUG] Terminal and log output enabled. Log: $LOGFILE"
+    echo "[DEBUG] Terminal and log output enabled: $LOGFILE"
 else
-    exec > >(sed 's/\x1b\[[0-9;]*m//g' >> "$LOGFILE") 2>&1
+    # Normal mode: only log file
+    exec >> "$LOGFILE" 2>&1
 fi
 LMS_CLI="$HOME/.lmstudio/bin/lms"
 GPU="1.0"
 LMS_RETRIES=3
 LMS_RETRY_SLEEP=5
 
-# === Model name (if not set via args, it remains empty) ===
-
 export LMSTUDIO_DISABLE_AUTO_LAUNCH=true
 
-# === Check dependencies (interactive suggestions) ===
+# === Command helpers ===
 have() { command -v "$1" >/dev/null 2>&1; }
 get_lms_cmd() {
     if [ -x "$LMS_CLI" ]; then
@@ -482,143 +482,44 @@ ensure_model_registered() {
 }
 
 if [ "$GUI_FLAG" -eq 1 ]; then
+    # GUI mode: start desktop app + tray monitor
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🛑 Stopping LM Studio daemon before GUI..."
     stop_daemon || true
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🖥️ Starting LM Studio GUI..."
     start_gui || true
-    exit 0
-fi
-
-LMS_CMD="$(get_lms_cmd || true)"
-if [ -z "$LMS_CMD" ]; then
-    echo "❌ lms CLI not found. Please install LM Studio." >&2
-    exit 1
-fi
-
-echo "$(date '+%Y-%m-%d %H:%M:%S') 🚀 Starting LM Studio daemon..."
-set +e
-"$LMS_CMD" daemon up
-DAEMON_RC=$?
-set -e
-if [ $DAEMON_RC -ne 0 ]; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ❌ Failed to start LM Studio daemon (exit $DAEMON_RC)." >&2
-    exit 1
-fi
-
-if have notify-send; then
-    notify-send "LM Studio" "LM Studio daemon is running" -i dialog-information || true
-fi
-
-# === API server wait logic: wait until the HTTP API is reachable (stable) ===
-HTTP_CFG="$HOME/.lmstudio/.internal/http-server-config.json"
-API_PORT=""
-if [ -f "$HTTP_CFG" ]; then
-    API_PORT=$(grep -oE '"port"\s*:\s*[0-9]+' "$HTTP_CFG" | grep -oE '[0-9]+' | head -n 1)
-fi
-API_PORT="${API_PORT:-1234}"
-API_WAIT="${API_WAIT:-30}"
-if have curl; then
-    try_ports=("$API_PORT")
-    if [ "$API_PORT" = "1234" ]; then
-        try_ports+=("41343")
-    fi
-    echo "$(date '+%Y-%m-%d %H:%M:%S') 🌐 Waiting for LM Studio API (Ports: ${try_ports[*]}, up to ${API_WAIT}s)..."
-    successes=0
-    waited=0
-    active_port=""
-    while [ "$waited" -lt "$API_WAIT" ]; do
-        for p in "${try_ports[@]}"; do
-            if curl -sS --max-time 1 "http://127.0.0.1:$p/" >/dev/null 2>&1; then
-                active_port="$p"
-                successes=$((successes+1))
-                break
-            fi
-            successes=0
-        done
-        if [ "$successes" -ge 2 ]; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ API reachable on port $active_port."
-            break
-        fi
-        sleep 1
-        waited=$((waited+1))
-        if [ -f "$HTTP_CFG" ]; then
-            new_port=$(grep -oE '"port"\s*:\s*[0-9]+' "$HTTP_CFG" | grep -oE '[0-9]+' | head -n 1)
-            if [ -n "$new_port" ] && [ "$new_port" != "$API_PORT" ]; then
-                API_PORT="$new_port"
-                try_ports=("$API_PORT")
-                if [ "$API_PORT" = "1234" ]; then try_ports+=("41343"); fi
-                echo "[DEBUG] Updated API port detection: $API_PORT"
-            fi
-        fi
-    done
-    if [ "$successes" -lt 2 ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ API not stably reachable – attempting loading anyway."
-    fi
-fi
-
-# === Load model if provided ===
-if [ -n "$MODEL" ]; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') 📦 Loading model: $MODEL ..."
-    if [ -n "$LMS_CMD" ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') 🔧 Using lms-CLI: $LMS_CMD"
-        if ! "$LMS_CMD" ps </dev/null >/dev/null 2>&1; then
-            sleep 1
-            "$LMS_CMD" ps </dev/null >/dev/null 2>&1 || true
-        fi
-        ATTEMPT=1
-        LOAD_OK=false
-        if [ -f "$MODEL" ]; then
-            RESOLVED_MODEL="$(ensure_model_registered "$MODEL" "$LMS_CMD")"
-        else
-            RESOLVED_MODEL="$(resolve_model_arg "$MODEL" "$LMS_CMD")"
-        fi
-        RESOLVED_MODEL="$(printf '%s' "$RESOLVED_MODEL" | head -n 1 | sed 's/^\s\+//; s/\s\+$//')"
-        while [ "$ATTEMPT" -le "$LMS_RETRIES" ]; do
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ▶️ Load attempt $ATTEMPT/$LMS_RETRIES: '$MODEL' with GPU=$GPU"
-            if "$LMS_CMD" load "$RESOLVED_MODEL" --gpu="$GPU" </dev/null; then
-                LOAD_OK=true; break
-            fi
-            sleep "$LMS_RETRY_SLEEP"; ATTEMPT=$((ATTEMPT + 1))
-        done
-
-        if ! $LOAD_OK; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Loading with GPU=$GPU failed – trying CPU fallback (GPU=0.0)."
-            if "$LMS_CMD" load "$RESOLVED_MODEL" --gpu="0.0" </dev/null; then
-                LOAD_OK=true; GPU="0.0"
-            fi
-        fi
-
-        if $LOAD_OK; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ Model loaded (GPU=$GPU)!"
-            if have notify-send; then
-                notify-send -i dialog-information -t 5000 "LM Studio" "✅ Model '$MODEL' loaded successfully! (GPU=$GPU)" || true
-            fi
-        else
-            echo "$(date '+%Y-%m-%d %H:%M:%S') ❌ Model '$MODEL' could not be loaded – skipping."
-            MODEL="failed-model"
-        fi
+    if [ -n "$MODEL" ]; then
+        TRAY_MODEL="$MODEL"
     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') ❌ lms-CLI not found – skipping loading."
-        MODEL="failed-model"
+        TRAY_MODEL="no-model"
     fi
 else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ No model provided – skipping loading."
-    MODEL="no-model"
+    # Default mode: monitor-only (no LM Studio start)
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Monitor-only mode active (no --gui): LM Studio will NOT be started."
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Start desktop app explicitly with: $0 --gui"
+
+    if [ -n "$MODEL" ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Model '$MODEL' requested, but no daemon is started in monitor-only mode."
+        TRAY_MODEL="$MODEL"
+    else
+        TRAY_MODEL="no-model"
+    fi
 fi
 
-# === Start tray monitor with model name (also placeholder) ===
-TRAY_MODEL="$MODEL"
-if [ -n "$RESOLVED_MODEL" ] && [ "$RESOLVED_MODEL" != "$MODEL" ]; then
-    TRAY_MODEL="$RESOLVED_MODEL"
+# Pass debug flag to tray script if enabled
+TRAY_DEBUG_ARG=""
+if [ "$DEBUG_FLAG" = "1" ]; then
+    TRAY_DEBUG_ARG="debug"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🐛 Debug mode enabled for tray monitor"
 fi
+
 echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starting Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py with model '$TRAY_MODEL'"
 # Priority: venv > python3.10 > python3 (PyGObject compatibility)
 if [ -x "$VENV_DIR/bin/python3" ]; then
-    "$VENV_DIR/bin/python3" "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
+    "$VENV_DIR/bin/python3" "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" "$TRAY_DEBUG_ARG" &
 elif have python3.10; then
-    python3.10 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
+    python3.10 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" "$TRAY_DEBUG_ARG" &
 elif have python3; then
-    python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" &
+    python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" "$TRAY_DEBUG_ARG" &
 else
     echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray not started – no Python interpreter found."
 fi
