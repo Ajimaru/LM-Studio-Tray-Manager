@@ -29,8 +29,9 @@ check_dependencies() {
         missing+=("python3")
         to_install+=("sudo apt install python3")
     fi
-    if ! command -v lms >/dev/null 2>&1 && [ ! -x "$HOME/.lmstudio/bin/lms" ]; then
-        missing+=("lms (LM Studio CLI)")
+    if ! command -v llmster >/dev/null 2>&1 \
+        && ! find "$HOME/.lmstudio/llmster" -maxdepth 3 -type f -name "llmster" -perm -111 2>/dev/null | grep -q .; then
+        missing+=("llmster (headless daemon)")
     fi
 
     if [ ${#missing[@]} -gt 0 ]; then
@@ -49,9 +50,10 @@ check_dependencies() {
                 exit 1
             fi
         fi
-        if ! command -v lms >/dev/null 2>&1 && [ ! -x "$HOME/.lmstudio/bin/lms" ]; then
-            echo "LM Studio CLI (lms) is missing. Install LM Studio for Linux:" >&2
-            echo "  https://lmstudio.ai/" >&2
+        if ! command -v llmster >/dev/null 2>&1 \
+            && ! find "$HOME/.lmstudio/llmster" -maxdepth 3 -type f -name "llmster" -perm -111 2>/dev/null | grep -q .; then
+            echo "llmster (headless daemon) is missing." >&2
+            echo "Install llmster and run this script again." >&2
             exit 1
         fi
     fi
@@ -65,15 +67,15 @@ usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Starts the Python tray monitor for LM Studio status control.
-Default behavior (without --gui): monitor-only mode, does NOT start LM Studio.
-With --gui: starts LM Studio desktop app and the tray monitor.
+Default behavior (without --gui): starts llmster (headless daemon) and tray monitor.
+With --gui: if llmster is running, it is stopped first; then LM Studio desktop app + tray monitor are started.
 The log file is created anew per run in .logs directory: lmstudio_autostart.log
 
 Options:
     -d, --debug       Enable debug output and Bash trace (also terminal output)
     -h, --help        Show this help and exit
     -L, --list-models List local models; in TTY: interactive selection with 30s auto-skip (no LM Studio start before selection)
-    -m, --model NAME  Model label for tray monitoring only
+    -m, --model NAME  Model label for tray monitoring
     -g, --gui         Start the LM Studio desktop app and tray monitor
 
 Environment variables:
@@ -88,13 +90,13 @@ Exit codes:
     3  No models found (-L mode)
 
 Examples:
-    $(basename "$0")                             # Monitor-only (no LM Studio start)
+    $(basename "$0")                             # Start llmster + tray monitor
     $(basename "$0") --debug                     # With debug output
     $(basename "$0") --model qwen2.5:7b-instruct # Monitor this model label in tray
     $(basename "$0") -m qwen2.5:7b-instruct      # Short form
     $(basename "$0") -m                          # Flag without name: uses default label
     $(basename "$0") -L                          # Interactive model selection (in TTY) or list (without TTY)
-    $(basename "$0") --gui                       # Start LM Studio desktop app + tray monitor
+    $(basename "$0") --gui                       # Stop llmster (if running), then start LM Studio desktop app + tray monitor
 EOF
 }
 
@@ -326,6 +328,148 @@ export LMSTUDIO_DISABLE_AUTO_LAUNCH=true
 
 # === Command helpers ===
 have() { command -v "$1" >/dev/null 2>&1; }
+
+get_llmster_cmd() {
+    if have llmster; then
+        command -v llmster
+        return 0
+    fi
+    local llmster_candidate
+    llmster_candidate="$(find "$HOME/.lmstudio/llmster" -maxdepth 3 -type f -name "llmster" -perm -111 2>/dev/null | sort -V | tail -n 1)"
+    if [ -n "$llmster_candidate" ]; then
+        printf '%s\n' "$llmster_candidate"
+        return 0
+    fi
+    return 1
+}
+
+is_llmster_running() {
+    pgrep -f "(^|/)llmster( |$)" >/dev/null 2>&1
+}
+
+start_llmster() {
+    local cmd lms_cmd
+    cmd="$(get_llmster_cmd || true)"
+    lms_cmd="$(get_lms_cmd || true)"
+    if [ -z "$cmd" ] && [ -z "$lms_cmd" ]; then
+        return 1
+    fi
+
+    set +e
+    # Prefer lms wrapper when available (usually non-blocking)
+    if [ -n "$lms_cmd" ]; then
+        timeout 8 "$lms_cmd" daemon up >/dev/null 2>&1
+        rc=$?
+        if [ $rc -eq 124 ] && is_llmster_running; then
+            rc=0
+        fi
+        if [ $rc -eq 0 ]; then
+            set -e
+            return 0
+        fi
+    fi
+
+    if [ -n "$cmd" ]; then
+        timeout 8 "$cmd" daemon start >/dev/null 2>&1
+        rc=$?
+        if [ $rc -eq 124 ] && is_llmster_running; then
+            rc=0
+        fi
+        if [ $rc -ne 0 ]; then
+            timeout 8 "$cmd" start >/dev/null 2>&1
+            rc=$?
+            if [ $rc -eq 124 ] && is_llmster_running; then
+                rc=0
+            fi
+        fi
+        if [ $rc -ne 0 ]; then
+            timeout 8 "$cmd" daemon up >/dev/null 2>&1
+            rc=$?
+            if [ $rc -eq 124 ] && is_llmster_running; then
+                rc=0
+            fi
+        fi
+        if [ $rc -ne 0 ]; then
+            timeout 8 "$cmd" up >/dev/null 2>&1
+            rc=$?
+            if [ $rc -eq 124 ] && is_llmster_running; then
+                rc=0
+            fi
+        fi
+    else
+        rc=1
+    fi
+
+    set -e
+    return $rc
+}
+
+stop_llmster() {
+    local cmd lms_cmd
+    cmd="$(get_llmster_cmd || true)"
+    lms_cmd="$(get_lms_cmd || true)"
+    if [ -z "$cmd" ] && [ -z "$lms_cmd" ]; then
+        return 0
+    fi
+
+    set +e
+    # Prefer lms wrapper when available
+    if [ -n "$lms_cmd" ]; then
+        timeout 8 "$lms_cmd" daemon down >/dev/null 2>&1
+        rc=$?
+        if [ $rc -eq 124 ] && ! is_llmster_running; then
+            rc=0
+        fi
+        if [ $rc -eq 0 ]; then
+            set -e
+            return 0
+        fi
+    fi
+
+    if [ -n "$cmd" ]; then
+        timeout 8 "$cmd" daemon stop >/dev/null 2>&1
+        rc=$?
+        if [ $rc -eq 124 ] && ! is_llmster_running; then
+            rc=0
+        fi
+        if [ $rc -ne 0 ]; then
+            timeout 8 "$cmd" stop >/dev/null 2>&1
+            rc=$?
+            if [ $rc -eq 124 ] && ! is_llmster_running; then
+                rc=0
+            fi
+        fi
+        if [ $rc -ne 0 ]; then
+            timeout 8 "$cmd" daemon down >/dev/null 2>&1
+            rc=$?
+            if [ $rc -eq 124 ] && ! is_llmster_running; then
+                rc=0
+            fi
+        fi
+        if [ $rc -ne 0 ]; then
+            timeout 8 "$cmd" down >/dev/null 2>&1
+            rc=$?
+            if [ $rc -eq 124 ] && ! is_llmster_running; then
+                rc=0
+            fi
+        fi
+    else
+        rc=0
+    fi
+
+    # Fallback: ensure process is actually gone
+    if is_llmster_running; then
+        pkill -f "(^|/)llmster( |$)" >/dev/null 2>&1 || true
+        sleep 1
+    fi
+    if is_llmster_running; then
+        rc=1
+    fi
+
+    set -e
+    return $rc
+}
+
 get_lms_cmd() {
     if [ -x "$LMS_CLI" ]; then
         printf '%s\n' "$LMS_CLI"
@@ -370,17 +514,7 @@ start_gui() {
 }
 
 stop_daemon() {
-    local lms_cmd
-    lms_cmd="$(get_lms_cmd || true)"
-    if [ -z "$lms_cmd" ]; then
-        return 0
-    fi
-    set +e
-    "$lms_cmd" daemon down >/dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        "$lms_cmd" daemon stop >/dev/null 2>&1
-    fi
-    set -e
+    stop_llmster
 }
 
 resolve_model_arg() {
@@ -483,8 +617,12 @@ ensure_model_registered() {
 
 if [ "$GUI_FLAG" -eq 1 ]; then
     # GUI mode: start desktop app + tray monitor
-    echo "$(date '+%Y-%m-%d %H:%M:%S') 🛑 Stopping LM Studio daemon before GUI..."
-    stop_daemon || true
+    if is_llmster_running; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') 🛑 llmster is running - stopping before GUI start..."
+        stop_llmster || true
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ llmster not running - continuing with GUI start..."
+    fi
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🖥️ Starting LM Studio GUI..."
     start_gui || true
     if [ -n "$MODEL" ]; then
@@ -493,12 +631,20 @@ if [ "$GUI_FLAG" -eq 1 ]; then
         TRAY_MODEL="no-model"
     fi
 else
-    # Default mode: monitor-only (no LM Studio start)
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Monitor-only mode active (no --gui): LM Studio will NOT be started."
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Start desktop app explicitly with: $0 --gui"
+    # Default mode: start llmster headless daemon + tray
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🚀 Starting llmster headless daemon..."
+    if start_llmster; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ llmster started."
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ❌ Failed to start llmster." >&2
+        if have notify-send; then
+            notify-send "LLMster" "Failed to start llmster headless daemon" -i dialog-error || true
+        fi
+    fi
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Use --gui to stop llmster and start LM Studio desktop app."
 
     if [ -n "$MODEL" ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Model '$MODEL' requested, but no daemon is started in monitor-only mode."
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Model label '$MODEL' will be monitored in tray."
         TRAY_MODEL="$MODEL"
     else
         TRAY_MODEL="no-model"

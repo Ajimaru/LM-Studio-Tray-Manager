@@ -72,6 +72,30 @@ def get_lms_cmd():
         return LMS_CLI
     return shutil.which("lms")
 
+
+def get_llmster_cmd():
+    """Return llmster executable path from PATH or LM Studio install dir."""
+    llmster_cmd = shutil.which("llmster")
+    if llmster_cmd:
+        return llmster_cmd
+
+    llmster_root = os.path.expanduser("~/.lmstudio/llmster")
+    if not os.path.isdir(llmster_root):
+        return None
+
+    candidates = []
+    try:
+        for entry in os.listdir(llmster_root):
+            candidate = os.path.join(llmster_root, entry, "llmster")
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                candidates.append(candidate)
+    except (OSError, PermissionError):
+        return None
+
+    if not candidates:
+        return None
+    return sorted(candidates)[-1]
+
 # === Terminate other instances of this script ===
 
 
@@ -235,15 +259,14 @@ class TrayIcon:
                  "not_found" if llmster is not installed.
         """
         try:
-            llmster_cmd = shutil.which("llmster")
+            llmster_cmd = get_llmster_cmd()
             if not llmster_cmd:
                 return "not_found"
 
-            # Check if daemon process is running with --run-as-service flag
-            # This distinguishes headless daemon from desktop app
+            # Check llmster daemon process directly
             try:
                 result = subprocess.run(
-                    ["pgrep", "-f", "lm-studio.*--run-as-service"],
+                    ["pgrep", "-f", "(^|/)llmster( |$)"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     check=False
@@ -355,93 +378,128 @@ class TrayIcon:
             return "🔴"
 
     def start_daemon(self, _widget):
-        """Start or ensure the LM Studio daemon is running.
+        """Start or ensure the llmster daemon is running.
 
-        Looks up the `lms` CLI path, invokes `lms daemon up`, logs success
-        or failure, and sends desktop notifications about the outcome.
+        Tries common llmster start command variants and notifies the user
+        about success or failure.
 
         Args:
             _widget: UI widget that triggered the action (unused).
         """
-        lms_cmd = get_lms_cmd()
-        if not lms_cmd:
-            logging.error("lms CLI not found")
+        llmster_cmd = get_llmster_cmd()
+        if not llmster_cmd:
+            logging.error("llmster not found")
             subprocess.run(
                 [
                     "notify-send",
                     "Error",
-                    "lms CLI not found. Run: lms daemon up",
+                    "llmster not found. Please install llmster.",
                 ],
                 check=False,
             )
             return
         try:
             result = subprocess.run(
-                [lms_cmd, "daemon", "up"],
+                [llmster_cmd, "daemon", "start"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
                 check=False,
             )
+            if result.returncode != 0:
+                result = subprocess.run(
+                    [llmster_cmd, "start"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+            if result.returncode != 0:
+                result = subprocess.run(
+                    [llmster_cmd, "daemon", "up"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+            if result.returncode != 0:
+                result = subprocess.run(
+                    [llmster_cmd, "up"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
             if result.returncode == 0:
-                logging.info("LM Studio daemon started/ensured")
+                logging.info("llmster daemon started/ensured")
                 subprocess.run(
                     [
-                        "notify-send",
-                        "LM Studio",
-                        "LM Studio daemon is running",
+                        "notify-send", "LLMster", "llmster daemon is running",
                     ],
                     check=False,
                 )
             else:
                 err = result.stderr.strip() or "Unknown error"
-                logging.error("Failed to start daemon: %s", err)
+                logging.error("Failed to start llmster daemon: %s", err)
                 subprocess.run(
                     ["notify-send", "Error", f"Daemon start failed: {err}"],
                     check=False,
                 )
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
-            logging.error("Error starting daemon: %s", e)
+            logging.error("Error starting llmster daemon: %s", e)
             subprocess.run(
                 ["notify-send", "Error", f"Error: {e}"],
                 check=False,
             )
 
     def stop_daemon(self, _widget):
-        """Stop the LM Studio daemon via lms CLI.
+        """Stop the llmster daemon.
 
-        This will cleanly shut down the headless daemon process that was
-        started via 'lms daemon up'. After shutdown, you can start the
-        desktop app via the tray menu.
+        Tries common llmster stop command variants.
 
         Args:
             _widget: UI widget that triggered the action (unused).
         """
-        lms_cmd = get_lms_cmd()
-        if not lms_cmd:
-            logging.error("lms CLI not found")
+        llmster_cmd = get_llmster_cmd()
+        if not llmster_cmd:
+            logging.error("llmster not found")
             subprocess.run(
                 [
                     "notify-send",
                     "Error",
-                    "lms CLI not found. Run: lms daemon down",
+                    "llmster not found. Nothing to stop.",
                 ],
                 check=False,
             )
             return
         try:
-            # Try 'daemon down' first (newer versions)
+            # Try common stop variants
             result = subprocess.run(
-                [lms_cmd, "daemon", "down"],
+                [llmster_cmd, "daemon", "stop"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
                 check=False,
             )
-            # If that doesn't work, try 'daemon stop'
             if result.returncode != 0:
                 result = subprocess.run(
-                    [lms_cmd, "daemon", "stop"],
+                    [llmster_cmd, "stop"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+            if result.returncode != 0:
+                result = subprocess.run(
+                    [llmster_cmd, "daemon", "down"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+            if result.returncode != 0:
+                result = subprocess.run(
+                    [llmster_cmd, "down"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
@@ -449,24 +507,24 @@ class TrayIcon:
                 )
 
             if result.returncode == 0:
-                logging.info("LM Studio daemon stopped")
+                logging.info("llmster daemon stopped")
                 subprocess.run(
                     [
                         "notify-send",
-                        "LM Studio",
+                        "LLMster",
                         "Daemon stopped. You can now start the desktop app.",
                     ],
                     check=False,
                 )
             else:
                 err = result.stderr.strip() or "Unknown error"
-                logging.error("Failed to stop daemon: %s", err)
+                logging.error("Failed to stop llmster daemon: %s", err)
                 subprocess.run(
                     ["notify-send", "Error", f"Daemon stop failed: {err}"],
                     check=False,
                 )
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
-            logging.error("Error stopping daemon: %s", e)
+            logging.error("Error stopping llmster daemon: %s", e)
             subprocess.run(
                 ["notify-send", "Error", f"Error: {e}"],
                 check=False,
@@ -585,7 +643,6 @@ class TrayIcon:
                 check=False,
             )
 
-
     def stop_desktop_app(self, _widget):
         """Stop LM Studio desktop app/background process completely.
 
@@ -626,9 +683,14 @@ class TrayIcon:
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Failed to stop desktop app: %s", e)
             subprocess.run(
-                ["notify-send", "Error", f"Desktop App Stop fehlgeschlagen: {e}"],
+                [
+                    "notify-send",
+                    "Error",
+                    f"Desktop App Stop fehlgeschlagen: {e}",
+                ],
                 check=False,
             )
+
     def reload_model(self, _widget):
         """
         Reload the currently loaded model in LM Studio.
@@ -736,7 +798,7 @@ class TrayIcon:
             callbacks).
         """
         try:
-            if not shutil.which("llmster"):
+            if not get_llmster_cmd():
                 self.indicator.set_icon_full(
                     ICON_WARN,
                     "Monitoring only (llmster not installed)"
