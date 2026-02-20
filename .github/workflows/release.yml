@@ -71,6 +71,9 @@ jobs:
           tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "$PKG_NAME"
           zip -rq "dist/${PKG_NAME}.zip" "dist/${PKG_NAME}"
 
+          cp "dist/${PKG_NAME}.tar.gz" "dist/LM-Studio-Tray-Manager-latest.tar.gz"
+          cp "dist/${PKG_NAME}.zip" "dist/LM-Studio-Tray-Manager-latest.zip"
+
       - name: Generate checksums
         run: |
           set -euo pipefail
@@ -78,7 +81,7 @@ jobs:
           sha256sum *.tar.gz *.zip > SHA256SUMS.txt
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
         with:
           name: LM-Studio-Tray-Manager - ${{ github.ref_name }}
           generate_release_notes: true
