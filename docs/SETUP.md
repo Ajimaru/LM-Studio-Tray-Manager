@@ -1,10 +1,10 @@
-# Virtual Environment Setup
+# Setup Guide
 
 The `setup.sh` script automates the complete setup process for LM Studio automation.
 
 ## Table of Contents
 
-- [Virtual Environment Setup](#virtual-environment-setup)
+- [Setup Guide](#setup-guide)
   - [Table of Contents](#table-of-contents)
   - [What setup.sh Does](#what-setupsh-does)
   - [Quick Start](#quick-start)
@@ -61,6 +61,12 @@ The setup script checks for and optionally installs:
 # Run the setup script (handles all checks and installations)
 ./setup.sh
 
+# Preview setup actions without changing your system
+./setup.sh --dry-run
+
+# Show available setup options
+./setup.sh --help
+
 # The setup will:
 # ✓ Check for LM Studio daemon
 # ✓ Check for LM Studio desktop app
@@ -73,6 +79,32 @@ The setup script checks for and optionally installs:
 # Check logs in .logs directory
 tail -f .logs/lmstudio_autostart.log
 
+```
+
+## Dry-run Mode
+
+Run `./setup.sh --dry-run` to validate the system and preview setup actions without making changes.
+
+In normal mode (`./setup.sh`), the script can install missing prerequisites and create the virtual environment.
+
+Dry-run mode:
+
+- Performs all detection and prerequisite checks
+- Prints commands it would execute for install/setup steps
+- Does **not** install packages, remove folders, create venvs, or modify files
+- Writes a dry-run summary to `.logs/setup.log`
+
+Example output (shortened):
+
+```text
+[INFO] Running setup in dry-run mode (no changes will be applied)
+[CHECK] LM Studio daemon (lms): found
+[CHECK] LM Studio desktop app: not found
+[DRY-RUN] Would open LM Studio download page for desktop app guidance
+[CHECK] Python 3.10: found
+[DRY-RUN] Would recreate virtual environment in: ./venv
+[DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
+[DONE] Dry-run completed successfully (0 changes applied)
 ```
 
 ## Setup Script Outputs

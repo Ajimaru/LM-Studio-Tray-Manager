@@ -204,7 +204,20 @@
             <h3>Step 1: Run Comprehensive Setup Script</h3>
             <p>The setup script handles all prerequisite checks and installations:</p>
             <pre><code>./setup.sh</code></pre>
-            <p>This interactive script will check for and install:</p>
+            <p>You can preview setup actions without changing your system:</p>
+            <pre><code>./setup.sh --dry-run</code></pre>
+            <p>To list setup options, run:</p>
+            <pre><code>./setup.sh --help</code></pre>
+            <p>Example dry-run output (shortened):</p>
+            <pre><code>[INFO] Running setup in dry-run mode (no changes will be applied)
+[CHECK] LM Studio daemon (lms): found
+[CHECK] LM Studio desktop app: not found
+[DRY-RUN] Would open LM Studio download page for desktop app guidance
+[CHECK] Python 3.10: found
+[DRY-RUN] Would recreate virtual environment in: ./venv
+[DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
+[DONE] Dry-run completed successfully (0 changes applied)</code></pre>
+            <p>In normal mode (<code>./setup.sh</code>), the script checks for and can install:</p>
             <ul>
                 <li><strong>LM Studio Daemon</strong> - Verifies <code>lms</code> CLI is installed (llmster v0.0.3+)</li>
                 <li><strong>LM Studio Desktop App</strong> - Detects .deb package or AppImage installation
@@ -214,12 +227,12 @@
                     </ul>
                 </li>
                 <li><strong>Python 3.10</strong> - Automatically installs via apt if missing</li>
-                <li><strong>Python venv</strong> - Creates isolated environment with PyGObject/GTK3 support in <code>venv/</code></li>
+                <li><strong>Python Environment</strong> - Creates an isolated environment with PyGObject/GTK3 support in <code>venv/</code></li>
             </ul>
-            <p>The script will prompt for missing components with helpful guidance and log all operations to <code>.logs/setup.log</code>.</p>
+            <p>The script will prompt for missing components with helpful guidance and log all operations to <code>.logs/setup.log</code>. In dry-run mode, it logs the planned actions only and does not modify the system.</p>
             <p>After setup completes, check the setup log:</p>
             <pre><code>cat .logs/setup.log</code></pre>
-            <p>For detailed information, see <a href="VENV_SETUP.md">VENV_SETUP.md</a>.</p>
+            <p>For detailed information, see <a href="SETUP.md">SETUP.md</a>.</p>
             
             <h3>Step 2: Run Autostart Script</h3>
             <p>After setup completes, start the automation workflow:</p>
@@ -236,7 +249,7 @@ tail -f .logs/lmstudio_autostart.log
 
 # Search for errors
 grep -i error .logs/*.log</code></pre>
-            <p>For detailed setup help, see <a href="VENV_SETUP.md">VENV_SETUP.md</a>.</p>
+            <p>For detailed setup help, see <a href="SETUP.md">SETUP.md</a>.</p>
         </section>
 
         <section id="autostart-script">
@@ -336,7 +349,7 @@ EOF</code></pre>
             <div class="mermaid">
                 graph TB
                     User["👤 User"]
-                    Setup["<b>setup.sh</b><br/>Virtual Environment Setup"]
+                    Setup["<b>setup.sh</b><br/>Setup & Environment Checks"]
                     Autostart["<b>lmstudio_autostart.sh</b><br/>Daemon Orchestration"]
                     Tray["<b>lmstudio_tray.py</b><br/>GTK3 System Tray Monitor"]
                     Daemon["LM Studio Daemon<br/>(llmster)"]
@@ -344,7 +357,7 @@ EOF</code></pre>
                     Models["Model Files"]
                     
                     User -->|"1. First run"| Setup
-                    Setup -->|"Creates venv/"| Autostart
+                    Setup -->|"Prepares Python environment"| Autostart
                     User -->|"2. Regular use"| Autostart
                     Autostart -->|"Starts & manages"| Daemon
                     Autostart -->|"Loads models"| Models
@@ -354,17 +367,17 @@ EOF</code></pre>
                     Tray -->|"Monitors"| API
             </div>
 
-            <h3>setup.sh - Virtual Environment Setup Script</h3>
+            <h3>setup.sh - Setup Script</h3>
             <div class="mermaid">
                 graph TD
                     A["<b>setup.sh</b><br/>START"] --> B[Check Python 3.10<br/>availability]
                     B --> C{Python 3.10<br/>found?}
                     C -->|No| D["Error:<br/>Install Python 3.10"]
                     D --> E["<b>END (Failed)</b>"]
-                    C -->|Yes| F[Create venv/<br/>virtual environment]
+                    C -->|Yes| F[Create Python environment<br/>(venv/)]
                     F --> G[Enable system-site-packages<br/>for GTK3/PyGObject]
                     G --> H[Upgrade pip &<br/>setuptools]
-                    H --> I["<b>END (Success)</b><br/>venv/ ready"]
+                    H --> I["<b>END (Success)</b><br/>Python environment ready"]
             </div>
 
             <h3>lmstudio_autostart.sh - Daemon Orchestration Script</h3>
@@ -454,9 +467,9 @@ EOF</code></pre>
             <h2>Configuration</h2>
             
             <h3>Initial Setup</h3>
-            <p>After cloning the repository, run the setup script once to create the Python virtual environment:</p>
+            <p>After cloning the repository, run the setup script once to prepare the Python environment:</p>
             <pre><code>./setup.sh</code></pre>
-            <p>This creates a Python 3.10 venv with PyGObject/GTK3 support in the <code>venv/</code> directory. For detailed information, see <a href="VENV_SETUP.md" target="_blank" rel="noopener">VENV_SETUP.md</a>.</p>
+            <p>This creates a Python 3.10 environment with PyGObject/GTK3 support in the <code>venv/</code> directory. For detailed information, see <a href="SETUP.md" target="_blank" rel="noopener">SETUP.md</a>.</p>
             
             <h3>Configuration Files</h3>
             <p>No configuration file is required for the daemon workflow. You can delete <code>config.json</code> if it only contains AppImage paths.</p>
@@ -501,7 +514,7 @@ grep -i "error" .logs/*.log</code></pre>
             
             <h3>Common Issues</h3>
             <ul>
-                <li><strong>PyGObject Import Error</strong>: Ensure you ran <code>./setup.sh</code> and have Python 3.10. Check <code>.logs/setup.log</code> for installation errors. See <a href="VENV_SETUP.md">VENV_SETUP.md</a> for details.</li>
+                <li><strong>PyGObject Import Error</strong>: Ensure you ran <code>./setup.sh</code> and have Python 3.10. Check <code>.logs/setup.log</code> for installation errors. See <a href="SETUP.md">SETUP.md</a> for details.</li>
                 <li><strong>Tray Icon Not Appearing</strong>: Check <code>.logs/lmstudio_tray.log</code> for GTK3 errors. Verify GTK3 libraries are installed on your system.</li>
                 <li><strong>Daemon Not Starting</strong>: Verify LM Studio daemon is installed (run <code>lms status</code>). Check <code>.logs/lmstudio_autostart.log</code> for dependency issues.</li>
                 <li><strong>Model Loading Fails</strong>: Check that the model name is correct (use <code>./lmstudio_autostart.sh --list-models</code>) and disk space is available.</li>

@@ -6,8 +6,9 @@ Welcome to the LM Studio Automation documentation.
 
 - **[Landing Page](index.html)** - GitHub Pages start page with links to all documentation formats
 - **[Full HTML Guide](guide.html)** - Detailed usage guide, flow diagrams, and architecture
-- **[Virtual Environment Setup](VENV_SETUP.md)** - How to configure the Python environment
+- **[Setup Guide](SETUP.md)** - Complete setup.sh and Python environment guide
 - **[Python Docstrings Reference](python_docstrings.html)** - Static API-style documentation from `lmstudio_tray.py`
+- **[Third-Party Licenses](../THIRD_PARTY_LICENSES.md)** – Overview of external runtime and CI dependencies
 
 ## File Organization
 
@@ -15,7 +16,7 @@ Welcome to the LM Studio Automation documentation.
 docs/
 ├── index.html              # GitHub Pages landing page
 ├── guide.html              # Main comprehensive documentation (full guide)
-├── VENV_SETUP.md           # Virtual environment configuration guide
+├── SETUP.md                # Comprehensive setup and environment guide
 ├── python_docstrings.html  # Static docstrings reference for lmstudio_tray.py
 └── README.md               # This file
 ```
@@ -25,7 +26,7 @@ docs/
 If you encounter issues:
 
 1. Check **[index.html](index.html)** for troubleshooting sections
-2. Review **[VENV_SETUP.md](VENV_SETUP.md)** for environment-specific issues
+2. Review **[SETUP.md](SETUP.md)** for setup and environment-specific issues
 3. Check the log files in the `.logs` directory from the project root:
    - `.logs/setup.log` - Setup script installation log
    - `.logs/lmstudio_autostart.log` - Daemon and startup logs
