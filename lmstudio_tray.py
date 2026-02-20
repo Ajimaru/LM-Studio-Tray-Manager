@@ -16,6 +16,7 @@ Logging is written to ".logs/lmstudio_tray.log" in the script directory.
 import subprocess
 import sys
 import os
+import time
 import signal
 import logging
 import shutil
@@ -96,6 +97,32 @@ def get_llmster_cmd():
         return None
     return sorted(candidates)[-1]
 
+
+def is_llmster_running():
+    """Return True when a llmster process is currently running."""
+    try:
+        result = subprocess.run(
+            ["pgrep", "-x", "llmster"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if result.returncode == 0:
+            return True
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", "llmster"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        return result.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
 # === Terminate other instances of this script ===
 
 
@@ -145,6 +172,8 @@ class TrayIcon:
         )
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
         self.indicator.set_title("LM Studio Monitor")
+        self.action_lock_until = 0.0
+        self.action_lock_name = None
 
         # Create persistent menu (AppIndicator requires static menu)
         self.menu = Gtk.Menu()
@@ -170,6 +199,22 @@ class TrayIcon:
             check=False,
         )
 
+    def begin_action_cooldown(self, action_name, seconds=2.0):
+        """Prevent rapid double-triggering of tray actions."""
+        now = time.monotonic()
+        if now < self.action_lock_until:
+            remaining = self.action_lock_until - now
+            logging.info(
+                "Action blocked by cooldown: %s (%.1fs remaining)",
+                action_name,
+                remaining,
+            )
+            return False
+
+        self.action_lock_until = now + seconds
+        self.action_lock_name = action_name
+        return True
+
     def build_menu(self):
         """Build or rebuild the context menu with current status and
         options.
@@ -192,7 +237,7 @@ class TrayIcon:
             daemon_item.set_sensitive(False)
             self.menu.append(daemon_item)
             stop_daemon_item = Gtk.MenuItem(
-                label="  → Stop daemon (switch to app)"
+                label="  → Stop daemon"
             )
             stop_daemon_item.connect("activate", self.stop_daemon)
             self.menu.append(stop_daemon_item)
@@ -263,18 +308,8 @@ class TrayIcon:
             if not llmster_cmd:
                 return "not_found"
 
-            # Check llmster daemon process directly
-            try:
-                result = subprocess.run(
-                    ["pgrep", "-f", "(^|/)llmster( |$)"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    check=False
-                )
-                if result.returncode == 0:
-                    return "running"
-            except (OSError, subprocess.SubprocessError):
-                pass
+            if is_llmster_running():
+                return "running"
 
             # llmster exists but daemon process is not active
             return "stopped"
@@ -386,51 +421,56 @@ class TrayIcon:
         Args:
             _widget: UI widget that triggered the action (unused).
         """
+        if not self.begin_action_cooldown("start_daemon"):
+            return
+
         llmster_cmd = get_llmster_cmd()
-        if not llmster_cmd:
+        lms_cmd = get_lms_cmd()
+        if not llmster_cmd and not lms_cmd:
             logging.error("llmster not found")
             subprocess.run(
                 [
                     "notify-send",
                     "Error",
-                    "llmster not found. Please install llmster.",
+                    "llmster/lms not found. Please install LM Studio CLI.",
                 ],
                 check=False,
             )
             return
         try:
-            result = subprocess.run(
-                [llmster_cmd, "daemon", "start"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=False,
-            )
-            if result.returncode != 0:
+            result = None
+            start_attempts = []
+            if lms_cmd:
+                start_attempts.extend(
+                    [
+                        [lms_cmd, "daemon", "up"],
+                        [lms_cmd, "daemon", "start"],
+                        [lms_cmd, "up"],
+                        [lms_cmd, "start"],
+                    ]
+                )
+            if llmster_cmd:
+                start_attempts.extend(
+                    [
+                        [llmster_cmd, "daemon", "up"],
+                        [llmster_cmd, "daemon", "start"],
+                        [llmster_cmd, "up"],
+                        [llmster_cmd, "start"],
+                    ]
+                )
+
+            for command in start_attempts:
                 result = subprocess.run(
-                    [llmster_cmd, "start"],
+                    command,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
                     check=False,
                 )
-            if result.returncode != 0:
-                result = subprocess.run(
-                    [llmster_cmd, "daemon", "up"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-            if result.returncode != 0:
-                result = subprocess.run(
-                    [llmster_cmd, "up"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-            if result.returncode == 0:
+                if result.returncode == 0 and is_llmster_running():
+                    break
+
+            if is_llmster_running():
                 logging.info("llmster daemon started/ensured")
                 subprocess.run(
                     [
@@ -439,18 +479,25 @@ class TrayIcon:
                     check=False,
                 )
             else:
-                err = result.stderr.strip() or "Unknown error"
+                err = "Unknown error"
+                if result is not None:
+                    err = result.stderr.strip() or result.stdout.strip() or err
                 logging.error("Failed to start llmster daemon: %s", err)
                 subprocess.run(
                     ["notify-send", "Error", f"Daemon start failed: {err}"],
                     check=False,
                 )
+            self.build_menu()
+            GLib.timeout_add_seconds(
+                2, lambda: (self.build_menu(), False)[1]
+            )
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Error starting llmster daemon: %s", e)
             subprocess.run(
                 ["notify-send", "Error", f"Error: {e}"],
                 check=False,
             )
+            self.build_menu()
 
     def stop_daemon(self, _widget):
         """Stop the llmster daemon.
@@ -460,53 +507,75 @@ class TrayIcon:
         Args:
             _widget: UI widget that triggered the action (unused).
         """
+        if not self.begin_action_cooldown("stop_daemon"):
+            return
+
         llmster_cmd = get_llmster_cmd()
-        if not llmster_cmd:
+        lms_cmd = get_lms_cmd()
+        if not llmster_cmd and not lms_cmd:
             logging.error("llmster not found")
             subprocess.run(
                 [
                     "notify-send",
                     "Error",
-                    "llmster not found. Nothing to stop.",
+                    "llmster/lms not found. Nothing to stop.",
                 ],
                 check=False,
             )
             return
         try:
-            # Try common stop variants
-            result = subprocess.run(
-                [llmster_cmd, "daemon", "stop"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=False,
-            )
-            if result.returncode != 0:
+            result = None
+            stop_attempts = []
+            if lms_cmd:
+                stop_attempts.extend(
+                    [
+                        [lms_cmd, "daemon", "down"],
+                        [lms_cmd, "daemon", "stop"],
+                        [lms_cmd, "down"],
+                        [lms_cmd, "stop"],
+                    ]
+                )
+            if llmster_cmd:
+                stop_attempts.extend(
+                    [
+                        [llmster_cmd, "daemon", "down"],
+                        [llmster_cmd, "daemon", "stop"],
+                        [llmster_cmd, "down"],
+                        [llmster_cmd, "stop"],
+                    ]
+                )
+
+            for command in stop_attempts:
                 result = subprocess.run(
-                    [llmster_cmd, "stop"],
+                    command,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
                     check=False,
                 )
-            if result.returncode != 0:
-                result = subprocess.run(
-                    [llmster_cmd, "daemon", "down"],
+                if not is_llmster_running():
+                    break
+
+            if is_llmster_running():
+                subprocess.run(
+                    ["pkill", "-x", "llmster"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    text=True,
                     check=False,
                 )
-            if result.returncode != 0:
-                result = subprocess.run(
-                    [llmster_cmd, "down"],
+                subprocess.run(
+                    ["pkill", "-f", "llmster"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    text=True,
                     check=False,
                 )
 
-            if result.returncode == 0:
+                for _ in range(6):
+                    if not is_llmster_running():
+                        break
+                    time.sleep(0.3)
+
+            if not is_llmster_running():
                 logging.info("llmster daemon stopped")
                 subprocess.run(
                     [
@@ -517,18 +586,28 @@ class TrayIcon:
                     check=False,
                 )
             else:
-                err = result.stderr.strip() or "Unknown error"
+                err = "llmster process is still running"
+                if result is not None:
+                    detail = result.stderr.strip() or result.stdout.strip()
+                    if detail:
+                        err = f"{err}: {detail}"
                 logging.error("Failed to stop llmster daemon: %s", err)
                 subprocess.run(
                     ["notify-send", "Error", f"Daemon stop failed: {err}"],
                     check=False,
                 )
+
+            self.build_menu()
+            GLib.timeout_add_seconds(
+                2, lambda: (self.build_menu(), False)[1]
+            )
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Error stopping llmster daemon: %s", e)
             subprocess.run(
                 ["notify-send", "Error", f"Error: {e}"],
                 check=False,
             )
+            self.build_menu()
 
     def start_desktop_app(self, _widget):
         """Start the LM Studio desktop application.
@@ -546,6 +625,9 @@ class TrayIcon:
         Args:
             _widget: The widget that triggered this callback (unused).
         """
+        if not self.begin_action_cooldown("start_desktop_app"):
+            return
+
         lms_cmd = get_lms_cmd()
         if not lms_cmd:
             logging.error("lms CLI not found")
@@ -623,6 +705,10 @@ class TrayIcon:
                     ],
                     check=False,
                 )
+                self.build_menu()
+                GLib.timeout_add_seconds(
+                    2, lambda: (self.build_menu(), False)[1]
+                )
             except (OSError, subprocess.SubprocessError) as e:
                 logging.error("Failed to start desktop app: %s", e)
                 subprocess.run(
@@ -652,6 +738,9 @@ class TrayIcon:
         Args:
             _widget: The widget that triggered this callback (unused).
         """
+        if not self.begin_action_cooldown("stop_desktop_app"):
+            return
+
         try:
             result = subprocess.run(
                 ["pkill", "-f", "/opt/LM Studio/lm-studio"],
@@ -666,7 +755,7 @@ class TrayIcon:
                     [
                         "notify-send",
                         "LM Studio",
-                        "Desktop App wurde beendet",
+                        "Desktop app stopped",
                     ],
                     check=False,
                 )
@@ -676,17 +765,21 @@ class TrayIcon:
                     [
                         "notify-send",
                         "LM Studio",
-                        "Keine laufende Desktop App gefunden",
+                        "No running desktop app found",
                     ],
                     check=False,
                 )
+            self.build_menu()
+            GLib.timeout_add_seconds(
+                2, lambda: (self.build_menu(), False)[1]
+            )
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Failed to stop desktop app: %s", e)
             subprocess.run(
                 [
                     "notify-send",
                     "Error",
-                    f"Desktop App Stop fehlgeschlagen: {e}",
+                    f"Desktop app stop failed: {e}",
                 ],
                 check=False,
             )
@@ -811,28 +904,40 @@ class TrayIcon:
             if not lms_cmd:
                 self.indicator.set_icon_full(ICON_FAIL, "LM Studio not found")
                 return True
-            result = subprocess.run(
-                [lms_cmd, "ps"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=0.5,  # Reduced from 5s to prevent UI blocking
-                check=False
-            )
             current_status = None
-            if result.returncode == 0:
-                if MODEL in result.stdout:
-                    current_status = "OK"
-                    self.indicator.set_icon_full(ICON_OK, "Model active")
-                elif result.stdout.strip():
-                    current_status = "INFO"
-                    self.indicator.set_icon_full(ICON_INFO, "Model changed")
-                else:
-                    current_status = "WARN"
-                    self.indicator.set_icon_full(ICON_WARN, "No model loaded")
-            else:
+            if self.get_daemon_status() != "running":
                 current_status = "FAIL"
                 self.indicator.set_icon_full(ICON_FAIL, "Daemon not running")
+            else:
+                result = subprocess.run(
+                    [lms_cmd, "ps"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=0.5,  # Reduced from 5s to prevent UI blocking
+                    check=False
+                )
+                if result.returncode == 0:
+                    if MODEL in result.stdout:
+                        current_status = "OK"
+                        self.indicator.set_icon_full(ICON_OK, "Model active")
+                    elif result.stdout.strip():
+                        current_status = "INFO"
+                        self.indicator.set_icon_full(
+                            ICON_INFO, "Model changed"
+                        )
+                    else:
+                        current_status = "WARN"
+                        self.indicator.set_icon_full(
+                            ICON_WARN,
+                            "No model loaded"
+                        )
+                else:
+                    current_status = "FAIL"
+                    self.indicator.set_icon_full(
+                        ICON_FAIL,
+                        "Daemon not running"
+                    )
 
             if (
                 self.last_status != current_status
@@ -880,6 +985,7 @@ class TrayIcon:
                 self.build_menu()
 
             self.last_status = current_status
+            self.build_menu()
 
         except subprocess.TimeoutExpired:
             # Timeout usually means lms ps is slow, not that daemon is down
@@ -888,6 +994,7 @@ class TrayIcon:
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             self.indicator.set_icon_full(ICON_FAIL, "Error checking status")
             logging.error("Error in status check: %s", e)
+            self.build_menu()
         return True
 
 
