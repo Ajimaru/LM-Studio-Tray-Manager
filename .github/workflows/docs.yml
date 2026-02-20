@@ -42,7 +42,7 @@ jobs:
           test -f docs/SETUP.md
 
       - name: Link check
-        uses: lycheeverse/lychee-action@v2.0.0
+        uses: lycheeverse/lychee-action@v2.0.2
         with:
           args: >-
             --no-progress
