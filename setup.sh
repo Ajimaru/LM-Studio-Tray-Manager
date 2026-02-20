@@ -5,6 +5,36 @@
 
 set -e
 
+DRY_RUN=0
+
+usage() {
+    cat <<EOF
+Usage: ./setup.sh [OPTIONS]
+
+Options:
+  -n, --dry-run   Show what would be done without changing system state
+  -h, --help      Show this help and exit
+EOF
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -n|--dry-run)
+            DRY_RUN=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
 LOGS_DIR="$SCRIPT_DIR/.logs"
@@ -73,6 +103,14 @@ print_info() {
     log_output "INFO" "$1"
 }
 
+run_or_print() {
+    if [ "$DRY_RUN" = "1" ]; then
+        print_info "[DRY-RUN] Would run: $*"
+        return 0
+    fi
+    "$@"
+}
+
 ask_yes_no() {
     local prompt="$1"
     local response
@@ -99,6 +137,9 @@ if [[ "$OSTYPE" != "linux"* ]]; then
 fi
 
 print_header "LM Studio Automation Setup"
+if [ "$DRY_RUN" = "1" ]; then
+    print_info "Dry-run mode enabled. No system changes will be made."
+fi
 
 # ============================================================================
 # 1. Check LM Studio Daemon (Headless)
@@ -115,20 +156,25 @@ else
     print_info "The LM Studio daemon (llmster) is required for the automation scripts."
     print_info "You can download it from: https://lmstudio.ai/download"
     echo ""
-    if ask_yes_no "Would you like to download LM Studio daemon?"; then
-        print_info "Opening LM Studio download page..."
-        if command -v xdg-open >/dev/null 2>&1; then
-            xdg-open "https://lmstudio.ai/download" &
-        elif command -v firefox >/dev/null 2>&1; then
-            firefox "https://lmstudio.ai/download" &
-        else
-            print_info "Please visit: https://lmstudio.ai/download"
-        fi
-        print_error "Please install LM Studio daemon and run this script again"
-        exit 1
+    if [ "$DRY_RUN" = "1" ]; then
+        print_info "[DRY-RUN] Would prompt for daemon download and open https://lmstudio.ai/download"
+        print_warning "Daemon is missing; real setup would stop here until installed"
     else
-        print_error "LM Studio daemon is required. Setup cancelled."
-        exit 1
+        if ask_yes_no "Would you like to download LM Studio daemon?"; then
+            print_info "Opening LM Studio download page..."
+            if command -v xdg-open >/dev/null 2>&1; then
+                xdg-open "https://lmstudio.ai/download" &
+            elif command -v firefox >/dev/null 2>&1; then
+                firefox "https://lmstudio.ai/download" &
+            else
+                print_info "Please visit: https://lmstudio.ai/download"
+            fi
+            print_error "Please install LM Studio daemon and run this script again"
+            exit 1
+        else
+            print_error "LM Studio daemon is required. Setup cancelled."
+            exit 1
+        fi
     fi
 fi
 
@@ -170,12 +216,20 @@ if [ "$APP_INSTALLED" = false ]; then
     print_info "  2) Use AppImage (manual download)"
     print_info "  3) Skip (can be installed later)"
     echo ""
-    read -p "Choose option [1-3]: " -r app_choice
+    if [ "$DRY_RUN" = "1" ]; then
+        print_info "[DRY-RUN] Would prompt for desktop app installation method"
+        print_warning "Desktop app missing; --gui option would not work until installed"
+        app_choice=3
+    else
+        read -p "Choose option [1-3]: " -r app_choice
+    fi
     
     case "$app_choice" in
         1)
             echo "Opening LM Studio download page..."
-            if command -v xdg-open >/dev/null 2>&1; then
+            if [ "$DRY_RUN" = "1" ]; then
+                print_info "[DRY-RUN] Would open https://lmstudio.ai/download"
+            elif command -v xdg-open >/dev/null 2>&1; then
                 xdg-open "https://lmstudio.ai/download" &
             elif command -v firefox >/dev/null 2>&1; then
                 firefox "https://lmstudio.ai/download" &
@@ -229,19 +283,23 @@ else
     print_warning "Python 3.10 not found"
     echo ""
     echo "Python 3.10 is required for PyGObject/GTK3 compatibility."
-    if ask_yes_no "Would you like to install Python 3.10?"; then
-        echo "Updating package manager..."
-        sudo apt update
-        echo "Installing Python 3.10..."
-        if sudo apt install -y python3.10 python3.10-venv python3.10-dev; then
-            print_step "Python 3.10 installed successfully"
+    if [ "$DRY_RUN" = "1" ]; then
+        print_info "[DRY-RUN] Would install Python 3.10 via apt: python3.10 python3.10-venv python3.10-dev"
+    else
+        if ask_yes_no "Would you like to install Python 3.10?"; then
+            echo "Updating package manager..."
+            sudo apt update
+            echo "Installing Python 3.10..."
+            if sudo apt install -y python3.10 python3.10-venv python3.10-dev; then
+                print_step "Python 3.10 installed successfully"
+            else
+                print_error "Failed to install Python 3.10"
+                exit 1
+            fi
         else
-            print_error "Failed to install Python 3.10"
+            print_error "Python 3.10 is required. Setup cancelled."
             exit 1
         fi
-    else
-        print_error "Python 3.10 is required. Setup cancelled."
-        exit 1
     fi
 fi
 
@@ -250,34 +308,51 @@ fi
 # ============================================================================
 echo -e "\n${BLUE}Step 4: Creating Python Virtual Environment${NC}"
 
-if [ -d "$VENV_DIR" ]; then
-    print_warning "Removing existing venv..."
-    rm -rf "$VENV_DIR"
-fi
-
-echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
-if python3.10 -m venv --system-site-packages "$VENV_DIR"; then
-    print_step "Virtual environment created"
+if [ "$DRY_RUN" = "1" ]; then
+    if [ -d "$VENV_DIR" ]; then
+        print_info "[DRY-RUN] Would remove existing venv: $VENV_DIR"
+    fi
+    print_info "[DRY-RUN] Would create venv: python3.10 -m venv --system-site-packages $VENV_DIR"
+    print_info "[DRY-RUN] Would upgrade pip/setuptools in venv"
+    print_step "Dry-run: venv step simulated"
 else
-    print_error "Failed to create virtual environment"
-    exit 1
-fi
+    if [ -d "$VENV_DIR" ]; then
+        print_warning "Removing existing venv..."
+        rm -rf "$VENV_DIR"
+    fi
 
-# Upgrade pip and setuptools
-print_info "Upgrading pip and setuptools..."
-if "$VENV_DIR/bin/python3" -m pip install --upgrade pip setuptools >/dev/null 2>&1; then
-    print_step "pip and setuptools upgraded"
-else
-    print_warning "Could not upgrade pip/setuptools (may continue anyway)"
+    echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
+    if python3.10 -m venv --system-site-packages "$VENV_DIR"; then
+        print_step "Virtual environment created"
+    else
+        print_error "Failed to create virtual environment"
+        exit 1
+    fi
+
+    # Upgrade pip and setuptools
+    print_info "Upgrading pip and setuptools..."
+    if "$VENV_DIR/bin/python3" -m pip install --upgrade pip setuptools >/dev/null 2>&1; then
+        print_step "pip and setuptools upgraded"
+    else
+        print_warning "Could not upgrade pip/setuptools (may continue anyway)"
+    fi
 fi
 
 # ============================================================================
 # 5. Summary
 # ============================================================================
 echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
-echo -e "${GREEN}✓ Setup completed successfully!${NC}"
+if [ "$DRY_RUN" = "1" ]; then
+    echo -e "${GREEN}✓ Dry-run completed successfully!${NC}"
+else
+    echo -e "${GREEN}✓ Setup completed successfully!${NC}"
+fi
 echo -e "${GREEN}═══════════════════════════════════════${NC}"
-log_output "INFO" "Setup completed successfully!"
+if [ "$DRY_RUN" = "1" ]; then
+    log_output "INFO" "Dry-run completed successfully!"
+else
+    log_output "INFO" "Setup completed successfully!"
+fi
 echo ""
 print_info "Next steps:"
 print_info "  1. Run the automation script:"
@@ -290,7 +365,7 @@ print_info "     ./lmstudio_autostart.sh --debug"
 echo ""
 print_info "For more information, see:"
 print_info "  - README.md"
-print_info "  - docs/VENV_SETUP.md"
+print_info "  - docs/SETUP.md"
 print_info "  - docs/index.html"
 echo ""
 print_info "Log file saved to: $LOGFILE"

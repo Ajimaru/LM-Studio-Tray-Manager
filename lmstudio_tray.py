@@ -62,9 +62,29 @@ ICON_OK = "emblem-default"         # ✅ Model loaded
 ICON_FAIL = "emblem-unreadable"    # ❌ Daemon and app not installed
 ICON_WARN = "dialog-warning"       # ⚠️ Daemon and app stopped
 ICON_INFO = "help-info"            # ℹ️ Runtime active, no model
+APP_NAME = "LM Studio Tray Monitor"
+APP_MAINTAINER = "Ajimaru"
+APP_REPOSITORY = "https://github.com/Ajimaru/LM-Studio"
+DEFAULT_APP_VERSION = "dev"
 
 # === Path to lms-CLI ===
 LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
+
+
+def get_app_version():
+    """Load app version from VERSION file in script directory."""
+    version_path = os.path.join(script_dir, "VERSION")
+    try:
+        with open(version_path, "r", encoding="utf-8") as version_file:
+            version = version_file.read().strip()
+            if version:
+                return version
+    except OSError:
+        pass
+    return DEFAULT_APP_VERSION
+
+
+APP_VERSION = get_app_version()
 
 
 def get_lms_cmd():
@@ -304,6 +324,10 @@ class TrayIcon:
         status_item = Gtk.MenuItem(label="Show Status")
         status_item.connect("activate", self.show_status_dialog)
         self.menu.append(status_item)
+
+        about_item = Gtk.MenuItem(label="About")
+        about_item.connect("activate", self.show_about_dialog)
+        self.menu.append(about_item)
 
         self.menu.append(Gtk.SeparatorMenuItem())
 
@@ -941,6 +965,29 @@ class TrayIcon:
             text="LM Studio Status"
         )
         dialog.format_secondary_text(text)
+        dialog.run()
+        dialog.destroy()
+
+    def show_about_dialog(self, _widget):
+        """Show application information in a GTK dialog."""
+        model_context = (
+            MODEL if MODEL and MODEL != "no-model-passed" else "none"
+        )
+        dialog = Gtk.MessageDialog(
+            parent=None,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            text=APP_NAME
+        )
+        dialog.format_secondary_text(
+            f"Version: {APP_VERSION}\n"
+            f"Maintainer: {APP_MAINTAINER}\n"
+            "Purpose: Monitors and controls LM Studio daemon"
+            " and desktop app.\n"
+            f"Model context: {model_context}\n"
+            f"Repository: {APP_REPOSITORY}"
+        )
         dialog.run()
         dialog.destroy()
 
