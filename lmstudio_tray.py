@@ -439,6 +439,130 @@ class TrayIcon:
         else:
             return "🔴"
 
+    def _run_daemon_attempts(self, attempts, stop_when):
+        """Run daemon CLI attempts until stop condition is met."""
+        result = None
+        for command in attempts:
+            result = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if stop_when(result):
+                break
+        return result
+
+    def _build_daemon_attempts(self, action):
+        """Build ordered daemon CLI attempts for start/stop actions."""
+        lms_cmd = get_lms_cmd()
+        llmster_cmd = get_llmster_cmd()
+        attempts = []
+
+        if action == "start":
+            if lms_cmd:
+                attempts.extend(
+                    [
+                        [lms_cmd, "daemon", "up"],
+                        [lms_cmd, "daemon", "start"],
+                        [lms_cmd, "up"],
+                        [lms_cmd, "start"],
+                    ]
+                )
+            if llmster_cmd:
+                attempts.extend(
+                    [
+                        [llmster_cmd, "daemon", "up"],
+                        [llmster_cmd, "daemon", "start"],
+                        [llmster_cmd, "up"],
+                        [llmster_cmd, "start"],
+                    ]
+                )
+        elif action == "stop":
+            if lms_cmd:
+                attempts.extend(
+                    [
+                        [lms_cmd, "daemon", "down"],
+                        [lms_cmd, "daemon", "stop"],
+                        [lms_cmd, "down"],
+                        [lms_cmd, "stop"],
+                    ]
+                )
+            if llmster_cmd:
+                attempts.extend(
+                    [
+                        [llmster_cmd, "daemon", "down"],
+                        [llmster_cmd, "daemon", "stop"],
+                        [llmster_cmd, "down"],
+                        [llmster_cmd, "stop"],
+                    ]
+                )
+
+        return attempts
+
+    def _force_stop_llmster(self):
+        """Force-kill llmster and wait briefly for exit."""
+        subprocess.run(
+            ["pkill", "-x", "llmster"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        subprocess.run(
+            ["pkill", "-f", "llmster"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+
+        for _ in range(8):
+            if not is_llmster_running():
+                break
+            time.sleep(0.25)
+
+    def _stop_llmster_best_effort(self):
+        """Try graceful daemon stop attempts, then force-kill fallback."""
+        attempts = self._build_daemon_attempts("stop")
+        result = self._run_daemon_attempts(
+            attempts,
+            lambda _result: not is_llmster_running(),
+        )
+
+        if is_llmster_running():
+            self._force_stop_llmster()
+
+        return (not is_llmster_running(), result)
+
+    def _stop_desktop_app_processes(self):
+        """Stop LM Studio desktop app processes with TERM then KILL."""
+        desktop_pids = get_desktop_app_pids()
+        for pid in desktop_pids:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except (OSError, ProcessLookupError, PermissionError):
+                pass
+
+        for _ in range(8):
+            if self.get_desktop_app_status() != "running":
+                break
+            time.sleep(0.25)
+
+        if self.get_desktop_app_status() == "running":
+            desktop_pids = get_desktop_app_pids()
+            for pid in desktop_pids:
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                except (OSError, ProcessLookupError, PermissionError):
+                    pass
+
+            for _ in range(8):
+                if self.get_desktop_app_status() != "running":
+                    break
+                time.sleep(0.25)
+
+        return self.get_desktop_app_status() != "running"
+
     def start_daemon(self, _widget):
         """Start or ensure the llmster daemon is running.
 
@@ -453,32 +577,7 @@ class TrayIcon:
 
         # Stop desktop app first to avoid daemon/app conflict
         if self.get_desktop_app_status() == "running":
-            desktop_pids = get_desktop_app_pids()
-            for pid in desktop_pids:
-                try:
-                    os.kill(pid, signal.SIGTERM)
-                except (OSError, ProcessLookupError, PermissionError):
-                    pass
-
-            for _ in range(8):
-                if self.get_desktop_app_status() != "running":
-                    break
-                time.sleep(0.25)
-
-            if self.get_desktop_app_status() == "running":
-                desktop_pids = get_desktop_app_pids()
-                for pid in desktop_pids:
-                    try:
-                        os.kill(pid, signal.SIGKILL)
-                    except (OSError, ProcessLookupError, PermissionError):
-                        pass
-
-                for _ in range(8):
-                    if self.get_desktop_app_status() != "running":
-                        break
-                    time.sleep(0.25)
-
-            if self.get_desktop_app_status() == "running":
+            if not self._stop_desktop_app_processes():
                 logging.error(
                     "Cannot start daemon: desktop app is still running"
                 )
@@ -496,9 +595,8 @@ class TrayIcon:
             logging.info("Desktop app stopped before daemon start")
             self.build_menu()
 
-        llmster_cmd = get_llmster_cmd()
-        lms_cmd = get_lms_cmd()
-        if not llmster_cmd and not lms_cmd:
+        start_attempts = self._build_daemon_attempts("start")
+        if not start_attempts:
             logging.error("llmster not found")
             subprocess.run(
                 [
@@ -510,37 +608,12 @@ class TrayIcon:
             )
             return
         try:
-            result = None
-            start_attempts = []
-            if lms_cmd:
-                start_attempts.extend(
-                    [
-                        [lms_cmd, "daemon", "up"],
-                        [lms_cmd, "daemon", "start"],
-                        [lms_cmd, "up"],
-                        [lms_cmd, "start"],
-                    ]
-                )
-            if llmster_cmd:
-                start_attempts.extend(
-                    [
-                        [llmster_cmd, "daemon", "up"],
-                        [llmster_cmd, "daemon", "start"],
-                        [llmster_cmd, "up"],
-                        [llmster_cmd, "start"],
-                    ]
-                )
-
-            for command in start_attempts:
-                result = subprocess.run(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-                if result.returncode == 0 and is_llmster_running():
-                    break
+            result = self._run_daemon_attempts(
+                start_attempts,
+                lambda current: (
+                    current.returncode == 0 and is_llmster_running()
+                ),
+            )
 
             if is_llmster_running():
                 logging.info("llmster daemon started/ensured")
@@ -582,9 +655,7 @@ class TrayIcon:
         if not self.begin_action_cooldown("stop_daemon"):
             return
 
-        llmster_cmd = get_llmster_cmd()
-        lms_cmd = get_lms_cmd()
-        if not llmster_cmd and not lms_cmd:
+        if not self._build_daemon_attempts("stop"):
             logging.error("llmster not found")
             subprocess.run(
                 [
@@ -596,58 +667,9 @@ class TrayIcon:
             )
             return
         try:
-            result = None
-            stop_attempts = []
-            if lms_cmd:
-                stop_attempts.extend(
-                    [
-                        [lms_cmd, "daemon", "down"],
-                        [lms_cmd, "daemon", "stop"],
-                        [lms_cmd, "down"],
-                        [lms_cmd, "stop"],
-                    ]
-                )
-            if llmster_cmd:
-                stop_attempts.extend(
-                    [
-                        [llmster_cmd, "daemon", "down"],
-                        [llmster_cmd, "daemon", "stop"],
-                        [llmster_cmd, "down"],
-                        [llmster_cmd, "stop"],
-                    ]
-                )
+            stopped, result = self._stop_llmster_best_effort()
 
-            for command in stop_attempts:
-                result = subprocess.run(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-                if not is_llmster_running():
-                    break
-
-            if is_llmster_running():
-                subprocess.run(
-                    ["pkill", "-x", "llmster"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    check=False,
-                )
-                subprocess.run(
-                    ["pkill", "-f", "llmster"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    check=False,
-                )
-
-                for _ in range(6):
-                    if not is_llmster_running():
-                        break
-                    time.sleep(0.3)
-
-            if not is_llmster_running():
+            if stopped:
                 logging.info("llmster daemon stopped")
                 subprocess.run(
                     [
@@ -714,58 +736,9 @@ class TrayIcon:
 
         # Stop headless daemon first to avoid LM Studio conflict dialog
         if is_llmster_running():
-            llmster_cmd = get_llmster_cmd()
-            stop_attempts = []
-            if lms_cmd:
-                stop_attempts.extend(
-                    [
-                        [lms_cmd, "daemon", "down"],
-                        [lms_cmd, "daemon", "stop"],
-                        [lms_cmd, "down"],
-                        [lms_cmd, "stop"],
-                    ]
-                )
-            if llmster_cmd:
-                stop_attempts.extend(
-                    [
-                        [llmster_cmd, "daemon", "down"],
-                        [llmster_cmd, "daemon", "stop"],
-                        [llmster_cmd, "down"],
-                        [llmster_cmd, "stop"],
-                    ]
-                )
+            stopped, _result = self._stop_llmster_best_effort()
 
-            for command in stop_attempts:
-                subprocess.run(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-                if not is_llmster_running():
-                    break
-
-            if is_llmster_running():
-                subprocess.run(
-                    ["pkill", "-x", "llmster"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    check=False,
-                )
-                subprocess.run(
-                    ["pkill", "-f", "llmster"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    check=False,
-                )
-
-                for _ in range(8):
-                    if not is_llmster_running():
-                        break
-                    time.sleep(0.25)
-
-            if is_llmster_running():
+            if not stopped:
                 logging.error(
                     "Cannot start desktop app: llmster still running"
                 )

@@ -320,9 +320,6 @@ else
     exec >> "$LOGFILE" 2>&1
 fi
 LMS_CLI="$HOME/.lmstudio/bin/lms"
-GPU="1.0"
-LMS_RETRIES=3
-LMS_RETRY_SLEEP=5
 
 export LMSTUDIO_DISABLE_AUTO_LAUNCH=true
 
@@ -347,6 +344,25 @@ is_llmster_running() {
     pgrep -f "(^|/)llmster( |$)" >/dev/null 2>&1
 }
 
+run_llmster_cmd_expect_state() {
+    local expected_state="$1"
+    shift
+
+    timeout 8 "$@" >/dev/null 2>&1
+    local rc=$?
+
+    if [ $rc -eq 124 ]; then
+        if [ "$expected_state" = "running" ] && is_llmster_running; then
+            return 0
+        fi
+        if [ "$expected_state" = "stopped" ] && ! is_llmster_running; then
+            return 0
+        fi
+    fi
+
+    return $rc
+}
+
 start_llmster() {
     local cmd lms_cmd
     cmd="$(get_llmster_cmd || true)"
@@ -358,11 +374,8 @@ start_llmster() {
     set +e
     # Prefer lms wrapper when available (usually non-blocking)
     if [ -n "$lms_cmd" ]; then
-        timeout 8 "$lms_cmd" daemon up >/dev/null 2>&1
+        run_llmster_cmd_expect_state running "$lms_cmd" daemon up
         rc=$?
-        if [ $rc -eq 124 ] && is_llmster_running; then
-            rc=0
-        fi
         if [ $rc -eq 0 ]; then
             set -e
             return 0
@@ -370,31 +383,20 @@ start_llmster() {
     fi
 
     if [ -n "$cmd" ]; then
-        timeout 8 "$cmd" daemon start >/dev/null 2>&1
+        rc=1
+        run_llmster_cmd_expect_state running "$cmd" daemon start
         rc=$?
-        if [ $rc -eq 124 ] && is_llmster_running; then
-            rc=0
+        if [ $rc -ne 0 ]; then
+            run_llmster_cmd_expect_state running "$cmd" start
+            rc=$?
         fi
         if [ $rc -ne 0 ]; then
-            timeout 8 "$cmd" start >/dev/null 2>&1
+            run_llmster_cmd_expect_state running "$cmd" daemon up
             rc=$?
-            if [ $rc -eq 124 ] && is_llmster_running; then
-                rc=0
-            fi
         fi
         if [ $rc -ne 0 ]; then
-            timeout 8 "$cmd" daemon up >/dev/null 2>&1
+            run_llmster_cmd_expect_state running "$cmd" up
             rc=$?
-            if [ $rc -eq 124 ] && is_llmster_running; then
-                rc=0
-            fi
-        fi
-        if [ $rc -ne 0 ]; then
-            timeout 8 "$cmd" up >/dev/null 2>&1
-            rc=$?
-            if [ $rc -eq 124 ] && is_llmster_running; then
-                rc=0
-            fi
         fi
     else
         rc=1
@@ -415,11 +417,8 @@ stop_llmster() {
     set +e
     # Prefer lms wrapper when available
     if [ -n "$lms_cmd" ]; then
-        timeout 8 "$lms_cmd" daemon down >/dev/null 2>&1
+        run_llmster_cmd_expect_state stopped "$lms_cmd" daemon down
         rc=$?
-        if [ $rc -eq 124 ] && ! is_llmster_running; then
-            rc=0
-        fi
         if [ $rc -eq 0 ]; then
             set -e
             return 0
@@ -427,31 +426,20 @@ stop_llmster() {
     fi
 
     if [ -n "$cmd" ]; then
-        timeout 8 "$cmd" daemon stop >/dev/null 2>&1
+        rc=1
+        run_llmster_cmd_expect_state stopped "$cmd" daemon stop
         rc=$?
-        if [ $rc -eq 124 ] && ! is_llmster_running; then
-            rc=0
+        if [ $rc -ne 0 ]; then
+            run_llmster_cmd_expect_state stopped "$cmd" stop
+            rc=$?
         fi
         if [ $rc -ne 0 ]; then
-            timeout 8 "$cmd" stop >/dev/null 2>&1
+            run_llmster_cmd_expect_state stopped "$cmd" daemon down
             rc=$?
-            if [ $rc -eq 124 ] && ! is_llmster_running; then
-                rc=0
-            fi
         fi
         if [ $rc -ne 0 ]; then
-            timeout 8 "$cmd" daemon down >/dev/null 2>&1
+            run_llmster_cmd_expect_state stopped "$cmd" down
             rc=$?
-            if [ $rc -eq 124 ] && ! is_llmster_running; then
-                rc=0
-            fi
-        fi
-        if [ $rc -ne 0 ]; then
-            timeout 8 "$cmd" down >/dev/null 2>&1
-            rc=$?
-            if [ $rc -eq 124 ] && ! is_llmster_running; then
-                rc=0
-            fi
         fi
     else
         rc=0
