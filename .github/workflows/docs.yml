@@ -1,0 +1,50 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+  pull_request:
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+
+jobs:
+  docs-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@v17
+        with:
+          globs: |
+            README.md
+            docs/**/*.md
+
+      - name: Verify docs entry files
+        run: |
+          test -f docs/index.html
+          test -f docs/guide.html
+          test -f docs/python_docstrings.html
+          test -f docs/README.md
+          test -f docs/SETUP.md
+
+      - name: Link check
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --verbose
+            README.md
+            docs/README.md
+            docs/SETUP.md
+            docs/index.html
+            docs/guide.html
+            docs/python_docstrings.html
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
