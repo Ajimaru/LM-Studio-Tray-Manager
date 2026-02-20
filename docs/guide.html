@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <title>LM Studio Automation Scripts Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" defer></script>
+    <style>
+        :root {
+            --bg-color: #0f1221;
+            --bg-elev: #131735;
+            --text-color: #e6e9ef;
+            --muted-text: #b5bfd3;
+            --sidebar-bg: #0b0e1f;
+            --sidebar-text: #c6d0f5;
+            --accent-color: #7aa2f7;
+            --accent-2: #9ece6a;
+            --accent-3: #bb9af7;
+            --accent-4: #f7768e;
+            --border-color: #2a2f4a;
+            --code-bg: #141830;
+            --highlight: #1b2042;
+            --focus: #ffd166;
+            --shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-color: #f6f7fb;
+                --bg-elev: #ffffff;
+                --text-color: #1c2333;
+                --muted-text: #4a5568;
+                --sidebar-bg: #eef0f6;
+                --sidebar-text: #1c2333;
+                --accent-color: #3366ff;
+                --accent-2: #2dbf71;
+                --accent-3: #7b61ff;
+                --accent-4: #ff4d6d;
+                --border-color: #d7dbe7;
+                --code-bg: #f2f4fb;
+                --highlight: #e9ecf6;
+                --focus: #c471ed;
+                --shadow: 0 8px 22px rgba(0,0,0,0.12);
+            }
+        }
+
+        /* Base layout */
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100dvh;
+        }
+        a { color: var(--accent-color); }
+        a:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+        :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+        /* Skip link */
+        .skip-link { position: absolute; left: -9999px; }
+        .skip-link:focus { left: 16px; top: 16px; z-index: 1000; background: var(--focus); color: #000; padding: 8px 12px; border-radius: 6px; box-shadow: var(--shadow); }
+
+        /* Sidebar / TOC */
+        nav[aria-label="Table of contents"] {
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 24px 20px 24px 20px;
+            position: sticky;
+            top: 0;
+            height: 100dvh;
+            overflow: auto;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+        .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); box-shadow: 0 0 0 3px rgba(122,162,247,0.15); }
+        nav h2 { margin: 0; font-size: 1.1rem; color: var(--accent-color); }
+        .toc { list-style: none; padding: 0; margin: 14px 0 0; }
+        .toc li { margin: 8px 0; }
+        .toc a { color: var(--sidebar-text); text-decoration: none; display: block; padding: 8px 10px; border-radius: 6px; transition: background .2s, transform .05s; }
+        .toc a:hover { background: var(--highlight); }
+        .toc a[aria-current="true"] { background: linear-gradient(135deg, rgba(122,162,247,.18), rgba(187,154,247,.18)); border: 1px solid rgba(122,162,247,.35); }
+
+        /* Main */
+        main { padding: 28px clamp(18px, 3vw, 40px); background: linear-gradient(180deg, rgba(122,162,247,.04), transparent 200px); }
+        header.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px dashed var(--border-color); }
+        header .title { display: flex; align-items: center; gap: 10px; }
+        header .title h1 { margin: 0; font-weight: 700; letter-spacing: .2px; }
+        .badge { background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); color: #0c1022; padding: 2px 8px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+        .read-time { color: var(--muted-text); font-size: .95rem; }
+        .header-actions { display:flex; gap:10px; align-items:center; }
+
+        section { background: var(--bg-elev); border: 1px solid var(--border-color); box-shadow: var(--shadow); padding: 18px 18px 8px; border-radius: 14px; margin: 18px 0; }
+        section h2 { margin-top: 0; color: var(--accent-color); }
+        section h3 { color: var(--accent-3); }
+        p { line-height: 1.65; color: var(--text-color); }
+        ul { line-height: 1.7; }
+
+        code, pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border-color); }
+        pre { background: var(--code-bg); border: 1px solid var(--border-color); padding: 14px; border-radius: 12px; overflow-x: auto; }
+
+        /* Mermaid container */
+        .diagram-card { background: var(--bg-elev); border: 1px solid var(--border-color); border-radius: 14px; padding: 8px 12px; box-shadow: var(--shadow); }
+        .mermaid { margin: 10px 0 2px; }
+        .diagram-caption { color: var(--muted-text); font-size: .9rem; margin: 6px 2px 4px; }
+
+        /* Buttons */
+        .btn { background: linear-gradient(135deg, var(--accent-color), var(--accent-3)); color: white; border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: transform .05s ease, box-shadow .2s ease; box-shadow: var(--shadow); }
+        .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+        .theme-toggle { background: linear-gradient(135deg, var(--accent-color), var(--accent-2)); color: #0e122b; border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 999px; cursor: pointer; font-weight: 700; }
+        .jump-to-top { position: fixed; right: 16px; bottom: 16px; opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity .2s ease, transform .2s ease; background: var(--bg-elev); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 999px; padding: 8px 12px; box-shadow: var(--shadow); }
+        .jump-to-top.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* Theme overrides via data-theme */
+        body[data-theme="light"] { 
+            --bg-color: #f6f7fb;
+            --bg-elev: #ffffff;
+            --text-color: #1c2333;
+            --muted-text: #4a5568;
+            --sidebar-bg: #eef0f6;
+            --sidebar-text: #1c2333;
+            --accent-color: #3366ff;
+            --accent-2: #2dbf71;
+            --accent-3: #7b61ff;
+            --accent-4: #ff4d6d;
+            --border-color: #d7dbe7;
+            --code-bg: #f2f4fb;
+            --highlight: #e9ecf6;
+            --focus: #c471ed;
+            --shadow: 0 8px 22px rgba(0,0,0,0.12);
+        }
+        body[data-theme="dark"] { 
+            color-scheme: dark;
+        }
+
+        /* Responsive */
+        @media (max-width: 920px) {
+            body { grid-template-columns: 1fr; }
+            nav[aria-label="Table of contents"] { position: static; height: auto; }
+        }
+
+        /* Utility classes */
+        .nested-list { margin-top: 5px; font-size: 0.95em; color: var(--muted-text); }
+        .status-sublist { margin-top: 5px; font-size: 0.95em; }
+        .status-sublist-compact { margin-top: 5px; font-size: 0.95em; }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <nav aria-label="Table of contents">
+        <div class="brand" role="img" aria-label="LM Studio Docs">
+            <span class="dot" aria-hidden="true"></span>
+            <h2>Contents</h2>
+        </div>
+        <ul class="toc">
+            <li><a href="#introduction">Introduction</a></li>
+            <li><a href="#python-docstrings">Python Docstrings</a></li>
+            <li><a href="#setup-guide">Setup Guide</a></li>
+            <li><a href="#autostart-script">LM Studio Autostart Script</a></li>
+            <li><a href="#tray-script">Tray Monitor Script</a></li>
+            <li><a href="#flow-diagrams">Flow Diagrams</a></li>
+            <li><a href="#usage">Usage</a></li>
+            <li><a href="#configuration">Configuration</a></li>
+            <li><a href="#logging-troubleshooting">Logging & Troubleshooting</a></li>
+            <li><a href="#resources">Official Resources</a></li>
+        </ul>
+    </nav>
+
+    <main id="main" role="main" aria-label="Documentation content">
+        <header class="header">
+            <div class="title">
+                <h1>LM Studio Automation Scripts Documentation</h1>
+            </div>
+            <div class="header-actions">
+                <div class="read-time" id="read-time">Estimated read time: calculating…</div>
+                <button class="theme-toggle" id="theme-toggle" aria-pressed="false" aria-label="Toggle color theme">Dark</button>
+            </div>
+        </header>
+
+        <section id="introduction">
+            <h2>Introduction</h2>
+            <p>This documentation covers the LM Studio automation setup and scripts. The project provides:</p>
+            <ul>
+                <li><code>setup.sh</code> – One-time setup script to create Python virtual environment (see <a href="../README.md" target="_blank" rel="noopener">README.md</a>)</li>
+                <li><code>lmstudio_autostart.sh</code> – Bash script for automated daemon startup and model loading</li>
+                <li><code>lmstudio_tray.py</code> – Python script for system tray monitoring</li>
+            </ul>
+            <p>The <code>lmstudio_autostart.sh</code> script ensures the LM Studio daemon is running, waits for the API, optionally loads a model, and starts the tray monitor. The <code>lmstudio_tray.py</code> script provides a system tray icon for real-time monitoring and quick actions.</p>
+            <p><strong>All log files are written to the <code>.logs/</code> directory</strong> for easy access and cleanup.</p>
+        </section>
+
+        <section id="python-docstrings">
+            <h2>Python Docstrings</h2>
+            <p>The static docstrings documentation for <code>lmstudio_tray.py</code> is available as a dedicated page and uses the same visual design as this documentation.</p>
+            <p><a href="python_docstrings.html">Open Python Docstrings Reference</a></p>
+        </section>
+
+        <section id="setup-guide">
+            <h2>Setup Guide</h2>
+            <p>The setup process is handled by an intelligent setup script that checks for all required components:</p>
+            
+            <h3>Step 1: Run Comprehensive Setup Script</h3>
+            <p>The setup script handles all prerequisite checks and installations:</p>
+            <pre><code>./setup.sh</code></pre>
+            <p>This interactive script will check for and install:</p>
+            <ul>
+                <li><strong>LM Studio Daemon</strong> – Verifies <code>lms</code> CLI is installed (llmster v0.0.3+)</li>
+                <li><strong>LM Studio Desktop App</strong> – Detects .deb package or AppImage installation
+                    <ul class="nested-list">
+                        <li>Searches in: script directory, <code>$HOME/Apps</code>, <code>$HOME/LM_Studio</code>, <code>$HOME/Applications</code>, <code>$HOME/.local/bin</code>, <code>/opt/lm-studio</code></li>
+                        <li>Supports both standard and versioned AppImage formats</li>
+                    </ul>
+                </li>
+                <li><strong>Python 3.10</strong> – Automatically installs via apt if missing</li>
+                <li><strong>Python venv</strong> – Creates isolated environment with PyGObject/GTK3 support in <code>venv/</code></li>
+            </ul>
+            <p>The script will prompt for missing components with helpful guidance and log all operations to <code>.logs/setup.log</code>.</p>
+            <p>After setup completes, check the setup log:</p>
+            <pre><code>cat .logs/setup.log</code></pre>
+            <p>For detailed information, see <a href="VENV_SETUP.md">VENV_SETUP.md</a>.</p>
+            
+            <h3>Step 2: Run Autostart Script</h3>
+            <p>After setup completes, start the automation workflow:</p>
+            <pre><code>./lmstudio_autostart.sh</code></pre>
+            <p>This will start the daemon, wait for the API, and launch the system tray monitor.</p>
+            
+            <h3>Troubleshooting Setup</h3>
+            <p>If you encounter issues, check the logs:</p>
+            <pre><code># View setup installation log
+cat .logs/setup.log
+
+# View daemon startup log
+tail -f .logs/lmstudio_autostart.log
+
+# Search for errors
+grep -i error .logs/*.log</code></pre>
+            <p>For detailed setup help, see <a href="VENV_SETUP.md">VENV_SETUP.md</a>.</p>
+        </section>
+
+        <section id="autostart-script">
+            <h2>LM Studio Autostart Script (<code>lmstudio_autostart.sh</code>)</h2>
+            <p>This Bash script automates the startup process of LM Studio. It performs the following main tasks:</p>
+            <ul>
+                <li>Checks and installs required dependencies (curl, notify-send, python3)</li>
+                <li>Default mode starts llmster daemon and tray monitor</li>
+                <li>Optionally starts the LM Studio GUI (stops daemon first)</li>
+                <li>Waits for the LM Studio API to be available</li>
+                <li>Optionally loads a specified model using lms-CLI</li>
+                <li>Starts the tray monitor script</li>
+            </ul>
+            <h3>Command Line Options</h3>
+            <pre><code>Usage: ./lmstudio_autostart.sh [OPTIONS]
+
+            Options:
+                -d, --debug       Enable debug output and Bash trace
+                -h, --help        Show help and exit
+                -L, --list-models List local models (interactive selection in TTY)
+                -m, --model NAME  Load specified model (empty NAME loads no model)
+                -g, --gui          Start the LM Studio GUI (stops daemon first)
+
+            Environment variables:
+                LM_AUTOSTART_DEBUG=1            Force debug mode
+                LM_AUTOSTART_SELECT_TIMEOUT=30  Timeout for interactive selection
+                LM_AUTOSTART_GUI_CMD="..."      Explicit GUI start command</code></pre>
+
+            <h3>System Autostart Integration</h3>
+            <p>To automatically start LM Studio daemon and tray monitor on login, create a desktop entry in <code>~/.config/autostart/</code>:</p>
+            <pre><code>mkdir -p ~/.config/autostart/
+cat > ~/.config/autostart/lmstudio-daemon.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=LM Studio Daemon
+Exec=/path/to/LM-Studio/lmstudio_autostart.sh
+X-GNOME-Autostart-enabled=true
+Hidden=false
+EOF</code></pre>
+            <p><strong>Recommended Setup:</strong> Run <code>./lmstudio_autostart.sh</code> without <code>--gui</code> flag in autostart. The daemon and tray monitor will start automatically. Users can then launch the desktop GUI on-demand via the tray monitor's <strong>"Start Desktop App"</strong> menu option.</p>
+        </section>
+
+        <section id="tray-script">
+            <h2>Tray Monitor Script (<code>lmstudio_tray.py</code>)</h2>
+            <p>This Python script creates a system tray icon for LM Studio runtime monitoring and mode switching. It provides:</p>
+            <ul>
+                <li>Runtime/model monitoring with four-state icon schema (❌⚠️ℹ️✅)</li>
+                <li>Live status display for daemon and desktop app in menu</li>
+                <li>Desktop app launcher (supports .deb and AppImage detection)</li>
+                <li>Tray icon with status indicators (active/warning/error)</li>
+                <li>Right-click menu for actions</li>
+                <li>Notifications for status changes</li>
+                <li>Automatic termination of duplicate instances</li>
+            </ul>
+            <h3>Status Indicators (in Menu)</h3>
+            <p>When you right-click the tray icon, the menu shows live status for each option:</p>
+            <ul>
+                <li><strong>🟢 (Green Circle)</strong> – Component is currently running/active</li>
+                <li><strong>🟡 (Yellow Circle)</strong> – Component is installed but not running</li>
+                <li><strong>🔴 (Red Circle)</strong> – Component is not found/not installed</li>
+            </ul>
+            <h3>Tray Icon Schema</h3>
+            <ul>
+                <li><strong>❌</strong> – Daemon and desktop app are not installed</li>
+                <li><strong>⚠️</strong> – Neither daemon nor desktop app is running</li>
+                <li><strong>ℹ️</strong> – Daemon or desktop app is running, but no model is loaded</li>
+                <li><strong>✅</strong> – A model is loaded</li>
+            </ul>
+            <h3>Tray Menu Options</h3>
+            <ul>
+                <li><strong>🟢/🟡/🔴 Start Desktop App:</strong> Launch LM Studio GUI 
+                    <ul class="status-sublist">
+                        <li>🟢 App is currently running</li>
+                        <li>🟡 App is installed but not running (will start on click)</li>
+                        <li>🔴 App not found ({.deb or AppImage) – disabled</li>
+                    </ul>
+                </li>
+                <li><strong>🟢/🟡/🔴 Start LM Studio Daemon:</strong> Ensure daemon is running
+                    <ul class="status-sublist-compact">
+                        <li>🟢 Daemon is currently active</li>
+                        <li>🟡 Daemon is installed but stopped (will start on click)</li>
+                        <li>🔴 Daemon not found – install from lmstudio.ai</li>
+                    </ul>
+                </li>
+                <li><strong>Stop Desktop App:</strong> Stops LM Studio desktop process</li>
+                <li><strong>Stop Daemon:</strong> Stops llmster daemon process</li>
+                <li><strong>Show Status:</strong> Displays current LM Studio status in a dialog</li>
+                <li><strong>Quit Tray:</strong> Terminates the tray monitor</li>
+            </ul>
+        </section>
+
+        <section id="flow-diagrams">
+            <h2>Flow Diagrams</h2>
+            
+            <h3>System Architecture Overview</h3>
+            <p>This diagram shows how the different scripts and components interact:</p>
+            <div class="mermaid">
+                graph TB
+                    User["👤 User"]
+                    Setup["<b>setup.sh</b><br/>Virtual Environment Setup"]
+                    Autostart["<b>lmstudio_autostart.sh</b><br/>Daemon Orchestration"]
+                    Tray["<b>lmstudio_tray.py</b><br/>GTK3 System Tray Monitor"]
+                    Daemon["LM Studio Daemon<br/>(llmster)"]
+                    API["LM Studio API<br/>http://localhost:1234"]
+                    Models["Model Files"]
+                    
+                    User -->|"1. First run"| Setup
+                    Setup -->|"Creates venv/"| Autostart
+                    User -->|"2. Regular use"| Autostart
+                    Autostart -->|"Starts & manages"| Daemon
+                    Autostart -->|"Loads models"| Models
+                    Daemon -->|"Provides"| API
+                    Autostart -->|"Starts"| Tray
+                    Tray -->|"Monitors"| Daemon
+                    Tray -->|"Monitors"| API
+            </div>
+
+            <h3>setup.sh – Virtual Environment Setup Script</h3>
+            <div class="mermaid">
+                graph TD
+                    A["<b>setup.sh</b><br/>START"] --> B[Check Python 3.10<br/>availability]
+                    B --> C{Python 3.10<br/>found?}
+                    C -->|No| D["Error:<br/>Install Python 3.10"]
+                    D --> E["<b>END (Failed)</b>"]
+                    C -->|Yes| F[Create venv/<br/>virtual environment]
+                    F --> G[Enable system-site-packages<br/>for GTK3/PyGObject]
+                    G --> H[Upgrade pip &<br/>setuptools]
+                    H --> I["<b>END (Success)</b><br/>venv/ ready"]
+            </div>
+
+            <h3>lmstudio_autostart.sh – Daemon Orchestration Script</h3>
+            <div class="mermaid">
+                graph TD
+                    A["<b>lmstudio_autostart.sh</b><br/>START"] --> B[Check system dependencies]
+                    B --> C{--gui flag?}
+                    C -->|Yes| D[Stop daemon]
+                    D --> E[Start LM Studio GUI]
+                    E --> L["Start lmstudio_tray.py<br/>in background"]
+                    L --> I["<b>END</b>"]
+                    C -->|No| F[Start LM Studio daemon]
+                    F --> G[Wait for API<br/>http://localhost:1234]
+                    G --> H{Model specified?}
+                    H -->|Yes| J[Load model via lms CLI]
+                    H -->|No| K[Skip model loading]
+                    J --> L
+                    K --> L
+                    L --> I
+            </div>
+
+            <h3>lmstudio_tray.py – GTK3 System Tray Monitor</h3>
+            <div class="mermaid">
+                graph TD
+                    A["<b>lmstudio_tray.py</b><br/>START"] --> B[Kill existing instances]
+                    B --> C[Create GTK3 tray icon]
+                    C --> D[Set up right-click menu]
+                    D --> E[Start daemon/API monitoring]
+                    E --> F{Status check}
+                    F --> G{Model loaded?}
+                    G -->|Yes| H[Set OK icon ✅]
+                    G -->|No| I{Any runtime active?}
+                    I -->|Yes| J[Set INFO icon ℹ️]
+                    I -->|No| K{Installed?}
+                    K -->|Yes| W[Set WARN icon ⚠️]
+                    K -->|No| X[Set FAIL icon ❌]
+                    H --> L[Check for changes]
+                    J --> L
+                    W --> L
+                    X --> L
+                    L --> M{Status changed?}
+                    M -->|Yes| N[Send notification]
+                    M -->|No| O[Wait before<br/>next check]
+                    N --> O
+                    O --> F
+                    F --> P{User action?}
+                    P -->|Start/Stop Daemon| Q[Switch to daemon mode]
+                    P -->|Start/Stop Desktop App| R[Switch to desktop app mode]
+                    P -->|Show Status| S[Show status dialog]
+                    P -->|Quit| T["<b>END</b>"]
+                    Q --> F
+                    R --> F
+                    S --> F
+            </div>
+        </section>
+
+        <section id="usage">
+            <h2>Usage</h2>
+            <h3>Basic Startup</h3>
+            <pre><code>./lmstudio_autostart.sh</code></pre>
+            <p>This starts LM Studio with default settings, checking dependencies and configuration.</p>
+
+            <h3>Start GUI (stops daemon first)</h3>
+            <pre><code>./lmstudio_autostart.sh --gui</code></pre>
+            <p>Stops the daemon, starts the GUI, and starts the tray monitor.</p>
+
+            <h3>Load Specific Model</h3>
+            <pre><code>./lmstudio_autostart.sh --model qwen2.5:7b-instruct</code></pre>
+            <p>Starts daemon mode and attempts to load the specified model.</p>
+
+            <h3>Interactive Model Selection</h3>
+            <pre><code>./lmstudio_autostart.sh --list-models</code></pre>
+            <p>In TTY mode, allows interactive selection of local models.</p>
+
+            <h3>Debug Mode</h3>
+            <pre><code>./lmstudio_autostart.sh --debug</code></pre>
+            <p>Enables verbose logging and terminal output.</p>
+
+            <h3>Check Logs</h3>
+            <p>Monitor daemon activity in real-time:</p>
+            <pre><code>tail -f .logs/lmstudio_autostart.log</code></pre>
+            <p>Monitor tray monitor activity:</p>
+            <pre><code>tail -f .logs/lmstudio_tray.log</code></pre>
+        </section>
+
+        <section id="configuration">
+            <h2>Configuration</h2>
+            
+            <h3>Initial Setup</h3>
+            <p>After cloning the repository, run the setup script once to create the Python virtual environment:</p>
+            <pre><code>./setup.sh</code></pre>
+            <p>This creates a Python 3.10 venv with PyGObject/GTK3 support in the <code>venv/</code> directory. For detailed information, see <a href="VENV_SETUP.md" target="_blank" rel="noopener">VENV_SETUP.md</a>.</p>
+            
+            <h3>Configuration Files</h3>
+            <p>No configuration file is required for the daemon workflow. You can delete <code>config.json</code> if it only contains AppImage paths.</p>
+            
+            <h3>Environment Variables</h3>
+            <p>Customize behavior with environment variables:</p>
+            <ul>
+                <li><code>VENV_DIR=/path/to/venv</code>: Specify custom venv location (default: <code>./venv</code>)</li>
+                <li><code>LM_AUTOSTART_DEBUG=1</code>: Force debug mode with verbose logging</li>
+                <li><code>LM_AUTOSTART_SELECT_TIMEOUT=30</code>: Timeout (seconds) for interactive model selection</li>
+            </ul>
+            
+            <h3>Log Files</h3>
+            <p>All output is logged to the <code>.logs/</code> directory:</p>
+            <ul>
+                <li><code>.logs/setup.log</code> – Setup script installation log</li>
+                <li><code>.logs/lmstudio_autostart.log</code> – Daemon startup and model loading logs</li>
+                <li><code>.logs/lmstudio_tray.log</code> – System tray monitor logs</li>
+            </ul>
+            <p>Check logs in real-time:</p>
+            <pre><code>cat .logs/setup.log
+tail -f .logs/lmstudio_autostart.log
+tail -f .logs/lmstudio_tray.log</code></pre>
+        </section>
+
+        <section id="logging-troubleshooting">
+            <h2>Logging & Troubleshooting</h2>
+            
+            <h3>Log Files Location</h3>
+            <p>All logs are written to the <code>.logs/</code> directory for easy access. View them with standard tools:</p>
+            <pre><code># Check setup installation log
+cat .logs/setup.log
+
+# Check the last 50 lines of daemon log
+tail -50 .logs/lmstudio_autostart.log
+
+# Watch logs in real-time
+tail -f .logs/lmstudio_autostart.log
+
+# Search for errors in all logs
+grep -i "error" .logs/*.log</code></pre>
+            
+            <h3>Common Issues</h3>
+            <ul>
+                <li><strong>PyGObject Import Error</strong>: Ensure you ran <code>./setup.sh</code> and have Python 3.10. Check <code>.logs/setup.log</code> for installation errors. See <a href="VENV_SETUP.md">VENV_SETUP.md</a> for details.</li>
+                <li><strong>Tray Icon Not Appearing</strong>: Check <code>.logs/lmstudio_tray.log</code> for GTK3 errors. Verify GTK3 libraries are installed on your system.</li>
+                <li><strong>Daemon Not Starting</strong>: Verify LM Studio daemon is installed (run <code>lms status</code>). Check <code>.logs/lmstudio_autostart.log</code> for dependency issues.</li>
+                <li><strong>Model Loading Fails</strong>: Check that the model name is correct (use <code>./lmstudio_autostart.sh --list-models</code>) and disk space is available.</li>
+            </ul>
+            
+            <h3>Debug Mode</h3>
+            <p>For detailed troubleshooting, run with debug mode:</p>
+            <pre><code>./lmstudio_autostart.sh --debug</code></pre>
+            <p>This enables verbose logging and shows all operations including API calls and model loading process.</p>
+            
+            <h3>Clearing Logs</h3>
+            <p>To clear old logs, simply delete the <code>.logs/</code> directory (logs will be recreated on next run):</p>
+            <pre><code>rm -rf .logs</code></pre>
+        </section>
+
+        <section id="resources">
+            <h2>Official Resources</h2>
+            <p>Learn more about LM Studio and stay updated with the latest developments:</p>
+            <ul>
+                <li><a href="https://lmstudio.ai/blog" target="_blank" rel="noopener">Blog</a> – Latest updates, news, and release announcements for LM Studio</li>
+                <li><a href="https://lmstudio.ai/docs/app" target="_blank" rel="noopener">Official Documentation</a> – Comprehensive guide and API documentation for LM Studio</li>
+                <li><a href="https://lmstudio.ai/download" target="_blank" rel="noopener">Download</a> – Download the latest version of LM Studio for your platform</li>
+            </ul>
+        </section>
+    </main>
+
+    <button class="jump-to-top" id="jump-to-top" aria-label="Jump to top">↑ Top</button>
+
+    <script>
+    // Progressive enhancement guard
+    (function(){
+        // Read time
+        const readEl = document.getElementById('read-time');
+        if (readEl) {
+            const text = document.body.innerText || '';
+            const words = text.trim().split(/\s+/).length;
+            const minutes = Math.max(1, Math.ceil(words / 200));
+            readEl.textContent = `Estimated read time: ${minutes} min`;
+        }
+
+        // Jump to top
+        const jumpBtn = document.getElementById('jump-to-top');
+        if (jumpBtn) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 200) jumpBtn.classList.add('show');
+                else jumpBtn.classList.remove('show');
+            });
+            jumpBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+
+        // Mermaid wird später in applyMermaidTheme initialisiert
+
+        // Highlight current section in TOC (deterministic scroll-based)
+        const links = Array.from(document.querySelectorAll('.toc a'));
+        const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+        const offset = 120; // pixels from top to consider a section as 'current'
+        let suppressTOCUpdate = false;
+        function setActiveSectionById(id) {
+            links.forEach(a => a.setAttribute('aria-current', 'false'));
+            const link = links.find(a => a.getAttribute('href') === `#${id}`);
+            if (link) link.setAttribute('aria-current', 'true');
+        }
+        function updateTOCHighlight() {
+            if (suppressTOCUpdate) return;
+            // Choose the last section whose top is above the offset; fallback to first
+            let active = sections[0];
+            for (const s of sections) {
+                const top = s.getBoundingClientRect().top;
+                if (top - offset <= 0) active = s; else break;
+            }
+            if (active) setActiveSectionById(active.id);
+        }
+        // Initialize and bind events
+        updateTOCHighlight();
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (suppressTOCUpdate) return;
+            if (!ticking) {
+                window.requestAnimationFrame(() => { updateTOCHighlight(); ticking = false; });
+                ticking = true;
+            }
+        }, { passive: true });
+        window.addEventListener('hashchange', () => updateTOCHighlight());
+        // Improve accuracy on TOC click: smooth scroll with offset and immediate highlight
+        links.forEach(a => a.addEventListener('click', (e) => {
+            const targetId = a.getAttribute('href')?.slice(1);
+            if (!targetId) return;
+            const el = document.getElementById(targetId);
+            if (!el) return;
+            e.preventDefault();
+            suppressTOCUpdate = true;
+            // Update URL without triggering hashchange
+            history.pushState(null, '', `#${targetId}`);
+            // Compute scroll target with offset
+            const y = window.scrollY + el.getBoundingClientRect().top - offset + 1; // +1 to ensure it crosses threshold
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            setActiveSectionById(targetId);
+            // Re-enable auto updates after scroll settles
+            setTimeout(() => { suppressTOCUpdate = false; updateTOCHighlight(); }, 450);
+        }));
+
+        // Theme toggle: persist in localStorage and update Mermaid theme
+        const themeBtn = document.getElementById('theme-toggle');
+        const root = document.body;
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'light' || storedTheme === 'dark') {
+            root.setAttribute('data-theme', storedTheme);
+            if (themeBtn) {
+                themeBtn.setAttribute('aria-pressed', String(storedTheme === 'light'));
+                themeBtn.textContent = storedTheme === 'dark' ? 'Dark' : 'Light';
+            }
+        } else {
+            // default dark
+            root.setAttribute('data-theme', 'dark');
+            if (themeBtn) themeBtn.textContent = 'Dark';
+        }
+        function applyMermaidTheme(theme) {
+            try {
+                if (window.mermaid) {
+                    const themeCSSDark = `
+                      .node rect, .node circle, .node ellipse, .node polygon { fill: #1f254b; stroke: #7aa2f7; }
+                      .node text { fill: #e6e9ef; }
+                      .edgeLabel rect { fill: #131735; stroke: #7aa2f7; }
+                      .cluster rect { fill: #0f1221; stroke: #7aa2f7; }
+                      .label, .edgeLabel tspan { fill: #e6e9ef; }
+                    `;
+                    const themeCSSLight = `
+                      .node rect, .node circle, .node ellipse, .node polygon { fill: #eef2ff; stroke: #3366ff; }
+                      .node text { fill: #1c2333; }
+                      .edgeLabel rect { fill: #f8fafc; stroke: #3366ff; }
+                      .cluster rect { fill: #ffffff; stroke: #3366ff; }
+                      .label, .edgeLabel tspan { fill: #1c2333; }
+                    `;
+                    const cfg = {
+                        startOnLoad: false,
+                        theme: 'base',
+                        themeVariables: theme === 'light' ? {
+                            primaryColor: '#eef2ff',
+                            primaryBorderColor: '#3366ff',
+                            primaryTextColor: '#1c2333',
+                            secondaryColor: '#f8fafc',
+                            lineColor: '#2dbf71',
+                            textColor: '#1c2333',
+                            noteBkgColor: '#e6ffed',
+                            noteTextColor: '#093',
+                        } : {
+                            primaryColor: '#1f254b',
+                            primaryBorderColor: '#7aa2f7',
+                            primaryTextColor: '#e6e9ef',
+                            secondaryColor: '#1a1f3b',
+                            lineColor: '#9ece6a',
+                            textColor: '#e6e9ef',
+                            noteBkgColor: '#1b3a2b',
+                            noteTextColor: '#e6ffe6',
+                        },
+                        themeCSS: theme === 'light' ? themeCSSLight : themeCSSDark,
+                        flowchart: { curve: 'basis' }
+                    };
+                    mermaid.initialize(cfg);
+                    mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                }
+            } catch(e) {}
+        }
+    applyMermaidTheme(root.getAttribute('data-theme'));
+    // In case mermaid script (deferred) wasn't ready yet, re-apply after DOM is ready
+    document.addEventListener('DOMContentLoaded', () => applyMermaidTheme(root.getAttribute('data-theme')));
+    window.addEventListener('load', () => applyMermaidTheme(root.getAttribute('data-theme')));
+
+        themeBtn?.addEventListener('click', () => {
+            const current = root.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            if (themeBtn) {
+                themeBtn.setAttribute('aria-pressed', String(next === 'light'));
+                themeBtn.textContent = next === 'dark' ? 'Dark' : 'Light';
+            }
+            applyMermaidTheme(next);
+        });
+    })();
+    </script>
+</body>
+</html>

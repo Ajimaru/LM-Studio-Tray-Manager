@@ -2,6 +2,8 @@
 
 ![LM Studio Icon](assets/img/lm-studio-64x64.png)
 
+---
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/downloads/)
 [![LM Studio App](https://img.shields.io/badge/LM_Studio_App-v0.4.3+-green.svg)](https://lmstudio.ai/download)
@@ -124,8 +126,10 @@ cat .logs/lmstudio_tray.log
 
 ## Documentation
 
-- **[Full Documentation](docs/index.html)** – Detailed usage examples, flow diagrams, and architecture
+- **[Docs Landing Page](docs/index.html)** – GitHub Pages entry point with links to all docs
+- **[Full Documentation](docs/guide.html)** – Detailed usage examples, flow diagrams, and architecture
 - **[Virtual Environment Setup](docs/VENV_SETUP.md)** – Guide for Python environment configuration and troubleshooting
+- **[Python Docstrings Reference](docs/python_docstrings.html)** – Static API-style view of `lmstudio_tray.py` docstrings
 
 ## Requirements
 

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <title>LM Studio Tray Python Docstrings</title>
+    <style>
+        :root {
+            --bg-color: #0f1221;
+            --bg-elev: #131735;
+            --text-color: #e6e9ef;
+            --muted-text: #b5bfd3;
+            --sidebar-bg: #0b0e1f;
+            --sidebar-text: #c6d0f5;
+            --accent-color: #7aa2f7;
+            --accent-2: #9ece6a;
+            --accent-3: #bb9af7;
+            --border-color: #2a2f4a;
+            --code-bg: #141830;
+            --highlight: #1b2042;
+            --focus: #ffd166;
+            --shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-color: #f6f7fb;
+                --bg-elev: #ffffff;
+                --text-color: #1c2333;
+                --muted-text: #4a5568;
+                --sidebar-bg: #eef0f6;
+                --sidebar-text: #1c2333;
+                --accent-color: #3366ff;
+                --accent-2: #2dbf71;
+                --accent-3: #7b61ff;
+                --border-color: #d7dbe7;
+                --code-bg: #f2f4fb;
+                --highlight: #e9ecf6;
+                --focus: #c471ed;
+                --shadow: 0 8px 22px rgba(0,0,0,0.12);
+            }
+        }
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Helvetica, Arial;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100dvh;
+        }
+        a { color: var(--accent-color); }
+        nav {
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 24px 20px;
+            position: sticky;
+            top: 0;
+            height: 100dvh;
+            overflow: auto;
+        }
+        .toc { list-style: none; padding: 0; margin: 12px 0 0; }
+        .toc li { margin: 8px 0; }
+        .toc a {
+            color: var(--sidebar-text);
+            text-decoration: none;
+            display: block;
+            padding: 8px 10px;
+            border-radius: 6px;
+        }
+        .toc a:hover { background: var(--highlight); }
+        main { padding: 28px clamp(18px, 3vw, 40px); }
+        section {
+            background: var(--bg-elev);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            padding: 18px;
+            border-radius: 14px;
+            margin: 18px 0;
+        }
+        h1, h2 { margin-top: 0; }
+        h2 { color: var(--accent-color); }
+        h3 { color: var(--accent-3); }
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            border-radius: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .muted { color: var(--muted-text); }
+        @media (max-width: 920px) {
+            body { grid-template-columns: 1fr; }
+            nav { position: static; height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <nav aria-label="Table of contents">
+        <h2>Docstrings</h2>
+        <ul class="toc">
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#module">Module</a></li>
+            <li><a href="#functions">Top-level Functions</a></li>
+            <li><a href="#trayicon">Class TrayIcon</a></li>
+            <li><a href="#methods">TrayIcon Methods</a></li>
+        </ul>
+        <p class="muted"><a href="index.html">← Back to main docs</a></p>
+    </nav>
+
+    <main>
+        <section id="overview">
+            <h1>Python Docstrings Reference</h1>
+            <p>Static API documentation extracted from <code>lmstudio_tray.py</code> docstrings.</p>
+            <p class="muted">Intended for GitHub Pages integration with the existing docs set.</p>
+        </section>
+
+        <section id="module">
+            <h2>Module Docstring</h2>
+            <pre>LM Studio Tray Icon Monitor.
+
+A GTK3-based system tray application that monitors the status of the LM Studio
+daemon and desktop app. It displays visual indicators and notifications when
+status changes, and supports starting/stopping daemon and desktop app as well
+as viewing status information through a context menu.
+
+The script accepts optional command-line arguments:
+    - sys.argv[1]: Model name to monitor (default: "no-model-passed")
+    - sys.argv[2]: Script directory for logging (default: current working dir)
+
+Logging is written to ".logs/lmstudio_tray.log" in the script directory.</pre>
+        </section>
+
+        <section id="functions">
+            <h2>Top-level Functions</h2>
+            <h3><code>get_lms_cmd()</code></h3>
+            <pre>Return the LM Studio CLI path if executable or resolve it from PATH.</pre>
+
+            <h3><code>get_llmster_cmd()</code></h3>
+            <pre>Return llmster executable path from PATH or LM Studio install dir.</pre>
+
+            <h3><code>is_llmster_running()</code></h3>
+            <pre>Return True when a llmster process is currently running.</pre>
+
+            <h3><code>get_desktop_app_pids()</code></h3>
+            <pre>Return PIDs of LM Studio desktop app root processes.</pre>
+
+            <h3><code>kill_existing_instances()</code></h3>
+            <pre>Terminate other running instances of this script.</pre>
+        </section>
+
+        <section id="trayicon">
+            <h2>Class <code>TrayIcon</code></h2>
+            <pre>Manage the GTK tray icon for LM Studio runtime monitoring.
+
+The tray displays runtime status, provides daemon/app controls, and sends
+desktop notifications on status transitions.</pre>
+        </section>
+
+        <section id="methods">
+            <h2>TrayIcon Methods</h2>
+            <h3><code>begin_action_cooldown(action_name, seconds=2.0)</code></h3>
+            <pre>Prevent rapid double-triggering of tray actions.</pre>
+
+            <h3><code>build_menu()</code></h3>
+            <pre>Build or rebuild the context menu with current status and
+options.</pre>
+
+            <h3><code>get_daemon_status()</code></h3>
+            <pre>Check if llmster headless daemon is running.
+
+Returns:
+    str: "running" if daemon process is active,
+         "stopped" if llmster is installed but daemon not running,
+         "not_found" if llmster is not installed.</pre>
+
+            <h3><code>get_desktop_app_status()</code></h3>
+            <pre>Check if LM Studio desktop app is running.
+
+The desktop app is started via lmstudio_autostart.sh --gui or directly,
+and runs WITHOUT the --run-as-service flag.
+
+This is different from the headless daemon (--run-as-service).
+
+Returns:
+    str: "running" if desktop app process is active,
+         "stopped" if installed but not running,
+         "not_found" if not installed.</pre>
+
+            <h3><code>get_status_indicator(status)</code></h3>
+            <pre>Convert status string to emoji indicator.
+
+Args:
+    status: "running", "stopped", or "not_found"
+
+Returns:
+    str: Emoji indicator (🟢 running, 🟡 stopped, 🔴 not_found)</pre>
+
+            <h3><code>_run_daemon_attempts(attempts, stop_when)</code></h3>
+            <pre>Run daemon command attempts until a condition is met.
+
+Args:
+    attempts: Ordered list of command argument lists.
+    stop_when: Callable that receives the subprocess result and
+        returns True when no further attempts are needed.
+
+Returns:
+    CompletedProcess | None: Last command result, or None if no
+    command was executed.</pre>
+
+            <h3><code>_build_daemon_attempts(action)</code></h3>
+            <pre>Build ordered daemon CLI attempts for one action.
+
+Args:
+    action: Either "start" or "stop".
+
+Returns:
+    list[list[str]]: Commands to try in order.</pre>
+
+            <h3><code>_force_stop_llmster()</code></h3>
+            <pre>Force-stop llmster and wait briefly for process exit.</pre>
+
+            <h3><code>_stop_llmster_best_effort()</code></h3>
+            <pre>Stop llmster with graceful attempts and force-stop fallback.
+
+Returns:
+    tuple[bool, CompletedProcess | None]:
+        - True when llmster is no longer running.
+        - Last command result used during stop attempts.</pre>
+
+            <h3><code>_stop_desktop_app_processes()</code></h3>
+            <pre>Stop LM Studio desktop processes using TERM, then KILL.
+
+Returns:
+    bool: True when the desktop app is no longer running.</pre>
+
+            <h3><code>start_daemon(_widget)</code></h3>
+            <pre>Start the headless daemon.
+
+Stops the desktop app first if needed, then tries daemon start
+variants and notifies on success/failure.
+
+Args:
+    _widget: Widget that triggered the action (unused).</pre>
+
+            <h3><code>stop_daemon(_widget)</code></h3>
+            <pre>Stop the headless daemon.
+
+Tries graceful stop variants first and falls back to force-stop.
+
+Args:
+    _widget: Widget that triggered the action (unused).</pre>
+
+            <h3><code>start_desktop_app(_widget)</code></h3>
+            <pre>Start the LM Studio desktop app.
+
+Stops the daemon first if needed, locates the app (.deb or AppImage),
+and launches it with user notification.
+
+Args:
+    _widget: Widget that triggered the action (unused).</pre>
+
+            <h3><code>stop_desktop_app(_widget)</code></h3>
+            <pre>Stop the LM Studio desktop app process.
+
+Useful when the window closes to tray but the process remains active.
+
+Args:
+    _widget: Widget that triggered the action (unused).</pre>
+
+            <h3><code>quit_app(_widget)</code></h3>
+            <pre>Handle the tray quit action by logging and exiting the Gtk main
+loop.</pre>
+
+            <h3><code>show_status_dialog(_widget)</code></h3>
+            <pre>Show a GTK message dialog containing the LM Studio CLI status output.
+
+Runs `lms ps` to retrieve status information, formats a friendly
+message on success or error, and displays it in an informational
+dialog. Errors are caught and shown to the user instead of raising.</pre>
+
+            <h3><code>check_model()</code></h3>
+            <pre>Check LM Studio runtime/model status and update the tray icon.
+
+Updates the tray icon using this schema:
+- FAIL: neither daemon nor desktop app is installed
+- WARN: neither daemon nor desktop app is running
+- INFO: daemon or desktop app is running, but no model is loaded
+- OK: a model is loaded
+
+Sends desktop notifications when status changes from a previous
+non-None state, and logs status changes and errors.
+
+Returns:
+    bool: True to indicate the check completed (used for scheduled
+    callbacks).</pre>
+        </section>
+    </main>
+</body>
+</html>

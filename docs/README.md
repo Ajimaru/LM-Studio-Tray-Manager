@@ -4,15 +4,19 @@ Welcome to the LM Studio Automation documentation.
 
 ## Quick Links
 
-- **[Main Documentation](index.html)** – Start here for full usage guide, examples, and architecture
+- **[Landing Page](index.html)** – GitHub Pages start page with links to all documentation formats
+- **[Full HTML Guide](guide.html)** – Detailed usage guide, flow diagrams, and architecture
 - **[Virtual Environment Setup](VENV_SETUP.md)** – How to configure the Python environment
+- **[Python Docstrings Reference](python_docstrings.html)** – Static API-style documentation from `lmstudio_tray.py`
 
 ## File Organization
 
 ```files
 docs/
-├── index.html              # Main comprehensive documentation (open in browser)
+├── index.html              # GitHub Pages landing page
+├── guide.html              # Main comprehensive documentation (full guide)
 ├── VENV_SETUP.md           # Virtual environment configuration guide
+├── python_docstrings.html  # Static docstrings reference for lmstudio_tray.py
 └── README.md               # This file
 ```
 
