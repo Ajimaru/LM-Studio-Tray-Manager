@@ -11,6 +11,7 @@
 [![CI](https://github.com/Ajimaru/LM-Studio/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio/actions/workflows/ci.yml)
 [![Docs](https://github.com/Ajimaru/LM-Studio/actions/workflows/docs.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio/actions/workflows/docs.yml)
 [![Security](https://github.com/Ajimaru/LM-Studio/actions/workflows/security.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio/actions/workflows/security.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/008764f58bb046ef886c86bccd336b85)](https://app.codacy.com/gh/Ajimaru/LM-Studio/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Made with Love in 🇪🇺](https://img.shields.io/badge/Made_with_❤️_in_🇪🇺-gray.svg)](https://europa.eu/)
 
 Automation scripts for LM Studio - a powerful desktop and server application for running Large Language Models locally on consumer hardware.
