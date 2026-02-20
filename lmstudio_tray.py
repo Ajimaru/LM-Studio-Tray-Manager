@@ -2,9 +2,9 @@
 """LM Studio Tray Icon Monitor.
 
 A GTK3-based system tray application that monitors the status of the LM Studio
-daemon and loaded models. It displays visual indicators and notifications when
-model status changes, and supports starting the daemon, reloading models, and
-viewing status information through a context menu.
+daemon and desktop app. It displays visual indicators and notifications when
+status changes, and supports starting/stopping daemon and desktop app as well
+as viewing status information through a context menu.
 
 The script accepts optional command-line arguments:
     - sys.argv[1]: Model name to monitor (default: "no-model-passed")
@@ -216,7 +216,6 @@ class TrayIcon:
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
         self.indicator.set_title("LM Studio Monitor")
         self.action_lock_until = 0.0
-        self.action_lock_name = None
 
         # Create persistent menu (AppIndicator requires static menu)
         self.menu = Gtk.Menu()
@@ -225,22 +224,6 @@ class TrayIcon:
         self.last_status = None
         self.check_model()
         GLib.timeout_add_seconds(INTERVAL, self.check_model)
-
-    def on_click(self, _icon):
-        """Handle tray icon click by sending a model status notification.
-
-        Args:
-            _icon: The system tray icon instance that triggered the
-                click event.
-        """
-        subprocess.run(
-            [
-                "notify-send",
-                "LM Studio",
-                f"Model status: {MODEL} is being monitored",
-            ],
-            check=False,
-        )
 
     def begin_action_cooldown(self, action_name, seconds=2.0):
         """Prevent rapid double-triggering of tray actions."""
@@ -255,7 +238,6 @@ class TrayIcon:
             return False
 
         self.action_lock_until = now + seconds
-        self.action_lock_name = action_name
         return True
 
     def build_menu(self):
@@ -321,10 +303,6 @@ class TrayIcon:
             self.menu.append(not_found_item)
 
         self.menu.append(Gtk.SeparatorMenuItem())
-
-        reload_item = Gtk.MenuItem(label="Reload Model")
-        reload_item.connect("activate", self.reload_model)
-        self.menu.append(reload_item)
 
         status_item = Gtk.MenuItem(label="Show Status")
         status_item.connect("activate", self.show_status_dialog)
@@ -440,7 +418,17 @@ class TrayIcon:
             return "🔴"
 
     def _run_daemon_attempts(self, attempts, stop_when):
-        """Run daemon CLI attempts until stop condition is met."""
+        """Run daemon command attempts until a condition is met.
+
+        Args:
+            attempts: Ordered list of command argument lists.
+            stop_when: Callable that receives the subprocess result and
+                returns True when no further attempts are needed.
+
+        Returns:
+            CompletedProcess | None: Last command result, or None if no
+            command was executed.
+        """
         result = None
         for command in attempts:
             result = subprocess.run(
@@ -455,7 +443,14 @@ class TrayIcon:
         return result
 
     def _build_daemon_attempts(self, action):
-        """Build ordered daemon CLI attempts for start/stop actions."""
+        """Build ordered daemon CLI attempts for one action.
+
+        Args:
+            action: Either "start" or "stop".
+
+        Returns:
+            list[list[str]]: Commands to try in order.
+        """
         lms_cmd = get_lms_cmd()
         llmster_cmd = get_llmster_cmd()
         attempts = []
@@ -502,7 +497,7 @@ class TrayIcon:
         return attempts
 
     def _force_stop_llmster(self):
-        """Force-kill llmster and wait briefly for exit."""
+        """Force-stop llmster and wait briefly for process exit."""
         subprocess.run(
             ["pkill", "-x", "llmster"],
             stdout=subprocess.PIPE,
@@ -522,7 +517,13 @@ class TrayIcon:
             time.sleep(0.25)
 
     def _stop_llmster_best_effort(self):
-        """Try graceful daemon stop attempts, then force-kill fallback."""
+        """Stop llmster with graceful attempts and force-stop fallback.
+
+        Returns:
+            tuple[bool, CompletedProcess | None]:
+                - True when llmster is no longer running.
+                - Last command result used during stop attempts.
+        """
         attempts = self._build_daemon_attempts("stop")
         result = self._run_daemon_attempts(
             attempts,
@@ -535,7 +536,11 @@ class TrayIcon:
         return (not is_llmster_running(), result)
 
     def _stop_desktop_app_processes(self):
-        """Stop LM Studio desktop app processes with TERM then KILL."""
+        """Stop LM Studio desktop processes using TERM, then KILL.
+
+        Returns:
+            bool: True when the desktop app is no longer running.
+        """
         desktop_pids = get_desktop_app_pids()
         for pid in desktop_pids:
             try:
@@ -564,13 +569,13 @@ class TrayIcon:
         return self.get_desktop_app_status() != "running"
 
     def start_daemon(self, _widget):
-        """Start or ensure the llmster daemon is running.
+        """Start the headless daemon.
 
-        Tries common llmster start command variants and notifies the user
-        about success or failure.
+        Stops the desktop app first if needed, then tries daemon start
+        variants and notifies on success/failure.
 
         Args:
-            _widget: UI widget that triggered the action (unused).
+            _widget: Widget that triggered the action (unused).
         """
         if not self.begin_action_cooldown("start_daemon"):
             return
@@ -645,12 +650,12 @@ class TrayIcon:
             self.build_menu()
 
     def stop_daemon(self, _widget):
-        """Stop the llmster daemon.
+        """Stop the headless daemon.
 
-        Tries common llmster stop command variants.
+        Tries graceful stop variants first and falls back to force-stop.
 
         Args:
-            _widget: UI widget that triggered the action (unused).
+            _widget: Widget that triggered the action (unused).
         """
         if not self.begin_action_cooldown("stop_daemon"):
             return
@@ -704,19 +709,13 @@ class TrayIcon:
             self.build_menu()
 
     def start_desktop_app(self, _widget):
-        """Start the LM Studio desktop application.
+        """Start the LM Studio desktop app.
 
-        Searches for the desktop app in order of preference:
-        1. .deb package installation
-        2. AppImage in common locations and script directory
-
-        If the headless daemon is running, this action stops it first and
-        only then launches the GUI.
-
-        If no desktop app is found, displays an error notification.
+        Stops the daemon first if needed, locates the app (.deb or AppImage),
+        and launches it with user notification.
 
         Args:
-            _widget: The widget that triggered this callback (unused).
+            _widget: Widget that triggered the action (unused).
         """
         if not self.begin_action_cooldown("start_desktop_app"):
             return
@@ -845,13 +844,12 @@ class TrayIcon:
             )
 
     def stop_desktop_app(self, _widget):
-        """Stop LM Studio desktop app/background process completely.
+        """Stop the LM Studio desktop app process.
 
-        This is useful when closing the window only minimizes to tray and the
-        process keeps running in the background.
+        Useful when the window closes to tray but the process remains active.
 
         Args:
-            _widget: The widget that triggered this callback (unused).
+            _widget: Widget that triggered the action (unused).
         """
         if not self.begin_action_cooldown("stop_desktop_app"):
             return
@@ -896,48 +894,6 @@ class TrayIcon:
                     "Error",
                     f"Desktop app stop failed: {e}",
                 ],
-                check=False,
-            )
-
-    def reload_model(self, _widget):
-        """
-        Reload the currently loaded model in LM Studio.
-
-        Args:
-            _widget: The widget that triggered this callback (unused).
-
-        Raises:
-            Logs errors and displays notifications if model reloading fails.
-        """
-        if MODEL != "no-model-passed":
-            try:
-                lms_cmd = get_lms_cmd()
-                if not lms_cmd:
-                    subprocess.run(
-                        ["notify-send", "Error", "lms CLI not found"],
-                        check=False,
-                    )
-                    return
-                subprocess.run([lms_cmd, "load", MODEL], check=False)
-                logging.info("Model reloaded: %s", MODEL)
-                subprocess.run(
-                    [
-                        "notify-send",
-                        "LM Studio",
-                        f"Model {MODEL} is being reloaded",
-                    ],
-                    check=False,
-                )
-            except (OSError, RuntimeError, subprocess.SubprocessError) as e:
-                logging.error("Error reloading model: %s", e)
-                err_msg = f"Model could not be reloaded: {e}"
-                subprocess.run(
-                    ["notify-send", "Error", err_msg],
-                    check=False,
-                )
-        else:
-            subprocess.run(
-                ["notify-send", "Info", "No model specified for reloading"],
                 check=False,
             )
 
@@ -993,73 +949,78 @@ class TrayIcon:
 
     def check_model(self):
         """
-        Check the status of the LM Studio model and update the tray icon.
+        Check LM Studio runtime/model status and update the tray icon.
 
-        Queries the LM Studio CLI to determine if the expected model is
-        loaded and active. Updates the status icon and tooltip based on the
-        current state (OK, INFO, WARN, FAIL). Sends desktop notifications when
-        status changes from a previous non-None state, and logs status changes
-        and errors.
+        Updates the tray icon using this schema:
+        - FAIL: neither daemon nor desktop app is installed
+        - WARN: neither daemon nor desktop app is running
+        - INFO: daemon or desktop app is running, but no model is loaded
+        - OK: a model is loaded
+
+        Sends desktop notifications when status changes from a previous
+        non-None state, and logs status changes and errors.
 
         Returns:
             bool: True to indicate the check completed (used for scheduled
             callbacks).
         """
         try:
-            if not get_llmster_cmd():
+            lms_cmd = get_lms_cmd()
+            current_status = None
+            daemon_status = self.get_daemon_status()
+            app_status = self.get_desktop_app_status()
+
+            daemon_running = daemon_status == "running"
+            app_running = app_status == "running"
+            any_running = daemon_running or app_running
+            both_missing = (
+                daemon_status == "not_found" and app_status == "not_found"
+            )
+
+            if both_missing:
+                current_status = "FAIL"
+                self.indicator.set_icon_full(
+                    ICON_FAIL,
+                    "Daemon and desktop app not installed"
+                )
+            elif not any_running:
+                current_status = "WARN"
                 self.indicator.set_icon_full(
                     ICON_WARN,
-                    "Monitoring only (llmster not installed)"
+                    "Daemon and desktop app stopped"
                 )
-                self.last_status = "MONITOR_ONLY"
-                self.build_menu()
-                return True
-
-            lms_cmd = get_lms_cmd()
-            if not lms_cmd:
-                self.indicator.set_icon_full(ICON_FAIL, "LM Studio not found")
-                return True
-            current_status = None
-            if self.get_daemon_status() != "running":
-                current_status = "FAIL"
-                self.indicator.set_icon_full(ICON_FAIL, "Daemon not running")
             else:
-                result = subprocess.run(
-                    [lms_cmd, "ps"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    timeout=0.5,  # Reduced from 5s to prevent UI blocking
-                    check=False
+                current_status = "INFO"
+                self.indicator.set_icon_full(
+                    ICON_INFO,
+                    "No model loaded"
                 )
-                if result.returncode == 0:
-                    if MODEL in result.stdout:
-                        current_status = "OK"
-                        self.indicator.set_icon_full(ICON_OK, "Model active")
-                    elif result.stdout.strip():
-                        current_status = "INFO"
-                        self.indicator.set_icon_full(
-                            ICON_INFO, "Model changed"
-                        )
-                    else:
-                        current_status = "WARN"
-                        self.indicator.set_icon_full(
-                            ICON_WARN,
-                            "No model loaded"
-                        )
-                else:
-                    current_status = "FAIL"
-                    self.indicator.set_icon_full(
-                        ICON_FAIL,
-                        "Daemon not running"
+
+                # Query lms ps whenever daemon or desktop app is running.
+                # This avoids daemon wake-up in fully stopped state while still
+                # allowing model detection in GUI-only mode.
+                if any_running and lms_cmd:
+                    result = subprocess.run(
+                        [lms_cmd, "ps"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        timeout=0.5,  # Reduced from 5s to prevent UI blocking
+                        check=False
                     )
+                    if result.returncode == 0 and result.stdout.strip():
+                        current_status = "OK"
+                        self.indicator.set_icon_full(ICON_OK, "Model loaded")
+                else:
+                    current_status = "INFO"
+                    self.indicator.set_icon_full(ICON_INFO, "No model loaded")
 
             if (
                 self.last_status != current_status
                 and self.last_status is not None
             ):
                 if current_status == "OK":
-                    msg = f"✅ Model {MODEL} is now active"
+                    msg = "✅ A model is loaded"
                     subprocess.run(
                         ["notify-send", "LM Studio", msg],
                         check=False
@@ -1069,7 +1030,8 @@ class TrayIcon:
                         [
                             "notify-send",
                             "LM Studio",
-                            "ℹ️ Model changed to another one",
+                            "ℹ️ Daemon or desktop app is running, "
+                            "but no model is loaded",
                         ],
                         check=False
                     )
@@ -1078,7 +1040,7 @@ class TrayIcon:
                         [
                             "notify-send",
                             "LM Studio",
-                            f"⚠️ No model loaded (expected: {MODEL})",
+                            "⚠️ Neither daemon nor desktop app is running",
                         ],
                         check=False
                     )
@@ -1087,7 +1049,7 @@ class TrayIcon:
                         [
                             "notify-send",
                             "LM Studio",
-                            "❌ LM Studio has stopped",
+                            "❌ Daemon and desktop app are not installed",
                         ],
                         check=False
                     )
@@ -1103,8 +1065,8 @@ class TrayIcon:
             self.build_menu()
 
         except subprocess.TimeoutExpired:
-            # Timeout usually means lms ps is slow, not that daemon is down
-            # Keep previous status to avoid flashing tooltips
+            # Timeout usually means lms ps is slow. Keep previous status to
+            # avoid flashing tray state.
             logging.debug("Timeout in lms ps check (keeping previous status)")
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             self.indicator.set_icon_full(ICON_FAIL, "Error checking status")
