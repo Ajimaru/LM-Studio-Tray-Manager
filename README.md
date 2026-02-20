@@ -60,25 +60,6 @@ The script will:
 - Check setup log: `cat .logs/setup.log`
 - Check daemon log: `tail -f .logs/lmstudio_autostart.log`
 
-## Project Structure
-
-```files
-.
-├── setup.sh                    # 👈 Run this FIRST after cloning
-├── lmstudio_autostart.sh       # Main automation script
-├── lmstudio_tray.py            # System tray monitor
-├── docs/
-│   ├── index.html              # Full documentation (open in browser)
-│   ├── VENV_SETUP.md           # Virtual environment guide
-│   └── README.md               # Docs overview
-├── .logs/                      # Log files (created automatically)
-│   ├── lmstudio_autostart.log
-│   └── lmstudio_tray.log
-├── venv/                       # Virtual environment (created by setup.sh)
-├── README.md                   # This file
-└── LICENSE                     # MIT License
-```
-
 ## Quick Reference
 
 ```bash
