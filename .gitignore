@@ -5,6 +5,7 @@
 __pycache__
 venv/
 .logs/
+dist/
 
 #Ignore AI rules
 .github/instructions/codacy.instructions.md
