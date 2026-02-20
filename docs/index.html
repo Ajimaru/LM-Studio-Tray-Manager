@@ -237,7 +237,7 @@ grep -i error .logs/*.log</code></pre>
             <p>This Bash script automates the startup process of LM Studio. It performs the following main tasks:</p>
             <ul>
                 <li>Checks and installs required dependencies (curl, notify-send, python3)</li>
-                <li>Starts or ensures the LM Studio daemon is running</li>
+                <li>Default mode starts llmster daemon and tray monitor</li>
                 <li>Optionally starts the LM Studio GUI (stops daemon first)</li>
                 <li>Waits for the LM Studio API to be available</li>
                 <li>Optionally loads a specified model using lms-CLI</li>
@@ -274,9 +274,9 @@ EOF</code></pre>
 
         <section id="tray-script">
             <h2>Tray Monitor Script (<code>lmstudio_tray.py</code>)</h2>
-            <p>This Python script creates a system tray icon for LM Studio monitoring. It provides:</p>
+            <p>This Python script creates a system tray icon for LM Studio runtime monitoring and mode switching. It provides:</p>
             <ul>
-                <li>Real-time model status monitoring with visual indicators (🟢🟡🔴)</li>
+                <li>Runtime/model monitoring with four-state icon schema (❌⚠️ℹ️✅)</li>
                 <li>Live status display for daemon and desktop app in menu</li>
                 <li>Desktop app launcher (supports .deb and AppImage detection)</li>
                 <li>Tray icon with status indicators (active/warning/error)</li>
@@ -290,6 +290,13 @@ EOF</code></pre>
                 <li><strong>🟢 (Green Circle)</strong> – Component is currently running/active</li>
                 <li><strong>🟡 (Yellow Circle)</strong> – Component is installed but not running</li>
                 <li><strong>🔴 (Red Circle)</strong> – Component is not found/not installed</li>
+            </ul>
+            <h3>Tray Icon Schema</h3>
+            <ul>
+                <li><strong>❌</strong> – Daemon and desktop app are not installed</li>
+                <li><strong>⚠️</strong> – Neither daemon nor desktop app is running</li>
+                <li><strong>ℹ️</strong> – Daemon or desktop app is running, but no model is loaded</li>
+                <li><strong>✅</strong> – A model is loaded</li>
             </ul>
             <h3>Tray Menu Options</h3>
             <ul>
@@ -307,7 +314,8 @@ EOF</code></pre>
                         <li>🔴 Daemon not found – install from lmstudio.ai</li>
                     </ul>
                 </li>
-                <li><strong>Reload Model:</strong> Reloads the specified model</li>
+                <li><strong>Stop Desktop App:</strong> Stops LM Studio desktop process</li>
+                <li><strong>Stop Daemon:</strong> Stops llmster daemon process</li>
                 <li><strong>Show Status:</strong> Displays current LM Studio status in a dialog</li>
                 <li><strong>Quit Tray:</strong> Terminates the tray monitor</li>
             </ul>
@@ -359,13 +367,14 @@ EOF</code></pre>
                     B --> C{--gui flag?}
                     C -->|Yes| D[Stop daemon]
                     D --> E[Start LM Studio GUI]
-                    E --> I["<b>END</b>"]
+                    E --> L["Start lmstudio_tray.py<br/>in background"]
+                    L --> I["<b>END</b>"]
                     C -->|No| F[Start LM Studio daemon]
                     F --> G[Wait for API<br/>http://localhost:1234]
                     G --> H{Model specified?}
                     H -->|Yes| J[Load model via lms CLI]
                     H -->|No| K[Skip model loading]
-                    J --> L["Start lmstudio_tray.py<br/>in background"]
+                    J --> L
                     K --> L
                     L --> I
             </div>
@@ -379,21 +388,24 @@ EOF</code></pre>
                     D --> E[Start daemon/API monitoring]
                     E --> F{Status check}
                     F --> G{Model loaded?}
-                    G -->|Yes| H[Set OK icon 🟢]
-                    G -->|No| I{Models available?}
-                    I -->|Yes| J[Set WARN icon 🟡]
-                    I -->|No| K[Set FAIL icon 🔴]
+                    G -->|Yes| H[Set OK icon ✅]
+                    G -->|No| I{Any runtime active?}
+                    I -->|Yes| J[Set INFO icon ℹ️]
+                    I -->|No| K{Installed?}
+                    K -->|Yes| W[Set WARN icon ⚠️]
+                    K -->|No| X[Set FAIL icon ❌]
                     H --> L[Check for changes]
                     J --> L
-                    K --> L
+                    W --> L
+                    X --> L
                     L --> M{Status changed?}
                     M -->|Yes| N[Send notification]
                     M -->|No| O[Wait before<br/>next check]
                     N --> O
                     O --> F
                     F --> P{User action?}
-                    P -->|Restart| Q[Run lms daemon up]
-                    P -->|Reload Model| R[Run lms model reload]
+                    P -->|Start/Stop Daemon| Q[Switch to daemon mode]
+                    P -->|Start/Stop Desktop App| R[Switch to desktop app mode]
                     P -->|Show Status| S[Show status dialog]
                     P -->|Quit| T["<b>END</b>"]
                     Q --> F
@@ -410,11 +422,11 @@ EOF</code></pre>
 
             <h3>Start GUI (stops daemon first)</h3>
             <pre><code>./lmstudio_autostart.sh --gui</code></pre>
-            <p>Stops the daemon, starts the GUI, and exits the script.</p>
+            <p>Stops the daemon, starts the GUI, and starts the tray monitor.</p>
 
             <h3>Load Specific Model</h3>
             <pre><code>./lmstudio_autostart.sh --model qwen2.5:7b-instruct</code></pre>
-            <p>Starts LM Studio and loads the specified model.</p>
+            <p>Starts daemon mode and attempts to load the specified model.</p>
 
             <h3>Interactive Model Selection</h3>
             <pre><code>./lmstudio_autostart.sh --list-models</code></pre>

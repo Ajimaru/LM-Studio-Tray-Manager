@@ -169,7 +169,7 @@ export LM_AUTOSTART_SELECT_TIMEOUT=60
 
 ## Desktop App Launch via Tray Monitor
 
-The system tray monitor (`lmstudio_tray.py`) provides a convenient way to launch the LM Studio desktop GUI without stopping the daemon. This is especially useful for headless autostart setups.
+The system tray monitor (`lmstudio_tray.py`) provides mode switching between headless daemon and desktop GUI with conflict-safe transitions.
 
 ### Recommended Setup
 
@@ -189,32 +189,32 @@ EOF
 
 2. On login, the daemon and tray monitor will start automatically
 3. Click the tray icon (right-click) and select **"Start Desktop App"** to launch the GUI
-4. The daemon remains running in the background
+4. The tray will stop daemon first, then launch the desktop app
 
 ### How "Start Desktop App" Works
 
 The menu shows status indicators before each option when you right-click the tray:
 
-**Status Meanings:**
+**Tray Icon Meaning:**
 
-- **🟢 (Green)** – Component is running/available and active
-- **🟡 (Yellow)** – Component is installed but not currently running
-- **🔴 (Red)** – Component is not installed/not found
+- **❌ (Fail)** – Daemon and desktop app are both not installed
+- **⚠️ (Warn)** – Neither daemon nor desktop app is running
+- **ℹ️ (Info)** – Daemon or desktop app is running, but no model is loaded
+- **✅ (OK)** – A model is loaded
 
 **For "Start Desktop App":**
 
 - **Priority 1**: Looks for installed `.deb` package
 - **Priority 2**: Searches for AppImage in common locations and script directory (preferred locations: `~/Apps`, `~/LM_Studio`, `$SCRIPT_DIR`, etc.)
-- **On Launch**: Automatically ensures daemon is running (`lms daemon up`)
+- **On Launch**: Stops daemon first (if running), then launches GUI
 - **Notifications**: Desktop notifications confirm app start or display errors
 - **Logging**: All actions logged to `.logs/lmstudio_tray.log`
 
 **For "Start LM Studio Daemon":**
 
-- **Status Check**: Uses `lms ps` to verify if daemon is running
-- **🟢 Running**: Daemon is currently active and responding
-- **🟡 Stopped**: Daemon binary exists but is not running (click to start)
-- **🔴 Not Found**: Daemon (llmster) not installed (need to install from lmstudio.ai)
+- **Conflict handling**: Stops desktop app first (if running), then starts daemon
+- **Start path**: Tries `lms` first, then `llmster` variants with fallback logic
+- **Stop path**: Uses graceful stop attempts with force-stop fallback when needed
 
 ## Troubleshooting
 

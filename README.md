@@ -12,12 +12,12 @@ Automation scripts for LM Studio – a powerful desktop and server application f
 
 ## Features
 
-- **Daemon Automation** (`lmstudio_autostart.sh`): Automatically start the LM Studio daemon, wait for API availability, and optionally load models
-- **System Tray Monitor** (`lmstudio_tray.py`): GTK3 system tray integration with real-time model status monitoring (🟢🟡🔴), daemon control, and desktop app launcher with live status indicators
-- **Smart Status Indicators**: Real-time status display for daemon and desktop app (🟢 running / 🟡 stopped / 🔴 not found)
-- **Desktop App Launcher**: One-click option in tray to start LM Studio desktop GUI (supports both .deb and AppImage), automatically ensuring daemon is running
-- **GUI Integration**: Support for launching the LM Studio desktop GUI while managing daemon lifecycle
-- **Flexible Model Management**: Interactive model selection, automatic model loading, and status tracking
+- **Daemon/Desktop Orchestration** (`lmstudio_autostart.sh`): Default mode starts `llmster` + tray monitor; `--gui` stops daemon first, then starts desktop app + tray monitor
+- **System Tray Monitor** (`lmstudio_tray.py`): GTK3 tray integration with live daemon/app controls and status transitions
+- **Tray Menu Controls**: Start/stop daemon and start/stop desktop app, including conflict-safe switching between both modes
+- **Icon Status Schema**: `❌` not installed, `⚠️` both stopped, `ℹ️` runtime active but no model loaded, `✅` model loaded
+- **Robust Runtime Handling**: Cooldown guard against double-click actions and best-effort process stop fallbacks
+- **Interactive Model Selection**: Optional model selection via `--list-models`
 
 ## Getting Started
 
@@ -48,8 +48,7 @@ The script will guide you through interactive setup steps if needed.
 The script will:
 
 - Check and install system dependencies (curl, notify-send, python3)
-- Start the LM Studio daemon
-- Wait for the API to be available
+- Start `llmster` daemon (default mode)
 - Launch the system tray monitor in the background
 
 ### 3. Verify It Works
@@ -87,14 +86,14 @@ The script will:
 # Start daemon with defaults
 ./lmstudio_autostart.sh
 
-# Start daemon and load a specific model
-./lmstudio_autostart.sh --model qwen2.5:7b-instruct
-
 # Launch GUI (stops daemon first)
 ./lmstudio_autostart.sh --gui
 
 # Interactive model selection
 ./lmstudio_autostart.sh --list-models
+
+# Start with model label for tray/status context
+./lmstudio_autostart.sh --model qwen2.5:7b-instruct
 
 # Debug mode with verbose output
 ./lmstudio_autostart.sh --debug
@@ -147,4 +146,4 @@ MIT License – See [LICENSE](LICENSE) file for details
 
 ---
 
-**Note:** These automation scripts are designed for the daemon workflow. Make sure the LM Studio daemon is properly installed and the `lms` CLI is available in your PATH.
+**Note:** These automation scripts support both daemon-first and GUI-first workflows. Ensure `llmster`/`lms` and LM Studio desktop app are installed.
