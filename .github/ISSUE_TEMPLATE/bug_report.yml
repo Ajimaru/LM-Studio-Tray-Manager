@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem in LM Studio Automation
+description: Report a reproducible problem in LM-Studio-Tray-Manager
 title: "[Bug]: "
 labels:
   - bug

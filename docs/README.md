@@ -1,6 +1,6 @@
 # Documentation
 
-Welcome to the LM Studio Automation documentation.
+Welcome to the LM-Studio-Tray-Manager documentation.
 
 ## Quick Links
 
@@ -44,4 +44,4 @@ start docs\index.html           # On Windows
 ```
 
 Or browse it directly if you're viewing this on GitHub:
-<https://github.com/Ajimaru/LM-Studio/blob/main/docs/index.html>
+<https://github.com/Ajimaru/LM-Studio-Tray-Manager/blob/main/docs/index.html>

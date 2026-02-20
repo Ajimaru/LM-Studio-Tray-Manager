@@ -64,7 +64,7 @@ ICON_WARN = "dialog-warning"       # ⚠️ Daemon and app stopped
 ICON_INFO = "help-info"            # ℹ️ Runtime active, no model
 APP_NAME = "LM Studio Tray Monitor"
 APP_MAINTAINER = "Ajimaru"
-APP_REPOSITORY = "https://github.com/Ajimaru/LM-Studio"
+APP_REPOSITORY = "https://github.com/Ajimaru/LM-Studio-Tray-Manager"
 DEFAULT_APP_VERSION = "dev"
 
 # === Path to lms-CLI ===

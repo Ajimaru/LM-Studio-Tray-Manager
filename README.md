@@ -1,4 +1,4 @@
-# LM Studio Automation
+# LM-Studio-Tray-Manager
 
 ![LM Studio Icon](assets/img/lm-studio-64x64.png)
 
@@ -8,10 +8,10 @@
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/downloads/)
 [![LM Studio App](https://img.shields.io/badge/LM_Studio_App-v0.4.3+-green.svg)](https://lmstudio.ai/download)
 [![LM Studio Daemon v0.0.3+](https://img.shields.io/badge/LM_Studio_Daemon-v0.0.3+-green.svg)](https://lmstudio.ai)
-[![CI](https://github.com/Ajimaru/LM-Studio/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio/actions/workflows/ci.yml)
-[![Docs](https://github.com/Ajimaru/LM-Studio/actions/workflows/docs.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio/actions/workflows/docs.yml)
-[![Security](https://github.com/Ajimaru/LM-Studio/actions/workflows/security.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio/actions/workflows/security.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/008764f58bb046ef886c86bccd336b85)](https://app.codacy.com/gh/Ajimaru/LM-Studio/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![CI](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml)
+[![Docs](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml)
+[![Security](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/security.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/security.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/008764f58bb046ef886c86bccd336b85)](https://app.codacy.com/gh/Ajimaru/LM-Studio-Tray-Manager/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Made with Love in 🇪🇺](https://img.shields.io/badge/Made_with_❤️_in_🇪🇺-gray.svg)](https://europa.eu/)
 
 Automation scripts for LM Studio - a powerful desktop and server application for running Large Language Models locally on consumer hardware.

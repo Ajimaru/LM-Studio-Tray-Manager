@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Setup script for LM Studio automation
+# Setup script for LM-Studio-Tray-Manager
 # Checks for LM Studio daemon, desktop app, and sets up Python venv
 # Linux only
 
@@ -136,7 +136,7 @@ if [[ "$OSTYPE" != "linux"* ]]; then
     exit 1
 fi
 
-print_header "LM Studio Automation Setup"
+print_header "LM-Studio-Tray-Manager Setup"
 if [ "$DRY_RUN" = "1" ]; then
     print_info "Dry-run mode enabled. No system changes will be made."
 fi
