@@ -42,6 +42,11 @@ applyTo: '**'
   - `E101` (pycodestyle): Indentation contains mixed spaces and tabs
   - `reportTabsNotSpaces` (Pylance): Use of tabs instead of spaces
 
+❌ **NEVER leave trailing whitespace on blank lines**
+- Keep blank lines empty (no spaces/tabs)
+- **Linter codes to avoid:**
+  - `W293` (pycodestyle): Blank line contains whitespace
+
 ## Variable Quoting (Bash/Shell)
 
 ✅ **ALWAYS quote variable expansions** in shell scripts
