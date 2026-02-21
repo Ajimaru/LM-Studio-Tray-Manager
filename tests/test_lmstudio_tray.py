@@ -647,10 +647,13 @@ def test_manual_check_updates_reports_update_available(
 
     monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
     tray.manual_check_updates(None)
-    assert len(notify_calls) == 1  # nosec B101
-    msg = str(notify_calls[0])
+    # check_updates() sends 1st notification, manual_check_updates() sends 2nd
+    assert len(notify_calls) == 2  # nosec B101
+    # First notification is from check_updates()
+    assert "Update Available" in str(notify_calls[0])  # nosec B101
+    # Second notification is from manual_check_updates()
+    msg = str(notify_calls[1])
     assert "Update Check" in msg  # nosec B101
-    assert "Update available" in msg  # nosec B101
     assert "v2.0.0" in msg  # nosec B101
 
 
@@ -712,7 +715,7 @@ def test_manual_check_updates_reports_error_with_details(
     assert len(notify_calls) == 1  # nosec B101
     msg = str(notify_calls[0])
     assert "Update Check" in msg  # nosec B101
-    assert "Error" in msg  # nosec B101
+    assert "Unable to check for updates" in msg  # nosec B101
     assert "Network error" in msg  # nosec B101
 
 
@@ -745,7 +748,7 @@ def test_manual_check_updates_reports_error_without_details(
     assert len(notify_calls) == 1  # nosec B101
     msg = str(notify_calls[0])
     assert "Update Check" in msg  # nosec B101
-    assert "Error checking for updates" in msg  # nosec B101
+    assert "Unable to check for updates" in msg  # nosec B101
 def test_get_authors_reads_file(tray_module, tmp_path, monkeypatch):
     """Read authors from AUTHORS file."""
     monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
