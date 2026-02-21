@@ -348,9 +348,8 @@ class DummyUrlLib:
             """Record a handler instance (unused)."""
             self.handlers.append(handler)
 
-        def open(self, _request, timeout=0):
+        def open(self, _request, _timeout=0):
             """Return a dummy response for the request."""
-            _ = timeout
             return DummyUrlResponse(self.payload)
 
     def opener_director(self):
