@@ -50,14 +50,30 @@ def get_gdk_pixbuf_paths():
 
 gdk_binaries, gdk_datas = get_gdk_pixbuf_paths()
 
+project_root = os.path.abspath(os.path.dirname(__file__))
+
+datas_base = [
+    (os.path.join(project_root, 'VERSION'), '.'),
+    (os.path.join(project_root, 'AUTHORS'), '.'),
+]
+
+optional_datas = []
+assets_dir = os.path.join(project_root, 'assets')
+if os.path.exists(assets_dir):
+    optional_datas.append((assets_dir, 'assets'))
+
+datas = datas_base + optional_datas + gdk_datas
+
 a = Analysis(
-    ['lmstudio_tray.py'],
-    pathex=[],
+    [os.path.join(project_root, 'lmstudio_tray.py')],
+    pathex=[project_root],
     binaries=gdk_binaries,
-    datas=[('VERSION', '.'), ('AUTHORS', '.'), ('assets', 'assets')] + gdk_datas,
+    datas=datas,
     hiddenimports=[
-        'gi',
-        'gi.repository',
+        'gi.repository.cairo',
+        'gi.repository.AyatanaAppIndicator3',
+        'gi.repository.AppIndicator3',
+        'cairo',
         'gi.repository.Gtk',
         'gi.repository.GLib',
         'gi.repository.GObject',
