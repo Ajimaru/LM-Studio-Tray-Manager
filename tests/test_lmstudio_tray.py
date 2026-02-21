@@ -2454,7 +2454,7 @@ def test_start_desktop_app_with_notifications(tray_module, monkeypatch):
     )
     monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
     monkeypatch.setattr(
-        tray_module, "get_notify_send_cmd", lambda: ["notify-send"]
+        tray_module, "get_notify_send_cmd", lambda: "/usr/bin/notify-send"
     )
 
     process_mock = SimpleNamespace(pid=12345)
