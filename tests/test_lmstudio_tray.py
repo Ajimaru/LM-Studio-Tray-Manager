@@ -1122,6 +1122,32 @@ def test_get_desktop_app_pids_edge_cases(tray_module, monkeypatch):
     assert tray_module.get_desktop_app_pids() == [789]  # nosec B101
 
 
+def test_get_desktop_app_pids_excludes_daemon_workers(
+    tray_module, monkeypatch
+):
+    """Exclude daemon worker processes.
+
+    Excludes systemresourcesworker, llmster, and similar processes.
+    """
+    output = (
+        "567 /home/user/.lmstudio/llmster/0.0.3/bin/llmster\n"
+        "678 /home/user/.lmstudio/.internal/utils/node "
+        "systemresourcesworker\n"
+        "789 /usr/bin/lm-studio\n"
+        "890 /home/user/.lmstudio/.internal/utils/node "
+        "liblmstudioworker\n"
+    )
+    monkeypatch.setattr(
+        tray_module.subprocess,
+        "run",
+        lambda *_args, **_kwargs: _completed(
+            returncode=0, stdout=output
+        ),
+    )
+    # Only /usr/bin/lm-studio should be included; daemon workers excluded
+    assert tray_module.get_desktop_app_pids() == [789]  # nosec B101
+
+
 def test_kill_existing_instances_ignores_current_pid(tray_module, monkeypatch):
     """Terminate only stale tray process IDs."""
     monkeypatch.setattr(
@@ -2608,3 +2634,73 @@ def test_show_status_dialog_lms_not_found(tray_module, monkeypatch):
     monkeypatch.setattr(tray_module.Gtk, "MessageDialog", CaptureDialog)
     _call_member(tray, "show_status_dialog", None)
     assert len(dialogs) > 0  # nosec B101
+
+
+def test_parse_args_short_hand_debug_flag(tray_module):
+    """Parse -d short-hand flag for --debug."""
+    old_argv = sys.argv[:]
+    try:
+        sys.argv = ["prog", "-d"]
+        args = tray_module.parse_args()
+        assert args.debug is True  # nosec B101
+    finally:
+        sys.argv = old_argv
+
+
+def test_parse_args_short_hand_auto_start_daemon(tray_module):
+    """Parse -a short-hand flag for --auto-start-daemon."""
+    old_argv = sys.argv[:]
+    try:
+        sys.argv = ["prog", "-a"]
+        args = tray_module.parse_args()
+        assert args.auto_start_daemon is True  # nosec B101
+    finally:
+        sys.argv = old_argv
+
+
+def test_parse_args_short_hand_gui_flag(tray_module):
+    """Parse -g short-hand flag for --gui."""
+    old_argv = sys.argv[:]
+    try:
+        sys.argv = ["prog", "-g"]
+        args = tray_module.parse_args()
+        assert args.gui is True  # nosec B101
+    finally:
+        sys.argv = old_argv
+
+
+def test_parse_args_short_hand_version_flag(tray_module):
+    """Parse -v short-hand flag for --version (exits in real usage)."""
+    old_argv = sys.argv[:]
+    try:
+        sys.argv = ["prog", "-v"]
+        args = tray_module.parse_args()
+        assert args.version is True  # nosec B101
+    finally:
+        sys.argv = old_argv
+
+
+def test_parse_args_combined_short_hand_flags(tray_module):
+    """Parse multiple short-hand flags combined."""
+    old_argv = sys.argv[:]
+    try:
+        sys.argv = ["prog", "-dga"]
+        args = tray_module.parse_args()
+        assert args.debug is True  # nosec B101
+        assert args.gui is True  # nosec B101
+        assert args.auto_start_daemon is True  # nosec B101
+    finally:
+        sys.argv = old_argv
+
+
+def test_parse_args_long_hand_still_works(tray_module):
+    """Verify long-hand flags still work after adding short-hand."""
+    old_argv = sys.argv[:]
+    try:
+        sys.argv = ["prog", "--debug", "--gui", "--auto-start-daemon"]
+        args = tray_module.parse_args()
+        assert args.debug is True  # nosec B101
+        assert args.gui is True  # nosec B101
+        assert args.auto_start_daemon is True  # nosec B101
+    finally:
+        sys.argv = old_argv

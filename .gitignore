@@ -8,6 +8,14 @@ venv/
 dist/
 build/
 .coverage
+.pytest_cache/
+.pyre/
+.pytype/
+.mypy_cache/
+.pyright/
+.pyre_check/
+.pyre_configuration/
+.pyre_configuration.local/
 
 #Ignore AI rules
 .github/instructions/codacy.instructions.md

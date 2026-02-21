@@ -448,6 +448,16 @@ def get_desktop_app_pids():
             if "--type=" in cmd_args:
                 continue
 
+            # Exclude daemon worker processes (llmster, systemresourcesworker,
+            # liblmstudioworker, etc.). These are child processes managed by
+            # the daemon and should not count as desktop app running.
+            if (
+                "systemresourcesworker" in cmd_args
+                or "liblmstudioworker" in cmd_args
+                or "/llmster/" in cmd_args
+            ):
+                continue
+
             if (
                 "/opt/LM Studio/lm-studio" in cmd_args
                 or cmd_args.startswith("/usr/bin/lm-studio")
