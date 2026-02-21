@@ -85,6 +85,13 @@ The setup script checks for and optionally installs:
 # Check logs in .logs directory
 tail -f .logs/lmstudio_autostart.log
 
+# If a binary exists at dist/lmstudio-tray-manager,
+# lmstudio_autostart.sh will prefer it over Python and pass:
+# - --auto-start-daemon (default mode)
+# - --debug (when --debug is used)
+# - --gui (when --gui is used)
+# Otherwise the same flags are forwarded to the Python tray script.
+
 ```
 
 ## Dry-run Mode

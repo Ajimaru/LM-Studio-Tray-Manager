@@ -7,6 +7,7 @@ Welcome to the LM-Studio-Tray-Manager documentation.
 - **[Landing Page](index.html)** - GitHub Pages start page with links to all documentation formats
 - **[Full HTML Guide](guide.html)** - Detailed usage guide, flow diagrams, and architecture
 - **[Setup Guide](SETUP.md)** - Complete setup.sh and Python environment guide
+- **[Binary Build Guide](BUILD.md)** - PyInstaller build and runtime requirements
 - **[Python Docstrings Reference](python_docstrings.html)** - Static API-style documentation from `lmstudio_tray.py`
 - **[Third-Party Licenses](../THIRD_PARTY_LICENSES.md)** – Overview of external runtime and CI dependencies
 
@@ -16,6 +17,7 @@ Welcome to the LM-Studio-Tray-Manager documentation.
 docs/
 ├── index.html              # GitHub Pages landing page
 ├── guide.html              # Main comprehensive documentation (full guide)
+├── BUILD.md                # Binary build and runtime guide
 ├── SETUP.md                # Comprehensive setup and environment guide
 ├── python_docstrings.html  # Static docstrings reference for lmstudio_tray.py
 └── README.md               # This file

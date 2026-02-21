@@ -160,6 +160,14 @@
             line-height: 1.6;
             white-space: pre-wrap;
         }
+        .item-returns {
+            color: var(--muted-text);
+            line-height: 1.5;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
         .no-doc {
             color: var(--muted-text);
             font-style: italic;
@@ -191,6 +199,7 @@
         <ul>
             <li><a href="#overview">Overview</a></li>
             <li><a href="#main-module">Main Module</a></li>
+            <li><a href="#build-module">Build Module</a></li>
             <li><a href="#test-docstrings">Test Suite</a></li>
         </ul>
     </nav>
@@ -217,11 +226,80 @@
 
             <div class="item">
                 <div class="item-header">
+                    <span class="item-name">load_version_from_dir</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">load_version_from_dir(base_dir)</div>
+                <div class="item-doc">Load app version from VERSION file in the given directory.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">parse_args</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">parse_args()</div>
+                <div class="item-doc">Parse command-line arguments.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
                     <span class="item-name">get_lms_cmd</span>
                     <span class="item-type">function</span>
                 </div>
                 <div class="item-signature">get_lms_cmd()</div>
                 <div class="item-doc">Return the LM Studio CLI path if executable or resolve it from PATH.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">get_authors</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">get_authors()</div>
+                <div class="item-doc">Load authors from AUTHORS file in script directory.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">parse_version</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">parse_version(version)</div>
+                <div class="item-doc">Parse a version string into a comparable tuple of integers.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">is_newer_version</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">is_newer_version(current, latest)</div>
+                <div class="item-doc">Return True when latest is newer than current.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_is_allowed_update_url</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_is_allowed_update_url(url)</div>
+                <div class="item-doc">Validate update URL to prevent unsafe schemes or hosts.
+
+Args:
+    url: URL string to validate.
+
+Returns:
+    bool: True when the URL uses HTTPS and GitHub API host.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">get_latest_release_version</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">get_latest_release_version()</div>
+                <div class="item-doc">Fetch the latest GitHub release tag name.</div>
             </div>
 
             <div class="item">
@@ -346,6 +424,24 @@ desktop notifications on status transitions.</div>
                 </div>
                 <div class="item-signature">__init__(self)</div>
                 <div class="item-doc">Initialize tray indicator, menu, and periodic status checks.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_maybe_auto_start_daemon</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_maybe_auto_start_daemon(self)</div>
+                <div class="item-doc">Start llmster daemon on launch when enabled.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_maybe_start_gui</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_maybe_start_gui(self)</div>
+                <div class="item-doc">Start LM Studio GUI on launch when enabled.</div>
             </div>
 
             <div class="item">
@@ -618,6 +714,59 @@ Returns:
     callbacks).</div>
             </div>
 
+        </section>
+
+        <section id="build-module">
+            <h2>Build Module (build_binary.py)</h2>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">get_gdk_pixbuf_loaders</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">get_gdk_pixbuf_loaders()</div>
+                <div class="item-doc">Find and return GdkPixbuf loaders directory and files.</div>
+                <div class="item-returns"><strong>Returns:</strong> tuple[str | None, str | None] — A tuple of (loaders_dir, cache_file) where both elements are None if loaders cannot be found or an error occurs.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">check_dependencies</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">check_dependencies()</div>
+                <div class="item-doc">Check and install required build dependencies.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">get_hidden_imports</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">get_hidden_imports()</div>
+                <div class="item-doc">Return list of hidden imports needed for GTK3/GObject.</div>
+                <div class="item-returns"><strong>Returns:</strong> list[str] — Hidden import module names required for GTK3/GObject functionality in the standalone binary.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">get_data_files</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">get_data_files()</div>
+                <div class="item-doc">Return list of data files to bundle.</div>
+                <div class="item-returns"><strong>Returns:</strong> list[tuple[str, str]] — List of (source, destination) tuples representing files and directories to bundle with the binary.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">build_binary</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">build_binary()</div>
+                <div class="item-doc">Build the standalone binary using PyInstaller.</div>
+                <div class="item-returns"><strong>Returns:</strong> int — Exit code (0 on successful build, 1 if binary creation fails or binary is missing after build completion).</div>
+            </div>
         </section>
 
         <section id="test-docstrings">
