@@ -63,7 +63,7 @@ else
     exit 1
 fi
 
-echo -e "${GREEN}✓${NC} Python found: \"$($PYTHON_BIN --version)\""
+echo -e "${GREEN}✓${NC} Python found: \"$("$PYTHON_BIN" --version)\""
 
 # Create venv if missing (with system site-packages for gi)
 if [ -d ".venv" ]; then
@@ -83,7 +83,8 @@ source "$VENV_DIR/bin/activate"
 if ! python -m PyInstaller --version &> /dev/null; then
     echo -e "${YELLOW}Installing PyInstaller in venv...${NC}"
     python -m pip install --upgrade pip
-    python -m pip install "pyinstaller==6.11.1"
+    python -m pip install -r "$SCRIPT_DIR/requirements-build.txt"
+
 fi
 
 # Clean previous builds
@@ -137,7 +138,8 @@ if command -v upx &> /dev/null; then
     FINAL_SIZE=$(get_file_size "$BINARY_PATH")
     FINAL_SIZE_MB=$(echo "scale=2; $FINAL_SIZE / 1048576" | bc)
     TOTAL_SAVED=$(echo "scale=2; ($UNOPT_SIZE - $FINAL_SIZE) / 1048576" | bc)
-    REDUCTION=$(echo "scale=1; (($UNOPT_SIZE - $FINAL_SIZE) * 100) / $UNOPT_SIZE" | bc)
+    DIFF_BYTES=$((UNOPT_SIZE - FINAL_SIZE))
+    REDUCTION=$(echo "scale=1; ($DIFF_BYTES * 100) / $UNOPT_SIZE" | bc)
     echo "Final size: ${FINAL_SIZE_MB} MB (saved ${TOTAL_SAVED} MB, ${REDUCTION}% reduction)"
 else
     echo -e "${YELLOW}Warning: upx not found, skipping compression${NC}"
