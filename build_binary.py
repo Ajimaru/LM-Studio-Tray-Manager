@@ -32,7 +32,8 @@ def get_gdk_pixbuf_loaders():
              "gdk-pixbuf-2.0"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
+            timeout=5
         )
         if result.returncode == 0:
             loaders_dir = result.stdout.strip()
@@ -107,6 +108,7 @@ def get_hidden_imports():
         "gi.repository.GdkPixbuf",
         "gi.repository.Pango",
         "gi.repository.PangoCairo",
+        "gi.repository.AyatanaAppIndicator3",
         "gi.repository.cairo",
         "cairo",
     ]
@@ -201,24 +203,23 @@ def build_binary():
         print("\n❌ Build failed: PyInstaller timed out after 3600 seconds")
         return 1
 
-    if result.returncode == 0:
-        binary_path = Path("dist/lmstudio-tray-manager")
-        if binary_path.exists():
-            size_mb = binary_path.stat().st_size / (1024 * 1024)
-            print("\n✅ Build successful!")
-            print(f"Binary location: {binary_path}")
-            print(f"Binary size: {size_mb:.2f} MB")
-            print("\nNext steps:")
-            print("1. Test: ./dist/lmstudio-tray-manager --version")
-            print("2. Optimize: strip dist/lmstudio-tray-manager")
-            print("3. Compress: upx --best dist/lmstudio-tray-manager")
-        else:
-            print("\n❌ Build completed but binary not found!")
-            return 1
-    else:
+    if result.returncode != 0:
         print("\n❌ Build failed!")
         return 1
 
+    binary_path = Path("dist/lmstudio-tray-manager")
+    if not binary_path.exists():
+        print("\n❌ Build completed but binary not found!")
+        return 1
+
+    size_mb = binary_path.stat().st_size / (1024 * 1024)
+    print("\n✅ Build successful!")
+    print(f"Binary location: {binary_path}")
+    print(f"Binary size: {size_mb:.2f} MB")
+    print("\nNext steps:")
+    print("1. Test: ./dist/lmstudio-tray-manager --version")
+    print("2. Optimize: strip dist/lmstudio-tray-manager")
+    print("3. Compress: upx --best dist/lmstudio-tray-manager")
     return 0
 
 

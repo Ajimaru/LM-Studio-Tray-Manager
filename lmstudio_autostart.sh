@@ -669,22 +669,21 @@ else
 fi
 
 # Pass debug flag to tray script if enabled
-TRAY_DEBUG_ARG=""
 if [ "$DEBUG_FLAG" = "1" ]; then
-    TRAY_DEBUG_ARG="--debug"
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🐛 Debug mode enabled for tray monitor"
 fi
 
 TRAY_BIN="$SCRIPT_DIR/dist/lmstudio-tray-manager"
-TRAY_ARGS=("$TRAY_MODEL" "$SCRIPT_DIR")
+TRAY_ARGS=()
 if [ "$DEBUG_FLAG" = "1" ]; then
-    TRAY_ARGS+=("$TRAY_DEBUG_ARG")
+    TRAY_ARGS+=("--debug")
 fi
 if [ "$GUI_FLAG" -eq 1 ]; then
     TRAY_ARGS+=("--gui")
 else
     TRAY_ARGS+=("--auto-start-daemon")
 fi
+TRAY_ARGS+=("$TRAY_MODEL" "$SCRIPT_DIR")
 
 if [ -x "$TRAY_BIN" ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🧩 Tray launch mode: binary"

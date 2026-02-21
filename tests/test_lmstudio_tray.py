@@ -2116,7 +2116,7 @@ def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     sys.modules.pop(module_name, None)
     old_argv = sys.argv[:]
     try:
-        sys.argv = ["lmstudio_tray.py", "m", str(tmp_path), "debug"]
+        sys.argv = ["lmstudio_tray.py", "--debug", "m", str(tmp_path)]
         spec = importlib.util.spec_from_file_location(
             module_name,
             str(Path(__file__).resolve().parents[1] / "lmstudio_tray.py"),

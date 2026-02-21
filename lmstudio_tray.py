@@ -76,7 +76,6 @@ def parse_args():
     Command-line Arguments:
         model (str): Model name to monitor; positional, optional.
         script_dir (str): Script directory for logs; positional, optional.
-        debug_mode (str): Positional debug flag; use 'debug' to enable.
         --debug, -d (bool): Flag to enable debug logging.
         --auto-start-daemon, -a (bool): Start daemon on launch.
         --gui, -g (bool): Start LM Studio GUI on launch.
@@ -107,12 +106,6 @@ def parse_args():
         nargs="?",
         default=os.getcwd(),
         help="Script directory for logs and VERSION file"
-    )
-    parser.add_argument(
-        "debug_mode",
-        nargs="?",
-        default="",
-        help="Use 'debug' to enable debug logging"
     )
     parser.add_argument(
         "--debug",
@@ -218,8 +211,16 @@ def main():
     # === Model name from argument or default ===
     MODEL = args.model
     script_dir = args.script_dir
-    DEBUG_MODE = args.debug or args.debug_mode.lower() == "debug"
+    DEBUG_MODE = args.debug
     GUI_MODE = args.gui
+
+    if args.auto_start_daemon and args.gui:
+        print(
+            "Warning: --auto-start-daemon and --gui are mutually exclusive; "
+            "--gui takes precedence.",
+            file=sys.stderr
+        )
+
     AUTO_START_DAEMON = args.auto_start_daemon and not GUI_MODE
 
     if args.version:
