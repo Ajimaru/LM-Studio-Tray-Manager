@@ -671,19 +671,40 @@ fi
 # Pass debug flag to tray script if enabled
 TRAY_DEBUG_ARG=""
 if [ "$DEBUG_FLAG" = "1" ]; then
-    TRAY_DEBUG_ARG="debug"
+    TRAY_DEBUG_ARG="--debug"
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🐛 Debug mode enabled for tray monitor"
 fi
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starting Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py with model '$TRAY_MODEL'"
-# Priority: venv > python3.10 > python3 (PyGObject compatibility)
-if [ -x "$VENV_DIR/bin/python3" ]; then
-    "$VENV_DIR/bin/python3" "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" "$TRAY_DEBUG_ARG" &
-elif have python3.10; then
-    python3.10 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" "$TRAY_DEBUG_ARG" &
-elif have python3; then
-    python3 "$SCRIPT_DIR/lmstudio_tray.py" "$TRAY_MODEL" "$SCRIPT_DIR" "$TRAY_DEBUG_ARG" &
+TRAY_BIN="$SCRIPT_DIR/dist/lmstudio-tray-manager"
+TRAY_ARGS=("$TRAY_MODEL" "$SCRIPT_DIR")
+if [ "$DEBUG_FLAG" = "1" ]; then
+    TRAY_ARGS+=("$TRAY_DEBUG_ARG")
+fi
+if [ "$GUI_FLAG" -eq 1 ]; then
+    TRAY_ARGS+=("--gui")
 else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray not started - no Python interpreter found."
+    TRAY_ARGS+=("--auto-start-daemon")
+fi
+
+if [ -x "$TRAY_BIN" ]; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🧩 Tray launch mode: binary"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🧩 Starting Tray-Monitor (binary): $TRAY_BIN"
+    "$TRAY_BIN" "${TRAY_ARGS[@]}" &
+else
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Tray launch mode: python"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starting Tray-Monitor: $SCRIPT_DIR/lmstudio_tray.py with model '$TRAY_MODEL'"
+    # Priority: venv > python3.10 > python3 (PyGObject compatibility)
+    if [ -x "$VENV_DIR/bin/python3" ]; then
+        "$VENV_DIR/bin/python3" "$SCRIPT_DIR/lmstudio_tray.py" \
+            "${TRAY_ARGS[@]}" &
+    elif have python3.10; then
+        python3.10 "$SCRIPT_DIR/lmstudio_tray.py" \
+            "${TRAY_ARGS[@]}" &
+    elif have python3; then
+        python3 "$SCRIPT_DIR/lmstudio_tray.py" \
+            "${TRAY_ARGS[@]}" &
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray not started - no Python interpreter found."
+    fi
 fi
 

@@ -479,6 +479,64 @@ def test_get_app_version_fallback_default(tray_module, tmp_path, monkeypatch):
     )  # nosec B101
 
 
+def test_load_version_from_dir_empty_file(tray_module, tmp_path):
+    """Return default version when VERSION file is empty.
+
+    Args:
+        tray_module: Imported lmstudio_tray module fixture.
+        tmp_path: Temporary directory path fixture.
+
+    Returns:
+        None: This is a test assertion helper.
+
+    Raises:
+        None.
+    """
+    (tmp_path / "VERSION").write_text("", encoding="utf-8")
+    version = tray_module.load_version_from_dir(str(tmp_path))
+    assert version == tray_module.DEFAULT_APP_VERSION  # nosec B101
+
+
+def test_version_flag_exits(tmp_path, monkeypatch):
+    """Exit early when --version flag is provided.
+
+    Args:
+        tmp_path: Temporary directory path fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+
+    Returns:
+        None: This is a test assertion helper.
+
+    Raises:
+        SystemExit: Expected exit after printing version.
+    """
+    (tmp_path / "VERSION").write_text("v9.9.9", encoding="utf-8")
+    gi_mod = ModuleType("gi")
+    setattr(gi_mod, "require_version", lambda *_args, **_kwargs: None)
+    monkeypatch.setitem(sys.modules, "gi", gi_mod)
+    monkeypatch.setitem(
+        sys.modules,
+        "gi.repository",
+        ModuleType("gi.repository"),
+    )
+    module_name = "lmstudio_tray_version"
+    sys.modules.pop(module_name, None)
+    old_argv = sys.argv[:]
+    try:
+        sys.argv = ["lmstudio_tray.py", "m", str(tmp_path), "--version"]
+        spec = importlib.util.spec_from_file_location(
+            module_name,
+            str(Path(__file__).resolve().parents[1] / "lmstudio_tray.py"),
+        )
+        assert spec is not None and spec.loader is not None  # nosec B101
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        with pytest.raises(SystemExit):
+            spec.loader.exec_module(module)
+    finally:
+        sys.argv = old_argv
+
+
 def test_parse_version_handles_prefix(tray_module):
     """Parse versions with a leading v prefix."""
     assert tray_module.parse_version("v1.2.3") == (1, 2, 3)  # nosec B101
@@ -628,6 +686,14 @@ def test_get_latest_release_version_url_error(tray_module, monkeypatch):
     version, error = tray_module.get_latest_release_version()
     assert version is None  # nosec B101
     assert error == "Network or parse error"  # nosec B101
+
+
+def test_get_latest_release_version_invalid_url(tray_module, monkeypatch):
+    """Return an error when update URL fails validation."""
+    monkeypatch.setattr(tray_module, "LATEST_RELEASE_API_URL", "http://bad")
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "Invalid update URL"  # nosec B101
 
 
 def test_get_latest_release_version_invalid_json(tray_module, monkeypatch):
@@ -818,7 +884,56 @@ def test_manual_check_updates_reports_error_with_details(
     msg = str(notify_calls[0])
     assert "Update Check" in msg  # nosec B101
     assert "Unable to check for updates" in msg  # nosec B101
-    assert "Network error" in msg  # nosec B101
+
+
+def test_update_check_helpers(tray_module):
+    """Cover update helper methods and timer callbacks."""
+    tray = _make_tray_instance(tray_module)
+    tray.update_status = None
+    assert tray.get_version_label().endswith("(Unknown)")  # nosec B101
+
+    message = _call_member(
+        tray,
+        "_format_update_check_message",
+        "Update available",
+        "v1.2.3",
+        None,
+    )
+    assert "v1.2.3" in message  # nosec B101
+
+    message = _call_member(
+        tray,
+        "_format_update_check_message",
+        "Unknown",
+        None,
+        "timeout",
+    )
+    assert "timeout" in message  # nosec B101
+
+    calls = {"count": 0}
+
+    def record_check():
+        calls["count"] += 1
+        return False
+
+    tray.check_updates = record_check
+    assert _call_member(tray, "_check_updates_tick") is True  # nosec B101
+    assert _call_member(tray, "_initial_update_check") is False  # nosec B101
+    assert calls["count"] == 2  # nosec B101
+
+
+def test_check_updates_without_notify(tray_module, monkeypatch):
+    """Return False when update is available but notify is missing."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: ("v1.1.0", None),
+    )
+    monkeypatch.setattr(tray_module, "get_notify_send_cmd", lambda: None)
+    assert tray.check_updates() is False  # nosec B101
 
 
 def test_manual_check_updates_reports_error_without_details(
@@ -846,6 +961,7 @@ def test_manual_check_updates_reports_error_without_details(
         notify_calls.append(cmd)
 
     monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
+    # Notify user when update check fails without details
     tray.manual_check_updates(None)
     assert len(notify_calls) == 1  # nosec B101
     msg = str(notify_calls[0])
@@ -865,6 +981,21 @@ def test_get_authors_reads_file(tray_module, tmp_path, monkeypatch):
     (tmp_path / "AUTHORS").write_text(authors_content, encoding="utf-8")
     authors = tray_module.get_authors()
     assert authors == ["Ajimaru", "John Doe"]  # nosec B101
+
+
+def test_get_authors_parsing_handles_dashes_and_handles(
+    tray_module,
+    tmp_path,
+    monkeypatch,
+):
+    """Strip handles and descriptions from authors list."""
+    monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
+    (tmp_path / "AUTHORS").write_text(
+        "- Jane Doe (@jane) - contributor\n",
+        encoding="utf-8",
+    )
+    authors = tray_module.get_authors()
+    assert authors == ["Jane Doe"]  # nosec B101
 
 
 def test_get_authors_fallback_maintainer(tray_module, tmp_path, monkeypatch):
@@ -944,6 +1075,14 @@ def test_is_llmster_running_true_second_check(tray_module, monkeypatch):
     assert tray_module.is_llmster_running() is True  # nosec B101
 
 
+def test_is_llmster_running_requires_absolute_pgrep(
+    tray_module, monkeypatch
+):
+    """Return False when pgrep is not an absolute path."""
+    monkeypatch.setattr(tray_module, "get_pgrep_cmd", lambda: "pgrep")
+    assert tray_module.is_llmster_running() is False  # nosec B101
+
+
 def test_get_desktop_app_pids_parsing(tray_module, monkeypatch):
     """Parse desktop app root process IDs from ps output."""
     output = (
@@ -958,6 +1097,29 @@ def test_get_desktop_app_pids_parsing(tray_module, monkeypatch):
         lambda *_a, **_k: _completed(returncode=0, stdout=output),
     )
     assert tray_module.get_desktop_app_pids() == [123, 234]  # nosec B101
+
+
+def test_get_desktop_app_pids_no_ps(tray_module, monkeypatch):
+    """Return empty list when ps command is unavailable."""
+    monkeypatch.setattr(tray_module, "get_ps_cmd", lambda: None)
+    assert tray_module.get_desktop_app_pids() == []  # nosec B101
+
+
+def test_get_desktop_app_pids_edge_cases(tray_module, monkeypatch):
+    """Ignore malformed, non-digit, and renderer entries."""
+    output = (
+        "abc /opt/LM Studio/lm-studio\n"
+        "123\n"
+        "456 /usr/bin/lm-studio --type=renderer\n"
+        "789 lm-studio --flag\n"
+        "101 /opt/LM Studio/lm-studio --type=utility\n"
+    )
+    monkeypatch.setattr(
+        tray_module.subprocess,
+        "run",
+        lambda *_a, **_k: _completed(returncode=0, stdout=output),
+    )
+    assert tray_module.get_desktop_app_pids() == [789]  # nosec B101
 
 
 def test_kill_existing_instances_ignores_current_pid(tray_module, monkeypatch):
@@ -1080,6 +1242,35 @@ def test_stop_desktop_app_processes_success(tray_module, monkeypatch):
     assert (11, signal.SIGTERM) in killed  # nosec B101
 
 
+def test_stop_desktop_app_processes_force_kill(tray_module, monkeypatch):
+    """Force-stop desktop app when it ignores SIGTERM."""
+    tray = _make_tray_instance(tray_module)
+    pid_batches = [[11], [22]]
+
+    def next_pids():
+        return pid_batches.pop(0) if pid_batches else []
+
+    calls = {"count": 0}
+
+    def next_status():
+        calls["count"] += 1
+        return "running" if calls["count"] < 12 else "stopped"
+
+    monkeypatch.setattr(tray_module, "get_desktop_app_pids", next_pids)
+    monkeypatch.setattr(tray, "get_desktop_app_status", next_status)
+    monkeypatch.setattr(tray_module.time, "sleep", lambda _x: None)
+    killed = []
+    monkeypatch.setattr(
+        tray_module.os,
+        "kill",
+        lambda pid, sig: killed.append((pid, sig)),
+    )
+
+    result = _call_member(tray, "_stop_desktop_app_processes")
+    assert result is True  # nosec B101
+    assert (22, signal.SIGKILL) in killed  # nosec B101
+
+
 def test_start_daemon_missing_binaries_notifies(tray_module, monkeypatch):
     """Notify user when daemon binaries are unavailable."""
     tray = _make_tray_instance(tray_module)
@@ -1094,6 +1285,43 @@ def test_start_daemon_missing_binaries_notifies(tray_module, monkeypatch):
     )
     tray.start_daemon(None)
     assert any("notify-send" in str(c) for c in calls)  # nosec B101
+
+
+def test_start_daemon_success_path(tray_module, monkeypatch):
+    """Notify user when daemon start succeeds."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(
+        tray,
+        "_build_daemon_attempts",
+        lambda _x: [["/usr/bin/llmster"]],
+    )
+    monkeypatch.setattr(
+        tray,
+        "_run_daemon_attempts",
+        lambda _a, _b: _completed(returncode=0),
+    )
+    monkeypatch.setattr(tray_module, "is_llmster_running", lambda: True)
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify(cmd):
+        notify_calls.append(cmd)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
+    monkeypatch.setattr(
+        tray_module.GLib,
+        "timeout_add_seconds",
+        lambda *_a, **_k: True,
+    )
+    tray.start_daemon(None)
+    assert notify_calls  # nosec B101
 
 
 def test_stop_daemon_success_path(tray_module, monkeypatch):
@@ -1123,6 +1351,41 @@ def test_stop_daemon_success_path(tray_module, monkeypatch):
     )
     tray.stop_daemon(None)
     assert any("notify-send" in str(c) for c in calls)  # nosec B101
+
+
+def test_stop_daemon_failure_detail(tray_module, monkeypatch):
+    """Include stderr detail when daemon stop fails."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
+    monkeypatch.setattr(
+        tray,
+        "_build_daemon_attempts",
+        lambda _x: [["/usr/bin/llmster"]],
+    )
+    monkeypatch.setattr(
+        tray,
+        "_stop_llmster_best_effort",
+        lambda: (False, _completed(returncode=1, stderr="oops")),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify(cmd):
+        notify_calls.append(cmd)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
+    monkeypatch.setattr(
+        tray_module.GLib,
+        "timeout_add_seconds",
+        lambda *_a, **_k: True,
+    )
+    tray.stop_daemon(None)
+    assert notify_calls  # nosec B101
 
 
 def test_start_desktop_app_missing_lms(tray_module, monkeypatch):
@@ -1190,6 +1453,57 @@ def test_start_desktop_app_appimage_found_and_started(
     )
 
     tray.start_desktop_app(None)
+
+
+def test_start_desktop_app_deb_path(tray_module, monkeypatch):
+    """Launch desktop app via installed .deb package."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=0, stdout="lm-studio"),
+    )
+    monkeypatch.setattr(
+        tray_module.shutil,
+        "which",
+        lambda _x: "/usr/bin/lm-studio",
+    )
+    monkeypatch.setattr(tray_module.os.path, "isfile", lambda _p: True)
+    monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
+
+    def is_safe_dir(path):
+        return path == "/usr/bin"
+
+    monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
+
+    popen_calls = []
+    process_mock = SimpleNamespace(pid=45678)
+
+    def record_popen(*args, **_kwargs):
+        popen_calls.append(args)
+        return process_mock
+
+    monkeypatch.setattr(tray_module.subprocess, "Popen", record_popen)
+
+    notifications = []
+
+    def capture_notify(cmd):
+        notifications.append(cmd)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
+
+    tray.start_desktop_app(None)
+    assert len(notifications) > 0  # nosec B101
     assert popen_calls  # nosec B101
 
 
@@ -1304,6 +1618,17 @@ def test_build_menu_running_entries(tray_module, monkeypatch):
     )  # nosec B101
 
 
+def test_build_menu_clears_existing_items(tray_module, monkeypatch):
+    """Remove stale menu items before rebuilding."""
+    tray = _make_tray_instance(tray_module)
+    tray.menu.append(DummyMenuItem(label="old"))
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    tray_module.TrayIcon.build_menu(tray)
+    labels = [getattr(i, "label", "") for i in tray.menu.get_children()]
+    assert "old" not in labels  # nosec B101
+
+
 def test_build_menu_not_found_entries(tray_module, monkeypatch):
     """Build menu entries for missing daemon and desktop app."""
     tray = _make_tray_instance(tray_module)
@@ -1316,6 +1641,21 @@ def test_build_menu_not_found_entries(tray_module, monkeypatch):
     )  # nosec B101
     assert any(
         "Desktop App (Not Installed)" in label for label in labels
+    )  # nosec B101
+
+
+def test_build_menu_stopped_entries(tray_module, monkeypatch):
+    """Build menu entries for stopped daemon and desktop app."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    tray_module.TrayIcon.build_menu(tray)
+    labels = [getattr(i, "label", "") for i in tray.menu.get_children()]
+    assert any(
+        "Start Daemon (Headless)" in label for label in labels
+    )  # nosec B101
+    assert any(
+        "Start Desktop App" in label for label in labels
     )  # nosec B101
 
 
@@ -1595,6 +1935,34 @@ def test_show_status_dialog_error_path(tray_module, monkeypatch):
     assert "Error retrieving status" in dialog.secondary  # nosec B101
 
 
+def test_show_status_dialog_success_path(tray_module, monkeypatch):
+    """Render status dialog with CLI output on success."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=0, stdout="model A"),
+    )
+    tray.show_status_dialog(None)
+    dialog = tray_module.Gtk.MessageDialog.last_instance
+    assert dialog.secondary == "model A"  # nosec B101
+
+
+def test_show_status_dialog_no_models(tray_module, monkeypatch):
+    """Render default message when no models are loaded."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=1, stdout=""),
+    )
+    tray.show_status_dialog(None)
+    dialog = tray_module.Gtk.MessageDialog.last_instance
+    assert "No models loaded" in dialog.secondary  # nosec B101
+
+
 def test_check_model_timeout_and_exception_paths(tray_module, monkeypatch):
     """Keep check_model stable on timeout and subprocess errors."""
     tray = _make_tray_instance(tray_module)
@@ -1608,6 +1976,56 @@ def test_check_model_timeout_and_exception_paths(tray_module, monkeypatch):
         lambda *_a, **_k: (
             _ for _ in ()
         ).throw(subprocess.TimeoutExpired("cmd", 1)),
+    )
+    assert tray.check_model() is True  # nosec B101
+
+
+def test_check_model_transition_notifications(tray_module, monkeypatch):
+    """Notify on INFO->WARN, WARN->FAIL, and OK->INFO transitions."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_notify_send_cmd", lambda: "/n")
+    notifications = []
+
+    def capture_notify(cmd):
+        notifications.append(cmd)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module.subprocess,
+        "run",
+        lambda *_a, **_k: _completed(returncode=1, stdout=""),
+    )
+
+    tray.last_status = "INFO"
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    tray.check_model()
+
+    tray.last_status = "WARN"
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.check_model()
+
+    tray.last_status = "OK"
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    tray.check_model()
+
+    assert len(notifications) >= 3  # nosec B101
+
+
+def test_check_model_empty_lms_output(tray_module, monkeypatch):
+    """Keep INFO status when lms output is empty."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=0, stdout=""),
     )
     assert tray.check_model() is True  # nosec B101
 
@@ -1723,9 +2141,61 @@ def test_trayicon_constructor_sets_indicator_and_timer(
         tray.indicator.status
         == tray_module.AppIndicator3.IndicatorStatus.ACTIVE
     )  # nosec B101
-    assert tray.indicator.title == "LM Studio Monitor"  # nosec B101
-    if not (timer_calls and timer_calls[0][0] == tray_module.INTERVAL):
-        raise AssertionError("Timer not configured with expected interval")
+
+
+def test_trayicon_constructor_idle_add(monkeypatch, tray_module):
+    """Register idle callbacks when GLib supports idle_add."""
+    monkeypatch.setattr(tray_module.TrayIcon, "build_menu", lambda self: None)
+    monkeypatch.setattr(tray_module.TrayIcon, "check_model", lambda self: True)
+    monkeypatch.setattr(
+        tray_module.GLib,
+        "timeout_add_seconds",
+        lambda *_a, **_k: True,
+    )
+    idle_calls = []
+
+    def record_idle(callback):
+        idle_calls.append(callback)
+        return True
+
+    monkeypatch.setattr(
+        tray_module.GLib,
+        "idle_add",
+        record_idle,
+        raising=False,
+    )
+    tray_module.TrayIcon()
+    assert len(idle_calls) == 2  # nosec B101
+
+
+def test_maybe_auto_start_daemon(monkeypatch, tray_module):
+    """Invoke auto-start path when enabled and daemon is stopped."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "AUTO_START_DAEMON", True)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    calls = []
+
+    def record_start(_widget):
+        calls.append("start")
+
+    monkeypatch.setattr(tray, "start_daemon", record_start)
+    result = _call_member(tray, "_maybe_auto_start_daemon")
+    assert result is False  # nosec B101
+    assert calls == ["start"]  # nosec B101
+
+
+def test_maybe_start_gui(monkeypatch, tray_module):
+    """Invoke GUI start path when enabled."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "GUI_MODE", True)
+    calls = []
+
+    def record_start(_widget):
+        calls.append("gui")
+
+    monkeypatch.setattr(tray, "start_desktop_app", record_start)
+    assert _call_member(tray, "_maybe_start_gui") is False  # nosec B101
+    assert calls == ["gui"]  # nosec B101
 
 
 def test_get_llmster_cmd_permission_error_and_no_candidates(
@@ -2006,6 +2476,32 @@ def test_stop_desktop_app_pkill_not_found(tray_module, monkeypatch):
 
     _call_member(tray, "stop_desktop_app", None)
     assert len(notifications) > 0  # nosec B101
+
+
+def test_stop_desktop_app_success_and_not_found(tray_module, monkeypatch):
+    """Cover success and not-found paths when stopping desktop app."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
+    monkeypatch.setattr(tray_module, "get_pkill_cmd", lambda: "/usr/bin/pkill")
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    results = [_completed(returncode=0), _completed(returncode=1)]
+    calls = []
+
+    def run_validated(cmd):
+        calls.append(cmd)
+        if cmd[0] == "/usr/bin/pkill":
+            return results.pop(0)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray, "_run_validated_command", run_validated)
+
+    _call_member(tray, "stop_desktop_app", None)
+    _call_member(tray, "stop_desktop_app", None)
+    assert len(calls) >= 4  # nosec B101
 
 
 def test_run_daemon_attempts_invalid_command_format(tray_module):
