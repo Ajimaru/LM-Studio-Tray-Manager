@@ -66,8 +66,10 @@ a = Analysis(
      gdk_datas
 ),
     hiddenimports=[
-        'gi',
-        'gi.repository',
+        'gi.repository.cairo',
+        'gi.repository.AyatanaAppIndicator3',
+        'gi.repository.AppIndicator3',
+        'cairo',
         'gi.repository.Gtk',
         'gi.repository.GLib',
         'gi.repository.GObject',
