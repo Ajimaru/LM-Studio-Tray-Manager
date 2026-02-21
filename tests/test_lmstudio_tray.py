@@ -433,6 +433,7 @@ def _make_tray_instance(module):
     tray.last_update_version = None
     tray.latest_update_version = None
     tray.update_status = "Unknown"
+    tray.last_update_error = None
     tray.build_menu = lambda: None
     return tray
 
