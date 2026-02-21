@@ -282,13 +282,8 @@ if [ "$LIST_MODELS" = "1" ]; then
                     CHOSEN="${MAPFILE_ARR[$((pick-1))]}"
                     CHOSEN_LABEL="$(model_label_from_path "$CHOSEN")"
                     echo "Selected: $CHOSEN_LABEL"
-                    if [ "$MODEL_EXPLICIT" -eq 0 ]; then
-                        MODEL="$CHOSEN_LABEL"
-                        if [ "$DEBUG_FLAG" = "1" ] || [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
-                            echo "[DEBUG] Selected file: $CHOSEN (label: $CHOSEN_LABEL)"
-                        fi
-                    else
-                        echo "Note: --model was already set and takes precedence; selection is ignored." >&2
+                    if [ "$DEBUG_FLAG" = "1" ] || [ "${LM_AUTOSTART_DEBUG:-0}" = "1" ]; then
+                        echo "[DEBUG] Selected file: $CHOSEN (label: $CHOSEN_LABEL)"
                     fi
                     break
                 fi
