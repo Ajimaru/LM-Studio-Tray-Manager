@@ -7,15 +7,13 @@ status changes, and supports starting/stopping daemon and desktop app as well
 as viewing status information through a context menu.
 
 Usage:
-    lmstudio_tray.py [model] [script_dir] [debug] [options]
+    lmstudio_tray.py [model] [script_dir] [options]
 
 Notes:
     Command-line arguments:
         model: Model name to monitor (optional, default: "no-model-passed").
         script_dir: Script directory for logs and VERSION file (optional,
             default: current working directory).
-        debug: Positional argument; use "debug" to enable debug logging
-            (optional).
         --debug, -d: Enable debug logging (flag).
         --auto-start-daemon, -a: Start llmster daemon on launch (flag).
         --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
