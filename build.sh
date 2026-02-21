@@ -83,7 +83,7 @@ source "$VENV_DIR/bin/activate"
 if ! python -m PyInstaller --version &> /dev/null; then
     echo -e "${YELLOW}Installing PyInstaller in venv...${NC}"
     python -m pip install --upgrade pip
-    python -m pip install -r "$SCRIPT_DIR/requirements-build.txt"
+    pip install pyinstaller==6.11.1
 
 fi
 
