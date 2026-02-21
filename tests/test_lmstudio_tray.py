@@ -356,9 +356,8 @@ class DummyUrlLib:
             """Record a handler instance (unused)."""
             self.handlers.append(handler)
 
-        def open(self, _request, timeout=None):
+        def open(self, _request, _timeout=None):
             """Return a dummy response or raise the configured exception."""
-            _ = timeout  # Unused but required for API compatibility
             if self.raise_exc is not None:
                 raise self.raise_exc
             return DummyUrlResponse(self.payload)
