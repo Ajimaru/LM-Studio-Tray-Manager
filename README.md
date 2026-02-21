@@ -139,33 +139,45 @@ This setup script:
 # Preview setup actions (no changes)
 ./setup.sh --dry-run
 
-# Show setup options
+# Setup script options
+./setup.sh --dry-run
 ./setup.sh --help
 
 # Start daemon with defaults
 ./lmstudio_autostart.sh
 
-# Launch GUI (stops daemon first)
+# Launch GUI (stops daemon first) - long or short form
 ./lmstudio_autostart.sh --gui
+./lmstudio_autostart.sh -g
 
 # Interactive model selection (loads selected model)
 ./lmstudio_autostart.sh --list-models
 
-# Debug mode with verbose output
+# Debug mode with verbose output - long or short form
 ./lmstudio_autostart.sh --debug
+./lmstudio_autostart.sh -d
 
-# Run the binary (release package)
+# Run the binary (release package) - auto-start daemon
 ./lmstudio-tray-manager --auto-start-daemon
+./lmstudio-tray-manager -a
 
 # Start the GUI directly via the binary
 ./lmstudio-tray-manager --gui
+./lmstudio-tray-manager -g
 
 # Version and help
 ./lmstudio-tray-manager --version
+./lmstudio-tray-manager -v
 ./lmstudio-tray-manager --help
+./lmstudio-tray-manager -h
 
-# Debug mode (binary)
+# Debug mode (binary) - long or short form
 ./lmstudio-tray-manager --debug
+./lmstudio-tray-manager -d
+
+# Combine short flags
+./lmstudio-tray-manager -d -a  # debug + auto-start daemon
+./lmstudio-tray-manager -dg    # debug + gui (if combined parsing allowed)
 
 # Check daemon status
 lms ps
@@ -190,6 +202,7 @@ If you encounter the error `Invalid passkey for lms CLI client`, this is typical
 The fix runs automatically when you start the script. Check the logs if issues persist:
 
 ```bash
+cat .logs/build.log
 cat .logs/lmstudio_autostart.log
 cat .logs/lmstudio_tray.log
 ```

@@ -30,6 +30,7 @@ If you encounter issues:
 1. Check **[index.html](index.html)** for troubleshooting sections
 2. Review **[SETUP.md](SETUP.md)** for setup and environment-specific issues
 3. Check the log files in the `.logs` directory from the project root:
+   - `.logs/build.log` - Binary build process log
    - `.logs/setup.log` - Setup script installation log
    - `.logs/lmstudio_autostart.log` - Daemon and startup logs
    - `.logs/lmstudio_tray.log` - System tray monitor logs

@@ -99,21 +99,25 @@ def parse_args():
     )
     parser.add_argument(
         "--debug",
+        "-d",
         action="store_true",
         help="Enable debug logging"
     )
     parser.add_argument(
         "--auto-start-daemon",
+        "-a",
         action="store_true",
         help="Start llmster daemon on launch"
     )
     parser.add_argument(
         "--gui",
+        "-g",
         action="store_true",
         help="Start LM Studio GUI on launch (stops daemon first)"
     )
     parser.add_argument(
         "--version",
+        "-v",
         action="store_true",
         help="Print version and exit"
     )

@@ -7,6 +7,24 @@ set -e  # Exit on error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# === Logging configuration ===
+LOGS_DIR="$SCRIPT_DIR/.logs"
+mkdir -p "$LOGS_DIR"
+LOGFILE="$LOGS_DIR/build.log"
+
+# Initialize log file with header
+{
+    echo "==================\
+======================================"
+    echo "LM Studio Tray Manager Build Log"
+    echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "==================\
+======================================"
+} > "$LOGFILE"
+
+# Redirect all output (stdout and stderr) to log file AND terminal
+exec > >(tee -a "$LOGFILE") 2>&1
+
 echo "======================================"
 echo "LM Studio Tray Manager Build Script"
 echo "======================================"
@@ -135,3 +153,5 @@ echo "Test the binary:"
 echo "  ./dist/lmstudio-tray-manager --version"
 echo "  ./dist/lmstudio-tray-manager --help"
 echo
+echo "Log: $LOGFILE"
+echo "Completed: $(date '+%Y-%m-%d %H:%M:%S')"

@@ -239,7 +239,17 @@
                     <span class="item-type">function</span>
                 </div>
                 <div class="item-signature">parse_args()</div>
-                <div class="item-doc">Parse command-line arguments.</div>
+                <div class="item-doc">Parse command-line arguments.
+
+Returns:
+    argparse.Namespace from parse_known_args()[0].
+
+Supported flags (short and long forms):
+    -d, --debug               Enable debug logging
+    -a, --auto-start-daemon   Start llmster daemon on launch
+    -g, --gui                 Start LM Studio GUI on launch (stops daemon first)
+    -v, --version             Print version and exit
+    -h, --help                Show help and exit</div>
             </div>
 
             <div class="item">
