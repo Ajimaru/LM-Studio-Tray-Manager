@@ -8,6 +8,7 @@ GTK3/GObject dependencies bundled.
 
 import importlib.util
 import os
+import shlex
 import sys
 import subprocess
 from pathlib import Path
@@ -168,11 +169,15 @@ def build_binary():
     cmd.append("lmstudio_tray.py")
 
     print("Running PyInstaller with options:")
-    print(" ".join(cmd))
+    print(shlex.join(cmd))
     print()
 
-    # Run PyInstaller
-    result = subprocess.run(cmd, check=False)
+    # Run PyInstaller with timeout
+    try:
+        result = subprocess.run(cmd, check=False, timeout=3600)
+    except subprocess.TimeoutExpired:
+        print("\n❌ Build failed: PyInstaller timed out after 3600 seconds")
+        sys.exit(1)
 
     if result.returncode == 0:
         binary_path = Path("dist/lmstudio-tray-manager")

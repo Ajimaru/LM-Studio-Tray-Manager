@@ -324,8 +324,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-         - name: Set up Python
-            uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       
@@ -339,8 +339,8 @@ jobs:
       - name: Build binary
         run: ./build.sh
       
-         - name: Upload artifact
-            uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: lmstudio-tray-manager
           path: dist/lmstudio-tray-manager

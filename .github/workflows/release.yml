@@ -96,14 +96,12 @@ jobs:
             cp -a "docs/BUILD.md" "$STAGE_DIR_BIN/docs/BUILD.md"
           fi
 
-          BIN_FILES=(
-            "lmstudio_autostart.sh"
-            "setup.sh"
-            "README.md"
-            "LICENSE"
-            "AUTHORS"
-            "VERSION"
-          )
+          BIN_FILES=()
+          for file in "${FILES[@]}"; do
+            if [[ "$file" != "lmstudio_tray.py" ]]; then
+              BIN_FILES+=("$file")
+            fi
+          done
 
           for file in "${BIN_FILES[@]}"; do
             if [[ -f "$file" ]]; then

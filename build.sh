@@ -14,12 +14,10 @@ LOGFILE="$LOGS_DIR/build.log"
 
 # Initialize log file with header
 {
-    echo "==================\
-======================================"
+    echo "================================================================================"
     echo "LM Studio Tray Manager Build Log"
     echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
-    echo "==================\
-======================================"
+    echo "================================================================================"
 } > "$LOGFILE"
 
 # Redirect all output (stdout and stderr) to log file AND terminal
@@ -81,7 +79,7 @@ fi
 # Clean previous builds
 if [ -d "build" ] || [ -d "dist" ]; then
     echo -e "${YELLOW}Cleaning previous builds...${NC}"
-    rm -rf build dist *.spec
+    rm -rf build dist
 fi
 
 # Run PyInstaller build
@@ -128,12 +126,9 @@ if command -v upx &> /dev/null; then
         "$BINARY_PATH"
     FINAL_SIZE=$(get_file_size "$BINARY_PATH")
     FINAL_SIZE_MB=$(echo "scale=2; $FINAL_SIZE / 1048576" | bc)
-    TOTAL_SAVED=$(echo "scale=2; ($UNOPT_SIZE - $FINAL_SIZE) / 1048576" \
-        | bc)
-    REDUCTION=$(echo "scale=1; (($UNOPT_SIZE - $FINAL_SIZE) * 100) / \
-        $UNOPT_SIZE" | bc)
-    echo "Final size: ${FINAL_SIZE_MB} MB (saved ${TOTAL_SAVED} MB, \
-${REDUCTION}% reduction)"
+    TOTAL_SAVED=$(echo "scale=2; ($UNOPT_SIZE - $FINAL_SIZE) / 1048576" | bc)
+    REDUCTION=$(echo "scale=1; (($UNOPT_SIZE - $FINAL_SIZE) * 100) / $UNOPT_SIZE" | bc)
+    echo "Final size: ${FINAL_SIZE_MB} MB (saved ${TOTAL_SAVED} MB, ${REDUCTION}% reduction)"
 else
     echo -e "${YELLOW}Warning: upx not found, skipping compression${NC}"
     echo "Install upx for better compression: sudo apt install upx"

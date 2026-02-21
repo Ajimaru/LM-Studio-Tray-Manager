@@ -480,36 +480,14 @@ def test_get_app_version_fallback_default(tray_module, tmp_path, monkeypatch):
 
 
 def test_load_version_from_dir_empty_file(tray_module, tmp_path):
-    """Return default version when VERSION file is empty.
-
-    Args:
-        tray_module: Imported lmstudio_tray module fixture.
-        tmp_path: Temporary directory path fixture.
-
-    Returns:
-        None: This is a test assertion helper.
-
-    Raises:
-        None.
-    """
+    """Return default version when VERSION file is empty."""
     (tmp_path / "VERSION").write_text("", encoding="utf-8")
     version = tray_module.load_version_from_dir(str(tmp_path))
     assert version == tray_module.DEFAULT_APP_VERSION  # nosec B101
 
 
 def test_version_flag_exits(tmp_path, monkeypatch):
-    """Exit early when --version flag is provided.
-
-    Args:
-        tmp_path: Temporary directory path fixture.
-        monkeypatch: Pytest monkeypatch fixture.
-
-    Returns:
-        None: This is a test assertion helper.
-
-    Raises:
-        SystemExit: Expected exit after printing version.
-    """
+    """Test that the CLI exits when --version is provided."""
     (tmp_path / "VERSION").write_text("v9.9.9", encoding="utf-8")
     gi_mod = ModuleType("gi")
     setattr(gi_mod, "require_version", lambda *_args, **_kwargs: None)

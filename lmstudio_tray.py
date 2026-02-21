@@ -48,9 +48,6 @@ def load_version_from_dir(base_dir):
 
     Returns:
         Version string from VERSION, or DEFAULT_APP_VERSION when missing.
-
-    Raises:
-        None: OSError is caught and results in DEFAULT_APP_VERSION.
     """
     version_path = os.path.join(base_dir, "VERSION")
     try:
@@ -64,16 +61,10 @@ def load_version_from_dir(base_dir):
 
 
 def parse_args():
-    """Parse command-line arguments.
-
-    Args:
-        None: Uses CLI arguments from sys.argv.
+    """Parse command-line arguments from sys.argv.
 
     Returns:
         argparse.Namespace from parse_known_args()[0].
-
-    Raises:
-        None: parse_known_args avoids SystemExit on unknown args.
     """
     parser = argparse.ArgumentParser(
         description="LM Studio Tray Monitor",
