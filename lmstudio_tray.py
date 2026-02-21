@@ -9,27 +9,21 @@ as viewing status information through a context menu.
 Usage:
     lmstudio_tray.py [model] [script_dir] [debug] [options]
 
-Args:
-    model: Model name to monitor (optional, default: "no-model-passed")
-    script_dir: Script directory for logs and VERSION file (optional,
-        default: current working directory)
-    debug: Positional argument; use "debug" to enable debug logging
-        (optional)
-    --debug, -d: Enable debug logging (flag)
-    --auto-start-daemon, -a: Start llmster daemon on launch (flag)
-    --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag)
-    --version, -v: Print version and exit (flag)
-    --help: Show help message and exit (flag)
-
-Returns:
-    None: This module runs as the main entry point.
-
-Raises:
-    FileNotFoundError: If VERSION file is missing (falls back to default).
-    OSError: If .logs directory cannot be created.
-
 Notes:
+    Command-line arguments:
+        model: Model name to monitor (optional, default: "no-model-passed").
+        script_dir: Script directory for logs and VERSION file (optional,
+            default: current working directory).
+        debug: Positional argument; use "debug" to enable debug logging
+            (optional).
+        --debug, -d: Enable debug logging (flag).
+        --auto-start-daemon, -a: Start llmster daemon on launch (flag).
+        --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
+        --version, -v: Print version and exit (flag).
+        --help: Show help message and exit (flag).
+
     Logging is written to .logs/lmstudio_tray.log in the script directory.
+    If the VERSION file is missing, a default version string is used.
 """
 
 # nosec B404 - subprocess is required for system process management
@@ -61,10 +55,6 @@ def load_version_from_dir(base_dir):
     Returns:
         str: Version string read from the VERSION file, or DEFAULT_APP_VERSION
             if the file is missing or empty.
-
-    Raises:
-        OSError: If the VERSION file cannot be read; caught and returns
-            DEFAULT_APP_VERSION.
     """
     version_path = os.path.join(base_dir, "VERSION")
     try:
@@ -82,9 +72,6 @@ def parse_args():
 
     This function reads all arguments and flags provided on the command line
     via sys.argv and returns them as a structured namespace object.
-
-    Args:
-        None: Reads from sys.argv internally.
 
     Command-line Arguments:
         model (str): Model name to monitor; positional, optional.

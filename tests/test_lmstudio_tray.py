@@ -12,15 +12,6 @@ application, including tests for:
 
 The tests use mocked GTK, AppIndicator, and GLib components to avoid requiring
 a display server or actual system dependencies during test execution.
-
-Args:
-    None
-
-Returns:
-    None
-
-Raises:
-    None
 """
 
 import importlib.util
