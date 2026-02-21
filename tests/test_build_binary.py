@@ -141,10 +141,15 @@ def test_build_binary_success_with_loaders(
     monkeypatch.setattr(
         build_binary_module, "check_dependencies", lambda: None
     )
+    loaders_dir = tmp_path / "loaders"
+    loaders_dir.mkdir()
+    # Dummy .so files – content is not inspected; only the glob match matters.
+    (loaders_dir / "libpixbufloader-png.so").write_bytes(b"")
+    (loaders_dir / "libpixbufloader-jpeg.so").write_bytes(b"")
     monkeypatch.setattr(
         build_binary_module,
         "get_gdk_pixbuf_loaders",
-        lambda: (str(tmp_path / "loaders"),
+        lambda: (str(loaders_dir),
                  str(tmp_path / "loaders.cache")),
     )
     monkeypatch.setattr(

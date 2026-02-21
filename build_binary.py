@@ -6,6 +6,7 @@ This script creates a standalone binary using PyInstaller with all necessary
 GTK3/GObject dependencies bundled.
 """
 
+import glob
 import importlib.util
 import os
 import shlex
@@ -160,10 +161,11 @@ def build_binary():
 
     # Add GdkPixbuf loaders and cache
     if loaders_dir and cache_file:
-        cmd.extend([
-            "--add-binary",
-            f"{loaders_dir}{os.pathsep}lib/gdk-pixbuf/loaders"
-        ])
+        for so_file in glob.glob(os.path.join(loaders_dir, "*.so*")):
+            cmd.extend([
+                "--add-binary",
+                f"{so_file}{os.pathsep}lib/gdk-pixbuf/loaders"
+            ])
         cmd.extend([
             "--add-data",
             f"{cache_file}{os.pathsep}lib/gdk-pixbuf"

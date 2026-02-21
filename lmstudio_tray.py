@@ -49,8 +49,6 @@ from urllib import parse as urllib_parse
 
 import gi
 
-gi.require_version("Gtk", "3.0")
-gi.require_version("AyatanaAppIndicator3", "0.1")
 DEFAULT_APP_VERSION = "dev"
 
 
@@ -156,51 +154,19 @@ def parse_args():
     return parser.parse_known_args()[0]
 
 
-args = parse_args()
+# === Module-level defaults for args-derived globals ===
+# These are overridden by main() when run as __main__.
+MODEL = "no-model-passed"
+script_dir = os.getcwd()
+DEBUG_MODE = False
+GUI_MODE = False
+AUTO_START_DAEMON = False
+APP_VERSION = DEFAULT_APP_VERSION
 
-# === Model name from argument or default ===
-MODEL = args.model
-script_dir = args.script_dir
-DEBUG_MODE = args.debug or args.debug_mode.lower() == "debug"
-GUI_MODE = args.gui
-AUTO_START_DAEMON = args.auto_start_daemon and not GUI_MODE
-
-if args.version:
-    print(load_version_from_dir(script_dir))
-    sys.exit(0)
-
-Gtk = importlib.import_module("gi.repository.Gtk")
-GLib = importlib.import_module("gi.repository.GLib")
-AppIndicator3 = importlib.import_module("gi.repository.AyatanaAppIndicator3")
-logs_dir = os.path.join(script_dir, ".logs")
-
-# === Create logs directory if not exists ===
-os.makedirs(logs_dir, exist_ok=True)
-
-# === Set up logging ===
-LOG_LEVEL = logging.DEBUG if DEBUG_MODE else logging.INFO
-log_file = os.path.join(logs_dir, "lmstudio_tray.log")
-
-# Write header to log file
-with open(log_file, 'w', encoding='utf-8') as f:
-    f.write("="*80 + "\n")
-    f.write("LM Studio Tray Monitor Log\n")
-    f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-    f.write("="*80 + "\n")
-
-logging.basicConfig(
-    filename=log_file,
-    level=LOG_LEVEL,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    filemode='a'
-)
-
-# Redirect Python warnings to log file in debug mode
-if DEBUG_MODE:
-    logging.captureWarnings(True)
-    warnings_logger = logging.getLogger('py.warnings')
-    warnings_logger.setLevel(logging.DEBUG)
-    logging.debug("Debug mode enabled - capturing warnings to log file")
+# GTK module globals – populated by main() before TrayIcon is created.
+Gtk = None
+GLib = None
+AppIndicator3 = None
 
 INTERVAL = 10
 UPDATE_CHECK_INTERVAL = 60 * 60 * 24
@@ -226,7 +192,75 @@ def get_app_version():
     return load_version_from_dir(script_dir)
 
 
-APP_VERSION = get_app_version()
+def main():
+    """Initialize module globals from CLI args and run the tray application.
+
+    Parses command-line arguments, loads GTK dependencies, configures
+    logging, and starts the GTK main loop. Exits immediately when the
+    --version flag is provided, without loading GTK.
+    """
+    global MODEL, script_dir, DEBUG_MODE, GUI_MODE, AUTO_START_DAEMON
+    global Gtk, GLib, AppIndicator3, APP_VERSION
+
+    args = parse_args()
+
+    # === Model name from argument or default ===
+    MODEL = args.model
+    script_dir = args.script_dir
+    DEBUG_MODE = args.debug or args.debug_mode.lower() == "debug"
+    GUI_MODE = args.gui
+    AUTO_START_DAEMON = args.auto_start_daemon and not GUI_MODE
+
+    if args.version:
+        print(load_version_from_dir(script_dir))
+        sys.exit(0)
+
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("AyatanaAppIndicator3", "0.1")
+    Gtk = importlib.import_module("gi.repository.Gtk")
+    GLib = importlib.import_module("gi.repository.GLib")
+    AppIndicator3 = importlib.import_module(
+        "gi.repository.AyatanaAppIndicator3"
+    )
+    logs_dir = os.path.join(script_dir, ".logs")
+
+    # === Create logs directory if not exists ===
+    os.makedirs(logs_dir, exist_ok=True)
+
+    # === Set up logging ===
+    LOG_LEVEL = logging.DEBUG if DEBUG_MODE else logging.INFO
+    log_file = os.path.join(logs_dir, "lmstudio_tray.log")
+
+    # Write header to log file
+    with open(log_file, 'w', encoding='utf-8') as f:
+        f.write("="*80 + "\n")
+        f.write("LM Studio Tray Monitor Log\n")
+        f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write("="*80 + "\n")
+
+    logging.basicConfig(
+        filename=log_file,
+        level=LOG_LEVEL,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        filemode='a'
+    )
+
+    # Redirect Python warnings to log file in debug mode
+    if DEBUG_MODE:
+        logging.captureWarnings(True)
+        warnings_logger = logging.getLogger('py.warnings')
+        warnings_logger.setLevel(logging.DEBUG)
+        logging.debug(
+            "Debug mode enabled - capturing warnings to log file"
+        )
+
+    APP_VERSION = get_app_version()
+
+    kill_existing_instances()
+    logging.info("Tray script started")
+
+    TrayIcon()
+    Gtk.main()
 
 
 def get_authors():
@@ -529,11 +563,6 @@ def kill_existing_instances():
                 logging.info("Terminating old instance: PID %s", pid)
             except (OSError, ProcessLookupError, PermissionError) as e:
                 logging.warning("Error terminating PID %s: %s", pid, e)
-
-
-kill_existing_instances()
-
-logging.info("Tray script started")
 
 
 class TrayIcon:
@@ -1665,5 +1694,4 @@ class TrayIcon:
 
 
 if __name__ == "__main__":
-    TrayIcon()
-    Gtk.main()
+    main()

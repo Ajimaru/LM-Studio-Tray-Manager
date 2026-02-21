@@ -437,6 +437,11 @@ def tray_module_fixture(monkeypatch, tmp_path):
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
+    # GTK globals are populated by main(); set them directly so tests
+    # that reference tray_module.Gtk / GLib / AppIndicator3 work.
+    module.Gtk = gtk_mod
+    module.GLib = glib_mod
+    module.AppIndicator3 = app_mod
     return module
 
 
@@ -509,8 +514,9 @@ def test_version_flag_exits(tmp_path, monkeypatch):
         assert spec is not None and spec.loader is not None  # nosec B101
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
+        spec.loader.exec_module(module)
         with pytest.raises(SystemExit):
-            spec.loader.exec_module(module)
+            module.main()
     finally:
         sys.argv = old_argv
 
@@ -2120,6 +2126,7 @@ def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
         spec.loader.exec_module(module)
+        module.main()
         assert captured["enabled"] is True  # nosec B101
     finally:
         sys.argv = old_argv
