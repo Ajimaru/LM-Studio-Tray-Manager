@@ -760,9 +760,7 @@ def test_show_about_dialog_contains_version_and_repo(tray_module, monkeypatch):
     tray.show_about_dialog(None)
     dialog = tray_module.Gtk.AboutDialog.last_instance
     assert dialog.version == "v2.0.0"  # nosec B101
-    assert dialog.authors == [
-        "TestMaintainer <https://github.com/TestMaintainer>"
-    ]  # nosec B101
+    assert dialog.authors == ["TestMaintainer"]  # nosec B101
     assert dialog.website == "https://github.com/test/repo"  # nosec B101
     assert dialog.website_label == "GitHub Repository"  # nosec B101
     assert dialog.ran  # nosec B101

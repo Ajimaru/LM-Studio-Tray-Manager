@@ -1147,10 +1147,7 @@ class TrayIcon:
         dialog = Gtk.AboutDialog()
         dialog.set_program_name(APP_NAME)
         dialog.set_version(APP_VERSION)
-        author_link = (
-            f"{APP_MAINTAINER} <https://github.com/{APP_MAINTAINER}>"
-        )
-        dialog.set_authors([author_link])
+        dialog.set_authors([APP_MAINTAINER])
         dialog.set_website(APP_REPOSITORY)
         dialog.set_website_label("GitHub Repository")
         dialog.set_comments(
