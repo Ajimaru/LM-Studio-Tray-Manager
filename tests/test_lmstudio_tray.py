@@ -20,6 +20,8 @@ import os
 import signal
 import subprocess  # nosec B404 - subprocess module is mocked in tests
 import sys
+import urllib.error
+from email.message import Message
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
@@ -360,7 +362,7 @@ class DummyUrlLib:
                 raise self.raise_exc
             return DummyUrlResponse(self.payload)
 
-    def OpenerDirector(self):
+    def opener_director(self):
         """Return a dummy opener with this instance payload."""
         return DummyUrlLib.DummyOpenerDirector(
             self.payload, self.raise_exc
@@ -494,13 +496,12 @@ def test_get_latest_release_version_reads_tag(tray_module, monkeypatch):
 
 def test_get_latest_release_version_http_error(tray_module, monkeypatch):
     """Return HTTP error code string on HTTPError."""
-    import urllib.error
-
+    hdrs = Message()
     exc = urllib.error.HTTPError(
         url="https://api.github.com",
         code=404,
         msg="Not Found",
-        hdrs={},
+        hdrs=hdrs,
         fp=None,
     )
     monkeypatch.setattr(
@@ -513,8 +514,6 @@ def test_get_latest_release_version_http_error(tray_module, monkeypatch):
 
 def test_get_latest_release_version_url_error(tray_module, monkeypatch):
     """Return network error message on URLError."""
-    import urllib.error
-
     exc = urllib.error.URLError(reason="connection refused")
     monkeypatch.setattr(
         tray_module, "urllib_request", DummyUrlLib(b"", raise_exc=exc)
@@ -749,6 +748,8 @@ def test_manual_check_updates_reports_error_without_details(
     msg = str(notify_calls[0])
     assert "Update Check" in msg  # nosec B101
     assert "Unable to check for updates" in msg  # nosec B101
+
+
 def test_get_authors_reads_file(tray_module, tmp_path, monkeypatch):
     """Read authors from AUTHORS file."""
     monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
