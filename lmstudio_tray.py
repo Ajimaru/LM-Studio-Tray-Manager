@@ -200,10 +200,9 @@ def get_latest_release_version():
         LATEST_RELEASE_API_URL,
     )
     try:
-        # Create custom opener that only allows HTTPS scheme
+        # Create opener with HTTPS support and default handlers
         https_handler = urllib_request.HTTPSHandler()
-        opener = urllib_request.OpenerDirector()
-        opener.add_handler(https_handler)
+        opener = urllib_request.build_opener(https_handler)
 
         with opener.open(request, timeout=10) as response:
             payload = response.read().decode("utf-8")
