@@ -17,12 +17,19 @@ from pathlib import Path
 def get_gdk_pixbuf_loaders():
     """Find and return GdkPixbuf loaders directory and files.
 
+    Args:
+        None
+
     Returns:
         tuple[str | None, str | None]: A tuple of (loaders_dir,
             cache_file) where loaders_dir is the path to the GdkPixbuf
             loaders directory and cache_file is the path to loaders.cache.
             Both elements are None if the loaders cannot be found or an
             error occurs.
+
+    Raises:
+        OSError: If subprocess execution fails.
+        subprocess.SubprocessError: If pkg-config command fails.
     """
     try:
         # Get loaders directory from pkg-config
@@ -55,7 +62,17 @@ def get_gdk_pixbuf_loaders():
 
 
 def check_dependencies():
-    """Check and install required build dependencies."""
+    """Check and install required build dependencies.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        SystemExit: If PyInstaller installation fails.
+    """
     if importlib.util.find_spec("PyInstaller") is not None:
         print("✓ PyInstaller is installed")
         return
@@ -77,9 +94,15 @@ def check_dependencies():
 def get_hidden_imports():
     """Return list of hidden imports needed for GTK3/GObject.
 
+    Args:
+        None
+
     Returns:
         list[str]: Hidden import module names required for GTK3/GObject
             functionality in the standalone binary.
+
+    Raises:
+        None
     """
     return [
         "gi",
@@ -101,11 +124,17 @@ def get_hidden_imports():
 def get_data_files():
     """Return list of data files to bundle.
 
+    Args:
+        None
+
     Returns:
         list[tuple[str, str]]: List of (source, destination) tuples
             representing files and directories to bundle with the binary.
             source is the file/directory path, destination is the target
             path relative to the binary root.
+
+    Raises:
+        OSError: If filesystem operations fail when checking paths.
     """
     data_files = []
 
@@ -127,9 +156,16 @@ def get_data_files():
 def build_binary():
     """Build the standalone binary using PyInstaller.
 
+    Args:
+        None
+
     Returns:
         int: Exit code (0 on successful build, 1 if binary creation
             fails or binary is missing after build completion).
+
+    Raises:
+        subprocess.TimeoutExpired: If PyInstaller takes longer than
+            3600 seconds.
     """
     print("\n" + "="*60)
     print("Building LM Studio Tray Manager Binary")
