@@ -150,7 +150,7 @@ GUI_MODE = False
 AUTO_START_DAEMON = False
 APP_VERSION = DEFAULT_APP_VERSION
 
-# GTK module globals – populated by main() before TrayIcon is created.
+# GTK module globals - populated by main() before TrayIcon is created.
 Gtk = None
 GLib = None
 AppIndicator3 = None
@@ -175,7 +175,22 @@ LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 
 def get_app_version():
-    """Load app version from VERSION file in script directory."""
+    """Load app version from VERSION file in script directory.
+
+    Reads the app version from the VERSION file located in the script
+    directory. Falls back to DEFAULT_APP_VERSION if the file is missing
+    or unreadable.
+
+    Args:
+        None
+
+    Returns:
+        str: Version string read from the VERSION file, or
+            DEFAULT_APP_VERSION if loading fails.
+
+    Raises:
+        None
+    """
     return load_version_from_dir(script_dir)
 
 
@@ -185,6 +200,15 @@ def main():
     Parses command-line arguments, loads GTK dependencies, configures
     logging, and starts the GTK main loop. Exits immediately when the
     --version flag is provided, without loading GTK.
+
+    Args:
+        None. Reads sys.argv internally via parse_args().
+
+    Returns:
+        None
+
+    Raises:
+        SystemExit: When --version flag is provided (via sys.exit(0)).
     """
     global MODEL, script_dir, DEBUG_MODE, GUI_MODE, AUTO_START_DAEMON
     global Gtk, GLib, AppIndicator3, APP_VERSION

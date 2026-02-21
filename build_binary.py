@@ -86,9 +86,15 @@ def check_dependencies():
 def get_hidden_imports():
     """Return list of hidden imports needed for GTK3/GObject.
 
+    Args:
+        None
+
     Returns:
         list[str]: Hidden import module names required for GTK3/GObject
             functionality in the standalone binary.
+
+    Raises:
+        None
     """
     return [
         "gi",
@@ -103,7 +109,6 @@ def get_hidden_imports():
         "gi.repository.PangoCairo",
         "gi.repository.cairo",
         "cairo",
-        "pkg_resources.py2_warn",
     ]
 
 

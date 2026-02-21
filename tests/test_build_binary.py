@@ -143,7 +143,7 @@ def test_build_binary_success_with_loaders(
     )
     loaders_dir = tmp_path / "loaders"
     loaders_dir.mkdir()
-    # Dummy .so files – content is not inspected; only the glob match matters.
+    # Dummy .so files - content is not inspected; only the glob match matters.
     (loaders_dir / "libpixbufloader-png.so").write_bytes(b"")
     (loaders_dir / "libpixbufloader-jpeg.so").write_bytes(b"")
     monkeypatch.setattr(

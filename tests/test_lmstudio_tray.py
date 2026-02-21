@@ -351,9 +351,8 @@ class DummyUrlLib:
             """Record a handler instance (unused)."""
             self.handlers.append(handler)
 
-        def open(self, _request, timeout=None, **_kwargs):
+        def open(self, _request, _timeout=None, **_kwargs):
             """Return a dummy response or raise the configured exception."""
-            _ = timeout  # Unused but required for API compatibility
             if self.raise_exc is not None:
                 raise self.raise_exc
             return DummyUrlResponse(self.payload)
@@ -384,7 +383,7 @@ def _completed(returncode=0, stdout="", stderr=""):
 def tray_module_fixture(monkeypatch, tmp_path):
     """Import lmstudio_tray with mocked GI/GTK dependencies."""
     gi_mod = ModuleType("gi")
-    setattr(gi_mod, "require_version", lambda *_args, **_kwargs: None)
+    gi_mod.require_version = lambda *_args, **_kwargs: None
 
     gtk_mod = DummyGtkModule("gi.repository.Gtk")
     glib_mod = DummyGLibModule("gi.repository.GLib")
@@ -495,7 +494,7 @@ def test_version_flag_exits(tmp_path, monkeypatch):
     """Test that the CLI exits when --version is provided."""
     (tmp_path / "VERSION").write_text("v9.9.9", encoding="utf-8")
     gi_mod = ModuleType("gi")
-    setattr(gi_mod, "require_version", lambda *_args, **_kwargs: None)
+    gi_mod.require_version = lambda *_args, **_kwargs: None
     monkeypatch.setitem(sys.modules, "gi", gi_mod)
     monkeypatch.setitem(
         sys.modules,
@@ -2068,7 +2067,7 @@ def test_start_daemon_fails_when_desktop_cannot_stop(tray_module, monkeypatch):
 def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     """Enable warning capture when module is imported in debug mode."""
     gi_mod = ModuleType("gi")
-    setattr(gi_mod, "require_version", lambda *_args, **_kwargs: None)
+    gi_mod.require_version = lambda *_args, **_kwargs: None
     gtk_mod = DummyGtkModule("gi.repository.Gtk")
     glib_mod = DummyGLibModule("gi.repository.GLib")
     app_mod = DummyAppIndicatorModule("gi.repository.AyatanaAppIndicator3")
@@ -2448,13 +2447,15 @@ def test_stop_daemon_error_paths(tray_module, monkeypatch):
 def test_start_desktop_app_with_notifications(tray_module, monkeypatch):
     """Cover notification path when starting desktop app."""
     tray = _make_tray_instance(tray_module)
-    tray.desktop_app_path = "/usr/bin/lm-studio"
 
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(
         tray_module.os.path, "isfile", lambda _p: True
     )
     monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
+    monkeypatch.setattr(
+        tray_module, "get_notify_send_cmd", lambda: ["notify-send"]
+    )
 
     process_mock = SimpleNamespace(pid=12345)
     monkeypatch.setattr(
