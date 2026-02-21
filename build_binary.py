@@ -63,13 +63,18 @@ def check_dependencies():
         None
 
     Raises:
-        SystemExit: If PyInstaller installation fails.
+        SystemExit: If requirements-build.txt is not found or if PyInstaller
+            installation fails.
     """
     if importlib.util.find_spec("PyInstaller") is not None:
         print("✓ PyInstaller is installed")
         return
 
     req_file = Path(__file__).parent / "requirements-build.txt"
+    if not req_file.exists():
+        print(f"\n❌ requirements-build.txt not found at {req_file}")
+        sys.exit(1)
+
     print("Installing PyInstaller...")
     try:
         subprocess.run(
