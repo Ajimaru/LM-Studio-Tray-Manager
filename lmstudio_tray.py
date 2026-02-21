@@ -177,15 +177,9 @@ def get_app_version():
     directory. Falls back to DEFAULT_APP_VERSION if the file is missing
     or unreadable.
 
-    Args:
-        None
-
     Returns:
         str: Version string read from the VERSION file, or
             DEFAULT_APP_VERSION if loading fails.
-
-    Raises:
-        None
     """
     return load_version_from_dir(script_dir)
 
@@ -193,15 +187,10 @@ def get_app_version():
 def main():
     """Initialize module globals from CLI args and run the tray application.
 
-    Parses command-line arguments, loads GTK dependencies, configures
-    logging, and starts the GTK main loop. Exits immediately when the
-    --version flag is provided, without loading GTK.
-
-    Args:
-        None. Reads sys.argv internally via parse_args().
-
-    Returns:
-        None
+    Parses command-line arguments (from sys.argv) via parse_args(), loads
+    GTK dependencies, configures logging, and starts the GTK main loop.
+    Exits immediately when the --version flag is provided, without loading
+    GTK.
 
     Raises:
         SystemExit: When --version flag is provided (via sys.exit(0)).
@@ -252,13 +241,13 @@ def main():
         f.write("LM Studio Tray Monitor Log\n")
         f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("="*80 + "\n")
+
+    logging.basicConfig(
+        filename=log_file,
+        level=LOG_LEVEL,
         format="%(asctime)s - %(levelname)s - %(message)s",
         filemode='a',
         force=True,
-    )
-        level=LOG_LEVEL,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        filemode='a'
     )
 
     # Redirect Python warnings to log file in debug mode
