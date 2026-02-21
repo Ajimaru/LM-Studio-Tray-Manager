@@ -2,18 +2,16 @@
 
 ![LM Studio Icon](assets/img/lm-studio-tray-manager.svg)
 
----
+Automation scripts for LM Studio - a powerful desktop and server application for running Large Language Models locally on consumer hardware.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/downloads/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://www.linux.org/)
 [![LM Studio App v0.4.3+](https://img.shields.io/badge/LM_Studio_App-v0.4.3+-green.svg)](https://lmstudio.ai/download)
 [![LM Studio Daemon v0.0.3+](https://img.shields.io/badge/LM_Studio_Daemon-v0.0.3+-green.svg)](https://lmstudio.ai)
-
 [![Release](https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ajimaru/LM-Studio-Tray-Manager/total.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases)
-
-Automation scripts for LM Studio - a powerful desktop and server application for running Large Language Models locally on consumer hardware.
+---
 
 ## Features
 
@@ -31,18 +29,18 @@ Automation scripts for LM Studio - a powerful desktop and server application for
 
 ### User Installation (from Release)
 
-1. Open the latest release:
+**1.** Open the latest release:
 
 ```text
 https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 ```
 
-2. Download one of these artifacts:
+**2.** Download one of these artifacts:
 
 - `LM-Studio-Tray-Manager-latest.tar.gz`
 - `LM-Studio-Tray-Manager-latest.zip`
 
-3. Extract and enter the folder.
+**3.** Extract and enter the folder.
 
 Example (`.tar.gz`):
 
@@ -51,7 +49,7 @@ tar -xzf LM-Studio-Tray-Manager-latest.tar.gz
 cd LM-Studio-Tray-Manager-vX.Y.Z
 ```
 
-4. Run the Setup Script
+**4.** Run the Setup Script
 
 ```bash
 ./setup.sh
@@ -69,7 +67,7 @@ This setup script:
 - ✓ Checks for Python 3.10 - installs via apt if missing
 - ✓ Creates Python 3.10 virtual environment with PyGObject/GTK3 support
 
-5. Run the Automation Script
+**5.** Run the Automation Script
 
 ```bash
 # Start the LM Studio daemon and system tray monitor
@@ -82,7 +80,7 @@ The script will:
 - Start `llmster` daemon (default mode)
 - Launch the system tray monitor in the background
 
-6. Verify It Works
+**6.** Verify It Works
 
 - Check that the LM Studio daemon is running: `lms ps`
 - Look for the system tray icon (should appear in your taskbar)
