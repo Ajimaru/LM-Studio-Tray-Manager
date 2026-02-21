@@ -77,10 +77,11 @@ def check_dependencies():
         print("✓ PyInstaller is installed")
         return
 
+    req_file = Path(__file__).parent / "requirements-build.txt"
     print("Installing PyInstaller...")
     try:
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "pyinstaller"],
+            [sys.executable, "-m", "pip", "install", "-r", str(req_file)],
             check=True
         )
     except subprocess.CalledProcessError as e:
