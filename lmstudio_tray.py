@@ -1292,7 +1292,11 @@ class TrayIcon:
         dialog.destroy()
 
     def get_version_label(self):
-        """Return version text with update status for the About dialog."""
+        """Return version text with update status for the About dialog.
+
+        Returns:
+            str: Version text in the format '<APP_VERSION> (<status>)'.
+        """
         status = self.update_status or "Unknown"
         return f"{APP_VERSION} ({status})"
 
