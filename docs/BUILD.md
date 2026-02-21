@@ -33,8 +33,8 @@ This will:
 ### Manual Build
 
 ```bash
-# Install PyInstaller
-pip install pyinstaller
+# Install build dependencies (pinned versions)
+pip install -r requirements-build.txt
 
 # Build using Python script
 python3 build_binary.py
@@ -61,7 +61,7 @@ sudo pacman -S python-pip upx binutils
 ### Python Packages
 
 ```bash
-pip install pyinstaller
+pip install -r requirements-build.txt
 ```
 
 ## Build Methods
@@ -334,7 +334,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y upx gir1.2-gtk-3.0
           pip install -r requirements.txt
-          pip install pyinstaller
+          pip install -r requirements-build.txt
       
       - name: Build binary
         run: ./build.sh

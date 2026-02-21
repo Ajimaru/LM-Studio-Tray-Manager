@@ -84,6 +84,7 @@ if ! python -m PyInstaller --version &> /dev/null; then
     echo -e "${YELLOW}Installing PyInstaller in venv...${NC}"
     python -m pip install --upgrade pip
     python -m pip install -r "$SCRIPT_DIR/requirements-build.txt"
+
 fi
 
 # Clean previous builds
