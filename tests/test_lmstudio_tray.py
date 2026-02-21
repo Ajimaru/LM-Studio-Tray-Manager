@@ -327,16 +327,6 @@ class DummyUrlLib:
         self.raise_exc = raise_exc
         self.last_request = None
 
-    def build_opener(self, *handlers):
-        """Return a dummy opener and attach any provided handlers."""
-        opener = DummyUrlLib.DummyOpenerDirector(
-            self.payload,
-            self.raise_exc,
-        )
-        for handler in handlers:
-            opener.add_handler(handler)
-        return opener
-
     class Request:
         """Dummy request object matching urllib.request.Request."""
 
@@ -361,18 +351,22 @@ class DummyUrlLib:
             """Record a handler instance (unused)."""
             self.handlers.append(handler)
 
-    def open(self, _request, timeout=None, **_kwargs):
+        def open(self, _request, timeout=None, **_kwargs):
             """Return a dummy response or raise the configured exception."""
             _ = timeout  # Unused but required for API compatibility
             if self.raise_exc is not None:
                 raise self.raise_exc
             return DummyUrlResponse(self.payload)
 
-    def build_opener(self, _handler):
-        """Return a dummy opener for the given handler."""
-        return DummyUrlLib.DummyOpenerDirector(
-            self.payload, self.raise_exc
+    def build_opener(self, *handlers):
+        """Return a dummy opener and attach any provided handlers."""
+        opener = DummyUrlLib.DummyOpenerDirector(
+            self.payload,
+            self.raise_exc,
         )
+        for handler in handlers:
+            opener.add_handler(handler)
+        return opener
 
     def opener_director(self):
         """Return a dummy opener with this instance payload."""

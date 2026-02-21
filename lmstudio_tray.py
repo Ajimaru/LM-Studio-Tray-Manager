@@ -432,7 +432,7 @@ class TrayIcon:
         self.last_status = None
         self.check_model()
         GLib.timeout_add_seconds(INTERVAL, self.check_model)
-        GLib.timeout_add_seconds(5, self._check_updates_tick)
+        GLib.timeout_add_seconds(5, self._initial_update_check)
         GLib.timeout_add_seconds(
             UPDATE_CHECK_INTERVAL,
             self._check_updates_tick,
@@ -1300,6 +1300,11 @@ class TrayIcon:
         """Run the update check for scheduled timers."""
         self.check_updates()
         return True
+
+    def _initial_update_check(self):
+        """Run a single update check shortly after startup."""
+        self.check_updates()
+        return False
 
     def _format_update_check_message(self, status, latest, error):
         """Build the update check notification message."""
