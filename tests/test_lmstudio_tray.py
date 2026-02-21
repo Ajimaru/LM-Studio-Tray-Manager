@@ -319,15 +319,19 @@ class DummyUrlResponse:
 class DummyUrlLib:
     """Dummy urllib.request module for version checks."""
 
-    def __init__(self, payload):
-        """Initialize with payload bytes for urlopen."""
+    def __init__(self, payload, raise_exc=None):
+        """Initialize with payload bytes and optional exception to raise."""
         self.payload = payload
+        self.raise_exc = raise_exc
         self.last_request = None
 
-    def request(self, url, headers=None):
-        """Capture the request and return a sentinel object."""
-        self.last_request = {"url": url, "headers": headers}
-        return url
+    class Request:
+        """Dummy request object matching urllib.request.Request."""
+
+        def __init__(self, url, headers=None):
+            """Accept url and headers; store for potential inspection."""
+            self.full_url = url
+            self.headers = headers or {}
 
     class HTTPSHandler:
         """Dummy HTTPS handler for urllib opener."""
@@ -339,22 +343,28 @@ class DummyUrlLib:
     class DummyOpenerDirector:
         """Dummy opener that returns a fixed response payload."""
 
-        def __init__(self, payload):
-            """Store payload for subsequent open calls."""
+        def __init__(self, payload, raise_exc=None):
+            """Store payload and optional exception for open calls."""
             self.payload = payload
+            self.raise_exc = raise_exc
             self.handlers = []
 
         def add_handler(self, handler):
             """Record a handler instance (unused)."""
             self.handlers.append(handler)
 
-        def open(self, _request, _timeout=0):
-            """Return a dummy response for the request."""
+        def open(self, _request, timeout=None):
+            """Return a dummy response or raise the configured exception."""
+            _ = timeout  # Unused but required for API compatibility
+            if self.raise_exc is not None:
+                raise self.raise_exc
             return DummyUrlResponse(self.payload)
 
-    def opener_director(self):
+    def OpenerDirector(self):
         """Return a dummy opener with this instance payload."""
-        return DummyUrlLib.DummyOpenerDirector(self.payload)
+        return DummyUrlLib.DummyOpenerDirector(
+            self.payload, self.raise_exc
+        )
 
 
 def _completed(returncode=0, stdout="", stderr=""):
@@ -482,6 +492,57 @@ def test_get_latest_release_version_reads_tag(tray_module, monkeypatch):
     assert error is None  # nosec B101
 
 
+def test_get_latest_release_version_http_error(tray_module, monkeypatch):
+    """Return HTTP error code string on HTTPError."""
+    import urllib.error
+
+    exc = urllib.error.HTTPError(
+        url="https://api.github.com",
+        code=404,
+        msg="Not Found",
+        hdrs={},
+        fp=None,
+    )
+    monkeypatch.setattr(
+        tray_module, "urllib_request", DummyUrlLib(b"", raise_exc=exc)
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "HTTP 404"  # nosec B101
+
+
+def test_get_latest_release_version_url_error(tray_module, monkeypatch):
+    """Return network error message on URLError."""
+    import urllib.error
+
+    exc = urllib.error.URLError(reason="connection refused")
+    monkeypatch.setattr(
+        tray_module, "urllib_request", DummyUrlLib(b"", raise_exc=exc)
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "Network or parse error"  # nosec B101
+
+
+def test_get_latest_release_version_invalid_json(tray_module, monkeypatch):
+    """Return parse error message when response body is not valid JSON."""
+    monkeypatch.setattr(
+        tray_module, "urllib_request", DummyUrlLib(b"not valid json")
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "Network or parse error"  # nosec B101
+
+
+def test_get_latest_release_version_no_tag(tray_module, monkeypatch):
+    """Return no-tag error when tag_name is absent from JSON response."""
+    payload = json.dumps({"other_field": "value"}).encode("utf-8")
+    monkeypatch.setattr(tray_module, "urllib_request", DummyUrlLib(payload))
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "No tag found"  # nosec B101
+
+
 def test_check_updates_notifies_once(tray_module, monkeypatch):
     """Send a single update notification per latest version."""
     tray = _make_tray_instance(tray_module)
@@ -586,10 +647,13 @@ def test_manual_check_updates_reports_update_available(
 
     monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
     tray.manual_check_updates(None)
-    assert len(notify_calls) == 1  # nosec B101
-    msg = str(notify_calls[0])
+    # check_updates() sends 1st notification, manual_check_updates() sends 2nd
+    assert len(notify_calls) == 2  # nosec B101
+    # First notification is from check_updates()
+    assert "Update Available" in str(notify_calls[0])  # nosec B101
+    # Second notification is from manual_check_updates()
+    msg = str(notify_calls[1])
     assert "Update Check" in msg  # nosec B101
-    assert "Update available" in msg  # nosec B101
     assert "v2.0.0" in msg  # nosec B101
 
 
@@ -651,7 +715,7 @@ def test_manual_check_updates_reports_error_with_details(
     assert len(notify_calls) == 1  # nosec B101
     msg = str(notify_calls[0])
     assert "Update Check" in msg  # nosec B101
-    assert "Error" in msg  # nosec B101
+    assert "Unable to check for updates" in msg  # nosec B101
     assert "Network error" in msg  # nosec B101
 
 
@@ -684,7 +748,7 @@ def test_manual_check_updates_reports_error_without_details(
     assert len(notify_calls) == 1  # nosec B101
     msg = str(notify_calls[0])
     assert "Update Check" in msg  # nosec B101
-    assert "Error checking for updates" in msg  # nosec B101
+    assert "Unable to check for updates" in msg  # nosec B101
 def test_get_authors_reads_file(tray_module, tmp_path, monkeypatch):
     """Read authors from AUTHORS file."""
     monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
