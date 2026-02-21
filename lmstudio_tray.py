@@ -252,9 +252,10 @@ def main():
         f.write("LM Studio Tray Monitor Log\n")
         f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("="*80 + "\n")
-
-    logging.basicConfig(
-        filename=log_file,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        filemode='a',
+        force=True,
+    )
         level=LOG_LEVEL,
         format="%(asctime)s - %(levelname)s - %(message)s",
         filemode='a'
