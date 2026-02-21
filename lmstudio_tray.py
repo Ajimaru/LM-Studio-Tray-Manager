@@ -148,6 +148,7 @@ APP_VERSION = DEFAULT_APP_VERSION
 Gtk = None
 GLib = None
 AppIndicator3 = None
+GdkPixbuf = None
 
 INTERVAL = 10
 UPDATE_CHECK_INTERVAL = 60 * 60 * 24
@@ -199,7 +200,7 @@ def main():
         SystemExit: When --version flag is provided (via sys.exit(0)).
     """
     global MODEL, script_dir, DEBUG_MODE, GUI_MODE, AUTO_START_DAEMON
-    global Gtk, GLib, AppIndicator3, APP_VERSION
+    global Gtk, GLib, AppIndicator3, GdkPixbuf, APP_VERSION
 
     args = parse_args()
 
@@ -226,6 +227,7 @@ def main():
     gi.require_version("AyatanaAppIndicator3", "0.1")
     Gtk = importlib.import_module("gi.repository.Gtk")
     GLib = importlib.import_module("gi.repository.GLib")
+    GdkPixbuf = importlib.import_module("gi.repository.GdkPixbuf")
     AppIndicator3 = importlib.import_module(
         "gi.repository.AyatanaAppIndicator3"
     )
@@ -269,6 +271,41 @@ def main():
 
     TrayIcon()
     Gtk.main()
+
+
+def get_asset_path(*path_components):
+    """Locate asset file handling both PyInstaller and normal execution.
+
+    Searches in this order:
+    1. sys._MEIPASS/assets/... (PyInstaller bundle)
+    2. script_dir/assets/... (Release package or source dir)
+    3. Current working directory/assets/...
+
+    Args:
+        *path_components: Path components relative to assets/ directory.
+            Example: get_asset_path("img", "lm-studio-tray-manager.svg")
+
+    Returns:
+        str | None: Full path to the asset file if found, None otherwise.
+    """
+    # Check if running as PyInstaller bundle
+    if hasattr(sys, "_MEIPASS"):
+        meipass_asset = os.path.join(sys._MEIPASS, "assets",
+                                      *path_components)
+        if os.path.isfile(meipass_asset):
+            return meipass_asset
+
+    # Check in script_dir
+    script_asset = os.path.join(script_dir, "assets", *path_components)
+    if os.path.isfile(script_asset):
+        return script_asset
+
+    # Check in current working directory
+    cwd_asset = os.path.join(os.getcwd(), "assets", *path_components)
+    if os.path.isfile(cwd_asset):
+        return cwd_asset
+
+    return None
 
 
 def get_authors():
@@ -1480,6 +1517,22 @@ class TrayIcon:
         dialog.set_comments(
             "Monitors and controls LM Studio daemon and desktop app."
         )
+
+        # Load and set the application logo
+        logo_path = get_asset_path("img", "lm-studio-tray-manager.svg")
+        if logo_path:
+            try:
+                logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                    logo_path, 128, 128, True
+                )
+                dialog.set_logo(logo)
+            except (OSError, GLib.Error) as e:
+                logging.warning("Failed to load logo from %s: %s",
+                                logo_path, e)
+        else:
+            logging.debug("Asset not found: assets/img/"
+                         "lm-studio-tray-manager.svg")
+
         dialog.set_modal(True)
         dialog.run()
         dialog.destroy()

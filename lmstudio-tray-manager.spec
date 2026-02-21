@@ -1,87 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import subprocess
-import os
-import glob
-import logging
-
-# Dynamically detect GdkPixbuf loaders paths across different distros
-def get_gdk_pixbuf_paths():
-    """Detect platform-specific GdkPixbuf loaders using pkg-config.
-
-    Returns:
-        tuple[list, list]: (binaries, datas) lists with platform-specific
-            paths. Falls back to empty lists if loaders cannot be found.
-    """
-    binaries = []
-    datas = []
-    try:
-        result = subprocess.run(
-            ["pkg-config", "--variable=gdk_pixbuf_moduledir",
-             "gdk-pixbuf-2.0"],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=5
-        )
-        if result.returncode == 0:
-            loaders_dir = result.stdout.strip()
-            if os.path.exists(loaders_dir):
-                # Add individual .so loader files
-                for loader_file in glob.glob(os.path.join(
-                    loaders_dir, '*.so*'
-                )):
-                    binaries.append((loader_file,
-                                     'lib/gdk-pixbuf/loaders'))
-
-                # Find loaders.cache
-                cache_file = os.path.join(
-                    os.path.dirname(loaders_dir),
-                    "loaders.cache"
-                )
-                if os.path.exists(cache_file):
-                    datas.append((cache_file, 'lib/gdk-pixbuf'))
-    except (OSError, subprocess.SubprocessError) as e:
-        logging.warning(
-            "Failed to detect GdkPixbuf loaders via pkg-config: %s",
-            e, exc_info=True
-        )
-    return binaries, datas
-
-gdk_binaries, gdk_datas = get_gdk_pixbuf_paths()
-
-project_root = os.path.abspath(os.path.dirname(__file__))
 
 a = Analysis(
-    [os.path.join(project_root, 'lmstudio_tray.py')],
-    pathex=[project_root],
-    binaries=gdk_binaries,
-    datas=[
-        (os.path.join(project_root, 'VERSION'), '.'),
-        (os.path.join(project_root, 'AUTHORS'), '.'),
-        (os.path.join(project_root, 'assets'), 'assets'),
-    ] + gdk_datas,
-    hiddenimports=[
-     ([('assets', 'assets')] if os.path.exists('assets') else [])
-     gdk_datas
-),
-    hiddenimports=[
-        'gi.repository.cairo',
-        'gi.repository.AyatanaAppIndicator3',
-        'gi.repository.AppIndicator3',
-        'cairo',
-        'gi.repository.Gtk',
-        'gi.repository.GLib',
-        'gi.repository.GObject',
-        'gi.repository.Gio',
-        'gi.repository.Gdk',
-        'gi.repository.GdkPixbuf',
-        'gi.repository.Pango',
-        'gi.repository.PangoCairo',
-        'gi.repository.cairo',
-        'cairo',
-        'pkg_resources.py2_warn',
-    ],
+    ['lmstudio_tray.py'],
+    pathex=[],
+    binaries=[('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-pnm.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-tiff.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-tga.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-ani.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-qtif.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-icns.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-bmp.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-ico.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-svg.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-xpm.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-xbm.so', 'lib/gdk-pixbuf/loaders'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-gif.so', 'lib/gdk-pixbuf/loaders')],
+    datas=[('VERSION', '.'), ('AUTHORS', '.'), ('assets', 'assets'), ('/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders.cache', 'lib/gdk-pixbuf')],
+    hiddenimports=['gi', 'gi.repository', 'gi.repository.Gtk', 'gi.repository.GLib', 'gi.repository.GObject', 'gi.repository.Gio', 'gi.repository.Gdk', 'gi.repository.GdkPixbuf', 'gi.repository.Pango', 'gi.repository.PangoCairo', 'gi.repository.AyatanaAppIndicator3', 'gi.repository.cairo', 'cairo'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
