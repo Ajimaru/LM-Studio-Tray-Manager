@@ -1,0 +1,3 @@
+# Build-time dependencies for creating the standalone binary.
+# Pin to a specific vetted version to mitigate supply-chain risks.
+pyinstaller==6.13.0
