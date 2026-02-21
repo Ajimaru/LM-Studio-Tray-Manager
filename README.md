@@ -29,8 +29,6 @@ Automation scripts for LM Studio - a powerful desktop and server application for
 
 ## Getting Started
 
-For normal usage, install from the GitHub Releases page (recommended).
-
 ### User Installation (from Release)
 
 1. Open the latest release:
@@ -44,35 +42,16 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 - `LM-Studio-Tray-Manager-latest.tar.gz`
 - `LM-Studio-Tray-Manager-latest.zip`
 
-3. Extract and enter the folder, then run setup.
+3. Extract and enter the folder.
 
 Example (`.tar.gz`):
 
 ```bash
 tar -xzf LM-Studio-Tray-Manager-latest.tar.gz
 cd LM-Studio-Tray-Manager-vX.Y.Z
-./setup.sh
 ```
 
-4. Start automation:
-
-```bash
-./lmstudio_autostart.sh
-```
-
-### Contributor Setup (Git Clone)
-
-Only use `git clone` if you want to contribute code, docs, or workflows:
-
-```bash
-git clone https://github.com/Ajimaru/LM-Studio-Tray-Manager.git
-cd LM-Studio-Tray-Manager
-./setup.sh
-```
-
-After setup, continue with the same runtime steps below.
-
-### 1. Run the Setup Script
+4. Run the Setup Script
 
 ```bash
 ./setup.sh
@@ -81,23 +60,16 @@ After setup, continue with the same runtime steps below.
 ./setup.sh --dry-run
 ```
 
-If you installed from a release archive, run these commands inside the extracted release directory.
+**Note:** If you installed from a release archive, run these commands inside the extracted release directory.
 
-This comprehensive setup script:
+This setup script:
 
 - ✓ Checks for LM Studio daemon (llmster)
 - ✓ Checks for LM Studio desktop app - intelligently detects .deb or AppImage
 - ✓ Checks for Python 3.10 - installs via apt if missing
 - ✓ Creates Python 3.10 virtual environment with PyGObject/GTK3 support
 
-Available setup options:
-
-- `./setup.sh --dry-run` (or `-n`): show planned actions without making changes
-- `./setup.sh --help` (or `-h`): show setup options
-
-The script will guide you through interactive setup steps if needed.
-
-### 2. Run the Automation Script
+5. Run the Automation Script
 
 ```bash
 # Start the LM Studio daemon and system tray monitor
@@ -110,12 +82,13 @@ The script will:
 - Start `llmster` daemon (default mode)
 - Launch the system tray monitor in the background
 
-### 3. Verify It Works
+6. Verify It Works
 
 - Check that the LM Studio daemon is running: `lms ps`
 - Look for the system tray icon (should appear in your taskbar)
 - Check setup log: `cat .logs/setup.log`
 - Check daemon log: `tail -f .logs/lmstudio_autostart.log`
+- Check tray log: `tail -f .logs/lmstudio_tray.log`
 
 ## Quick Reference
 

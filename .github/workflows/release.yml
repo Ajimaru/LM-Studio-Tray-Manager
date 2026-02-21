@@ -80,11 +80,33 @@ jobs:
           cd dist
           sha256sum *.tar.gz *.zip > SHA256SUMS.txt
 
+      - name: Prepare Full Changelog link
+        id: changelog_link
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          
+          # Find the previous tag for comparison link
+          PREV_TAG=$(git tag --sort=-v:refname | grep -A1 "^${TAG}$" | tail -n1 || echo "")
+          
+          if [[ -n "$PREV_TAG" ]]; then
+            CHANGELOG_LINK="**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${TAG}"
+          else
+            CHANGELOG_LINK="**Full Changelog**: https://github.com/${{ github.repository }}/commits/${TAG}"
+          fi
+          
+          echo "link=${CHANGELOG_LINK}" >> "$GITHUB_OUTPUT"
+          echo "${CHANGELOG_LINK}"
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
         with:
           name: LM-Studio-Tray-Manager - ${{ github.ref_name }}
           generate_release_notes: true
+          append_body: true
+          body: |
+            
+            ${{ steps.changelog_link.outputs.link }}
           files: |
             dist/*.tar.gz
             dist/*.zip
