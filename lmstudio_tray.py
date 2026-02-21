@@ -22,6 +22,10 @@ import signal
 import logging
 import shutil
 import importlib
+import json
+from urllib import request as urllib_request
+from urllib import error as urllib_error
+from urllib import parse as urllib_parse
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -66,6 +70,7 @@ if DEBUG_MODE:
     logging.debug("Debug mode enabled - capturing warnings to log file")
 
 INTERVAL = 10
+UPDATE_CHECK_INTERVAL = 60 * 60 * 24
 
 # === GTK icon names from the icon browser ===
 ICON_OK = "emblem-default"         # ✅ Model loaded
@@ -75,6 +80,10 @@ ICON_INFO = "help-info"            # ℹ️ Runtime active, no model
 APP_NAME = "LM Studio Tray Monitor"
 APP_MAINTAINER = "Ajimaru"
 APP_REPOSITORY = "https://github.com/Ajimaru/LM-Studio-Tray-Manager"
+LATEST_RELEASE_API_URL = (
+    "https://api.github.com/repos/Ajimaru/LM-Studio-Tray-Manager"
+    "/releases/latest"
+)
 DEFAULT_APP_VERSION = "dev"
 
 # === Path to lms-CLI ===
@@ -127,6 +136,86 @@ def get_authors():
         pass
     # Fallback to maintainer if no authors found
     return authors if authors else [APP_MAINTAINER]
+
+
+def parse_version(version):
+    """Parse a version string into a comparable tuple of integers."""
+    if not version:
+        return ()
+    cleaned = version.strip()
+    if cleaned.startswith("v"):
+        cleaned = cleaned[1:]
+    parts = []
+    for part in cleaned.split("."):
+        digits = ""
+        for char in part:
+            if char.isdigit():
+                digits += char
+            else:
+                break
+        if not digits:
+            break
+        parts.append(int(digits))
+    return tuple(parts)
+
+
+def is_newer_version(current, latest):
+    """Return True when latest is newer than current."""
+    current_parts = parse_version(current)
+    latest_parts = parse_version(latest)
+    if not current_parts or not latest_parts:
+        return False
+    return latest_parts > current_parts
+
+
+def _is_allowed_update_url(url):
+    """Validate update URL to prevent unsafe schemes or hosts.
+
+    Args:
+        url: URL string to validate.
+
+    Returns:
+        bool: True when the URL uses HTTPS and GitHub API host.
+    """
+    parsed = urllib_parse.urlparse(url)
+    return (
+        parsed.scheme == "https"
+        and parsed.netloc == "api.github.com"
+        and parsed.path.startswith("/repos/")
+    )
+
+
+def get_latest_release_version():
+    """Fetch the latest GitHub release tag name."""
+    if not _is_allowed_update_url(LATEST_RELEASE_API_URL):
+        logging.debug("Update check: invalid update URL")
+        return None, "Invalid update URL"
+
+    request = urllib_request.Request(
+        LATEST_RELEASE_API_URL,
+        headers={"User-Agent": "LM-Studio-Tray-Manager"},
+    )
+    logging.debug(
+        "Update check: requesting %s",
+        LATEST_RELEASE_API_URL,
+    )
+    try:
+        # Create opener with HTTPS support and default handlers
+        https_handler = urllib_request.HTTPSHandler()
+        opener = urllib_request.build_opener(https_handler)
+
+        with opener.open(request, timeout=10) as response:
+            payload = response.read().decode("utf-8")
+            data = json.loads(payload)
+            tag = data.get("tag_name")
+            logging.debug("Update check: latest tag %s", tag)
+            return (tag.strip(), None) if tag else (None, "No tag found")
+    except urllib_error.HTTPError as exc:
+        logging.debug("Update check: HTTP error %s", exc.code)
+        return None, f"HTTP {exc.code}"
+    except (urllib_error.URLError, OSError, ValueError):
+        logging.debug("Update check: network or parse error")
+        return None, "Network or parse error"
 
 
 def get_lms_cmd():
@@ -331,6 +420,10 @@ class TrayIcon:
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
         self.indicator.set_title("LM Studio Monitor")
         self.action_lock_until = 0.0
+        self.last_update_version = None
+        self.update_status = "Unknown"
+        self.latest_update_version = None
+        self.last_update_error = None
 
         # Create persistent menu (AppIndicator requires static menu)
         self.menu = Gtk.Menu()
@@ -339,6 +432,11 @@ class TrayIcon:
         self.last_status = None
         self.check_model()
         GLib.timeout_add_seconds(INTERVAL, self.check_model)
+        GLib.timeout_add_seconds(5, self._initial_update_check)
+        GLib.timeout_add_seconds(
+            UPDATE_CHECK_INTERVAL,
+            self._check_updates_tick,
+        )
 
     def begin_action_cooldown(self, action_name, seconds=2.0):
         """Prevent rapid double-triggering of tray actions."""
@@ -422,6 +520,10 @@ class TrayIcon:
         status_item = Gtk.MenuItem(label="Show Status")
         status_item.connect("activate", self.show_status_dialog)
         self.menu.append(status_item)
+
+        update_item = Gtk.MenuItem(label="Check for updates")
+        update_item.connect("activate", self.manual_check_updates)
+        self.menu.append(update_item)
 
         about_item = Gtk.MenuItem(label="About")
         about_item.connect("activate", self.show_about_dialog)
@@ -1178,7 +1280,7 @@ class TrayIcon:
         """Show application information in a GTK dialog."""
         dialog = Gtk.AboutDialog()
         dialog.set_program_name(APP_NAME)
-        dialog.set_version(APP_VERSION)
+        dialog.set_version(self.get_version_label())
         dialog.set_authors(get_authors())
         dialog.set_website(APP_REPOSITORY)
         dialog.set_website_label("GitHub Repository")
@@ -1189,22 +1291,119 @@ class TrayIcon:
         dialog.run()
         dialog.destroy()
 
-    def check_model(self):
+    def get_version_label(self):
+        """Return version text with update status for the About dialog.
+
+        Returns:
+            str: Version text in the format '<APP_VERSION> (<status>)'.
         """
-        Check LM Studio runtime/model status and update the tray icon.
+        status = self.update_status or "Unknown"
+        return f"{APP_VERSION} ({status})"
+
+    def _check_updates_tick(self):
+        """Run the update check for scheduled timers."""
+        self.check_updates()
+        return True
+
+    def _initial_update_check(self):
+        """Run a single update check shortly after startup."""
+        self.check_updates()
+        return False
+
+    def _format_update_check_message(self, status, latest, error):
+        """Build the update check notification message."""
+        if status == "Update available" and latest:
+            return (
+                f"New version available: {latest} (current {APP_VERSION})"
+            )
+
+        messages = {
+            "Up to date": f"You are up to date ({APP_VERSION})",
+            "Dev build": "Dev build: update checks disabled",
+        }
+        message = messages.get(status)
+        if message:
+            return message
+
+        detail = f" ({error})" if error else ""
+        return "Unable to check for updates." + detail
+
+    def manual_check_updates(self, _widget):
+        """Run update check on demand and notify about the result."""
+        notified = self.check_updates()
+        notify_cmd = get_notify_send_cmd()
+        if not notify_cmd or notified:
+            return
+
+        status = self.update_status or "Unknown"
+        latest = self.latest_update_version
+        error = self.last_update_error
+        message = self._format_update_check_message(status, latest, error)
+
+        self._run_validated_command([notify_cmd, "Update Check", message])
+
+    def check_updates(self):
+        """Check GitHub for a newer release and notify the user.
+
+        Returns:
+            bool: True if a notification was sent.
+        """
+        if APP_VERSION == DEFAULT_APP_VERSION:
+            self.update_status = "Dev build"
+            logging.debug("Update check skipped: dev build")
+            return False
+
+        latest, error = get_latest_release_version()
+        self.last_update_error = error
+        if not latest:
+            self.update_status = "Unknown"
+            logging.debug("Update check failed: %s", error)
+            return False
+
+        self.latest_update_version = latest
+        self.last_update_error = None
+
+        newer = is_newer_version(APP_VERSION, latest)
+        self.update_status = "Update available" if newer else "Up to date"
+        logging.debug(
+            "Update check status: %s (latest %s)",
+            self.update_status,
+            latest,
+        )
+
+        if not newer:
+            return False
+
+        if self.last_update_version == latest:
+            return False
+
+        self.last_update_version = latest
+        notify_cmd = get_notify_send_cmd()
+        if notify_cmd:
+            message = (
+                f"New version available: {latest} (current {APP_VERSION})"
+            )
+            self._run_validated_command(
+                [notify_cmd, "Update Available", message]
+            )
+            return True
+        return False
+
+    def check_model(self):
+        """Check LM Studio runtime/model status and update tray icon.
 
         Updates the tray icon using this schema:
         - FAIL: neither daemon nor desktop app is installed
         - WARN: neither daemon nor desktop app is running
-        - INFO: daemon or desktop app is running, but no model is loaded
+        - INFO: daemon or desktop app is running, but no model loaded
         - OK: a model is loaded
 
-        Sends desktop notifications when status changes from a previous
-        non-None state, and logs status changes and errors.
+        Sends desktop notifications when status changes from a
+        previous non-None state, and logs status changes and errors.
 
         Returns:
-            bool: True to indicate the check completed (used for scheduled
-            callbacks).
+            bool: True to indicate the check completed (used for
+            scheduled callbacks).
         """
         try:
             lms_cmd = get_lms_cmd()

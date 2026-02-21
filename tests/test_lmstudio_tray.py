@@ -15,10 +15,13 @@ a display server or actual system dependencies during test execution.
 """
 
 import importlib.util
+import json
 import os
 import signal
 import subprocess  # nosec B404 - subprocess module is mocked in tests
 import sys
+import urllib.error
+from email.message import Message
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
@@ -295,6 +298,83 @@ class DummyGLibModule(ModuleType):
         return True
 
 
+class DummyUrlResponse:
+    """Dummy response object for urllib tests."""
+
+    def __init__(self, payload):
+        """Store response payload as bytes."""
+        self.payload = payload
+
+    def read(self):
+        """Return raw payload bytes."""
+        return self.payload
+
+    def __enter__(self):
+        """Support context manager protocol."""
+        return self
+
+    def __exit__(self, _exc_type, _exc, _tb):
+        """No cleanup required for dummy response."""
+        return False
+
+
+class DummyUrlLib:
+    """Dummy urllib.request module for version checks."""
+
+    def __init__(self, payload, raise_exc=None):
+        """Initialize with payload bytes and optional exception to raise."""
+        self.payload = payload
+        self.raise_exc = raise_exc
+        self.last_request = None
+
+    class Request:
+        """Dummy request object matching urllib.request.Request."""
+
+        def __init__(self, url, headers=None):
+            """Accept url and headers; store for potential inspection."""
+            self.full_url = url
+            self.headers = headers or {}
+
+    class HTTPSHandler:
+        """Dummy HTTPS handler for urllib opener."""
+
+    class DummyOpenerDirector:
+        """Dummy opener that returns a fixed response payload."""
+
+        def __init__(self, payload, raise_exc=None):
+            """Store payload and optional exception for open calls."""
+            self.payload = payload
+            self.raise_exc = raise_exc
+            self.handlers = []
+
+        def add_handler(self, handler):
+            """Record a handler instance (unused)."""
+            self.handlers.append(handler)
+
+        def open(self, _request, timeout=None, **_kwargs):
+            """Return a dummy response or raise the configured exception."""
+            _ = timeout  # Unused but required for API compatibility
+            if self.raise_exc is not None:
+                raise self.raise_exc
+            return DummyUrlResponse(self.payload)
+
+    def build_opener(self, *handlers):
+        """Return a dummy opener and attach any provided handlers."""
+        opener = DummyUrlLib.DummyOpenerDirector(
+            self.payload,
+            self.raise_exc,
+        )
+        for handler in handlers:
+            opener.add_handler(handler)
+        return opener
+
+    def opener_director(self):
+        """Return a dummy opener with this instance payload."""
+        return DummyUrlLib.DummyOpenerDirector(
+            self.payload, self.raise_exc
+        )
+
+
 def _completed(returncode=0, stdout="", stderr=""):
     """Create a subprocess-like completed result object."""
     return SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
@@ -367,6 +447,10 @@ def _make_tray_instance(module):
     tray.menu = DummyMenu()
     tray.last_status = None
     tray.action_lock_until = 0.0
+    tray.last_update_version = None
+    tray.latest_update_version = None
+    tray.update_status = "Unknown"
+    tray.last_update_error = None
     tray.build_menu = lambda: None
     return tray
 
@@ -393,6 +477,380 @@ def test_get_app_version_fallback_default(tray_module, tmp_path, monkeypatch):
         tray_module.get_app_version()
         == tray_module.DEFAULT_APP_VERSION
     )  # nosec B101
+
+
+def test_parse_version_handles_prefix(tray_module):
+    """Parse versions with a leading v prefix."""
+    assert tray_module.parse_version("v1.2.3") == (1, 2, 3)  # nosec B101
+
+
+def test_is_newer_version(tray_module):
+    """Compare version tuples for update checks."""
+    assert tray_module.is_newer_version("v1.2.3", "v1.2.4")  # nosec B101
+    assert not tray_module.is_newer_version("v1.2.3", "v1.2.3")  # nosec B101
+    assert not tray_module.is_newer_version("dev", "v1.2.3")  # nosec B101
+
+
+def test_get_latest_release_version_reads_tag(tray_module, monkeypatch):
+    """Extract tag_name from GitHub release payload."""
+    payload = json.dumps({"tag_name": "v9.9.9"}).encode("utf-8")
+
+    class DummyResponse:
+        """
+        A mock response object for testing HTTP request simulations.
+
+        This class simulates the behavior of an HTTP response object,
+        implementing context manager protocol for use in with statements.
+        It stores data and provides a read() method to retrieve it.
+        """
+        def __init__(self, data):
+            self._data = data
+
+        def read(self):
+            """Read and return the stored data.
+
+            Returns:
+                The data that was stored in this mock file object.
+            """
+            return self._data
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            return False
+
+    class DummyOpener:
+        """
+        A mock URL opener for testing HTTP requests.
+
+        This class simulates urllib.request.OpenerDirector behavior by
+        returning predefined response data without making actual network
+        calls.
+
+        Attributes:
+            _data: The data to be returned by the response object.
+
+        Methods:
+            open: Returns a DummyResponse containing the predefined data.
+        """
+        def __init__(self, data):
+            self._data = data
+
+        def open(self, _request, **_kwargs):
+            """
+            Open a dummy HTTP request and return a response with
+            predefined data.
+
+            This method is used to mock HTTP requests in tests by
+            returning a DummyResponse containing the data stored in
+            this handler instance.
+
+            Args:
+                _request: The HTTP request object (unused in this mock
+                    implementation).
+                **_kwargs: Additional keyword arguments (unused in this
+                    mock implementation).
+
+            Returns:
+                DummyResponse: A response object with the predefined
+                    data.
+            """
+            return DummyResponse(self._data)
+
+    class DummyOpenerDirector:
+        """Stand-in for urllib.request.OpenerDirector."""
+
+    def dummy_request(url, data=None, headers=None, method=None):
+        # Minimal Request stand-in; attributes are only for compatibility.
+        return SimpleNamespace(
+            full_url=url,
+            data=data,
+            headers=headers or {},
+            method=method,
+        )
+
+    class DummyHttpsHandler:
+        """Stand-in for urllib.request.HTTPSHandler."""
+
+    def dummy_build_opener(_handler):
+        return DummyOpener(payload)
+
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "Request",
+        dummy_request,
+    )
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "HTTPSHandler",
+        DummyHttpsHandler,
+    )
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "OpenerDirector",
+        DummyOpenerDirector,
+    )
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "build_opener",
+        dummy_build_opener,
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version == "v9.9.9"  # nosec B101
+    assert error is None  # nosec B101
+
+
+def test_get_latest_release_version_http_error(tray_module, monkeypatch):
+    """Return HTTP error code string on HTTPError."""
+    hdrs = Message()
+    exc = urllib.error.HTTPError(
+        url="https://api.github.com",
+        code=404,
+        msg="Not Found",
+        hdrs=hdrs,
+        fp=None,
+    )
+    monkeypatch.setattr(
+        tray_module, "urllib_request", DummyUrlLib(b"", raise_exc=exc)
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "HTTP 404"  # nosec B101
+
+
+def test_get_latest_release_version_url_error(tray_module, monkeypatch):
+    """Return network error message on URLError."""
+    exc = urllib.error.URLError(reason="connection refused")
+    monkeypatch.setattr(
+        tray_module, "urllib_request", DummyUrlLib(b"", raise_exc=exc)
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "Network or parse error"  # nosec B101
+
+
+def test_get_latest_release_version_invalid_json(tray_module, monkeypatch):
+    """Return parse error message when response body is not valid JSON."""
+    monkeypatch.setattr(
+        tray_module, "urllib_request", DummyUrlLib(b"not valid json")
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "Network or parse error"  # nosec B101
+
+
+def test_get_latest_release_version_no_tag(tray_module, monkeypatch):
+    """Return no-tag error when tag_name is absent from JSON response."""
+    payload = json.dumps({"other_field": "value"}).encode("utf-8")
+    monkeypatch.setattr(tray_module, "urllib_request", DummyUrlLib(payload))
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "No tag found"  # nosec B101
+
+
+def test_check_updates_notifies_once(tray_module, monkeypatch):
+    """Send a single update notification per latest version."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: ("v2.0.0", None),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify_call(cmd):
+        """Record notify command calls."""
+        notify_calls.append(cmd)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
+    tray.check_updates()
+    tray.check_updates()
+    assert len(notify_calls) == 1  # nosec B101
+    assert tray.update_status == "Update available"  # nosec B101
+
+
+def test_check_updates_dev_build(tray_module, monkeypatch):
+    """Set update_status to 'Dev build' when running a dev build."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "dev")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    tray.check_updates()
+    assert tray.update_status == "Dev build"  # nosec B101
+
+
+def test_check_updates_error_path(tray_module, monkeypatch):
+    """Set update_status to 'Unknown' when version fetch fails."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: (None, "Network error"),
+    )
+    tray.check_updates()
+    assert tray.update_status == "Unknown"  # nosec B101
+
+
+def test_manual_check_updates_reports_up_to_date(tray_module, monkeypatch):
+    """Notify user when already up to date."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: ("v1.0.0", None),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify_call(cmd):
+        """Record notify command calls."""
+        notify_calls.append(cmd)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
+    tray.manual_check_updates(None)
+    assert len(notify_calls) == 1  # nosec B101
+    assert "Update Check" in str(notify_calls[0])  # nosec B101
+
+
+def test_manual_check_updates_reports_update_available(
+    tray_module,
+    monkeypatch,
+):
+    """Notify user when an update is available."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: ("v2.0.0", None),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify_call(cmd):
+        """Record notify command calls."""
+        notify_calls.append(cmd)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
+    tray.manual_check_updates(None)
+    assert len(notify_calls) == 1  # nosec B101
+    msg = str(notify_calls[0])
+    assert "Update Available" in msg  # nosec B101
+    assert "v2.0.0" in msg  # nosec B101
+
+
+def test_manual_check_updates_reports_dev_build(tray_module, monkeypatch):
+    """Notify user when running a development build."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "dev")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: ("v2.0.0", None),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify_call(cmd):
+        """Record notify command calls."""
+        notify_calls.append(cmd)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
+    tray.manual_check_updates(None)
+    assert len(notify_calls) == 1  # nosec B101
+    msg = str(notify_calls[0])
+    assert "Update Check" in msg  # nosec B101
+    assert "Dev build" in msg  # nosec B101
+
+
+def test_manual_check_updates_reports_error_with_details(
+    tray_module,
+    monkeypatch,
+):
+    """Notify user when update check fails with error details."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: (None, "Network error"),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify_call(cmd):
+        """Record notify command calls."""
+        notify_calls.append(cmd)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
+    tray.manual_check_updates(None)
+    assert len(notify_calls) == 1  # nosec B101
+    msg = str(notify_calls[0])
+    assert "Update Check" in msg  # nosec B101
+    assert "Unable to check for updates" in msg  # nosec B101
+    assert "Network error" in msg  # nosec B101
+
+
+def test_manual_check_updates_reports_error_without_details(
+    tray_module,
+    monkeypatch,
+):
+    """Notify user when update check fails without details."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: (None, None),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify_call(cmd):
+        """Record notify command calls."""
+        notify_calls.append(cmd)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
+    tray.manual_check_updates(None)
+    assert len(notify_calls) == 1  # nosec B101
+    msg = str(notify_calls[0])
+    assert "Update Check" in msg  # nosec B101
+    assert "Unable to check for updates" in msg  # nosec B101
 
 
 def test_get_authors_reads_file(tray_module, tmp_path, monkeypatch):
@@ -784,9 +1242,10 @@ def test_show_about_dialog_contains_version_and_repo(tray_module, monkeypatch):
         "get_authors",
         lambda: ["TestMaintainer"],
     )
+    tray.update_status = "Up to date"
     tray.show_about_dialog(None)
     dialog = tray_module.Gtk.AboutDialog.last_instance
-    assert dialog.version == "v2.0.0"  # nosec B101
+    assert dialog.version == "v2.0.0 (Up to date)"  # nosec B101
     assert dialog.authors == ["TestMaintainer"]  # nosec B101
     assert dialog.website == "https://github.com/test/repo"  # nosec B101
     assert dialog.website_label == "GitHub Repository"  # nosec B101
@@ -1627,11 +2086,10 @@ def test_show_status_dialog_lms_not_found(tray_module, monkeypatch):
             self.secondary = ""
 
         def format_secondary_text(self, text):
-            """
-            Set the secondary text for the notification.
+            """Set the secondary text for the notification.
 
             Args:
-                text: The secondary/body text to display in the notification
+                text: The secondary/body text to display in the notification.
             """
             self.secondary = text
 
@@ -1644,8 +2102,7 @@ def test_show_status_dialog_lms_not_found(tray_module, monkeypatch):
             return 0
 
         def destroy(self):
-            """
-            Destroy the object and clean up resources.
+            """Destroy the object and clean up resources.
 
             This method is called when the object is no longer needed.
             It performs any necessary cleanup operations before the

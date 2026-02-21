@@ -85,6 +85,8 @@ If you change setup or runtime behavior, update at least:
 - `docs/guide.html`
 - `docs/SETUP.md`
 
+If you contribute code or documentation, add yourself to `AUTHORS`.
+
 ## Code of Conduct & Security
 
 Please follow:

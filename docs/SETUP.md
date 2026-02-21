@@ -26,6 +26,7 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
   - [Troubleshooting](#troubleshooting)
     - [venv not found](#venv-not-found)
     - [Checking Logs](#checking-logs)
+      - [Update Check Issues](#update-check-issues)
     - [View tray monitor logs](#view-tray-monitor-logs)
     - [View both in real-time (in separate terminals)](#view-both-in-real-time-in-separate-terminals)
   - [PyGObject Import Errors](#pygobject-import-errors)
@@ -342,6 +343,22 @@ grep -i 'error' .logs/*.log
 # View all logs in real-time (in separate terminal)
 tail -f .logs/*.log
 ```
+
+### Update Check Issues
+
+The tray monitor periodically checks GitHub releases and also exposes a manual
+"Check for updates" menu action. If you see "Unable to check for updates.",
+review the tray log for details:
+
+```bash
+tail -f .logs/lmstudio_tray.log
+```
+
+Common causes:
+
+- GitHub API rate limits (HTTP 403)
+- No internet access or proxy/firewall restrictions
+- Temporary GitHub outages
 
 ### View tray monitor logs
 
