@@ -177,15 +177,9 @@ def get_app_version():
     directory. Falls back to DEFAULT_APP_VERSION if the file is missing
     or unreadable.
 
-    Args:
-        None
-
     Returns:
         str: Version string read from the VERSION file, or
             DEFAULT_APP_VERSION if loading fails.
-
-    Raises:
-        None
     """
     return load_version_from_dir(script_dir)
 
