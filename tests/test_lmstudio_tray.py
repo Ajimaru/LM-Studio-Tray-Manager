@@ -511,6 +511,29 @@ def test_check_updates_notifies_once(tray_module, monkeypatch):
     assert tray.update_status == "Update available"  # nosec B101
 
 
+def test_check_updates_dev_build(tray_module, monkeypatch):
+    """Set update_status to 'Dev build' when running a dev build."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "dev")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    tray.check_updates()
+    assert tray.update_status == "Dev build"  # nosec B101
+
+
+def test_check_updates_error_path(tray_module, monkeypatch):
+    """Set update_status to 'Unknown' when version fetch fails."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: (None, "Network error"),
+    )
+    tray.check_updates()
+    assert tray.update_status == "Unknown"  # nosec B101
+
+
 def test_manual_check_updates_reports_up_to_date(tray_module, monkeypatch):
     """Notify user when already up to date."""
     tray = _make_tray_instance(tray_module)
