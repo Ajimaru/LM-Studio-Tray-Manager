@@ -1157,8 +1157,8 @@ def test_trayicon_constructor_sets_indicator_and_timer(
         == tray_module.AppIndicator3.IndicatorStatus.ACTIVE
     )  # nosec B101
     assert tray.indicator.title == "LM Studio Monitor"  # nosec B101
-    # nosec B101
-    assert timer_calls and timer_calls[0][0] == tray_module.INTERVAL
+    if not (timer_calls and timer_calls[0][0] == tray_module.INTERVAL):
+        raise AssertionError("Timer not configured with expected interval")
 
 
 def test_get_llmster_cmd_permission_error_and_no_candidates(
@@ -1203,4 +1203,4 @@ def test_is_llmster_running_second_probe_error(tray_module, monkeypatch):
         raise subprocess.SubprocessError("fail")
 
     monkeypatch.setattr(tray_module.subprocess, "run", run_side_effect)
-    assert tray_module.is_llmster_running() is False
+    assert tray_module.is_llmster_running() is False  # nosec B101
