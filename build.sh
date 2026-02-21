@@ -113,7 +113,16 @@ echo
 
 # Ensure bc is available for size calculations
 if ! command -v bc >/dev/null 2>&1; then
-    echo -e "${RED}Error: 'bc' is required for size calculations, \
+    echo -e "${RED}Error: 'bc' is required for size calculations${NC}"
+    echo "Install with: sudo apt-get install bc"
+    exit 1
+fi
+
+UNOPT_SIZE=$(get_file_size "$BINARY_PATH")
+UNOPT_SIZE_MB=$(echo "scale=2; $UNOPT_SIZE / 1048576" | bc)
+echo "Unoptimized binary size: ${UNOPT_SIZE_MB} MB"
+
+# Strip debug symbols
 if command -v strip &> /dev/null; then
     echo -e "${GREEN}Stripping debug symbols...${NC}"
     strip "$BINARY_PATH"
