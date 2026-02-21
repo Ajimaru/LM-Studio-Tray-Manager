@@ -673,7 +673,13 @@ if [ "$DEBUG_FLAG" = "1" ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🐛 Debug mode enabled for tray monitor"
 fi
 
-TRAY_BIN="$SCRIPT_DIR/dist/lmstudio-tray-manager"
+TRAY_BIN=""
+if [ -x "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
+    TRAY_BIN="$SCRIPT_DIR/lmstudio-tray-manager"
+elif [ -x "$SCRIPT_DIR/dist/lmstudio-tray-manager" ]; then
+    TRAY_BIN="$SCRIPT_DIR/dist/lmstudio-tray-manager"
+fi
+
 TRAY_ARGS=()
 if [ "$DEBUG_FLAG" = "1" ]; then
     TRAY_ARGS+=("--debug")
@@ -685,7 +691,7 @@ else
 fi
 TRAY_ARGS+=("$TRAY_MODEL" "$SCRIPT_DIR")
 
-if [ -x "$TRAY_BIN" ]; then
+if [ -n "$TRAY_BIN" ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🧩 Tray launch mode: binary"
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🧩 Starting Tray-Monitor (binary): $TRAY_BIN"
     "$TRAY_BIN" "${TRAY_ARGS[@]}" &
