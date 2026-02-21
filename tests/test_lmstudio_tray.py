@@ -324,15 +324,38 @@ class DummyUrlLib:
         self.payload = payload
         self.last_request = None
 
-    def Request(self, url, headers=None):
+    def request(self, url, headers=None):
         """Capture the request and return a sentinel object."""
         self.last_request = {"url": url, "headers": headers}
         return url
 
-    def urlopen(self, _request, timeout=0):
-        """Return a dummy response for the request."""
-        _ = timeout
-        return DummyUrlResponse(self.payload)
+    class HTTPSHandler:
+        """Dummy HTTPS handler for urllib opener."""
+
+        def __init__(self):
+            """No-op initializer for handler stub."""
+            return None
+
+    class DummyOpenerDirector:
+        """Dummy opener that returns a fixed response payload."""
+
+        def __init__(self, payload):
+            """Store payload for subsequent open calls."""
+            self.payload = payload
+            self.handlers = []
+
+        def add_handler(self, handler):
+            """Record a handler instance (unused)."""
+            self.handlers.append(handler)
+
+        def open(self, _request, timeout=0):
+            """Return a dummy response for the request."""
+            _ = timeout
+            return DummyUrlResponse(self.payload)
+
+    def opener_director(self):
+        """Return a dummy opener with this instance payload."""
+        return DummyUrlLib.DummyOpenerDirector(self.payload)
 
 
 def _completed(returncode=0, stdout="", stderr=""):
@@ -454,11 +477,6 @@ def test_get_latest_release_version_reads_tag(tray_module, monkeypatch):
     """Extract tag_name from GitHub release payload."""
     payload = json.dumps({"tag_name": "v9.9.9"}).encode("utf-8")
     monkeypatch.setattr(tray_module, "urllib_request", DummyUrlLib(payload))
-    monkeypatch.setattr(
-        tray_module,
-        "APP_REPOSITORY",
-        "https://github.com/test/repo",
-    )
     version, error = tray_module.get_latest_release_version()
     assert version == "v9.9.9"  # nosec B101
     assert error is None  # nosec B101

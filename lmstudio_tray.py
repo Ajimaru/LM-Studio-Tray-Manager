@@ -25,6 +25,7 @@ import importlib
 import json
 from urllib import request as urllib_request
 from urllib import error as urllib_error
+from urllib import parse as urllib_parse
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -79,6 +80,10 @@ ICON_INFO = "help-info"            # ℹ️ Runtime active, no model
 APP_NAME = "LM Studio Tray Monitor"
 APP_MAINTAINER = "Ajimaru"
 APP_REPOSITORY = "https://github.com/Ajimaru/LM-Studio-Tray-Manager"
+LATEST_RELEASE_API_URL = (
+    "https://api.github.com/repos/Ajimaru/LM-Studio-Tray-Manager"
+    "/releases/latest"
+)
 DEFAULT_APP_VERSION = "dev"
 
 # === Path to lms-CLI ===
@@ -133,17 +138,6 @@ def get_authors():
     return authors if authors else [APP_MAINTAINER]
 
 
-def get_latest_release_api_url():
-    """Build GitHub latest-release API URL from APP_REPOSITORY."""
-    repo_prefix = "https://github.com/"
-    if not APP_REPOSITORY.startswith(repo_prefix):
-        return None
-    repo_path = APP_REPOSITORY[len(repo_prefix):].strip("/")
-    if not repo_path:
-        return None
-    return f"https://api.github.com/repos/{repo_path}/releases/latest"
-
-
 def parse_version(version):
     """Parse a version string into a comparable tuple of integers."""
     if not version:
@@ -174,20 +168,44 @@ def is_newer_version(current, latest):
     return latest_parts > current_parts
 
 
+def _is_allowed_update_url(url):
+    """Validate update URL to prevent unsafe schemes or hosts.
+
+    Args:
+        url: URL string to validate.
+
+    Returns:
+        bool: True when the URL uses HTTPS and GitHub API host.
+    """
+    parsed = urllib_parse.urlparse(url)
+    return (
+        parsed.scheme == "https"
+        and parsed.netloc == "api.github.com"
+        and parsed.path.startswith("/repos/")
+    )
+
+
 def get_latest_release_version():
     """Fetch the latest GitHub release tag name."""
-    api_url = get_latest_release_api_url()
-    if not api_url:
-        logging.debug("Update check: invalid repository URL")
-        return None, "Invalid repository URL"
+    if not _is_allowed_update_url(LATEST_RELEASE_API_URL):
+        logging.debug("Update check: invalid update URL")
+        return None, "Invalid update URL"
 
     request = urllib_request.Request(
-        api_url,
+        LATEST_RELEASE_API_URL,
         headers={"User-Agent": "LM-Studio-Tray-Manager"},
     )
-    logging.debug("Update check: requesting %s", api_url)
+    logging.debug(
+        "Update check: requesting %s",
+        LATEST_RELEASE_API_URL,
+    )
     try:
-        with urllib_request.urlopen(request, timeout=10) as response:
+        # Create custom opener that only allows HTTPS scheme
+        https_handler = urllib_request.HTTPSHandler()
+        opener = urllib_request.OpenerDirector()
+        opener.add_handler(https_handler)
+
+        with opener.open(request, timeout=10) as response:
             payload = response.read().decode("utf-8")
             data = json.loads(payload)
             tag = data.get("tag_name")
