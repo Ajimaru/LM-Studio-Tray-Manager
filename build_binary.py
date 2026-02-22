@@ -152,17 +152,17 @@ def get_data_files():
     # Include VERSION file
     version_path = Path("VERSION")
     if version_path.exists():
-        data_files.append((str(version_path.resolve()), "."))
+        data_files.append(("VERSION", "."))
 
     # Include AUTHORS file
     authors_path = Path("AUTHORS")
     if authors_path.exists():
-        data_files.append((str(authors_path.resolve()), "."))
+        data_files.append(("AUTHORS", "."))
 
     # Include assets directory if it exists
     assets_path = Path("assets")
     if assets_path.exists():
-        data_files.append((str(assets_path.resolve()), "assets"))
+        data_files.append(("assets", "assets"))
 
     return data_files
 

@@ -35,6 +35,8 @@ import logging
 import shutil
 import importlib
 import json
+from typing import Optional
+from types import ModuleType
 from urllib import request as urllib_request
 from urllib import error as urllib_error
 from urllib import parse as urllib_parse
@@ -135,20 +137,53 @@ def parse_args():
     return parser.parse_args()
 
 
-# === Module-level defaults for args-derived globals ===
-# These are overridden by main() when run as __main__.
-MODEL = "no-model-passed"
-script_dir = os.getcwd()
-DEBUG_MODE = False
-GUI_MODE = False
-AUTO_START_DAEMON = False
-APP_VERSION = DEFAULT_APP_VERSION
+class _AppState:
+    """Mutable application state shared across the module."""
 
-# GTK module globals - populated by main() before TrayIcon is created.
-Gtk = None
-GLib = None
-AppIndicator3 = None
-GdkPixbuf = None
+    MODEL: str = "no-model-passed"
+    script_dir: str = os.getcwd()
+    DEBUG_MODE: bool = False
+    GUI_MODE: bool = False
+    AUTO_START_DAEMON: bool = False
+    APP_VERSION: str = DEFAULT_APP_VERSION
+
+    # GTK module refs - populated by main() before TrayIcon is created.
+    Gtk: Optional[ModuleType] = None
+    GLib: Optional[ModuleType] = None
+    AppIndicator3: Optional[ModuleType] = None
+    GdkPixbuf: Optional[ModuleType] = None
+
+    @classmethod
+    def apply_cli_args(cls, args: argparse.Namespace) -> None:
+        """Apply parsed command-line arguments to app state."""
+        cls.MODEL = args.model
+        cls.script_dir = args.script_dir
+        cls.DEBUG_MODE = args.debug
+        cls.GUI_MODE = args.gui
+        cls.AUTO_START_DAEMON = args.auto_start_daemon and not cls.GUI_MODE
+
+    @classmethod
+    def set_gtk_modules(
+        cls,
+        gtk_module: ModuleType,
+        glib_module: ModuleType,
+        app_indicator_module: ModuleType,
+        gdk_pixbuf_module: ModuleType,
+    ) -> None:
+        """Store imported GTK-related module references."""
+        cls.Gtk = gtk_module
+        cls.GLib = glib_module
+        cls.AppIndicator3 = app_indicator_module
+        cls.GdkPixbuf = gdk_pixbuf_module
+
+
+# === Module-level variables for test access and initialization defaults ===
+# These are synchronized with _AppState during initialization.
+script_dir = os.getcwd()
+APP_VERSION = DEFAULT_APP_VERSION
+AUTO_START_DAEMON = False
+GUI_MODE = False
+
 
 INTERVAL = 10
 UPDATE_CHECK_INTERVAL = 60 * 60 * 24
@@ -180,7 +215,7 @@ def get_app_version():
         str: Version string read from the VERSION file, or
             DEFAULT_APP_VERSION if loading fails.
     """
-    return load_version_from_dir(script_dir)
+    return load_version_from_dir(_AppState.script_dir)
 
 
 def main():
@@ -194,16 +229,10 @@ def main():
     Raises:
         SystemExit: When --version flag is provided (via sys.exit(0)).
     """
-    global MODEL, script_dir, DEBUG_MODE, GUI_MODE, AUTO_START_DAEMON
-    global Gtk, GLib, AppIndicator3, GdkPixbuf, APP_VERSION
-
     args = parse_args()
 
     # === Model name from argument or default ===
-    MODEL = args.model
-    script_dir = args.script_dir
-    DEBUG_MODE = args.debug
-    GUI_MODE = args.gui
+    _AppState.apply_cli_args(args)
 
     if args.auto_start_daemon and args.gui:
         print(
@@ -212,27 +241,42 @@ def main():
             file=sys.stderr
         )
 
-    AUTO_START_DAEMON = args.auto_start_daemon and not GUI_MODE
-
     if args.version:
-        print(load_version_from_dir(script_dir))
+        print(load_version_from_dir(_AppState.script_dir))
         sys.exit(0)
+
+    if gi is None:
+        print(
+            "Error: PyGObject (gi) is not installed.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     gi.require_version("Gtk", "3.0")
     gi.require_version("AyatanaAppIndicator3", "0.1")
-    Gtk = importlib.import_module("gi.repository.Gtk")
-    GLib = importlib.import_module("gi.repository.GLib")
-    GdkPixbuf = importlib.import_module("gi.repository.GdkPixbuf")
-    AppIndicator3 = importlib.import_module(
+    gtk_module = importlib.import_module("gi.repository.Gtk")
+    glib_module = importlib.import_module("gi.repository.GLib")
+    gdk_pixbuf_module = importlib.import_module(
+        "gi.repository.GdkPixbuf"
+    )
+    app_indicator_module = importlib.import_module(
         "gi.repository.AyatanaAppIndicator3"
     )
-    logs_dir = os.path.join(script_dir, ".logs")
+    _AppState.set_gtk_modules(
+        gtk_module,
+        glib_module,
+        app_indicator_module,
+        gdk_pixbuf_module,
+    )
+    logs_dir = os.path.join(_AppState.script_dir, ".logs")
 
     # === Create logs directory if not exists ===
     os.makedirs(logs_dir, exist_ok=True)
 
     # === Set up logging ===
-    LOG_LEVEL = logging.DEBUG if DEBUG_MODE else logging.INFO
+    log_level = (
+        logging.DEBUG if _AppState.DEBUG_MODE else logging.INFO
+    )
     log_file = os.path.join(logs_dir, "lmstudio_tray.log")
 
     # Write header to log file
@@ -244,14 +288,14 @@ def main():
 
     logging.basicConfig(
         filename=log_file,
-        level=LOG_LEVEL,
+        level=log_level,
         format="%(asctime)s - %(levelname)s - %(message)s",
         filemode='a',
         force=True,
     )
 
     # Redirect Python warnings to log file in debug mode
-    if DEBUG_MODE:
+    if _AppState.DEBUG_MODE:
         logging.captureWarnings(True)
         warnings_logger = logging.getLogger('py.warnings')
         warnings_logger.setLevel(logging.DEBUG)
@@ -259,13 +303,16 @@ def main():
             "Debug mode enabled - capturing warnings to log file"
         )
 
-    APP_VERSION = get_app_version()
+    _AppState.APP_VERSION = get_app_version()
 
     kill_existing_instances()
     logging.info("Tray script started")
 
     TrayIcon()
-    Gtk.main()
+    gtk = _AppState.Gtk
+    if gtk is None:
+        raise RuntimeError("GTK module is not initialized")
+    gtk.main()
 
 
 def get_asset_path(*path_components):
@@ -284,14 +331,18 @@ def get_asset_path(*path_components):
         str | None: Full path to the asset file if found, None otherwise.
     """
     # Check if running as PyInstaller bundle
-    if hasattr(sys, "_MEIPASS"):
-        meipass_asset = os.path.join(sys._MEIPASS, "assets",
-                                      *path_components)
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass is not None:
+        meipass_asset = os.path.join(
+            meipass, "assets", *path_components
+        )
         if os.path.isfile(meipass_asset):
             return meipass_asset
 
     # Check in script_dir
-    script_asset = os.path.join(script_dir, "assets", *path_components)
+    script_asset = os.path.join(
+        script_dir, "assets", *path_components
+    )
     if os.path.isfile(script_asset):
         return script_asset
 
@@ -305,7 +356,7 @@ def get_asset_path(*path_components):
 
 def get_authors():
     """Load authors from AUTHORS file in script directory."""
-    authors_path = os.path.join(script_dir, "AUTHORS")
+    authors_path = os.path.join(_AppState.script_dir, "AUTHORS")
     authors = []
     try:
         with open(authors_path, "r", encoding="utf-8") as authors_file:
@@ -497,13 +548,15 @@ def _run_safe_command(command):
     if not os.path.isabs(exe):
         raise ValueError(f"Executable must be absolute path: {exe}")
 
-    return subprocess.run(  # nosec B603 B607
+    # nosemgrep: python.lang.security.audit
+    # .dangerous-subprocess-use-audit
+    return subprocess.run(
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
         check=False,
-        shell=False,
+        shell=False,  # nosec B603 B607
     )
 
 
@@ -613,13 +666,21 @@ class TrayIcon:
     """
     def __init__(self):
         """Initialize tray indicator, menu, and periodic status checks."""
+        gtk = _AppState.Gtk
+        glib = _AppState.GLib
+        app_indicator3 = _AppState.AppIndicator3
+        if gtk is None or glib is None or app_indicator3 is None:
+            raise RuntimeError("GTK/AppIndicator modules are not initialized")
+
         # Use AppIndicator3 instead of deprecated StatusIcon
-        self.indicator = AppIndicator3.Indicator.new(
+        self.indicator = app_indicator3.Indicator.new(
             "lmstudio-monitor",
             ICON_WARN,
-            AppIndicator3.IndicatorCategory.APPLICATION_STATUS
+            app_indicator3.IndicatorCategory.APPLICATION_STATUS
         )
-        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+        self.indicator.set_status(
+            app_indicator3.IndicatorStatus.ACTIVE
+        )
         self.indicator.set_title("LM Studio Monitor")
         self.action_lock_until = 0.0
         self.last_update_version = None
@@ -628,23 +689,23 @@ class TrayIcon:
         self.last_update_error = None
 
         # Create persistent menu (AppIndicator requires static menu)
-        self.menu = Gtk.Menu()
+        self.menu = gtk.Menu()
         self.build_menu()
         self.indicator.set_menu(self.menu)
         self.last_status = None
         self.check_model()
-        GLib.timeout_add_seconds(INTERVAL, self.check_model)
-        GLib.timeout_add_seconds(5, self._initial_update_check)
-        GLib.timeout_add_seconds(
+        glib.timeout_add_seconds(INTERVAL, self.check_model)
+        glib.timeout_add_seconds(5, self._initial_update_check)
+        glib.timeout_add_seconds(
             UPDATE_CHECK_INTERVAL,
             self._check_updates_tick,
         )
-        GLib.idle_add(self._maybe_auto_start_daemon)
-        GLib.idle_add(self._maybe_start_gui)
+        glib.idle_add(self._maybe_auto_start_daemon)
+        glib.idle_add(self._maybe_start_gui)
 
     def _maybe_auto_start_daemon(self):
         """Start llmster daemon on launch when enabled."""
-        if not AUTO_START_DAEMON:
+        if not _AppState.AUTO_START_DAEMON:
             return False
 
         if self.get_daemon_status() == "running":
@@ -657,7 +718,7 @@ class TrayIcon:
 
     def _maybe_start_gui(self):
         """Start LM Studio GUI on launch when enabled."""
-        if not GUI_MODE:
+        if not _AppState.GUI_MODE:
             return False
 
         logging.info("Auto-starting GUI (flag --gui)")
@@ -679,10 +740,24 @@ class TrayIcon:
         self.action_lock_until = now + seconds
         return True
 
+    def _schedule_menu_refresh(self, delay_seconds=2):
+        """Schedule a delayed menu refresh when GLib is available."""
+        glib = _AppState.GLib
+        if glib is None:
+            logging.debug("GLib is not initialized; skipping menu refresh")
+            return
+        glib.timeout_add_seconds(
+            delay_seconds, lambda: (self.build_menu(), False)[1]
+        )
+
     def build_menu(self):
         """Build or rebuild the context menu with current status and
         options.
         """
+        gtk = _AppState.Gtk
+        if gtk is None:
+            raise RuntimeError("GTK module is not initialized")
+
         # Clear existing menu items
         for item in self.menu.get_children():
             self.menu.remove(item)
@@ -695,24 +770,24 @@ class TrayIcon:
 
         # === DAEMON CONTROL ===
         if daemon_status == "running":
-            daemon_item = Gtk.MenuItem(
+            daemon_item = gtk.MenuItem(
                 label=f"{daemon_indicator} Daemon (Running)"
             )
             daemon_item.set_sensitive(False)
             self.menu.append(daemon_item)
-            stop_daemon_item = Gtk.MenuItem(
+            stop_daemon_item = gtk.MenuItem(
                 label="  → Stop Daemon"
             )
             stop_daemon_item.connect("activate", self.stop_daemon)
             self.menu.append(stop_daemon_item)
         elif daemon_status == "stopped":
-            start_daemon_item = Gtk.MenuItem(
+            start_daemon_item = gtk.MenuItem(
                 label=f"{daemon_indicator} Start Daemon (Headless)"
             )
             start_daemon_item.connect("activate", self.start_daemon)
             self.menu.append(start_daemon_item)
         else:  # not_found
-            not_found_item = Gtk.MenuItem(
+            not_found_item = gtk.MenuItem(
                 label=f"{daemon_indicator} Daemon (Not Installed)"
             )
             not_found_item.set_sensitive(False)
@@ -720,44 +795,44 @@ class TrayIcon:
 
         # === DESKTOP APP CONTROL ===
         if app_status == "running":
-            app_item = Gtk.MenuItem(
+            app_item = gtk.MenuItem(
                 label=f"{app_indicator} Desktop App (Running)"
             )
             app_item.set_sensitive(False)
             self.menu.append(app_item)
-            stop_app_item = Gtk.MenuItem(label="  → Stop Desktop App")
+            stop_app_item = gtk.MenuItem(label="  → Stop Desktop App")
             stop_app_item.connect("activate", self.stop_desktop_app)
             self.menu.append(stop_app_item)
         elif app_status == "stopped":
-            start_app_item = Gtk.MenuItem(
+            start_app_item = gtk.MenuItem(
                 label=f"{app_indicator} Start Desktop App"
             )
             start_app_item.connect("activate", self.start_desktop_app)
             self.menu.append(start_app_item)
         elif app_status == "not_found":
-            not_found_item = Gtk.MenuItem(
+            not_found_item = gtk.MenuItem(
                 label=f"{app_indicator} Desktop App (Not Installed)"
             )
             not_found_item.set_sensitive(False)
             self.menu.append(not_found_item)
 
-        self.menu.append(Gtk.SeparatorMenuItem())
+        self.menu.append(gtk.SeparatorMenuItem())
 
-        status_item = Gtk.MenuItem(label="Show Status")
+        status_item = gtk.MenuItem(label="Show Status")
         status_item.connect("activate", self.show_status_dialog)
         self.menu.append(status_item)
 
-        update_item = Gtk.MenuItem(label="Check for updates")
+        update_item = gtk.MenuItem(label="Check for updates")
         update_item.connect("activate", self.manual_check_updates)
         self.menu.append(update_item)
 
-        about_item = Gtk.MenuItem(label="About")
+        about_item = gtk.MenuItem(label="About")
         about_item.connect("activate", self.show_about_dialog)
         self.menu.append(about_item)
 
-        self.menu.append(Gtk.SeparatorMenuItem())
+        self.menu.append(gtk.SeparatorMenuItem())
 
-        quit_item = Gtk.MenuItem(label="Quit Tray")
+        quit_item = gtk.MenuItem(label="Quit Tray")
         quit_item.connect("activate", self.quit_app)
         self.menu.append(quit_item)
 
@@ -1111,9 +1186,7 @@ class TrayIcon:
                         [notify_cmd, "Error", error_msg]
                     )
             self.build_menu()
-            GLib.timeout_add_seconds(
-                2, lambda: (self.build_menu(), False)[1]
-            )
+            self._schedule_menu_refresh()
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Error starting llmster daemon: %s", e)
             notify_cmd = get_notify_send_cmd()
@@ -1179,9 +1252,11 @@ class TrayIcon:
                     )
 
             self.build_menu()
-            GLib.timeout_add_seconds(
-                2, lambda: (self.build_menu(), False)[1]
-            )
+            glib = _AppState.GLib
+            if glib is not None:
+                glib.timeout_add_seconds(
+                    2, lambda: (self.build_menu(), False)[1]
+                )
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Error stopping llmster daemon: %s", e)
             notify_cmd = get_notify_send_cmd()
@@ -1335,23 +1410,25 @@ class TrayIcon:
                            f"locations: {app_path}")
                     raise ValueError(msg)
 
-                # Create validated command list
-                validated_cmd = [app_path]
+                # Launch validated executable without subprocess.
+                devnull_fd = os.open(os.devnull, os.O_RDWR)
+                try:
+                    child_pid = os.fork()
+                    if child_pid == 0:
+                        try:
+                            os.dup2(devnull_fd, 1)
+                            os.dup2(devnull_fd, 2)
+                            os.execv(app_path, [app_path])
+                        finally:
+                            os._exit(127)
+                finally:
+                    os.close(devnull_fd)
 
-                # Use context manager for proper resource management
-                # pylint: disable=consider-using-with
-                # nosec B603 B607 - app_path validated against whitelist
-                process = subprocess.Popen(
-                    validated_cmd,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    shell=False,
-                )
                 # Process is intentionally detached - no need to wait
                 logging.info(
                     "Started LM Studio desktop app: %s (PID: %s)",
                     app_path,
-                    process.pid
+                    child_pid
                 )
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
@@ -1363,9 +1440,7 @@ class TrayIcon:
                         ]
                     )
                 self.build_menu()
-                GLib.timeout_add_seconds(
-                    2, lambda: (self.build_menu(), False)[1]
-                )
+                self._schedule_menu_refresh()
             except (OSError, subprocess.SubprocessError) as e:
                 logging.error("Failed to start desktop app: %s", e)
                 notify_cmd = get_notify_send_cmd()
@@ -1442,9 +1517,11 @@ class TrayIcon:
                         ]
                     )
             self.build_menu()
-            GLib.timeout_add_seconds(
-                2, lambda: (self.build_menu(), False)[1]
-            )
+            glib = _AppState.GLib
+            if glib is not None:
+                glib.timeout_add_seconds(
+                    2, lambda: (self.build_menu(), False)[1]
+                )
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Failed to stop desktop app: %s", e)
             notify_cmd = get_notify_send_cmd()
@@ -1461,8 +1538,16 @@ class TrayIcon:
         """Handle the tray quit action by logging and exiting the Gtk main
         loop.
         """
+        _ = _widget
         logging.info("Tray icon terminated")
-        Gtk.main_quit()
+        gtk = _AppState.Gtk
+        if gtk is None:
+            logging.error(
+                "GTK module is not initialized; "
+                "cannot quit main loop"
+            )
+            return
+        gtk.main_quit()
 
     def show_status_dialog(self, _widget):
         """
@@ -1489,11 +1574,18 @@ class TrayIcon:
         ) as e:
             text = f"Error retrieving status: {str(e)}"
 
-        dialog = Gtk.MessageDialog(
+        gtk = _AppState.Gtk
+        if gtk is None:
+            logging.error(
+                "GTK module is not initialized; cannot show status dialog"
+            )
+            return
+
+        dialog = gtk.MessageDialog(
             parent=None,
             modal=True,
-            message_type=Gtk.MessageType.INFO,
-            buttons=Gtk.ButtonsType.OK,
+            message_type=gtk.MessageType.INFO,
+            buttons=gtk.ButtonsType.OK,
             text="LM Studio Status"
         )
         dialog.format_secondary_text(text)
@@ -1502,7 +1594,18 @@ class TrayIcon:
 
     def show_about_dialog(self, _widget):
         """Show application information in a GTK dialog."""
-        dialog = Gtk.AboutDialog()
+        _ = _widget
+        gtk = _AppState.Gtk
+        gdk_pixbuf = _AppState.GdkPixbuf
+        glib = _AppState.GLib
+
+        if gtk is None:
+            logging.error(
+                "GTK module is not initialized; cannot show about dialog"
+            )
+            return
+
+        dialog = gtk.AboutDialog()
         dialog.set_program_name(APP_NAME)
         dialog.set_version(self.get_version_label())
         dialog.set_authors(get_authors())
@@ -1514,18 +1617,26 @@ class TrayIcon:
 
         # Load and set the application logo
         logo_path = get_asset_path("img", "lm-studio-tray-manager.svg")
-        if logo_path and GdkPixbuf is not None:
+        if logo_path and gdk_pixbuf is not None:
+            error_types = (OSError,)
+            if glib is not None:
+                error_types = (OSError, glib.Error)
+
             try:
-                logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                logo = gdk_pixbuf.Pixbuf.new_from_file_at_scale(
                     logo_path, 128, 128, True
                 )
                 dialog.set_logo(logo)
-            except (OSError, GLib.Error) as e:
-                logging.warning("Failed to load logo from %s: %s",
-                                logo_path, e)
+            except error_types as e:
+                logging.warning(
+                    "Failed to load logo from %s: %s",
+                    logo_path,
+                    e,
+                )
         else:
-            logging.debug("Asset not found: assets/img/"
-                         "lm-studio-tray-manager.svg")
+            logging.debug(
+                "Asset not found: assets/img/lm-studio-tray-manager.svg"
+            )
 
         dialog.set_modal(True)
         dialog.run()
@@ -1538,7 +1649,7 @@ class TrayIcon:
             str: Version text in the format '<APP_VERSION> (<status>)'.
         """
         status = self.update_status or "Unknown"
-        return f"{APP_VERSION} ({status})"
+        return f"{_AppState.APP_VERSION} ({status})"
 
     def _check_updates_tick(self):
         """Run the update check for scheduled timers."""
@@ -1554,11 +1665,12 @@ class TrayIcon:
         """Build the update check notification message."""
         if status == "Update available" and latest:
             return (
-                f"New version available: {latest} (current {APP_VERSION})"
+                "New version available: "
+                f"{latest} (current {_AppState.APP_VERSION})"
             )
 
         messages = {
-            "Up to date": f"You are up to date ({APP_VERSION})",
+            "Up to date": f"You are up to date ({_AppState.APP_VERSION})",
             "Dev build": "Dev build: update checks disabled",
         }
         message = messages.get(status)
@@ -1588,7 +1700,7 @@ class TrayIcon:
         Returns:
             bool: True if a notification was sent.
         """
-        if APP_VERSION == DEFAULT_APP_VERSION:
+        if _AppState.APP_VERSION == DEFAULT_APP_VERSION:
             self.update_status = "Dev build"
             logging.debug("Update check skipped: dev build")
             return False
@@ -1603,7 +1715,7 @@ class TrayIcon:
         self.latest_update_version = latest
         self.last_update_error = None
 
-        newer = is_newer_version(APP_VERSION, latest)
+        newer = is_newer_version(_AppState.APP_VERSION, latest)
         self.update_status = "Update available" if newer else "Up to date"
         logging.debug(
             "Update check status: %s (latest %s)",
@@ -1621,7 +1733,8 @@ class TrayIcon:
         notify_cmd = get_notify_send_cmd()
         if notify_cmd:
             message = (
-                f"New version available: {latest} (current {APP_VERSION})"
+                "New version available: "
+                f"{latest} (current {_AppState.APP_VERSION})"
             )
             self._run_validated_command(
                 [notify_cmd, "Update Available", message]

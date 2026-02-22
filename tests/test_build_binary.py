@@ -22,8 +22,8 @@ def _load_build_binary_module():
     return module
 
 
-@pytest.fixture(scope="module")
-def build_binary_module():
+@pytest.fixture(scope="module", name="build_binary_module")
+def fixture_build_binary_module():
     """Load build_binary module for testing.
 
     Returns:

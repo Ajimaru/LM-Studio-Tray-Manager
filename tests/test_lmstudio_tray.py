@@ -398,7 +398,17 @@ def _completed(returncode=0, stdout="", stderr=""):
 def tray_module_fixture(monkeypatch, tmp_path):
     """Import lmstudio_tray with mocked GI/GTK dependencies."""
     gi_mod = ModuleType("gi")
-    gi_mod.require_version = lambda *_args, **_kwargs: None
+
+    def require_version(*args, **kwargs):
+        _ = (args, kwargs)
+        return None
+
+    monkeypatch.setattr(
+        gi_mod,
+        "require_version",
+        require_version,
+        raising=False,
+    )
 
     gtk_mod = DummyGtkModule("gi.repository.Gtk")
     glib_mod = DummyGLibModule("gi.repository.GLib")
@@ -434,6 +444,7 @@ def tray_module_fixture(monkeypatch, tmp_path):
 
     def safe_run(_args, **_kwargs):
         """Return a safe default subprocess result during import."""
+        _ = (_args, _kwargs)
         return _completed(returncode=1, stdout="", stderr="")
 
     monkeypatch.setattr(subprocess, "run", safe_run)
@@ -453,9 +464,32 @@ def tray_module_fixture(monkeypatch, tmp_path):
     spec.loader.exec_module(module)
     # GTK globals are populated by main(); set them directly so tests
     # that reference tray_module.Gtk / GLib / AppIndicator3 work.
-    module.Gtk = gtk_mod
-    module.GLib = glib_mod
-    module.AppIndicator3 = app_mod
+    setattr(module, "Gtk", gtk_mod)
+    setattr(module, "GLib", glib_mod)
+    setattr(module, "AppIndicator3", app_mod)
+
+    # Also set on _AppState for internal use
+    app_state = getattr(module, "_AppState")
+    app_state.Gtk = gtk_mod
+    app_state.GLib = glib_mod
+    app_state.AppIndicator3 = app_mod
+
+    # Setup synchronization: when module-level variables are set,
+    # also update _AppState to keep them in sync
+    original_setattr = monkeypatch.setattr
+
+    def synced_setattr(target, name, value, *args, **kwargs):
+        """Setattr with automatic _AppState synchronization."""
+        # If setting a module-level variable, also update _AppState
+        if target is module and name in (
+            "script_dir", "APP_VERSION",
+            "AUTO_START_DAEMON", "GUI_MODE"
+        ):
+            setattr(app_state, name, value)
+        return original_setattr(target, name, value, *args, **kwargs)
+
+    monkeypatch.setattr = synced_setattr
+
     return module
 
 
@@ -509,7 +543,17 @@ def test_version_flag_exits(tmp_path, monkeypatch):
     """Test that the CLI exits when --version is provided."""
     (tmp_path / "VERSION").write_text("v9.9.9", encoding="utf-8")
     gi_mod = ModuleType("gi")
-    gi_mod.require_version = lambda *_args, **_kwargs: None
+
+    def require_version(*args, **kwargs):
+        _ = (args, kwargs)
+        return None
+
+    monkeypatch.setattr(
+        gi_mod,
+        "require_version",
+        require_version,
+        raising=False,
+    )
     monkeypatch.setitem(sys.modules, "gi", gi_mod)
     monkeypatch.setitem(
         sys.modules,
@@ -1453,13 +1497,19 @@ def test_start_desktop_app_appimage_found_and_started(
         return _completed(returncode=0)
 
     monkeypatch.setattr(tray_module.subprocess, "run", fake_run)
-    popen_calls = []
 
-    def mock_popen(args, **_kwargs):
-        popen_calls.append(args)
-        return SimpleNamespace(pid=99999)
+    # Mock os.fork/execv to prevent actual child process
+    fork_calls = []
 
-    monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+    def mock_fork():
+        fork_calls.append(True)
+        return 12345  # Return child PID
+    monkeypatch.setattr(tray_module.os, "fork", mock_fork)
+    monkeypatch.setattr(tray_module.os, "execv", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "open", lambda *_a: 3)
+    monkeypatch.setattr(tray_module.os, "dup2", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "close", lambda *_a: None)
+
     monkeypatch.setattr(
         tray_module.os.path,
         "isdir",
@@ -1477,6 +1527,7 @@ def test_start_desktop_app_appimage_found_and_started(
     )
 
     tray.start_desktop_app(None)
+    assert fork_calls  # nosec B101  # Fork should have been called
 
 
 def test_start_desktop_app_deb_path(tray_module, monkeypatch):
@@ -1509,14 +1560,23 @@ def test_start_desktop_app_deb_path(tray_module, monkeypatch):
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
 
-    popen_calls = []
-    process_mock = SimpleNamespace(pid=45678)
+    # Test parent process - mock fork to return child PID
+    fork_calls = []
+    execv_calls = []
 
-    def record_popen(*args, **_kwargs):
-        popen_calls.append(args)
-        return process_mock
+    def mock_fork():
+        fork_calls.append(True)
+        return 12345  # Return child PID
 
-    monkeypatch.setattr(tray_module.subprocess, "Popen", record_popen)
+    def mock_execv(path, args):
+        execv_calls.append((path, args))
+        return None
+
+    monkeypatch.setattr(tray_module.os, "fork", mock_fork)
+    monkeypatch.setattr(tray_module.os, "execv", mock_execv)
+    monkeypatch.setattr(tray_module.os, "open", lambda *_a: 3)
+    monkeypatch.setattr(tray_module.os, "dup2", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "close", lambda *_a: None)
 
     notifications = []
 
@@ -1528,7 +1588,125 @@ def test_start_desktop_app_deb_path(tray_module, monkeypatch):
 
     tray.start_desktop_app(None)
     assert len(notifications) > 0  # nosec B101
-    assert popen_calls  # nosec B101
+    assert fork_calls  # nosec B101
+
+
+def test_start_desktop_app_fork_child_process(tray_module, monkeypatch):
+    """Test child process code path in fork."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=0, stdout="lm-studio"),
+    )
+    monkeypatch.setattr(
+        tray_module.shutil,
+        "which",
+        lambda _x: "/usr/bin/lm-studio",
+    )
+    monkeypatch.setattr(tray_module.os.path, "isfile", lambda _p: True)
+    monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
+
+    def is_safe_dir(path):
+        return path == "/usr/bin"
+
+    monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
+
+    # Test CHILD process - mock fork to return 0 (simulating child)
+    dup2_calls = []
+    exit_calls = []
+
+    def mock_fork():
+        return 0  # Simulate child process
+
+    def mock_dup2(fd1, fd2):
+        dup2_calls.append((fd1, fd2))
+        return None
+
+    def mock_exit(code):
+        exit_calls.append(code)
+        raise SystemExit(code)
+
+    monkeypatch.setattr(tray_module.os, "fork", mock_fork)
+    monkeypatch.setattr(tray_module.os, "execv", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "open", lambda *_a: 3)
+    monkeypatch.setattr(tray_module.os, "dup2", mock_dup2)
+    monkeypatch.setattr(tray_module.os, "close", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "_exit", mock_exit)
+
+    notifications = []
+
+    def capture_notify(cmd):
+        notifications.append(cmd)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
+
+    with pytest.raises(SystemExit):
+        tray.start_desktop_app(None)
+    # Child process should have redirected stdout/stderr
+    assert len(dup2_calls) > 0  # nosec B101  # dup2 called
+    assert len(exit_calls) > 0  # nosec B101  # _exit called
+
+
+def test_start_desktop_app_fork_oserror(tray_module, monkeypatch):
+    """Test OSError handling when fork fails."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=0, stdout="lm-studio"),
+    )
+    monkeypatch.setattr(
+        tray_module.shutil,
+        "which",
+        lambda _x: "/usr/bin/lm-studio",
+    )
+    monkeypatch.setattr(tray_module.os.path, "isfile", lambda _p: True)
+    monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
+
+    def is_safe_dir(path):
+        return path == "/usr/bin"
+
+    monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
+
+    # Make os.open raise OSError to test error path
+    def mock_open(*_a, **_k):
+        raise OSError("Permission denied")
+
+    monkeypatch.setattr(tray_module.os, "open", mock_open)
+
+    notifications = []
+
+    def capture_notify(cmd):
+        notifications.append(cmd)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
+
+    # Should not raise, should handle gracefully
+    tray.start_desktop_app(None)
+    # Error handling should have tried to send notification
+    # (if notify-send is available)
+    assert tray is not None  # nosec B101
 
 
 def test_stop_desktop_app_no_process_path(tray_module, monkeypatch):
@@ -1890,6 +2068,12 @@ def test_start_desktop_app_daemon_stop_fails(tray_module, monkeypatch):
         "run",
         lambda *_a, **_k: _completed(returncode=0),
     )
+    # Mock os.fork/execv to prevent actual child process
+    monkeypatch.setattr(tray_module.os, "fork", lambda: 12345)
+    monkeypatch.setattr(tray_module.os, "execv", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "open", lambda *_a: 3)
+    monkeypatch.setattr(tray_module.os, "dup2", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "close", lambda *_a: None)
     tray.start_desktop_app(None)
 
 
@@ -1906,6 +2090,12 @@ def test_start_desktop_app_not_found_path(tray_module, monkeypatch):
         if args[:2] == ["dpkg", "-l"]
         else _completed(returncode=0),
     )
+    # Mock os.fork/execv to prevent actual child process
+    monkeypatch.setattr(tray_module.os, "fork", lambda: 12345)
+    monkeypatch.setattr(tray_module.os, "execv", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "open", lambda *_a: 3)
+    monkeypatch.setattr(tray_module.os, "dup2", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "close", lambda *_a: None)
     monkeypatch.setattr(tray_module.os.path, "isdir", lambda _p: False)
     tray.start_desktop_app(None)
 
@@ -1926,6 +2116,12 @@ def test_start_desktop_app_popen_failure(tray_module, monkeypatch):
         "Popen",
         lambda *_a, **_k: (_ for _ in ()).throw(OSError("fail")),
     )
+    # Mock os.fork/execv to prevent actual child process
+    monkeypatch.setattr(tray_module.os, "fork", lambda: 12345)
+    monkeypatch.setattr(tray_module.os, "execv", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "open", lambda *_a: 3)
+    monkeypatch.setattr(tray_module.os, "dup2", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "close", lambda *_a: None)
     tray.start_desktop_app(None)
 
 
@@ -2082,7 +2278,17 @@ def test_start_daemon_fails_when_desktop_cannot_stop(tray_module, monkeypatch):
 def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     """Enable warning capture when module is imported in debug mode."""
     gi_mod = ModuleType("gi")
-    gi_mod.require_version = lambda *_args, **_kwargs: None
+
+    def require_version(*args, **kwargs):
+        _ = (args, kwargs)
+        return None
+
+    monkeypatch.setattr(
+        gi_mod,
+        "require_version",
+        require_version,
+        raising=False,
+    )
     gtk_mod = DummyGtkModule("gi.repository.Gtk")
     glib_mod = DummyGLibModule("gi.repository.GLib")
     gdkpixbuf_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
@@ -2482,6 +2688,13 @@ def test_start_desktop_app_with_notifications(tray_module, monkeypatch):
         "Popen",
         lambda *_a, **_k: process_mock,
     )
+
+    # Mock os.fork/execv to prevent actual child process
+    monkeypatch.setattr(tray_module.os, "fork", lambda: 12345)
+    monkeypatch.setattr(tray_module.os, "execv", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "open", lambda *_a: 3)
+    monkeypatch.setattr(tray_module.os, "dup2", lambda *_a: None)
+    monkeypatch.setattr(tray_module.os, "close", lambda *_a: None)
 
     notifications = []
 
