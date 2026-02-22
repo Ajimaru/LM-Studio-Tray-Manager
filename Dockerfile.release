@@ -1,0 +1,99 @@
+# Release Build Container (mimics GitHub Actions ubuntu-22.04)
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y \
+    bc \
+    pkg-config \
+    python3.10 \
+    python3.10-venv \
+    python3.10-dev \
+    python3.10-distutils \
+    python3-pip \
+    python3-gi \
+    gobject-introspection \
+    gir1.2-gtk-3.0 \
+    gir1.2-ayatanaappindicator3-0.1 \
+    libgirepository1.0-dev \
+    git \
+    curl \
+    tar \
+    gzip \
+    && apt-get install -y upx 2>/dev/null || apt-get install -y upx-ucl \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.10 /usr/bin/python
+
+WORKDIR /workspace
+
+COPY . .
+
+# Build the binary
+RUN ./build.sh
+
+# Read version
+RUN VERSION=$(cat VERSION) && echo "Build version: $VERSION"
+
+# Prepare release packages
+RUN bash -c ' \
+    set -euo pipefail; \
+    TAG=$(cat VERSION); \
+    PKG_NAME_SRC="LM-Studio-Tray-Manager-${TAG}"; \
+    PKG_NAME_BIN="LM-Studio-Tray-Manager-${TAG}-binary"; \
+    STAGE_DIR_SRC="release/${PKG_NAME_SRC}"; \
+    STAGE_DIR_BIN="release/${PKG_NAME_BIN}"; \
+    \
+    rm -rf release; \
+    mkdir -p "$STAGE_DIR_SRC" "$STAGE_DIR_BIN"; \
+    \
+    FILES=("lmstudio_autostart.sh" "lmstudio_tray.py" "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"); \
+    \
+    for file in "${FILES[@]}"; do \
+      if [[ -f "$file" ]]; then \
+        mkdir -p "$STAGE_DIR_SRC/$(dirname "$file")"; \
+        cp -a "$file" "$STAGE_DIR_SRC/$file"; \
+      fi; \
+    done; \
+    \
+    if [[ -f "docs/SETUP.md" ]]; then \
+      mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"; \
+      cp -a "docs/SETUP.md" "$STAGE_DIR_SRC/docs/SETUP.md"; \
+      cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"; \
+    fi; \
+    \
+    if [[ -f "docs/BUILD.md" ]]; then \
+      mkdir -p "$STAGE_DIR_BIN/docs"; \
+      cp -a "docs/BUILD.md" "$STAGE_DIR_BIN/docs/BUILD.md"; \
+    fi; \
+    \
+    if [[ -d "assets" ]]; then \
+      cp -a "assets" "$STAGE_DIR_SRC/assets"; \
+      cp -a "assets" "$STAGE_DIR_BIN/assets"; \
+    fi; \
+    \
+    BIN_FILES=(); \
+    for file in "${FILES[@]}"; do \
+      if [[ "$file" != "lmstudio_tray.py" ]]; then \
+        BIN_FILES+=("$file"); \
+      fi; \
+    done; \
+    \
+    for file in "${BIN_FILES[@]}"; do \
+      if [[ -f "$file" ]]; then \
+        mkdir -p "$STAGE_DIR_BIN/$(dirname "$file")"; \
+        cp -a "$file" "$STAGE_DIR_BIN/$file"; \
+      fi; \
+    done; \
+    \
+    if [[ ! -f "dist/lmstudio-tray-manager" ]]; then \
+      echo "Error: Binary not found"; \
+      exit 1; \
+    fi; \
+    cp -a "dist/lmstudio-tray-manager" "$STAGE_DIR_BIN/lmstudio-tray-manager"; \
+    \
+    tar -czf "release/${PKG_NAME_SRC}.tar.gz" -C release "$PKG_NAME_SRC"; \
+    tar -czf "release/${PKG_NAME_BIN}.tar.gz" -C release "$PKG_NAME_BIN"; \
+    \
+    cd release && sha256sum *.tar.gz > SHA256SUMS.txt; \
+    ls -lh *.tar.gz SHA256SUMS.txt \
+'
+
+CMD ["/bin/bash"]
