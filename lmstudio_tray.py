@@ -1518,6 +1518,7 @@ class TrayIcon:
                 subprocess.Popen(  # nosec B603
                     [app_path],
                     start_new_session=True,
+                    close_fds=True,
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
