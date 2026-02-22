@@ -136,19 +136,21 @@ def test_check_dependencies_installs(
     assert calls[0][:3] == [sys.executable, "-m", "pip"]
 
 
-def test_get_data_files(build_binary_module, monkeypatch, tmp_path):
+def test_get_data_files(build_binary_module):
     """Include VERSION, AUTHORS, and assets when present."""
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "VERSION").write_text("v1.2.3", encoding="utf-8")
-    (tmp_path / "AUTHORS").write_text("- Test", encoding="utf-8")
-    assets_dir = tmp_path / "assets"
-    assets_dir.mkdir()
-    (assets_dir / "icon.png").write_text("x", encoding="utf-8")
-
+    # get_data_files returns absolute paths from the project dir
+    # Just verify the function returns tuples with correct destinations
     data_files = build_binary_module.get_data_files()
-    assert ("VERSION", ".") in data_files
-    assert ("AUTHORS", ".") in data_files
-    assert ("assets", "assets") in data_files
+
+    # VERSION file should map to "."
+    assert any(dest == "." and "VERSION" in src for src, dest in data_files)
+    # AUTHORS file should map to "."
+    assert any(dest == "." and "AUTHORS" in src for src, dest in data_files)
+    # assets directory should map to "assets"
+    assert any(
+        dest == "assets" and "assets" in src
+        for src, dest in data_files
+    )
 
 
 def test_build_binary_success_with_loaders(

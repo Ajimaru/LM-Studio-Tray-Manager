@@ -148,21 +148,22 @@ def get_data_files():
             path relative to the binary root.
     """
     data_files = []
+    base_dir = Path(__file__).parent.resolve()
 
     # Include VERSION file
-    version_path = Path("VERSION")
+    version_path = base_dir / "VERSION"
     if version_path.exists():
-        data_files.append(("VERSION", "."))
+        data_files.append((str(version_path), "."))
 
     # Include AUTHORS file
-    authors_path = Path("AUTHORS")
+    authors_path = base_dir / "AUTHORS"
     if authors_path.exists():
-        data_files.append(("AUTHORS", "."))
+        data_files.append((str(authors_path), "."))
 
     # Include assets directory if it exists
-    assets_path = Path("assets")
+    assets_path = base_dir / "assets"
     if assets_path.exists():
-        data_files.append(("assets", "assets"))
+        data_files.append((str(assets_path), "assets"))
 
     return data_files
 
