@@ -2143,7 +2143,9 @@ def test_check_api_models_non_dict_response(tray_module, monkeypatch):
             "urlopen",
             lambda *_a, _p=bad_payload, **_k: DummyUrlResponse(_p),
         )
-        assert tray_module.check_api_models() is False  # nosec B101
+        assert tray_module.check_api_models() is False, (  # nosec B101
+            f"Expected False for payload: {bad_payload!r}"
+        )
 
 
 def test_check_api_models_non_list_data_field(tray_module, monkeypatch):
@@ -2155,7 +2157,9 @@ def test_check_api_models_non_list_data_field(tray_module, monkeypatch):
             "urlopen",
             lambda *_a, _p=payload, **_k: DummyUrlResponse(_p),
         )
-        assert tray_module.check_api_models() is False  # nosec B101
+        assert tray_module.check_api_models() is False, (  # nosec B101
+            f"Expected False for data value: {bad_data!r}"
+        )
 
 
 def test_get_api_models_url_defaults(tray_module):
