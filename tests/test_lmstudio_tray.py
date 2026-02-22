@@ -400,6 +400,16 @@ def tray_module_fixture(monkeypatch, tmp_path):
     gi_mod = ModuleType("gi")
 
     def require_version(*args, **kwargs):
+        """
+        No-op replacement for gi.require_version used in tests.
+        
+        Parameters:
+            *args: Positional arguments passed by callers (e.g., module name and version); accepted and ignored.
+            **kwargs: Keyword arguments accepted and ignored.
+        
+        Returns:
+            None
+        """
         _ = (args, kwargs)
         return None
 
@@ -443,7 +453,14 @@ def tray_module_fixture(monkeypatch, tmp_path):
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
     def safe_run(_args, **_kwargs):
-        """Return a safe default subprocess result during import."""
+        """
+        Provide a safe default subprocess-like result used during import-time when running external commands fails.
+        
+        This function ignores its arguments and always returns a completed subprocess result indicating failure.
+        
+        Returns:
+            A subprocess-like result object with `returncode` 1 and empty `stdout` and `stderr`.
+        """
         _ = (_args, _kwargs)
         return _completed(returncode=1, stdout="", stderr="")
 
@@ -479,7 +496,22 @@ def tray_module_fixture(monkeypatch, tmp_path):
     original_setattr = monkeypatch.setattr
 
     def synced_setattr(target, name, value, *args, **kwargs):
-        """Setattr with automatic _AppState synchronization."""
+        """
+        Set an attribute on `target` and mirror certain module-level assignments into the internal `_AppState`.
+        
+        When `target` is the module and `name` is one of "script_dir", "APP_VERSION",
+        "AUTO_START_DAEMON", or "GUI_MODE", the same attribute is also set on the
+        module's internal `app_state` object to keep runtime state synchronized.
+        
+        Parameters:
+            target (object): The object or module on which to set the attribute.
+            name (str): The attribute name to set.
+            value (Any): The value to assign to the attribute.
+            *args, **kwargs: Forwarded to the underlying setattr implementation.
+        
+        Returns:
+            Any: The result returned by the underlying setattr implementation (typically None).
+        """
         # If setting a module-level variable, also update _AppState
         if target is module and name in (
             "script_dir", "APP_VERSION",
@@ -498,7 +530,21 @@ def tray_module_fixture(monkeypatch, tmp_path):
 
 
 def _make_tray_instance(module):
-    """Build a partially initialized TrayIcon for unit tests."""
+    """
+    Create a partially initialized TrayIcon instance configured for unit tests.
+    
+    The returned object is an instance of TrayIcon allocated without running its constructor and populated with lightweight test doubles and default state to avoid side effects. Notable initialized attributes:
+    - indicator: DummyIndicator instance used to capture status/icon updates.
+    - menu: DummyMenu instance used to capture menu items.
+    - last_status: None (no prior status).
+    - action_lock_until: 0.0 (no action cooldown).
+    - last_update_version, latest_update_version, last_update_error: None (no update state).
+    - update_status: "Unknown".
+    - build_menu: no-op callable to avoid GUI operations.
+    
+    Returns:
+        tray (TrayIcon): A TrayIcon instance prepared for unit testing.
+    """
     tray = module.TrayIcon.__new__(module.TrayIcon)
     tray.indicator = DummyIndicator()
     tray.menu = DummyMenu()
@@ -549,6 +595,16 @@ def test_version_flag_exits(tmp_path, monkeypatch):
     gi_mod = ModuleType("gi")
 
     def require_version(*args, **kwargs):
+        """
+        No-op replacement for gi.require_version used in tests.
+        
+        Parameters:
+            *args: Positional arguments passed by callers (e.g., module name and version); accepted and ignored.
+            **kwargs: Keyword arguments accepted and ignored.
+        
+        Returns:
+            None
+        """
         _ = (args, kwargs)
         return None
 
@@ -1495,7 +1551,18 @@ def test_start_desktop_app_appimage_found_and_started(
     monkeypatch.setattr(tray_module.sys, "argv", ["x", "model", str(app_dir)])
 
     def fake_run(args, **_kwargs):
-        """Return dpkg miss and generic success for other commands."""
+        """
+        Simulate subprocess.run for tests by returning a completed-process-like result.
+        
+        When called with args beginning with ["dpkg", "-l"], returns an object with returncode 0 and an empty stdout to emulate no matching package output; for any other command returns an object with returncode 0.
+        
+        Parameters:
+        	args (Sequence[str]): Command and arguments as passed to subprocess.run.
+        	_kwargs: Ignored keyword arguments (accepted for compatibility).
+        
+        Returns:
+        	A completed-process-like object with attributes `returncode` (int) and, for the dpkg case, `stdout` (str).
+        """
         if args[:2] == ["dpkg", "-l"]:
             return _completed(returncode=0, stdout="")
         return _completed(returncode=0)
@@ -1506,6 +1573,14 @@ def test_start_desktop_app_appimage_found_and_started(
     fork_calls = []
 
     def mock_fork():
+        """
+        Simulates os.fork for tests by recording the invocation and returning a fixed child PID.
+        
+        This helper appends True to the shared fork_calls list to indicate a fork was attempted.
+        
+        Returns:
+            int: The simulated child process ID (12345).
+        """
         fork_calls.append(True)
         return 12345  # Return child PID
     monkeypatch.setattr(tray_module.os, "fork", mock_fork)
@@ -1569,10 +1644,28 @@ def test_start_desktop_app_deb_path(tray_module, monkeypatch):
     execv_calls = []
 
     def mock_fork():
+        """
+        Simulates os.fork for tests by recording the invocation and returning a fixed child PID.
+        
+        This helper appends True to the shared fork_calls list to indicate a fork was attempted.
+        
+        Returns:
+            int: The simulated child process ID (12345).
+        """
         fork_calls.append(True)
         return 12345  # Return child PID
 
     def mock_execv(path, args):
+        """
+        Record an execv invocation by appending (path, args) to the shared execv_calls list.
+        
+        Parameters:
+            path (str): Path of the executable passed to execv.
+            args (Sequence[str]): Argument list passed to execv.
+        
+        Returns:
+            None
+        """
         execv_calls.append((path, args))
         return None
 
@@ -1621,6 +1714,15 @@ def test_start_desktop_app_fork_child_process(tray_module, monkeypatch):
     monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
 
     def is_safe_dir(path):
+        """
+        Determine whether a filesystem path is the trusted system binary directory.
+        
+        Parameters:
+            path (str): The filesystem path to check.
+        
+        Returns:
+            True if the path is '/usr/bin', False otherwise.
+        """
         return path == "/usr/bin"
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
@@ -1630,13 +1732,38 @@ def test_start_desktop_app_fork_child_process(tray_module, monkeypatch):
     exit_calls = []
 
     def mock_fork():
+        """
+        Simulate a fork call in tests to indicate execution continues in the child process.
+        
+        Returns:
+            0: Value returned by os.fork() when running in the child process.
+        """
         return 0  # Simulate child process
 
     def mock_dup2(fd1, fd2):
+        """
+        Record a dup2-like invocation by appending the file descriptor pair to the test call log.
+        
+        Parameters:
+            fd1 (int): Source file descriptor that would be duplicated.
+            fd2 (int): Target file descriptor to duplicate into.
+        
+        Returns:
+            None
+        """
         dup2_calls.append((fd1, fd2))
         return None
 
     def mock_exit(code):
+        """
+        Record the provided exit code in the module-level `exit_calls` list and raise SystemExit with that code.
+        
+        Parameters:
+            code (int): Exit status code to record and use as the SystemExit value.
+        
+        Raises:
+            SystemExit: Always raised with the provided `code`.
+        """
         exit_calls.append(code)
         raise SystemExit(code)
 
@@ -1650,6 +1777,15 @@ def test_start_desktop_app_fork_child_process(tray_module, monkeypatch):
     notifications = []
 
     def capture_notify(cmd):
+        """
+        Record a notification command for later inspection.
+        
+        Parameters:
+            cmd (str): Notification command or message to append to the shared notifications list.
+        
+        Returns:
+            result (object): A subprocess-like result object with `returncode` set to 0.
+        """
         notifications.append(cmd)
         return _completed(returncode=0)
 
@@ -1688,12 +1824,27 @@ def test_start_desktop_app_fork_oserror(tray_module, monkeypatch):
     monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
 
     def is_safe_dir(path):
+        """
+        Determine whether a filesystem path is the trusted system binary directory.
+        
+        Parameters:
+            path (str): The filesystem path to check.
+        
+        Returns:
+            True if the path is '/usr/bin', False otherwise.
+        """
         return path == "/usr/bin"
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
 
     # Make os.open raise OSError to test error path
     def mock_open(*_a, **_k):
+        """
+        Test helper that simulates a file open failure due to insufficient permissions.
+        
+        Raises:
+            OSError: Always raised with the message "Permission denied".
+        """
         raise OSError("Permission denied")
 
     monkeypatch.setattr(tray_module.os, "open", mock_open)
@@ -1701,6 +1852,15 @@ def test_start_desktop_app_fork_oserror(tray_module, monkeypatch):
     notifications = []
 
     def capture_notify(cmd):
+        """
+        Record a notification command for later inspection.
+        
+        Parameters:
+            cmd (str): Notification command or message to append to the shared notifications list.
+        
+        Returns:
+            result (object): A subprocess-like result object with `returncode` set to 0.
+        """
         notifications.append(cmd)
         return _completed(returncode=0)
 
@@ -2284,6 +2444,16 @@ def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     gi_mod = ModuleType("gi")
 
     def require_version(*args, **kwargs):
+        """
+        No-op replacement for gi.require_version used in tests.
+        
+        Parameters:
+            *args: Positional arguments passed by callers (e.g., module name and version); accepted and ignored.
+            **kwargs: Keyword arguments accepted and ignored.
+        
+        Returns:
+            None
+        """
         _ = (args, kwargs)
         return None
 
@@ -2703,6 +2873,15 @@ def test_start_desktop_app_with_notifications(tray_module, monkeypatch):
     notifications = []
 
     def capture_notify(cmd):
+        """
+        Record a notification command for later inspection.
+        
+        Parameters:
+            cmd (str): Notification command or message to append to the shared notifications list.
+        
+        Returns:
+            result (object): A subprocess-like result object with `returncode` set to 0.
+        """
         notifications.append(cmd)
         return _completed(returncode=0)
 

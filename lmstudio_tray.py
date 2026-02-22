@@ -71,28 +71,20 @@ def load_version_from_dir(base_dir):
 
 
 def parse_args():
-    """Parse command-line arguments from sys.argv.
-
-    This function reads all arguments and flags provided on the command line
-    via sys.argv and returns them as a structured namespace object.
-
-    Command-line Arguments:
-        model (str): Model name to monitor; positional, optional.
-        script_dir (str): Script directory for logs; positional, optional.
-        --debug, -d (bool): Flag to enable debug logging.
-        --auto-start-daemon, -a (bool): Start daemon on launch.
-        --gui, -g (bool): Start LM Studio GUI on launch.
-        --version, -v (bool): Print version and exit.
-        --help (bool): Print help message and exit.
-
+    """
+    Parse command-line options for the LM Studio tray monitor.
+    
+    Parameters:
+        None
+    
     Returns:
-        argparse.Namespace: Parsed arguments as an object with attributes
-            matching argument names (e.g., namespace.model, namespace.debug).
-
-    Raises:
-        SystemExit: If --help or --version flags are used, or if the
-            argument parser encounters invalid arguments (handled by
-            argparse.ArgumentParser).
+        argparse.Namespace: Parsed arguments with these attributes:
+            - model (str): Model name to monitor (default "no-model-passed").
+            - script_dir (str): Directory for logs and VERSION file (default current working directory).
+            - debug (bool): True if debug logging is enabled.
+            - auto_start_daemon (bool): True if the daemon should be auto-started on launch.
+            - gui (bool): True if the LM Studio GUI should be started on launch.
+            - version (bool): True if the program should print its version and exit.
     """
     parser = argparse.ArgumentParser(
         description="LM Studio Tray Monitor",
@@ -155,15 +147,13 @@ class _AppState:
 
     @classmethod
     def apply_cli_args(cls, args: argparse.Namespace) -> None:
-        """Apply parsed command-line arguments to app state.
-
-        Args:
-            args (argparse.Namespace): Parsed command-line arguments.
-                Expected fields: model, script_dir, debug, gui,
-                auto_start_daemon.
-
-        Returns:
-            None.
+        """
+        Apply parsed CLI options to the shared application state.
+        
+        Copies selected fields from the given argparse.Namespace onto the class: sets MODEL, script_dir, DEBUG_MODE, GUI_MODE and AUTO_START_DAEMON (AUTO_START_DAEMON is cleared when GUI_MODE is enabled).
+        
+        Parameters:
+            args (argparse.Namespace): Parsed CLI arguments. Expected attributes: `model`, `script_dir`, `debug`, `gui`, `auto_start_daemon`.
         """
         cls.MODEL = args.model
         cls.script_dir = args.script_dir
@@ -179,18 +169,14 @@ class _AppState:
         app_indicator_module: ModuleType,
         gdk_pixbuf_module: ModuleType,
     ) -> None:
-        """Store imported GTK-related module references on the class.
-
-        Args:
-            gtk_module (ModuleType): The Gtk module to store as cls.Gtk.
-            glib_module (ModuleType): The GLib module to store as cls.GLib.
-            app_indicator_module (ModuleType): The AppIndicator3 module
-                to store as cls.AppIndicator3.
-            gdk_pixbuf_module (ModuleType): The GdkPixbuf module to store
-                as cls.GdkPixbuf.
-
-        Returns:
-            None.
+        """
+        Store GTK-related module references on the class for later use by the application.
+        
+        Parameters:
+            gtk_module (ModuleType): Gtk module to assign to cls.Gtk.
+            glib_module (ModuleType): GLib module to assign to cls.GLib.
+            app_indicator_module (ModuleType): AppIndicator3 module to assign to cls.AppIndicator3.
+            gdk_pixbuf_module (ModuleType): GdkPixbuf module to assign to cls.GdkPixbuf.
         """
         cls.Gtk = gtk_module
         cls.GLib = glib_module
@@ -226,29 +212,31 @@ LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 
 def get_app_version():
-    """Load app version from VERSION file in script directory.
-
-    Reads the app version from the VERSION file located in the script
-    directory. Falls back to DEFAULT_APP_VERSION if the file is missing
-    or unreadable.
-
+    """
+    Get the application version from the script directory's VERSION file.
+    
     Returns:
-        str: Version string read from the VERSION file, or
-            DEFAULT_APP_VERSION if loading fails.
+        str: Version string read from the VERSION file in _AppState.script_dir, or
+             DEFAULT_APP_VERSION if the file is missing or unreadable.
     """
     return load_version_from_dir(_AppState.script_dir)
 
 
 def main():
-    """Initialize module globals from CLI args and run the tray application.
-
-    Parses command-line arguments (from sys.argv) via parse_args(), loads
-    GTK dependencies, configures logging, and starts the GTK main loop.
-    Exits immediately when the --version flag is provided, without loading
-    GTK.
-
+    """
+    Initialize application state from CLI, configure runtime services, and start the GTK tray application's main loop.
+    
+    Parses command-line arguments and applies them to the internal application state, prints and exits if the version flag is set, loads required GTK-related modules, creates a .logs directory and initializes logging (including redirecting Python warnings to the log when debug mode is enabled), updates the cached application version, ensures no other tray instances are running, instantiates the tray UI, and enters the GTK main loop.
+    
+    Side effects:
+    - May print to stdout/stderr (e.g., version output or warnings).
+    - Creates a ".logs" directory under the configured script directory and writes a log file ("lmstudio_tray.log").
+    - Loads GTK-related gi modules and stores them on the internal _AppState.
+    - Starts the GTK main loop.
+    
     Raises:
-        SystemExit: When --version flag is provided (via sys.exit(0)).
+        SystemExit: when the --version flag is provided (process exits after printing version).
+        RuntimeError: if GTK modules are not initialized before entering the main loop.
     """
     args = parse_args()
 
@@ -337,19 +325,16 @@ def main():
 
 
 def get_asset_path(*path_components):
-    """Locate asset file handling both PyInstaller and normal execution.
-
-    Searches in this order:
-    1. sys._MEIPASS/assets/... (PyInstaller bundle)
-    2. script_dir/assets/... (Release package or source dir)
-    3. Current working directory/assets/...
-
-    Args:
-        *path_components: Path components relative to assets/ directory.
-            Example: get_asset_path("img", "lm-studio-tray-manager.svg")
-
+    """
+    Locate an asset file from bundled or source assets directories.
+    
+    Searches for the requested asset in this order: the PyInstaller bundle's _MEIPASS/assets, the application's script_dir/assets, then the current working directory's assets directory.
+    
+    Parameters:
+        *path_components: One or more path segments under the assets directory (e.g., "img", "logo.svg").
+    
     Returns:
-        str | None: Full path to the asset file if found, None otherwise.
+        str or None: Absolute path to the asset if found, `None` if no matching file exists.
     """
     # Check if running as PyInstaller bundle
     meipass = getattr(sys, "_MEIPASS", None)
@@ -376,7 +361,14 @@ def get_asset_path(*path_components):
 
 
 def get_authors():
-    """Load authors from AUTHORS file in script directory."""
+    """
+    Read the AUTHORS file from the configured script directory and return a list of author names.
+    
+    Parses markdown-style list items (lines starting with "-") while ignoring empty lines and comment/header lines beginning with "#" or "<!--". From each list item, extracts the name portion before any " - " description and removes any GitHub handle in the form "(@handle)". If the AUTHORS file cannot be read or no valid authors are found, returns a single-item list containing the package maintainer.
+    
+    Returns:
+        list[str]: Ordered list of author names extracted from the AUTHORS file, or [APP_MAINTAINER] if none found.
+    """
     authors_path = os.path.join(_AppState.script_dir, "AUTHORS")
     authors = []
     try:
@@ -544,20 +536,19 @@ def get_dpkg_cmd():
 
 
 def _run_safe_command(command):
-    """Run a pre-validated command list via subprocess.
-
-    The caller MUST ensure that ``command`` only contains trusted,
-    absolute-path executables resolved through helper functions.
-
-    Args:
-        command: List of strings forming the command.
-
+    """
+    Execute a validated command list and return its completed process result.
+    
+    The caller must supply a non-empty list of string arguments whose first element is an absolute path to a trusted executable. This function does not perform path resolution or trust checks beyond verifying types and that the executable path is absolute.
+    
+    Parameters:
+        command (list[str]): Command and arguments to run; first element must be an absolute path to the executable.
+    
     Returns:
-        CompletedProcess: The completed process result.
-
+        subprocess.CompletedProcess: The result of running the command with captured stdout and stderr.
+    
     Raises:
-        ValueError: If command format is invalid or executable is not
-            an absolute path.
+        ValueError: If `command` is not a non-empty list of strings or if the first element is not an absolute path.
     """
     if not isinstance(command, list) or not command:
         raise ValueError("Command must be a non-empty list")
@@ -686,7 +677,12 @@ class TrayIcon:
     desktop notifications on status transitions.
     """
     def __init__(self):
-        """Initialize tray indicator, menu, and periodic status checks."""
+        """
+        Initialize the system tray indicator and its persistent context menu, perform an initial status check, and schedule periodic status and update checks and idle startup tasks.
+        
+        Raises:
+            RuntimeError: If required GTK/AppIndicator modules have not been initialized via _AppState.
+        """
         gtk = _AppState.Gtk
         glib = _AppState.GLib
         app_indicator3 = _AppState.AppIndicator3
@@ -725,7 +721,14 @@ class TrayIcon:
         glib.idle_add(self._maybe_start_gui)
 
     def _maybe_auto_start_daemon(self):
-        """Start llmster daemon on launch when enabled."""
+        """
+        Attempt to start the LM Studio daemon at application startup when auto-start is enabled.
+        
+        If auto-start is enabled and the daemon is not already running, initiates the daemon start sequence. Intended for use as an idle/timeout callback.
+        
+        Returns:
+            False: Always returns False to indicate the callback should not be repeated.
+        """
         if not _AppState.AUTO_START_DAEMON:
             return False
 
@@ -738,7 +741,14 @@ class TrayIcon:
         return False
 
     def _maybe_start_gui(self):
-        """Start LM Studio GUI on launch when enabled."""
+        """
+        Attempt to start the LM Studio desktop application if GUI mode is enabled.
+        
+        If GUI mode is disabled, this function does nothing.
+        
+        Returns:
+            bool: `False` (always).
+        """
         if not _AppState.GUI_MODE:
             return False
 
@@ -747,7 +757,16 @@ class TrayIcon:
         return False
 
     def begin_action_cooldown(self, action_name, seconds=2.0):
-        """Prevent rapid double-triggering of tray actions."""
+        """
+        Debounces a named tray action to prevent it from being invoked again for a short period.
+        
+        Parameters:
+            action_name (str): Identifier used in log messages for the action being debounced.
+            seconds (float): Cooldown duration in seconds.
+        
+        Returns:
+            bool: True if the action is allowed and the cooldown was started, False if the action is blocked due to an active cooldown.
+        """
         now = time.monotonic()
         if now < self.action_lock_until:
             remaining = self.action_lock_until - now
@@ -762,11 +781,13 @@ class TrayIcon:
         return True
 
     def _schedule_menu_refresh(self, delay_seconds=2):
-        """Schedule a delayed menu refresh when GLib is available.
-
-        Args:
-            delay_seconds (int): Number of seconds to delay before
-                refreshing the menu. Defaults to 2 seconds.
+        """
+        Schedule a one-time delayed rebuild of the tray menu using GLib.
+        
+        If GLib is not initialized, this function does nothing.
+        
+        Parameters:
+            delay_seconds (int): Seconds to wait before rebuilding the menu. Defaults to 2.
         """
         glib = _AppState.GLib
         if glib is None:
@@ -1136,13 +1157,13 @@ class TrayIcon:
         return self.get_desktop_app_status() != "running"
 
     def start_daemon(self, _widget):
-        """Start the headless daemon.
-
-        Stops the desktop app first if needed, then tries daemon start
-        variants and notifies on success/failure.
-
-        Args:
-            _widget: Widget that triggered the action (unused).
+        """
+        Start the headless daemon, stopping the desktop app first if necessary, and notify the user about success or failure.
+        
+        Attempts available start commands until the daemon is running, updates the tray menu, and sends desktop notifications on outcome.
+        
+        Parameters:
+            _widget: The activating GTK widget (unused).
         """
         if not self.begin_action_cooldown("start_daemon"):
             return
@@ -1223,12 +1244,13 @@ class TrayIcon:
             self.build_menu()
 
     def stop_daemon(self, _widget):
-        """Stop the headless daemon.
-
-        Tries graceful stop variants first and falls back to force-stop.
-
-        Args:
-            _widget: Widget that triggered the action (unused).
+        """
+        Stop the headless daemon and refresh the tray UI.
+        
+        Attempts graceful stop variants and falls back to forceful termination when needed. Sends desktop notifications on success or failure and rebuilds/schedules a menu refresh.
+        
+        Parameters:
+            _widget: The GTK widget that triggered this action (unused).
         """
         if not self.begin_action_cooldown("stop_daemon"):
             return
@@ -1293,13 +1315,15 @@ class TrayIcon:
             self.build_menu()
 
     def start_desktop_app(self, _widget):
-        """Start the LM Studio desktop app.
-
-        Stops the daemon first if needed, locates the app (.deb or AppImage),
-        and launches it with user notification.
-
-        Args:
-            _widget: Widget that triggered the action (unused).
+        """
+        Start the LM Studio desktop application, stopping the headless daemon first if necessary.
+        
+        Searches for an installed .deb package or an AppImage, validates the chosen executable path against known safe locations,
+        detaches and launches the desktop process, and notifies the user of success or failure. If a headless daemon is running,
+        attempts to stop it before launching the GUI; if the daemon cannot be stopped the launch is aborted and the user is notified.
+        
+        Parameters:
+            _widget: The GTK widget that triggered this action (unused).
         """
         if not self.begin_action_cooldown("start_desktop_app"):
             return
@@ -1492,12 +1516,16 @@ class TrayIcon:
                 )
 
     def stop_desktop_app(self, _widget):
-        """Stop the LM Studio desktop app process.
-
-        Useful when the window closes to tray but the process remains active.
-
-        Args:
+        """
+        Stop the LM Studio desktop application processes and update the tray UI.
+        
+        Attempts to terminate desktop app processes (via system pkill). If pkill is unavailable, logs a warning and, if notify-send is present, sends an error notification. On success or when no running desktop app is found, sends a notification if possible. After attempting to stop the app, rebuilds the tray menu and schedules a short delayed refresh. This action is debounced by begin_action_cooldown and returns immediately if the cooldown is active.
+        
+        Parameters:
             _widget: Widget that triggered the action (unused).
+        
+        Returns:
+            None
         """
         if not self.begin_action_cooldown("stop_desktop_app"):
             return
@@ -1561,8 +1589,10 @@ class TrayIcon:
                 )
 
     def quit_app(self, _widget):
-        """Handle the tray quit action by logging and exiting the Gtk main
-        loop.
+        """
+        Quit the GTK main loop and log that the tray icon terminated.
+        
+        The `_widget` parameter is ignored. If the GTK module is not initialized, an error is logged and no attempt to quit the main loop is made.
         """
         _ = _widget
         logging.info("Tray icon terminated")
@@ -1577,11 +1607,7 @@ class TrayIcon:
 
     def show_status_dialog(self, _widget):
         """
-        Show a GTK message dialog containing the LM Studio CLI status output.
-
-        Runs `lms ps` to retrieve status information, formats a friendly
-        message on success or error, and displays it in an informational
-        dialog. Errors are caught and shown to the user instead of raising.
+        Display an informational GTK dialog showing the LM Studio runtime status as reported by the LM Studio CLI; if the status cannot be retrieved, show an error message to the user.
         """
         try:
             lms_cmd = get_lms_cmd()
@@ -1619,7 +1645,14 @@ class TrayIcon:
         dialog.destroy()
 
     def show_about_dialog(self, _widget):
-        """Show application information in a GTK dialog."""
+        """
+        Show an "About" dialog with program name, version, authors, website, and a short description.
+        
+        If an SVG logo asset is available and GdkPixbuf is initialized, the logo is loaded and displayed (failures are logged). The dialog is modal and blocks until dismissed.
+        
+        Parameters:
+            _widget: The GTK widget that triggered the action; this parameter is ignored.
+        """
         _ = _widget
         gtk = _AppState.Gtk
         gdk_pixbuf = _AppState.GdkPixbuf
@@ -1669,16 +1702,22 @@ class TrayIcon:
         dialog.destroy()
 
     def get_version_label(self):
-        """Return version text with update status for the About dialog.
-
+        """
+        Produce the display label combining the application version and current update status.
+        
         Returns:
-            str: Version text in the format '<APP_VERSION> (<status>)'.
+            str: The version label in the form "<APP_VERSION> (<status>)", where <status> is the current update status or "Unknown" if unavailable.
         """
         status = self.update_status or "Unknown"
         return f"{_AppState.APP_VERSION} ({status})"
 
     def _check_updates_tick(self):
-        """Run the update check for scheduled timers."""
+        """
+        Trigger an update check and ensure the periodic scheduler continues invoking this callback.
+        
+        Returns:
+            bool: `True` to keep the scheduled callback active.
+        """
         self.check_updates()
         return True
 
@@ -1688,7 +1727,21 @@ class TrayIcon:
         return False
 
     def _format_update_check_message(self, status, latest, error):
-        """Build the update check notification message."""
+        """
+        Builds a user-facing message describing the outcome of an update check.
+        
+        Parameters:
+            status (str): The update check result label (e.g., "Update available", "Up to date", "Dev build", or an error status).
+            latest (str | None): The latest release tag or version string when available.
+            error (str | None): Error details to include when the check failed.
+        
+        Returns:
+            str: A human-readable message summarizing the update status. Examples:
+                - "New version available: {latest} (current {version})" when an update is available.
+                - "You are up to date ({version})" when no update is needed.
+                - "Dev build: update checks disabled" for development builds.
+                - "Unable to check for updates. ({error})" when the check fails and error information is provided.
+        """
         if status == "Update available" and latest:
             return (
                 "New version available: "
@@ -1721,10 +1774,13 @@ class TrayIcon:
         self._run_validated_command([notify_cmd, "Update Check", message])
 
     def check_updates(self):
-        """Check GitHub for a newer release and notify the user.
-
+        """
+        Check GitHub for a newer release and update internal state; send a desktop notification if an update is available.
+        
+        Updates the instance fields `update_status`, `latest_update_version`, `last_update_error`, and `last_update_version` as appropriate. Skips the check for development builds (when _AppState.APP_VERSION == DEFAULT_APP_VERSION). If a newer release is found and notify-send is available, sends a notification to the user.
+        
         Returns:
-            bool: True if a notification was sent.
+            bool: `True` if a desktop notification was sent, `False` otherwise.
         """
         if _AppState.APP_VERSION == DEFAULT_APP_VERSION:
             self.update_status = "Dev build"
