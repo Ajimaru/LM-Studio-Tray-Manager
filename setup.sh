@@ -282,8 +282,25 @@ if [ -x "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
     BINARY_RELEASE=true
 elif [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
     print_warning "Found lmstudio-tray-manager but it is not executable"
-    print_info "Treating this as a Python package release (will create venv)"
-    BINARY_RELEASE=false
+    if [ "$DRY_RUN" = "1" ]; then
+        print_info "[DRY-RUN] Would make it executable: chmod +x $SCRIPT_DIR/lmstudio-tray-manager"
+        print_info "[DRY-RUN] Would treat this as a binary release after chmod"
+        BINARY_RELEASE=true
+    else
+        if ask_yes_no "Make lmstudio-tray-manager executable (chmod +x) and continue as binary release?"; then
+            if chmod +x "$SCRIPT_DIR/lmstudio-tray-manager"; then
+                print_step "Binary made executable"
+                BINARY_RELEASE=true
+            else
+                print_error "Failed to chmod +x lmstudio-tray-manager"
+                exit 1
+            fi
+        else
+            print_error "Binary exists but is not executable; cannot continue safely."
+            print_info "Fix permissions and re-run: chmod +x ./lmstudio-tray-manager"
+            exit 1
+        fi
+    fi
 else
     print_info "Python package release detected"
     print_info "Python virtual environment will be created"
