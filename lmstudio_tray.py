@@ -389,6 +389,7 @@ def main():
         )
 
     _AppState.APP_VERSION = get_app_version()
+    globals()["APP_VERSION"] = _AppState.APP_VERSION
 
     kill_existing_instances()
     logging.info("Tray script started")
