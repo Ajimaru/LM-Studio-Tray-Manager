@@ -438,21 +438,14 @@ def get_authors():
     """Load authors from AUTHORS file in script directory.
 
     Reads the AUTHORS file located in _AppState.script_dir and parses
-    author names from markdown list format. Returns a fallback list
-    containing APP_MAINTAINER if no authors are found.
-
-    Args:
-        None.
+    author names from markdown list format. If the file cannot be read
+    or contains no valid authors, a fallback list containing
+    APP_MAINTAINER is returned instead.
 
     Returns:
         list: List of author name strings extracted from the AUTHORS file.
             If the file cannot be read or contains no valid authors,
             returns a list containing APP_MAINTAINER as a fallback.
-
-    Raises:
-        No exceptions are raised to the caller. OSError and FileNotFoundError
-        that may occur when opening the AUTHORS file are caught and handled
-        internally by returning the fallback author list.
     """
     authors_path = os.path.join(_AppState.script_dir, "AUTHORS")
     authors = []
