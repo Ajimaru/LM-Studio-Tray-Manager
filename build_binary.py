@@ -2,8 +2,12 @@
 """
 PyInstaller build script for LM Studio Tray Manager.
 
-This script creates a standalone binary using PyInstaller with all necessary
-GTK3/GObject dependencies bundled.
+This script creates a standalone binary using PyInstaller that bundles the
+LM Studio Tray Manager Python code, resources, and GTK3/GObject-related
+Python modules (via hidden imports), as well as optional GdkPixbuf loader
+.so files when available. System GTK3/GObject/gi shared libraries must be
+provided by the target environment at runtime; this script does not build
+a fully self-contained GTK runtime.
 """
 
 import glob
