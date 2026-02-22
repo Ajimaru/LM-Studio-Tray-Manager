@@ -717,14 +717,20 @@ def check_api_models():
             headers={"User-Agent": "lmstudio-tray-manager"},
         )
         with urllib_request.urlopen(req, timeout=2) as response:
-            data = json.loads(response.read().decode("utf-8"))
+            payload = response.read()
+            data = json.loads(payload.decode("utf-8"))
+            if not isinstance(data, dict):
+                return False
             models = data.get("data", [])
+            if not isinstance(models, list):
+                return False
             return len(models) > 0
     except (
         urllib_error.HTTPError,
         urllib_error.URLError,
         OSError,
         ValueError,
+        UnicodeDecodeError,
         json.JSONDecodeError,
     ):
         return False
@@ -2085,12 +2091,6 @@ class TrayIcon:
                     "Daemon and desktop app stopped"
                 )
             else:
-                current_status = "INFO"
-                self.indicator.set_icon_full(
-                    ICON_INFO,
-                    "No model loaded"
-                )
-
                 # Query lms ps whenever daemon or desktop app is running.
                 # This avoids daemon wake-up in fully stopped state while still
                 # allowing model detection in GUI-only mode.
@@ -2108,10 +2108,22 @@ class TrayIcon:
                                 ICON_OK,
                                 "Model loaded"
                             )
+                        else:
+                            current_status = "INFO"
+                            self.indicator.set_icon_full(
+                                ICON_INFO,
+                                "No model loaded"
+                            )
                 # When daemon is not installed, check API directly
                 elif any_running and check_api_models():
                     current_status = "OK"
                     self.indicator.set_icon_full(ICON_OK, "Model loaded")
+                else:
+                    current_status = "INFO"
+                    self.indicator.set_icon_full(
+                        ICON_INFO,
+                        "No model loaded"
+                    )
 
             if (
                 self.last_status != current_status
