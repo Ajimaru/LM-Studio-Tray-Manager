@@ -13,7 +13,9 @@ def _load_build_binary_module():
     module_path = Path(__file__).resolve().parents[1] / "build_binary.py"
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:
-        raise RuntimeError("Failed to load build_binary module")
+        raise RuntimeError(
+            "Failed to load build_binary module"
+        )  # noqa: TRY003
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     spec.loader.exec_module(module)

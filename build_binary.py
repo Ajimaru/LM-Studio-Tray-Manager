@@ -64,6 +64,8 @@ def get_gdk_pixbuf_loaders():
                     print(f"✓ Found loaders.cache: {cache_file}")
                     return loaders_dir, cache_file
 
+                return loaders_dir, None
+
         print("⚠ GdkPixbuf loaders not found via pkg-config")
         return None, None
     except (OSError, subprocess.SubprocessError) as e:

@@ -297,6 +297,21 @@ class DummyGLibModule(ModuleType):
         """Stub timer registration and report success."""
         return True
 
+    @staticmethod
+    def idle_add(_callback):
+        """Stub idle callback registration and report success."""
+        return True
+
+
+class DummyGdkPixbufModule(ModuleType):
+    """Mock GdkPixbuf module for testing purposes."""
+    class Pixbuf:
+        """Stub Pixbuf class used by the About dialog logo loader."""
+        @staticmethod
+        def new_from_file_at_scale(_path, _width, _height, _preserve):
+            """Return a dummy pixbuf object."""
+            return object()
+
 
 class DummyUrlResponse:
     """Dummy response object for urllib tests."""
@@ -2026,7 +2041,7 @@ def test_check_model_transition_notifications(tray_module, monkeypatch):
 
 
 def test_check_model_empty_lms_output(tray_module, monkeypatch):
-    """Keep INFO status when lms output is empty."""
+    """Keep INFO status for empty lms output and run OSError."""
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
@@ -2070,6 +2085,7 @@ def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     gi_mod.require_version = lambda *_args, **_kwargs: None
     gtk_mod = DummyGtkModule("gi.repository.Gtk")
     glib_mod = DummyGLibModule("gi.repository.GLib")
+    gdkpixbuf_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
     app_mod = DummyAppIndicatorModule("gi.repository.AyatanaAppIndicator3")
 
     monkeypatch.setitem(sys.modules, "gi", gi_mod)
@@ -2080,6 +2096,7 @@ def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     )
     monkeypatch.setitem(sys.modules, "gi.repository.Gtk", gtk_mod)
     monkeypatch.setitem(sys.modules, "gi.repository.GLib", glib_mod)
+    monkeypatch.setitem(sys.modules, "gi.repository.GdkPixbuf", gdkpixbuf_mod)
     monkeypatch.setitem(
         sys.modules,
         "gi.repository.AyatanaAppIndicator3",
@@ -2094,6 +2111,8 @@ def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
             return gtk_mod
         if name == "gi.repository.GLib":
             return glib_mod
+        if name == "gi.repository.GdkPixbuf":
+            return gdkpixbuf_mod
         if name == "gi.repository.AyatanaAppIndicator3":
             return app_mod
         return original_import_module(name)

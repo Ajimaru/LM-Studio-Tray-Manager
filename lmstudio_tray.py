@@ -132,10 +132,7 @@ def parse_args():
         action="store_true",
         help="Print version and exit"
     )
-    args, unknown = parser.parse_known_args()
-    if unknown:
-        parser.error(f"unrecognized arguments: {' '.join(unknown)}")
-    return args
+    return parser.parse_args()
 
 
 # === Module-level defaults for args-derived globals ===
@@ -220,36 +217,6 @@ def main():
     if args.version:
         print(load_version_from_dir(script_dir))
         sys.exit(0)
-
-    if gi is None:
-        print(
-            "Error: PyGObject (gi) is not installed.\n"
-            "This application requires the 'gi' module provided by "
-            "PyGObject.\n"
-            "Please install the appropriate package for your system, "
-            "for example:\n"
-            "  - Debian/Ubuntu: sudo apt install python3-gi "
-            "gir1.2-gtk-3.0\n"
-            "  - Fedora: sudo dnf install python3-gobject "
-            "gtk3\n"
-            "  - Arch: sudo pacman -S python-gobject gtk3",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    if gi is None:
-        print(
-            "Error: PyGObject (gi) is not installed.\n"
-            "This application requires the 'gi' module provided by "
-            "PyGObject.\n"
-            "Please install the appropriate package for your system, "
-            "for example:\n"
-            "  - Debian/Ubuntu: sudo apt install python3-gi "
-            "gir1.2-gtk-3.0\n"
-            "  - Fedora: sudo dnf install python3-gobject gtk3\n"
-            "  - Arch: sudo pacman -S python-gobject gtk3",
-            file=sys.stderr,
-        )
-        sys.exit(1)
 
     gi.require_version("Gtk", "3.0")
     gi.require_version("AyatanaAppIndicator3", "0.1")
@@ -672,9 +639,8 @@ class TrayIcon:
             UPDATE_CHECK_INTERVAL,
             self._check_updates_tick,
         )
-        if hasattr(GLib, "idle_add"):
-            GLib.idle_add(self._maybe_auto_start_daemon)
-            GLib.idle_add(self._maybe_start_gui)
+        GLib.idle_add(self._maybe_auto_start_daemon)
+        GLib.idle_add(self._maybe_start_gui)
 
     def _maybe_auto_start_daemon(self):
         """Start llmster daemon on launch when enabled."""
