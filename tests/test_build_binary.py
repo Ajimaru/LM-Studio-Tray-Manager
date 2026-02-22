@@ -10,16 +10,18 @@ import pytest
 def _load_build_binary_module():
     """
     Load and return the build_binary module from the repository root.
-
-    Attempts to import the file ``build_binary.py`` located one directory
+    """
+    Load and return the build_binary module from the repository root.
+    
+    Attempts to import the file build_binary.py located one directory
     above this test package and returns the loaded module object.
-
+    
     Returns:
-        module: The imported ``build_binary`` module object.
-
+        module: The imported `build_binary` module object.
+    
     Raises:
-        RuntimeError: If the module spec or loader cannot be obtained and the
-            module cannot be loaded.
+        RuntimeError: If the module spec or loader cannot be obtained
+            and the module cannot be loaded.
     """
     module_name = "build_binary"
     module_path = Path(__file__).resolve().parents[1] / "build_binary.py"
