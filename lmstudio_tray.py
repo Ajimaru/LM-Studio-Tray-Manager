@@ -1796,20 +1796,100 @@ class TrayIcon:
         """
         Show a GTK message dialog containing the LM Studio CLI status output.
 
-        Runs `lms ps` to retrieve status information, formats a friendly
-        message on success or error, and displays it in an informational
-        dialog. Errors are caught and shown to the user instead of raising.
+        Runs `lms ps` to retrieve status information. If daemon is not
+        running, falls back to querying the LM Studio API directly.
+        Formats a friendly message on success or error, and displays it in
+        an informational dialog. Errors are caught and shown to the user
+        instead of raising.
         """
         _ = _widget
+        text = "No models loaded or error."
         try:
             lms_cmd = get_lms_cmd()
-            if not lms_cmd:
-                raise RuntimeError("lms CLI not found")
-            result = _run_safe_command([lms_cmd, "ps"])
-            if result.returncode == 0 and result.stdout.strip():
-                text = result.stdout.strip()
+            if lms_cmd:
+                result = _run_safe_command([lms_cmd, "ps"])
+                if result.returncode == 0 and result.stdout.strip():
+                    text = result.stdout.strip()
+                else:
+                    # Fallback: lms ps failed (daemon not running or no
+                    # models), try API for desktop app check
+                    if check_api_models():
+                        # Query API to get model details
+                        try:
+                            req = urllib_request.Request(
+                                get_api_models_url(),
+                                headers={"User-Agent":
+                                         "lmstudio-tray-manager"},
+                            )
+                            with urllib_request.urlopen(
+                                req, timeout=2
+                            ) as response:
+                                payload = response.read()
+                                data = json.loads(
+                                    payload.decode("utf-8")
+                                )
+                                if isinstance(data, dict):
+                                    models = data.get("data", [])
+                                    if (isinstance(models, list) and
+                                            len(models) > 0):
+                                        model_names = "\n".join(
+                                            [m.get("id", "Unknown")
+                                             for m in models]
+                                        )
+                                        text = (
+                                            "Models loaded via desktop app:\n"
+                                            f"{model_names}"
+                                        )
+                                    else:
+                                        text = (
+                                            "No models loaded or error."
+                                        )
+                        except (
+                            urllib_error.HTTPError,
+                            urllib_error.URLError,
+                            OSError,
+                            ValueError,
+                            UnicodeDecodeError,
+                            json.JSONDecodeError,
+                        ):
+                            text = "No models loaded or error."
             else:
-                text = "No models loaded or error."
+                # lms not available, try API directly
+                if check_api_models():
+                    try:
+                        req = urllib_request.Request(
+                            get_api_models_url(),
+                            headers={"User-Agent":
+                                     "lmstudio-tray-manager"},
+                        )
+                        with urllib_request.urlopen(
+                            req, timeout=2
+                        ) as response:
+                            payload = response.read()
+                            data = json.loads(payload.decode("utf-8"))
+                            if isinstance(data, dict):
+                                models = data.get("data", [])
+                                if (isinstance(models, list) and
+                                        len(models) > 0):
+                                    model_names = "\n".join(
+                                        [m.get("id", "Unknown")
+                                         for m in models]
+                                    )
+                                    text = (
+                                        "Models loaded via desktop app:\n"
+                                        f"{model_names}"
+                                    )
+                                else:
+                                    text = "No models loaded or error."
+                    except (
+                        urllib_error.HTTPError,
+                        urllib_error.URLError,
+                        OSError,
+                        ValueError,
+                        UnicodeDecodeError,
+                        json.JSONDecodeError,
+                    ):
+                        text = "No models loaded or error."
         except (
             OSError,
             RuntimeError,

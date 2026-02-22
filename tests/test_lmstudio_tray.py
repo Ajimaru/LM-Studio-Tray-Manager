@@ -2656,12 +2656,13 @@ def test_stop_desktop_app_exception_path(tray_module, monkeypatch):
 
 
 def test_show_status_dialog_error_path(tray_module, monkeypatch):
-    """Render status dialog with an error message when lms is missing."""
+    """Render status dialog with API fallback message when lms is missing."""
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
-    assert "Error retrieving status" in dialog.secondary  # nosec B101
+    assert "No models loaded" in dialog.secondary  # nosec B101
 
 
 def test_show_status_dialog_success_path(tray_module, monkeypatch):
@@ -2687,6 +2688,7 @@ def test_show_status_dialog_no_models(tray_module, monkeypatch):
         "_run_safe_command",
         lambda *_a, **_k: _completed(returncode=1, stdout=""),
     )
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
     assert "No models loaded" in dialog.secondary  # nosec B101
@@ -2713,6 +2715,7 @@ def test_check_model_transition_notifications(tray_module, monkeypatch):
     """Notify on INFO->WARN, WARN->FAIL, and OK->INFO transitions."""
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray_module, "get_notify_send_cmd", lambda: "/n")
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
     notifications = []
 
     def capture_notify(cmd):
