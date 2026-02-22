@@ -1650,6 +1650,7 @@ class TrayIcon:
         message on success or error, and displays it in an informational
         dialog. Errors are caught and shown to the user instead of raising.
         """
+        _ = _widget
         try:
             lms_cmd = get_lms_cmd()
             if not lms_cmd:
