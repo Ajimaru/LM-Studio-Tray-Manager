@@ -154,12 +154,18 @@ def test_get_data_files(build_binary_module):
     data_files = build_binary_module.get_data_files()
 
     # VERSION file should map to "."
-    assert any(dest == "." and "VERSION" in src for src, dest in data_files)
+    assert any(
+        dest == "." and Path(src).name == "VERSION"
+        for src, dest in data_files
+    )
     # AUTHORS file should map to "."
-    assert any(dest == "." and "AUTHORS" in src for src, dest in data_files)
+    assert any(
+        dest == "." and Path(src).name == "AUTHORS"
+        for src, dest in data_files
+    )
     # assets directory should map to "assets"
     assert any(
-        dest == "assets" and "assets" in src
+        dest == "assets" and Path(src).name == "assets"
         for src, dest in data_files
     )
 
