@@ -533,8 +533,10 @@ def _validate_url_scheme(url):
             f"only 'http' and 'https' are allowed"
         )
 
-
-def get_api_base_url():
+    port = _normalize_api_port(_AppState.API_PORT)
+    if port is None:
+        raise ValueError("Invalid API port")
+    return f"http://{host}:{port}"
     host = (_AppState.API_HOST or "").strip()
     if not host or any(ch.isspace() for ch in host):
         raise ValueError("Invalid API host")
