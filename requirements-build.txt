@@ -1,0 +1,5 @@
+# Build-time dependencies for creating the standalone binary.
+# Pin to a specific vetted version to mitigate supply-chain risks.
+pyinstaller==6.13.0
+pyinstaller-hooks-contrib>=2024.0,<2025.0  # transitive dep; pin to known-good range
+altgraph>=0.17,<0.18  # transitive dep used by PyInstaller

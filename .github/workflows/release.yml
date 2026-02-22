@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-and-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout tag
@@ -28,16 +28,52 @@ jobs:
             exit 1
           fi
 
-      - name: Prepare release package
+      - name: Install binary build dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc \
+            pkg-config \
+            python3.10 \
+            python3.10-venv \
+            python3.10-dev \
+            python3-gi \
+            gobject-introspection \
+            gir1.2-gtk-3.0 \
+            gir1.2-ayatanaappindicator3-0.1 \
+            libgirepository1.0-dev
+
+          # UPX package name varies by repo; try both.
+          if apt-cache show upx > /dev/null 2>&1; then
+            sudo apt-get install -y upx
+          else
+            sudo apt-get install -y upx-ucl
+          fi
+
+      - name: Build standalone binary
+        run: |
+          set -euo pipefail
+          mkdir -p .build-cache
+          ./build.sh
+          if [[ ! -f "dist/lmstudio-tray-manager" ]]; then
+            echo "Binary missing after build"
+            exit 1
+          fi
+          cp -a "dist/lmstudio-tray-manager" ".build-cache/lmstudio-tray-manager"
+
+      - name: Prepare release packages
         run: |
           set -euo pipefail
 
           TAG="${GITHUB_REF_NAME}"
-          PKG_NAME="LM-Studio-Tray-Manager-${TAG}"
-          STAGE_DIR="dist/${PKG_NAME}"
+          PKG_NAME_SRC="LM-Studio-Tray-Manager-${TAG}"
+          PKG_NAME_BIN="LM-Studio-Tray-Manager-${TAG}-binary"
+          STAGE_DIR_SRC="dist/${PKG_NAME_SRC}"
+          STAGE_DIR_BIN="dist/${PKG_NAME_BIN}"
 
           rm -rf dist
-          mkdir -p "$STAGE_DIR"
+          mkdir -p "$STAGE_DIR_SRC" "$STAGE_DIR_BIN"
 
           FILES=(
             "lmstudio_autostart.sh"
@@ -51,41 +87,72 @@ jobs:
 
           for file in "${FILES[@]}"; do
             if [[ -f "$file" ]]; then
-              mkdir -p "$STAGE_DIR/$(dirname "$file")"
-              cp -a "$file" "$STAGE_DIR/$file"
+              mkdir -p "$STAGE_DIR_SRC/$(dirname "$file")"
+              cp -a "$file" "$STAGE_DIR_SRC/$file"
             fi
           done
 
           if [[ -f "docs/SETUP.md" ]]; then
-            mkdir -p "$STAGE_DIR/docs"
-            cp -a "docs/SETUP.md" "$STAGE_DIR/docs/SETUP.md"
+            mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"
+            cp -a "docs/SETUP.md" "$STAGE_DIR_SRC/docs/SETUP.md"
+            cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"
           fi
+
+          if [[ -f "docs/BUILD.md" ]]; then
+            mkdir -p "$STAGE_DIR_BIN/docs"
+            cp -a "docs/BUILD.md" "$STAGE_DIR_BIN/docs/BUILD.md"
+          fi
+
+          # Copy assets to both packages
+          if [[ -d "assets" ]]; then
+            cp -a "assets" "$STAGE_DIR_SRC/assets"
+            cp -a "assets" "$STAGE_DIR_BIN/assets"
+          fi
+
+          BIN_FILES=()
+          for file in "${FILES[@]}"; do
+            if [[ "$file" != "lmstudio_tray.py" ]]; then
+              BIN_FILES+=("$file")
+            fi
+          done
+
+          for file in "${BIN_FILES[@]}"; do
+            if [[ -f "$file" ]]; then
+              mkdir -p "$STAGE_DIR_BIN/$(dirname "$file")"
+              cp -a "$file" "$STAGE_DIR_BIN/$file"
+            fi
+          done
+
+          if [[ ! -f ".build-cache/lmstudio-tray-manager" ]]; then
+            echo "Error: Binary not found at .build-cache/lmstudio-tray-manager"
+            exit 1
+          fi
+          cp -a ".build-cache/lmstudio-tray-manager" \
+            "$STAGE_DIR_BIN/lmstudio-tray-manager"
 
       - name: Create archives
         run: |
           set -euo pipefail
 
           TAG="${GITHUB_REF_NAME}"
-          PKG_NAME="LM-Studio-Tray-Manager-${TAG}"
+          PKG_NAME_SRC="LM-Studio-Tray-Manager-${TAG}"
+          PKG_NAME_BIN="LM-Studio-Tray-Manager-${TAG}-binary"
 
-          tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "$PKG_NAME"
-          (cd dist && zip -rq "${PKG_NAME}.zip" "$PKG_NAME")
+          tar -czf "dist/${PKG_NAME_SRC}.tar.gz" -C dist "$PKG_NAME_SRC"
+          tar -czf "dist/${PKG_NAME_BIN}.tar.gz" -C dist "$PKG_NAME_BIN"
 
-          cp "dist/${PKG_NAME}.tar.gz" "dist/LM-Studio-Tray-Manager-latest.tar.gz"
-          cp "dist/${PKG_NAME}.zip" "dist/LM-Studio-Tray-Manager-latest.zip"
 
       - name: Generate checksums
         run: |
           set -euo pipefail
           cd dist
-          sha256sum *.tar.gz *.zip > SHA256SUMS.txt
+          sha256sum *.tar.gz > SHA256SUMS.txt
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
         with:
-          name: LM-Studio-Tray-Manager - ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           generate_release_notes: true
           files: |
             dist/*.tar.gz
-            dist/*.zip
             dist/SHA256SUMS.txt

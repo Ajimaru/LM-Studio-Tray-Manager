@@ -6,14 +6,26 @@ daemon and desktop app. It displays visual indicators and notifications when
 status changes, and supports starting/stopping daemon and desktop app as well
 as viewing status information through a context menu.
 
-The script accepts optional command-line arguments:
-    - sys.argv[1]: Model name to monitor (default: "no-model-passed")
-    - sys.argv[2]: Script directory for logging (default: current working dir)
+Usage:
+    lmstudio_tray.py [model] [script_dir] [options]
 
-Logging is written to ".logs/lmstudio_tray.log" in the script directory.
+Notes:
+    Command-line arguments:
+        model: Model name to monitor (optional, default: "no-model-passed").
+        script_dir: Script directory for logs and VERSION file (optional,
+            default: current working directory).
+        --debug, -d: Enable debug logging (flag).
+        --auto-start-daemon, -a: Start llmster daemon on launch (flag).
+        --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
+        --version, -v: Print version and exit (flag).
+        --help: Show help message and exit (flag).
+
+    Logging is written to .logs/lmstudio_tray.log in the script directory.
+    If the VERSION file is missing, a default version string is used.
 """
 
 # nosec B404 - subprocess is required for system process management
+import argparse
 import subprocess  # nosec B404
 import sys
 import os
@@ -26,48 +38,117 @@ import json
 from urllib import request as urllib_request
 from urllib import error as urllib_error
 from urllib import parse as urllib_parse
-import gi
 
-gi.require_version("Gtk", "3.0")
-gi.require_version("AyatanaAppIndicator3", "0.1")
-Gtk = importlib.import_module("gi.repository.Gtk")
-GLib = importlib.import_module("gi.repository.GLib")
-AppIndicator3 = importlib.import_module("gi.repository.AyatanaAppIndicator3")
+try:
+    import gi
+except ImportError:
+    gi = None
+
+DEFAULT_APP_VERSION = "dev"
 
 
-# === Model name from argument or default ===
-MODEL = sys.argv[1] if len(sys.argv) > 1 else "no-model-passed"
-script_dir = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
-DEBUG_MODE = sys.argv[3].lower() == "debug" if len(sys.argv) > 3 else False
-logs_dir = os.path.join(script_dir, ".logs")
+def load_version_from_dir(base_dir):
+    """Load app version from the VERSION file.
 
-# === Create logs directory if not exists ===
-os.makedirs(logs_dir, exist_ok=True)
+    Args:
+        base_dir (str): Directory path containing the VERSION file.
 
-# === Set up logging ===
-LOG_LEVEL = logging.DEBUG if DEBUG_MODE else logging.INFO
-log_file = os.path.join(logs_dir, "lmstudio_tray.log")
+    Returns:
+        str: Version string read from the VERSION file, or DEFAULT_APP_VERSION
+            if the file is missing or empty.
+    """
+    version_path = os.path.join(base_dir, "VERSION")
+    try:
+        with open(version_path, "r", encoding="utf-8") as version_file:
+            version = version_file.read().strip()
+            if version:
+                return version
+    except OSError:
+        pass
+    return DEFAULT_APP_VERSION
 
-# Write header to log file
-with open(log_file, 'w', encoding='utf-8') as f:
-    f.write("="*80 + "\n")
-    f.write("LM Studio Tray Monitor Log\n")
-    f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-    f.write("="*80 + "\n")
 
-logging.basicConfig(
-    filename=log_file,
-    level=LOG_LEVEL,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    filemode='a'
-)
+def parse_args():
+    """Parse command-line arguments from sys.argv.
 
-# Redirect Python warnings to log file in debug mode
-if DEBUG_MODE:
-    logging.captureWarnings(True)
-    warnings_logger = logging.getLogger('py.warnings')
-    warnings_logger.setLevel(logging.DEBUG)
-    logging.debug("Debug mode enabled - capturing warnings to log file")
+    This function reads all arguments and flags provided on the command line
+    via sys.argv and returns them as a structured namespace object.
+
+    Command-line Arguments:
+        model (str): Model name to monitor; positional, optional.
+        script_dir (str): Script directory for logs; positional, optional.
+        --debug, -d (bool): Flag to enable debug logging.
+        --auto-start-daemon, -a (bool): Start daemon on launch.
+        --gui, -g (bool): Start LM Studio GUI on launch.
+        --version, -v (bool): Print version and exit.
+        --help (bool): Print help message and exit.
+
+    Returns:
+        argparse.Namespace: Parsed arguments as an object with attributes
+            matching argument names (e.g., namespace.model, namespace.debug).
+
+    Raises:
+        SystemExit: If --help or --version flags are used, or if the
+            argument parser encounters invalid arguments (handled by
+            argparse.ArgumentParser).
+    """
+    parser = argparse.ArgumentParser(
+        description="LM Studio Tray Monitor",
+        add_help=True
+    )
+    parser.add_argument(
+        "model",
+        nargs="?",
+        default="no-model-passed",
+        help="Model name to monitor"
+    )
+    parser.add_argument(
+        "script_dir",
+        nargs="?",
+        default=os.getcwd(),
+        help="Script directory for logs and VERSION file"
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        action="store_true",
+        help="Enable debug logging"
+    )
+    parser.add_argument(
+        "--auto-start-daemon",
+        "-a",
+        action="store_true",
+        help="Start llmster daemon on launch"
+    )
+    parser.add_argument(
+        "--gui",
+        "-g",
+        action="store_true",
+        help="Start LM Studio GUI on launch (stops daemon first)"
+    )
+    parser.add_argument(
+        "--version",
+        "-v",
+        action="store_true",
+        help="Print version and exit"
+    )
+    return parser.parse_args()
+
+
+# === Module-level defaults for args-derived globals ===
+# These are overridden by main() when run as __main__.
+MODEL = "no-model-passed"
+script_dir = os.getcwd()
+DEBUG_MODE = False
+GUI_MODE = False
+AUTO_START_DAEMON = False
+APP_VERSION = DEFAULT_APP_VERSION
+
+# GTK module globals - populated by main() before TrayIcon is created.
+Gtk = None
+GLib = None
+AppIndicator3 = None
+GdkPixbuf = None
 
 INTERVAL = 10
 UPDATE_CHECK_INTERVAL = 60 * 60 * 24
@@ -84,26 +165,142 @@ LATEST_RELEASE_API_URL = (
     "https://api.github.com/repos/Ajimaru/LM-Studio-Tray-Manager"
     "/releases/latest"
 )
-DEFAULT_APP_VERSION = "dev"
-
 # === Path to lms-CLI ===
 LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 
 def get_app_version():
-    """Load app version from VERSION file in script directory."""
-    version_path = os.path.join(script_dir, "VERSION")
-    try:
-        with open(version_path, "r", encoding="utf-8") as version_file:
-            version = version_file.read().strip()
-            if version:
-                return version
-    except OSError:
-        pass
-    return DEFAULT_APP_VERSION
+    """Load app version from VERSION file in script directory.
+
+    Reads the app version from the VERSION file located in the script
+    directory. Falls back to DEFAULT_APP_VERSION if the file is missing
+    or unreadable.
+
+    Returns:
+        str: Version string read from the VERSION file, or
+            DEFAULT_APP_VERSION if loading fails.
+    """
+    return load_version_from_dir(script_dir)
 
 
-APP_VERSION = get_app_version()
+def main():
+    """Initialize module globals from CLI args and run the tray application.
+
+    Parses command-line arguments (from sys.argv) via parse_args(), loads
+    GTK dependencies, configures logging, and starts the GTK main loop.
+    Exits immediately when the --version flag is provided, without loading
+    GTK.
+
+    Raises:
+        SystemExit: When --version flag is provided (via sys.exit(0)).
+    """
+    global MODEL, script_dir, DEBUG_MODE, GUI_MODE, AUTO_START_DAEMON
+    global Gtk, GLib, AppIndicator3, GdkPixbuf, APP_VERSION
+
+    args = parse_args()
+
+    # === Model name from argument or default ===
+    MODEL = args.model
+    script_dir = args.script_dir
+    DEBUG_MODE = args.debug
+    GUI_MODE = args.gui
+
+    if args.auto_start_daemon and args.gui:
+        print(
+            "Warning: --auto-start-daemon and --gui are mutually exclusive; "
+            "--gui takes precedence.",
+            file=sys.stderr
+        )
+
+    AUTO_START_DAEMON = args.auto_start_daemon and not GUI_MODE
+
+    if args.version:
+        print(load_version_from_dir(script_dir))
+        sys.exit(0)
+
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("AyatanaAppIndicator3", "0.1")
+    Gtk = importlib.import_module("gi.repository.Gtk")
+    GLib = importlib.import_module("gi.repository.GLib")
+    GdkPixbuf = importlib.import_module("gi.repository.GdkPixbuf")
+    AppIndicator3 = importlib.import_module(
+        "gi.repository.AyatanaAppIndicator3"
+    )
+    logs_dir = os.path.join(script_dir, ".logs")
+
+    # === Create logs directory if not exists ===
+    os.makedirs(logs_dir, exist_ok=True)
+
+    # === Set up logging ===
+    LOG_LEVEL = logging.DEBUG if DEBUG_MODE else logging.INFO
+    log_file = os.path.join(logs_dir, "lmstudio_tray.log")
+
+    # Write header to log file
+    with open(log_file, 'w', encoding='utf-8') as f:
+        f.write("="*80 + "\n")
+        f.write("LM Studio Tray Monitor Log\n")
+        f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write("="*80 + "\n")
+
+    logging.basicConfig(
+        filename=log_file,
+        level=LOG_LEVEL,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        filemode='a',
+        force=True,
+    )
+
+    # Redirect Python warnings to log file in debug mode
+    if DEBUG_MODE:
+        logging.captureWarnings(True)
+        warnings_logger = logging.getLogger('py.warnings')
+        warnings_logger.setLevel(logging.DEBUG)
+        logging.debug(
+            "Debug mode enabled - capturing warnings to log file"
+        )
+
+    APP_VERSION = get_app_version()
+
+    kill_existing_instances()
+    logging.info("Tray script started")
+
+    TrayIcon()
+    Gtk.main()
+
+
+def get_asset_path(*path_components):
+    """Locate asset file handling both PyInstaller and normal execution.
+
+    Searches in this order:
+    1. sys._MEIPASS/assets/... (PyInstaller bundle)
+    2. script_dir/assets/... (Release package or source dir)
+    3. Current working directory/assets/...
+
+    Args:
+        *path_components: Path components relative to assets/ directory.
+            Example: get_asset_path("img", "lm-studio-tray-manager.svg")
+
+    Returns:
+        str | None: Full path to the asset file if found, None otherwise.
+    """
+    # Check if running as PyInstaller bundle
+    if hasattr(sys, "_MEIPASS"):
+        meipass_asset = os.path.join(sys._MEIPASS, "assets",
+                                      *path_components)
+        if os.path.isfile(meipass_asset):
+            return meipass_asset
+
+    # Check in script_dir
+    script_asset = os.path.join(script_dir, "assets", *path_components)
+    if os.path.isfile(script_asset):
+        return script_asset
+
+    # Check in current working directory
+    cwd_asset = os.path.join(os.getcwd(), "assets", *path_components)
+    if os.path.isfile(cwd_asset):
+        return cwd_asset
+
+    return None
 
 
 def get_authors():
@@ -354,18 +551,28 @@ def get_desktop_app_pids():
             if len(parts) != 2:
                 continue
 
-            pid_text, args = parts
+            pid_text, cmd_args = parts
             if not pid_text.isdigit():
                 continue
 
-            if "--type=" in args:
+            if "--type=" in cmd_args:
+                continue
+
+            # Exclude daemon worker processes (llmster, systemresourcesworker,
+            # liblmstudioworker, etc.). These are child processes managed by
+            # the daemon and should not count as desktop app running.
+            if (
+                "systemresourcesworker" in cmd_args
+                or "liblmstudioworker" in cmd_args
+                or "/llmster/" in cmd_args
+            ):
                 continue
 
             if (
-                "/opt/LM Studio/lm-studio" in args
-                or args.startswith("/usr/bin/lm-studio")
-                or args.startswith("lm-studio ")
-                or args == "lm-studio"
+                "/opt/LM Studio/lm-studio" in cmd_args
+                or cmd_args.startswith("/usr/bin/lm-studio")
+                or cmd_args.startswith("lm-studio ")
+                or cmd_args == "lm-studio"
             ):
                 pids.append(int(pid_text))
     except (OSError, subprocess.SubprocessError, ValueError):
@@ -396,11 +603,6 @@ def kill_existing_instances():
                 logging.info("Terminating old instance: PID %s", pid)
             except (OSError, ProcessLookupError, PermissionError) as e:
                 logging.warning("Error terminating PID %s: %s", pid, e)
-
-
-kill_existing_instances()
-
-logging.info("Tray script started")
 
 
 class TrayIcon:
@@ -437,6 +639,30 @@ class TrayIcon:
             UPDATE_CHECK_INTERVAL,
             self._check_updates_tick,
         )
+        GLib.idle_add(self._maybe_auto_start_daemon)
+        GLib.idle_add(self._maybe_start_gui)
+
+    def _maybe_auto_start_daemon(self):
+        """Start llmster daemon on launch when enabled."""
+        if not AUTO_START_DAEMON:
+            return False
+
+        if self.get_daemon_status() == "running":
+            logging.info("Auto-start skipped: daemon already running")
+            return False
+
+        logging.info("Auto-starting daemon (flag --auto-start-daemon)")
+        self.start_daemon(None)
+        return False
+
+    def _maybe_start_gui(self):
+        """Start LM Studio GUI on launch when enabled."""
+        if not GUI_MODE:
+            return False
+
+        logging.info("Auto-starting GUI (flag --gui)")
+        self.start_desktop_app(None)
+        return False
 
     def begin_action_cooldown(self, action_name, seconds=2.0):
         """Prevent rapid double-triggering of tray actions."""
@@ -597,9 +823,8 @@ class TrayIcon:
                 pass
 
         # Check for AppImage
-        script_dir_arg = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
         search_paths = [
-            script_dir_arg,
+            script_dir,
             os.path.expanduser("~/Apps"),
             os.path.expanduser("~/LM_Studio"),
             os.path.expanduser("~/Applications"),
@@ -1034,9 +1259,8 @@ class TrayIcon:
 
         # If .deb not found, search for AppImage
         if not app_found:
-            script_dir_arg = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
             search_paths = [
-                script_dir_arg,
+                script_dir,
                 os.path.expanduser("~/Apps"),
                 os.path.expanduser("~/LM_Studio"),
                 os.path.expanduser("~/Applications"),
@@ -1287,6 +1511,22 @@ class TrayIcon:
         dialog.set_comments(
             "Monitors and controls LM Studio daemon and desktop app."
         )
+
+        # Load and set the application logo
+        logo_path = get_asset_path("img", "lm-studio-tray-manager.svg")
+        if logo_path and GdkPixbuf is not None:
+            try:
+                logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                    logo_path, 128, 128, True
+                )
+                dialog.set_logo(logo)
+            except (OSError, GLib.Error) as e:
+                logging.warning("Failed to load logo from %s: %s",
+                                logo_path, e)
+        else:
+            logging.debug("Asset not found: assets/img/"
+                         "lm-studio-tray-manager.svg")
+
         dialog.set_modal(True)
         dialog.run()
         dialog.destroy()
@@ -1508,5 +1748,5 @@ class TrayIcon:
         return True
 
 
-TrayIcon()
-Gtk.main()
+if __name__ == "__main__":
+    main()

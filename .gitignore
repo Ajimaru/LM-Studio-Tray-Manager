@@ -2,11 +2,24 @@
 *.pid
 *.seed
 *.pid.lock
-__pycache__
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+eggs/
+pip-wheel-metadata/
 venv/
 .logs/
 dist/
+build/
+.build-cache/
 .coverage
+.pytest_cache/
+.pyre/
+.pytype/
+.mypy_cache/
+.pyright/
 
 #Ignore AI rules
 .github/instructions/codacy.instructions.md

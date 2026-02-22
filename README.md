@@ -11,19 +11,21 @@ Automation scripts for LM Studio - a powerful desktop and server application for
 [![LM Studio Daemon v0.0.3+](https://img.shields.io/badge/LM_Studio_Daemon-v0.0.3+-green.svg)](https://lmstudio.ai)
 [![Release](https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ajimaru/LM-Studio-Tray-Manager/total.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases)
+
 ---
 
 ## Features
 
-- **⚙️ Daemon/Desktop Orchestration** (`lmstudio_autostart.sh`): Default mode starts `llmster` + tray monitor; `--gui` stops daemon first, then starts desktop app + tray monitor
+- **⚙️ Daemon/Desktop Orchestration** (`lmstudio_autostart.sh`): Default mode starts `llmster` + tray monitor
 - **🖥️ System Tray Monitor** (`lmstudio_tray.py`): GTK3 tray integration with live daemon/app controls and status transitions
 - **🎛️ Tray Menu Controls**: Start/stop daemon and start/stop desktop app, including conflict-safe switching between both modes
 - **🔎 Update Checks**: Periodic GitHub release checks with a manual "Check for updates" menu action
 - **🚦 Icon Status Schema**: `❌` not installed, `⚠️` both stopped, `ℹ️` runtime active but no model loaded, `✅` model loaded
 - **🛡️ Robust Runtime Handling**: Cooldown guard against double-click actions and best-effort process stop fallbacks
 - **🧠 Interactive Model Selection**: Choose from local models via `--list-models` and auto-load the selection in daemon mode
-- **🧰 Comprehensive Setup Script** (`setup.sh`): Checks for and installs dependencies, sets up Python environment, and provides a `--dry-run` option for previewing actions without making changes
+- **🧰 Comprehensive Setup Script** (`setup.sh`): Checks for and installs dependencies, sets up Python environment, and provides a `--dry-run` option
 - **🧾 About Dialog Metadata**: Shows update status and loads contributors from `AUTHORS`
+- **📦 Standalone Binary Build** (`build.sh`): Creates a single executable via PyInstaller
 
 ## Getting Started
 
@@ -35,30 +37,56 @@ Automation scripts for LM Studio - a powerful desktop and server application for
 https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 ```
 
-**2.** Download one of these artifacts:
+**2.** Choose your installation path:
 
-- `LM-Studio-Tray-Manager-latest.tar.gz`
-- `LM-Studio-Tray-Manager-latest.zip`
+### Path 1 (Recommended): Binary release
 
-**3.** Extract and enter the folder.
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Show Binary release install steps</summary>
 
-Example (`.tar.gz`):
+**Download:**
 
-```bash
-tar -xzf LM-Studio-Tray-Manager-latest.tar.gz
-cd LM-Studio-Tray-Manager-vX.Y.Z
-```
+- `LM-Studio-Tray-Manager-vX.Y.Z-binary.tar.gz`
 
-**4.** Run the Setup Script
+**Extract and run:**
 
 ```bash
+tar -xzf LM-Studio-Tray-Manager-vX.Y.Z-binary.tar.gz
+cd LM-Studio-Tray-Manager-vX.Y.Z-binary
+
 ./setup.sh
-
-# Preview setup actions without changing system state
-./setup.sh --dry-run
+./lmstudio-tray-manager --auto-start-daemon
 ```
 
-**Note:** If you installed from a release archive, run these commands inside the extracted release directory.
+**Verify:**
+
+- `lms ps`
+- tray icon appears
+- `tail -f .logs/lmstudio_tray.log`
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
+### Path 2 (Python package)
+
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Show Python install steps</summary>
+
+**Download:**
+
+- `LM-Studio-Tray-Manager-vX.Y.Z.tar.gz`
+
+**Extract and run:**
+
+```bash
+tar -xzf LM-Studio-Tray-Manager-vX.Y.Z.tar.gz
+cd LM-Studio-Tray-Manager-vX.Y.Z
+
+./setup.sh
+./lmstudio_autostart.sh
+```
 
 This setup script:
 
@@ -67,26 +95,29 @@ This setup script:
 - ✓ Checks for Python 3.10 - installs via apt if missing
 - ✓ Creates Python 3.10 virtual environment with PyGObject/GTK3 support
 
-**5.** Run the Automation Script
+**Verify:**
+
+- `lms ps`
+- tray icon appears
+- `tail -f .logs/lmstudio_autostart.log`
+- `tail -f .logs/lmstudio_tray.log`
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
+### Path 3 (Advanced): Build your own binary
+
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Show advanced build steps</summary>
 
 ```bash
-# Start the LM Studio daemon and system tray monitor
-./lmstudio_autostart.sh
+./build.sh
+./dist/lmstudio-tray-manager --auto-start-daemon
 ```
 
-The script will:
-
-- Check and install system dependencies (curl, notify-send, python3)
-- Start `llmster` daemon (default mode)
-- Launch the system tray monitor in the background
-
-**6.** Verify It Works
-
-- Check that the LM Studio daemon is running: `lms ps`
-- Look for the system tray icon (should appear in your taskbar)
-- Check setup log: `cat .logs/setup.log`
-- Check daemon log: `tail -f .logs/lmstudio_autostart.log`
-- Check tray log: `tail -f .logs/lmstudio_tray.log`
+</details>
+<!-- markdownlint-enable MD033 -->
 
 ## Requirements
 
@@ -108,20 +139,45 @@ The script will:
 # Preview setup actions (no changes)
 ./setup.sh --dry-run
 
-# Show setup options
+# Setup script options
 ./setup.sh --help
 
 # Start daemon with defaults
 ./lmstudio_autostart.sh
 
-# Launch GUI (stops daemon first)
+# Launch GUI (stops daemon first) - long or short form
 ./lmstudio_autostart.sh --gui
+./lmstudio_autostart.sh -g
 
 # Interactive model selection (loads selected model)
 ./lmstudio_autostart.sh --list-models
 
-# Debug mode with verbose output
+# Debug mode with verbose output - long or short form
 ./lmstudio_autostart.sh --debug
+./lmstudio_autostart.sh -d
+
+# Run the binary (release package) - auto-start daemon
+./lmstudio-tray-manager --auto-start-daemon
+./lmstudio-tray-manager -a
+
+# Start the GUI directly via the binary
+./lmstudio-tray-manager --gui
+./lmstudio-tray-manager -g
+
+# Version and help
+./lmstudio-tray-manager --version
+./lmstudio-tray-manager -v
+./lmstudio-tray-manager --help
+./lmstudio-tray-manager -h
+
+# Debug mode (binary) - long or short form
+./lmstudio-tray-manager --debug
+./lmstudio-tray-manager -d
+
+# Combine short flags
+./lmstudio-tray-manager -d -a   # debug + auto-start daemon
+./lmstudio-tray-manager -dg     # debug + gui
+./lmstudio-tray-manager -dga    # debug + gui + auto-start-daemon; note: -a is ignored when -g is active
 
 # Check daemon status
 lms ps
@@ -146,6 +202,7 @@ If you encounter the error `Invalid passkey for lms CLI client`, this is typical
 The fix runs automatically when you start the script. Check the logs if issues persist:
 
 ```bash
+cat .logs/build.log
 cat .logs/lmstudio_autostart.log
 cat .logs/lmstudio_tray.log
 ```
