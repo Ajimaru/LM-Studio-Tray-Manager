@@ -518,7 +518,16 @@ def save_config(api_host, api_port):
 
 def get_api_base_url():
     """Return the base URL for the configured LM Studio API endpoint."""
-    host = _AppState.API_HOST
+    host = (_AppState.API_HOST or "").strip()
+
+    # Disallow embedding a scheme/path/query in the host field.
+    if "://" in host or "/" in host or "?" in host or "#" in host:
+        raise ValueError("Invalid API host")
+
+    # Bracket IPv6 literals for URL formatting.
+    if ":" in host and not host.startswith("["):
+        host = f"[{host}]"
+
     port = _AppState.API_PORT
     return f"http://{host}:{port}"
 
