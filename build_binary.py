@@ -178,10 +178,6 @@ def get_data_files():
     if assets_path.exists():
         add_data_file(assets_path, "assets")
 
-    icon_path = assets_path / "img" / "lm-studio-tray-manager.svg"
-    if icon_path.exists():
-        add_data_file(icon_path, "assets/img")
-
     return data_files
 
 
