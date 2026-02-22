@@ -33,7 +33,7 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 
 **2.** Choose your installation path:
 
-### Path 1 (Recommended): Binary release
+#### Path 1 (Recommended): Binary release
 
 <!-- markdownlint-disable MD033 -->
 <details>
@@ -64,7 +64,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
 </details>
 <!-- markdownlint-enable MD033 -->
 
-### Path 2 (Python package)
+#### Path 2 (Python package)
 
 <!-- markdownlint-disable MD033 -->
 <details>
@@ -101,7 +101,7 @@ This setup script:
 </details>
 <!-- markdownlint-enable MD033 -->
 
-### Path 3 (Advanced): Build your own binary
+#### Path 3 (Advanced): Build your own binary
 
 <!-- markdownlint-disable MD033 -->
 <details>
