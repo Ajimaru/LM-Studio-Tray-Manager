@@ -57,6 +57,7 @@ RUN bash -c ' \
         echo "Error: Required file missing: $file" >&2; \
         exit 1; \
       fi; \
+      mkdir -p "$STAGE_DIR_SRC/$(dirname "$file")"; \
       cp -a "$file" "$STAGE_DIR_SRC/$file"; \
     done; \
     \
