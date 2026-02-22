@@ -465,11 +465,6 @@ if [ "$BINARY_RELEASE" = false ]; then
             log_output "DEBUG" "Venv absolute path: $VENV_ABS"
             log_output "DEBUG" "Script absolute path: $SCRIPT_ABS"
             if [ -z "$VENV_ABS" ]; then
-                print_error \
-                    "Cannot resolve venv path '$VENV_DIR' (symlink or permission issue)"
-                exit 1
-            fi
-            if [ -z "$VENV_ABS" ]; then
                 print_error "Cannot resolve venv path '$VENV_DIR' (symlink or permission issue)"
                 log_output "ERROR" "Failed to resolve absolute path for venv '$VENV_DIR'"
                 exit 1
