@@ -525,8 +525,12 @@ def get_api_base_url():
     if "://" in host or "/" in host or "?" in host or "#" in host:
         raise ValueError("Invalid API host")
 
-    # Bracket IPv6 literals for URL formatting.
+    # Bracket IPv6 literals for URL formatting, but reject host:port.
     if ":" in host and not host.startswith("["):
+        # A single colon is most likely "host:port", which is invalid here
+        # because the port must be configured separately.
+        if host.count(":") == 1:
+            raise ValueError("Invalid API host")
         host = f"[{host}]"
 
     port = _AppState.API_PORT
