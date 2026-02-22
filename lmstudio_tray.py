@@ -1953,9 +1953,9 @@ class TrayIcon:
             port = _normalize_api_port(port_entry.get_text())
             if host and port is not None:
                 try:
+                    save_config(host, port)
                     _AppState.API_HOST = host
                     _AppState.API_PORT = port
-                    save_config(host, port)
                     logging.info(
                         "Updated API endpoint to http://%s:%s",
                         host,
