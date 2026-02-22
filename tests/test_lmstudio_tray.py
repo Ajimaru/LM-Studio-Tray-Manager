@@ -490,7 +490,11 @@ def tray_module_fixture(monkeypatch, tmp_path):
 
     monkeypatch.setattr = synced_setattr
 
-    return module
+    yield module
+
+    # Restore original monkeypatch.setattr in teardown so other tests
+    # are not affected by the synced_setattr override
+    monkeypatch.setattr = original_setattr
 
 
 def _make_tray_instance(module):

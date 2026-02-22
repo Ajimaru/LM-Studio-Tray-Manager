@@ -155,7 +155,16 @@ class _AppState:
 
     @classmethod
     def apply_cli_args(cls, args: argparse.Namespace) -> None:
-        """Apply parsed command-line arguments to app state."""
+        """Apply parsed command-line arguments to app state.
+
+        Args:
+            args (argparse.Namespace): Parsed command-line arguments.
+                Expected fields: model, script_dir, debug, gui,
+                auto_start_daemon.
+
+        Returns:
+            None.
+        """
         cls.MODEL = args.model
         cls.script_dir = args.script_dir
         cls.DEBUG_MODE = args.debug
@@ -170,7 +179,19 @@ class _AppState:
         app_indicator_module: ModuleType,
         gdk_pixbuf_module: ModuleType,
     ) -> None:
-        """Store imported GTK-related module references."""
+        """Store imported GTK-related module references on the class.
+
+        Args:
+            gtk_module (ModuleType): The Gtk module to store as cls.Gtk.
+            glib_module (ModuleType): The GLib module to store as cls.GLib.
+            app_indicator_module (ModuleType): The AppIndicator3 module
+                to store as cls.AppIndicator3.
+            gdk_pixbuf_module (ModuleType): The GdkPixbuf module to store
+                as cls.GdkPixbuf.
+
+        Returns:
+            None.
+        """
         cls.Gtk = gtk_module
         cls.GLib = glib_module
         cls.AppIndicator3 = app_indicator_module
@@ -741,7 +762,12 @@ class TrayIcon:
         return True
 
     def _schedule_menu_refresh(self, delay_seconds=2):
-        """Schedule a delayed menu refresh when GLib is available."""
+        """Schedule a delayed menu refresh when GLib is available.
+
+        Args:
+            delay_seconds (int): Number of seconds to delay before
+                refreshing the menu. Defaults to 2 seconds.
+        """
         glib = _AppState.GLib
         if glib is None:
             logging.debug("GLib is not initialized; skipping menu refresh")
