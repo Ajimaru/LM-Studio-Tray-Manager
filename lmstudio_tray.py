@@ -517,6 +517,23 @@ def save_config(api_host, api_port):
         raise exc
 
 
+def _validate_url_scheme(url):
+    """Validate that URL uses only permitted schemes (http/https).
+
+    Args:
+        url: URL string to validate.
+
+    Raises:
+        ValueError: If URL scheme is not http or https.
+    """
+    parsed = urllib_parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(
+            f"URL scheme '{parsed.scheme}' not permitted; "
+            f"only 'http' and 'https' are allowed"
+        )
+
+
 def get_api_base_url():
     """Return the base URL for the configured LM Studio API endpoint."""
     host = (_AppState.API_HOST or "").strip()
@@ -732,8 +749,10 @@ def check_api_models():
         bool: True if at least one model is loaded, False otherwise.
     """
     try:
+        api_url = get_api_models_url()
+        _validate_url_scheme(api_url)
         req = urllib_request.Request(
-            get_api_models_url(),
+            api_url,
             headers={"User-Agent": "lmstudio-tray-manager"},
         )
         with urllib_request.urlopen(req, timeout=2) as response:
@@ -1816,8 +1835,10 @@ class TrayIcon:
                     if check_api_models():
                         # Query API to get model details
                         try:
+                            api_url = get_api_models_url()
+                            _validate_url_scheme(api_url)
                             req = urllib_request.Request(
-                                get_api_models_url(),
+                                api_url,
                                 headers={"User-Agent":
                                          "lmstudio-tray-manager"},
                             )
@@ -1857,8 +1878,10 @@ class TrayIcon:
                 # lms not available, try API directly
                 if check_api_models():
                     try:
+                        api_url = get_api_models_url()
+                        _validate_url_scheme(api_url)
                         req = urllib_request.Request(
-                            get_api_models_url(),
+                            api_url,
                             headers={"User-Agent":
                                      "lmstudio-tray-manager"},
                         )
