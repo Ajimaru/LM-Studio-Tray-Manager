@@ -497,7 +497,7 @@ def tray_module_fixture(monkeypatch, tmp_path):
             return
         setattr(module, name, value)
 
-    module._set_state_for_tests = _set_state
+    setattr(module, "_set_state_for_tests", _set_state)
 
     yield module
 

@@ -357,7 +357,25 @@ if [ "$BINARY_RELEASE" = false ]; then
     else
         if [ -d "$VENV_DIR" ]; then
             print_warning "Removing existing venv..."
-            rm -rf "$VENV_DIR"
+            
+            # Safety check: refuse to remove dangerous paths
+            case "$VENV_DIR" in
+                ""|"/"|"."|".." )
+                    print_error "Refusing to remove unsafe venv path: '$VENV_DIR'"
+                    exit 1
+                    ;;
+            esac
+
+            # Ensure venv dir is under the script directory
+            VENV_ABS="$(cd "$SCRIPT_DIR" && cd "$VENV_DIR" 2>/dev/null && pwd -P)"
+            SCRIPT_ABS="$(cd "$SCRIPT_DIR" && pwd -P)"
+            case "$VENV_ABS" in
+                "$SCRIPT_ABS"/*) rm -rf "$VENV_DIR" ;;
+                *)
+                    print_error "Refusing to remove venv outside script dir: '$VENV_DIR'"
+                    exit 1
+                    ;;
+            esac
         fi
 
         echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
