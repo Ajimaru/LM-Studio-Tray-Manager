@@ -18,7 +18,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     tar \
     gzip \
-    && apt-get install -y upx 2>/dev/null || apt-get install -y upx-ucl \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3.10 /usr/bin/python
 
