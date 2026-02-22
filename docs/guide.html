@@ -431,7 +431,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
             </div>
 
             <h3>setup.sh - Smart Setup with Context-Aware Output</h3>
-            <p><strong>New in v0.3.1:</strong> The setup script now displays context-specific next-steps based on installation type:</p>
+            <p><strong>New in v0.4.0:</strong> The setup script now displays context-specific next-steps based on installation type:</p>
             <ul>
                 <li><strong>Binary Release:</strong> Shows <code>./lmstudio-tray-manager --auto-start-daemon</code>, <code>--gui</code>, <code>--debug</code>, etc.</li>
                 <li><strong>Python Package:</strong> Shows <code>./lmstudio_autostart.sh</code> with available options</li>
@@ -510,6 +510,54 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     Q --> F
                     R --> F
                     S --> F
+            </div>
+
+            <h3>lmstudio-tray-manager - Standalone Binary</h3>
+            <p>The standalone binary compiled from PyInstaller combines the tray monitor with command-line argument handling. No venv activation required.</p>
+            <div class="mermaid">
+                graph TD
+                    A["<b>lmstudio-tray-manager</b><br/>START"] --> B["Parse command-line<br/>arguments"]
+                    B --> C{Argument<br/>provided?}
+                    C -->|--help| Help["Display help<br/>and usage info"]
+                    Help --> EXIT1["<b>END</b>"]
+                    C -->|--version| Ver["Display version<br/>info"]
+                    Ver --> EXIT2["<b>END</b>"]
+                    C -->|--debug| D["Enable debug mode<br/>Verbose logging"]
+                    C -->|--auto-start-daemon| Auto["Auto-start daemon<br/>and tray monitor"]
+                    C -->|--gui| Gui["Start LM Studio<br/>GUI first"]
+                    C -->|No args| Default["Run as tray monitor<br/>(default behavior)"]
+                    D --> RunStart["Kill existing<br/>instances"]
+                    Auto --> RunStart
+                    Gui --> RunStart
+                    Default --> RunStart
+                    RunStart --> E["Create GTK3<br/>tray icon"]
+                    E --> F["Set up right-click<br/>menu"]
+                    F --> G["Start daemon/API<br/>monitoring"]
+                    G --> H{Status<br/>check}
+                    H --> I{Model<br/>loaded?}
+                    I -->|Yes| J["Set OK icon ✅"]
+                    I -->|No| K{Any runtime<br/>active?}
+                    K -->|Yes| L["Set INFO icon ℹ️"]
+                    K -->|No| M{Installed?}
+                    M -->|Yes| N["Set WARN icon ⚠️"]
+                    M -->|No| O["Set FAIL icon ❌"]
+                    J --> P["Check for<br/>changes"]
+                    L --> P
+                    N --> P
+                    O --> P
+                    P --> Q{Status<br/>changed?}
+                    Q -->|Yes| R["Send<br/>notification"]
+                    Q -->|No| S["Wait before<br/>next check"]
+                    R --> S
+                    S --> H
+                    H --> T{User<br/>action?}
+                    T -->|Start/Stop<br/>Daemon| U["Toggle<br/>daemon"]
+                    T -->|Start/Stop<br/>Desktop App| V["Toggle<br/>desktop app"]
+                    T -->|Show Status| W["Display<br/>status dialog"]
+                    T -->|Quit| X["<b>END</b>"]
+                    U --> H
+                    V --> H
+                    W --> H
             </div>
         </section>
 

@@ -211,8 +211,8 @@ cat .logs/lmstudio_tray.log
 
 ## Documentation
 
+- **[Readme](docs/README.md)** - Documentation overview and quick links
 - **[Docs Landing Page](docs/index.html)** - GitHub Pages entry point with links to all docs
-- **[Full Documentation](docs/guide.html)** - Detailed usage examples, flow diagrams, and architecture
 - **[Setup Guide](docs/SETUP.md)** - Complete setup.sh guide, Python environment configuration, and troubleshooting
 - **[Python Docstrings Reference](docs/python_docstrings.html)** - Static API-style view of `lmstudio_tray.py` docstrings
 
@@ -232,9 +232,6 @@ cat .logs/lmstudio_tray.log
 
 ## Project Meta
 
-- **[Setup Guide](docs/SETUP.md)** - Comprehensive setup and troubleshooting documentation
-- **[Build Documentation](docs/BUILD.md)** - How to build binaries from source
-- **[Readme](docs/README.md)** - Documentation overview and quick links
 - **[Changelog](CHANGELOG.md)** - Notable project changes by release
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute and validate changes
 - **[Authors](AUTHORS)** - Project contributors displayed in the About dialog
