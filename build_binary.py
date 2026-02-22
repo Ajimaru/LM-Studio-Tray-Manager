@@ -141,12 +141,14 @@ def get_hidden_imports():
 def get_data_files():
     """
     Collect package data files and directories to include with the built binary.
-    
-    Includes the repository's VERSION and AUTHORS files (if present) and the assets directory (if present).
-    
+
+    Includes the repository's VERSION and AUTHORS files (if present) and
+    the assets directory (if present).
+
     Returns:
-        list[tuple[str, str]]: List of (source, destination) tuples where `source` is the filesystem
-        path to a file or directory and `destination` is the target path relative to the binary root.
+        list[tuple[str, str]]: List of (source, destination) tuples where
+        ``source`` is the filesystem path to a file or directory and
+        ``destination`` is the target path relative to the binary root.
     """
     data_files = []
     base_dir = Path(__file__).parent.resolve()
