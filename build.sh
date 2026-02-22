@@ -111,15 +111,8 @@ echo "Build Optimization"
 echo "======================================"
 echo
 
-# Ensure bc is available for size calculations
-if ! command -v bc >/dev/null 2>&1; then
-    echo -e "${RED}Error: 'bc' is required for size calculations${NC}"
-    echo "Install with: sudo apt-get install bc"
-    exit 1
-fi
-
 UNOPT_SIZE=$(get_file_size "$BINARY_PATH")
-UNOPT_SIZE_MB=$(echo "scale=2; $UNOPT_SIZE / 1048576" | bc)
+UNOPT_SIZE_MB=$(awk -v n="$UNOPT_SIZE" 'BEGIN {printf "%.2f", n / 1048576}')
 echo "Unoptimized binary size: ${UNOPT_SIZE_MB} MB"
 
 # Strip debug symbols
@@ -127,9 +120,10 @@ if command -v strip &> /dev/null; then
     echo -e "${GREEN}Stripping debug symbols...${NC}"
     strip "$BINARY_PATH"
     STRIPPED_SIZE=$(get_file_size "$BINARY_PATH")
-    STRIPPED_SIZE_MB=$(echo "scale=2; $STRIPPED_SIZE / 1048576" | bc)
-    SAVED_MB=$(echo "scale=2; ($UNOPT_SIZE - $STRIPPED_SIZE) / 1048576" \
-        | bc)
+    STRIPPED_SIZE_MB=$(awk -v n="$STRIPPED_SIZE" \
+        'BEGIN {printf "%.2f", n / 1048576}')
+    SAVED_MB=$(awk -v a="$UNOPT_SIZE" -v b="$STRIPPED_SIZE" \
+        'BEGIN {printf "%.2f", (a - b) / 1048576}')
     echo "After strip: ${STRIPPED_SIZE_MB} MB (saved ${SAVED_MB} MB)"
 else
     echo -e "${YELLOW}Warning: strip not found, skipping...${NC}"
@@ -142,11 +136,14 @@ if command -v upx &> /dev/null; then
     upx --best --lzma "$BINARY_PATH" 2>/dev/null || upx --best \
         "$BINARY_PATH"
     FINAL_SIZE=$(get_file_size "$BINARY_PATH")
-    FINAL_SIZE_MB=$(echo "scale=2; $FINAL_SIZE / 1048576" | bc)
-    TOTAL_SAVED=$(echo "scale=2; ($UNOPT_SIZE - $FINAL_SIZE) / 1048576" | bc)
+    FINAL_SIZE_MB=$(awk -v n="$FINAL_SIZE" \
+        'BEGIN {printf "%.2f", n / 1048576}')
+    TOTAL_SAVED=$(awk -v a="$UNOPT_SIZE" -v b="$FINAL_SIZE" \
+        'BEGIN {printf "%.2f", (a - b) / 1048576}')
     DIFF_BYTES=$((UNOPT_SIZE - FINAL_SIZE))
     if [ "$UNOPT_SIZE" -gt 0 ]; then
-        REDUCTION=$(echo "scale=1; ($DIFF_BYTES * 100) / $UNOPT_SIZE" | bc)
+        REDUCTION=$(awk -v d="$DIFF_BYTES" -v t="$UNOPT_SIZE" \
+            'BEGIN {printf "%.1f", (d * 100) / t}')
         echo "Final size: ${FINAL_SIZE_MB} MB (saved ${TOTAL_SAVED} MB, ${REDUCTION}% reduction)"
     else
         echo "Final size: ${FINAL_SIZE_MB} MB (saved ${TOTAL_SAVED} MB)"
@@ -155,7 +152,8 @@ else
     echo -e "${YELLOW}Warning: upx not found, skipping compression${NC}"
     echo "Install upx for better compression: sudo apt install upx"
     FINAL_SIZE=$STRIPPED_SIZE
-    FINAL_SIZE_MB=$(echo "scale=2; $FINAL_SIZE / 1048576" | bc)
+    FINAL_SIZE_MB=$(awk -v n="$FINAL_SIZE" \
+        'BEGIN {printf "%.2f", n / 1048576}')
 fi
 
 echo
