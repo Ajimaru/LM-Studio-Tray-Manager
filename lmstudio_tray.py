@@ -507,14 +507,20 @@ def save_config(api_host, api_port):
         "api_host": host,
         "api_port": port,
     }
+    tmp_path = f"{config_path}.tmp"
     try:
-        tmp_path = f"{config_path}.tmp"
         with open(tmp_path, "w", encoding="utf-8") as config_file:
             json.dump(payload, config_file, indent=2)
+            config_file.flush()
+            os.fsync(config_file.fileno())
         os.replace(tmp_path, config_path)
-    except OSError as exc:
+    except OSError:
         logging.exception("Failed to write config: %s", config_path)
-        raise exc
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 def _validate_url_scheme(url):
