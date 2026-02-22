@@ -2,6 +2,42 @@
 
 This document describes how to build a standalone binary of LM Studio Tray Manager using PyInstaller.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+  - [Automated Build (Recommended)](#automated-build-recommended)
+  - [Manual Build](#manual-build)
+- [Requirements](#requirements)
+  - [Build Dependencies](#build-dependencies)
+  - [Python Packages](#python-packages)
+- [Build Methods](#build-methods)
+  - [Method 1: Shell Script (Easiest)](#method-1-shell-script-easiest)
+  - [Method 2: Python Script](#method-2-python-script)
+  - [Method 3: PyInstaller Spec File](#method-3-pyinstaller-spec-file)
+- [Optimization](#optimization)
+  - [Size Reduction](#size-reduction)
+  - [Expected Sizes](#expected-sizes)
+- [Testing](#testing)
+  - [Basic Tests](#basic-tests)
+  - [Full Test](#full-test)
+- [Troubleshooting](#troubleshooting)
+  - [Missing GTK3 Libraries](#missing-gtk3-libraries)
+  - [Runtime Requirements on Target Machine](#runtime-requirements-on-target-machine)
+  - [Binary Crashes on Startup](#binary-crashes-on-startup)
+  - [Large Binary Size](#large-binary-size)
+  - [UPX Not Working](#upx-not-working)
+- [Distribution](#distribution)
+  - [Creating Release Package](#creating-release-package)
+  - [Installation](#installation)
+- [CI/CD Integration](#cicd-integration)
+  - [GitHub Actions Example](#github-actions-example)
+- [Alternative Approaches](#alternative-approaches)
+  - [Nuitka](#nuitka)
+  - [AppImage](#appimage)
+  - [Rust Rewrite](#rust-rewrite)
+- [Support](#support)
+
 ## Overview
 
 The binary build process creates a single executable file that bundles:
