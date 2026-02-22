@@ -88,7 +88,6 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     excludes=[],
-    runtime_hooks=[os.path.join(project_root, "pyi_rth_gdk_pixbuf.py")],
     optimize=0,
 )
 pyz = PYZ(a.pure)
