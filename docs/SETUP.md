@@ -7,6 +7,9 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
 - [Setup Guide](#setup-guide)
   - [Table of Contents](#table-of-contents)
   - [What setup.sh Does](#what-setupsh-does)
+  - [Installation Types](#installation-types)
+    - [Binary Release (Recommended)](#binary-release-recommended)
+    - [Python Package Release](#python-package-release)
   - [Quick Start](#quick-start)
   - [Dry-run Mode](#dry-run-mode)
   - [Setup Script Outputs](#setup-script-outputs)
@@ -15,6 +18,8 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
     - [If Python 3.10 is Missing](#if-python-310-is-missing)
   - [What's Inside the venv?](#whats-inside-the-venv)
   - [File Structure After Setup](#file-structure-after-setup)
+    - [For Binary Release](#for-binary-release)
+    - [For Python Package](#for-python-package)
   - [Environment Variables](#environment-variables)
   - [Log File Format](#log-file-format)
     - [setup.log](#setuplog)
@@ -26,7 +31,7 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
   - [Troubleshooting](#troubleshooting)
     - [venv not found](#venv-not-found)
     - [Checking Logs](#checking-logs)
-      - [Update Check Issues](#update-check-issues)
+    - [Update Check Issues](#update-check-issues)
     - [View tray monitor logs](#view-tray-monitor-logs)
     - [View both in real-time (in separate terminals)](#view-both-in-real-time-in-separate-terminals)
   - [PyGObject Import Errors](#pygobject-import-errors)
@@ -56,15 +61,63 @@ The setup script checks for and optionally installs:
 3. **Python 3.10** - Required for PyGObject/GTK3 compatibility
    - Checks for availability
    - Installs automatically if missing (via `apt`)
+   - Skipped if using binary release
 
-4. **Python Virtual Environment** - Isolated Python environment
+4. **Installation Type Detection** - Determines setup path
+   - Detects `lmstudio-tray-manager` binary (if present)
+   - For binary releases: Skips Python venv creation (dependencies bundled)
+   - For Python package releases: Creates Python virtual environment
+
+5. **Python Virtual Environment** - Isolated Python environment (Python releases only)
    - Creates venv with system site-packages
    - Enables GTK3 introspection and PyGObject
+   - Skipped for binary releases
+
+## Installation Types
+
+The setup script automatically detects your installation type:
+
+### Binary Release (Recommended)
+
+**Detection:** Script finds `lmstudio-tray-manager` binary in the script directory
+
+**What happens:**
+
+- ✓ No Python venv needed (dependencies bundled in binary)
+- ✓ Fast setup (only checks dependencies)
+- ✓ Checks for LM Studio daemon
+- ✓ Checks for LM Studio desktop app
+- ✓ Checks for Python 3.10 (not installed if missing)
+- ✓ Minimal dependencies
+
+**Next steps:**
+
+```bash
+./lmstudio-tray-manager --auto-start-daemon
+```
+
+### Python Package Release
+
+**Detection:** No `lmstudio-tray-manager` binary found
+
+**What happens:**
+
+- ✓ Creates Python virtual environment (./venv)
+- ✓ Checks for LM Studio daemon
+- ✓ Checks for LM Studio desktop app
+- ✓ Installs Python 3.10 if missing
+- ✓ Sets up GTK3 and PyGObject support
+
+**Next steps:**
+
+```bash
+./lmstudio_autostart.sh
+```
 
 ## Quick Start
 
 ```bash
-# Run the setup script (handles all checks and installations)
+# Run the setup script (auto-detects installation type)
 ./setup.sh
 
 # Preview setup actions without changing your system
@@ -76,21 +129,18 @@ The setup script checks for and optionally installs:
 # The setup will:
 # ✓ Check for LM Studio daemon
 # ✓ Check for LM Studio desktop app
-# ✓ Install Python 3.10 if needed
-# ✓ Create venv in ./venv/
+# ✓ Detect if binary or Python package
+# ✓ Create venv (Python packages only)
+# ✓ Install Python 3.10 if needed (Python packages only)
 
-# After setup, run the automation script
+# For binary release:
+./lmstudio-tray-manager --auto-start-daemon
+
+# For Python package:
 ./lmstudio_autostart.sh
 
 # Check logs in .logs directory
-tail -f .logs/lmstudio_autostart.log
-
-# If a binary exists at dist/lmstudio-tray-manager,
-# lmstudio_autostart.sh will prefer it over Python and pass:
-# - --auto-start-daemon (default mode)
-# - --debug (when --debug is used)
-# - --gui (when --gui is used)
-# Otherwise the same flags are forwarded to the Python tray script.
+tail -f .logs/lmstudio_tray.log
 
 ```
 
@@ -182,11 +232,28 @@ Selecting `y` installs Python 3.10 via `apt` (requires sudo password).
 
 ## File Structure After Setup
 
-After running `./setup.sh`, your project directory will contain:
+### For Binary Release
+
+After running `./setup.sh`:
+
+```files
+.
+├── lmstudio-tray-manager       # Pre-built binary
+├── .logs/                      # 📝 Log files directory
+│   └── setup.log               # Setup script log (created during setup)
+```
+
+**Note:** No venv created; binary is self-contained.
+
+### For Python Package
+
+After running `./setup.sh`:
 
 ```files
 .
 ├── venv/                       # 🆕 Python virtual environment
+├── lmstudio_autostart.sh       # Automation script
+├── lmstudio_tray.py            # Tray monitor script
 ├── .logs/                      # 📝 Log files directory
 │   ├── setup.log               # Setup script log (created during setup)
 │   ├── lmstudio_autostart.log  # Daemon script log

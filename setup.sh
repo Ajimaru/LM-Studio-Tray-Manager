@@ -304,42 +304,62 @@ else
 fi
 
 # ============================================================================
-# 4. Create Python Virtual Environment
+# 4. Check if using binary release (skip venv creation if binary exists)
 # ============================================================================
-echo -e "\n${BLUE}Step 4: Creating Python Virtual Environment${NC}"
+echo -e "\n${BLUE}Step 4: Checking Installation Type${NC}"
 
-if [ "$DRY_RUN" = "1" ]; then
-    if [ -d "$VENV_DIR" ]; then
-        print_info "[DRY-RUN] Would remove existing venv: $VENV_DIR"
-    fi
-    print_info "[DRY-RUN] Would create venv: python3.10 -m venv --system-site-packages $VENV_DIR"
-    print_info "[DRY-RUN] Would upgrade pip/setuptools in venv"
-    print_step "Dry-run: venv step simulated"
+BINARY_RELEASE=false
+if [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
+    print_step "Binary release detected (lmstudio-tray-manager)"
+    print_info "Skipping Python virtual environment creation"
+    BINARY_RELEASE=true
 else
-    if [ -d "$VENV_DIR" ]; then
-        print_warning "Removing existing venv..."
-        rm -rf "$VENV_DIR"
-    fi
-
-    echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
-    if python3.10 -m venv --system-site-packages "$VENV_DIR"; then
-        print_step "Virtual environment created"
-    else
-        print_error "Failed to create virtual environment"
-        exit 1
-    fi
-
-    # Upgrade pip and setuptools
-    print_info "Upgrading pip and setuptools..."
-    if "$VENV_DIR/bin/python3" -m pip install --upgrade pip setuptools >/dev/null 2>&1; then
-        print_step "pip and setuptools upgraded"
-    else
-        print_warning "Could not upgrade pip/setuptools (may continue anyway)"
-    fi
+    print_info "Python package release detected"
+    print_info "Python virtual environment will be created"
 fi
 
 # ============================================================================
-# 5. Summary
+# 5. Create Python Virtual Environment (only for Python package)
+# ============================================================================
+if [ "$BINARY_RELEASE" = false ]; then
+    echo -e "\n${BLUE}Step 5: Creating Python Virtual Environment${NC}"
+
+    if [ "$DRY_RUN" = "1" ]; then
+        if [ -d "$VENV_DIR" ]; then
+            print_info "[DRY-RUN] Would remove existing venv: $VENV_DIR"
+        fi
+        print_info "[DRY-RUN] Would create venv: python3.10 -m venv --system-site-packages $VENV_DIR"
+        print_info "[DRY-RUN] Would upgrade pip/setuptools in venv"
+        print_step "Dry-run: venv step simulated"
+    else
+        if [ -d "$VENV_DIR" ]; then
+            print_warning "Removing existing venv..."
+            rm -rf "$VENV_DIR"
+        fi
+
+        echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
+        if python3.10 -m venv --system-site-packages "$VENV_DIR"; then
+            print_step "Virtual environment created"
+        else
+            print_error "Failed to create virtual environment"
+            exit 1
+        fi
+
+        # Upgrade pip and setuptools
+        print_info "Upgrading pip and setuptools..."
+        if "$VENV_DIR/bin/python3" -m pip install --upgrade pip setuptools >/dev/null 2>&1; then
+            print_step "pip and setuptools upgraded"
+        else
+            print_warning "Could not upgrade pip/setuptools (may continue anyway)"
+        fi
+    fi
+else
+    echo -e "\n${BLUE}Step 5: Python Virtual Environment${NC}"
+    print_step "Skipped (using binary release)"
+fi
+
+# ============================================================================
+# 6. Summary
 # ============================================================================
 echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
 if [ "$DRY_RUN" = "1" ]; then

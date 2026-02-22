@@ -201,7 +201,14 @@
 
         <section id="setup-guide">
             <h2>Setup Guide</h2>
-            <p>The setup process is handled by an intelligent setup script that checks for all required components:</p>
+            <p>The setup process is handled by an intelligent setup script that automatically detects your installation type and configures accordingly:</p>
+
+            <h3>Installation Types</h3>
+            <p>The script automatically detects whether you have a binary or Python package release:</p>
+            <ul>
+                <li><strong>Binary Release:</strong> Contains <code>lmstudio-tray-manager</code> binary. Setup skips Python venv creation (all dependencies bundled).</li>
+                <li><strong>Python Package Release:</strong> Contains source files. Setup creates Python venv with PyGObject/GTK3 support.</li>
+            </ul>
 
             <h3>Step 1: Run Comprehensive Setup Script</h3>
             <p>The setup script handles all prerequisite checks and installations:</p>
@@ -210,16 +217,13 @@
             <pre><code>./setup.sh --dry-run</code></pre>
             <p>To list setup options, run:</p>
             <pre><code>./setup.sh --help</code></pre>
-            <p>Example dry-run output (shortened):</p>
+            <p>Example dry-run output (binary release):</p>
             <pre><code>[INFO] Running setup in dry-run mode (no changes will be applied)
 [CHECK] LM Studio daemon (lms): found
 [CHECK] LM Studio desktop app: not found
-[DRY-RUN] Would open LM Studio download page for desktop app guidance
-[CHECK] Python 3.10: found
-[DRY-RUN] Would recreate virtual environment in: ./venv
-[DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
+[CHECK] Installation type: Binary release detected
 [DONE] Dry-run completed successfully (0 changes applied)</code></pre>
-            <p>In normal mode (<code>./setup.sh</code>), the script checks for and can install:</p>
+            <p>In normal mode (<code>./setup.sh</code>), the script checks for:</p>
             <ul>
                 <li><strong>LM Studio Daemon</strong> - Verifies <code>lms</code> CLI is installed (llmster v0.0.3+)</li>
                 <li><strong>LM Studio Desktop App</strong> - Detects .deb package or AppImage installation
@@ -228,8 +232,13 @@
                         <li>Supports both standard and versioned AppImage formats</li>
                     </ul>
                 </li>
-                <li><strong>Python 3.10</strong> - Automatically installs via apt if missing</li>
-                <li><strong>Python Environment</strong> - Creates an isolated environment with PyGObject/GTK3 support in <code>venv/</code></li>
+                <li><strong>Installation Type</strong> - Detects if <code>lmstudio-tray-manager</code> binary is present
+                    <ul class="nested-list">
+                        <li>Binary Release: Skips Python venv (dependencies bundled)</li>
+                        <li>Python Release: Creates Python virtual environment with PyGObject/GTK3</li>
+                    </ul>
+                </li>
+                <li><strong>Python 3.10</strong> - Installs via apt if missing (Python releases only)</li>
             </ul>
             <p>The script will prompt for missing components with helpful guidance and log all operations to <code>.logs/setup.log</code>. In dry-run mode, it logs the planned actions only and does not modify the system.</p>
             <p>After setup completes, check the setup log:</p>
@@ -237,22 +246,22 @@
             <p>For detailed information, see <a href="SETUP.md">SETUP.md</a>.</p>
 
             <h3>Path 1 (Recommended): Binary release</h3>
-            <p>If you downloaded the binary release archive, you can run the tray monitor without Python:</p>
+            <p>If you downloaded the binary release archive, the setup script automatically detects the binary and skips Python venv creation:</p>
             <pre><code>tar -xzf LM-Studio-Tray-Manager-vX.Y.Z-binary.tar.gz
 cd LM-Studio-Tray-Manager-vX.Y.Z-binary
 
 ./setup.sh
 ./lmstudio-tray-manager --auto-start-daemon</code></pre>
-            <p>The binary is included inside the release archive and lives at <code>./lmstudio-tray-manager</code> after extraction.</p>
+            <p>The binary is self-contained at <code>./lmstudio-tray-manager</code> after extraction. No Python venv needed.</p>
 
             <h3>Path 2: Python package</h3>
-            <p>Use the source package when you want the full Python setup:</p>
+            <p>Use the source package when you want the full Python setup. The setup script creates a Python venv with PyGObject/GTK3:</p>
             <pre><code>tar -xzf LM-Studio-Tray-Manager-vX.Y.Z.tar.gz
 cd LM-Studio-Tray-Manager-vX.Y.Z
 
 ./setup.sh
 ./lmstudio_autostart.sh</code></pre>
-            <p>This will start the daemon, wait for the API, and launch the system tray monitor. If a binary exists at <code>dist/lmstudio-tray-manager</code>, it is used automatically and launched with <code>--auto-start-daemon</code> (default mode) and <code>--debug</code> when enabled.</p>
+            <p>This will create a venv, start the daemon, wait for the API, and launch the system tray monitor. If a binary exists at <code>dist/lmstudio-tray-manager</code>, it is used automatically and launched with <code>--auto-start-daemon</code> (default mode) and <code>--debug</code> when enabled.</p>
 
             <h3>Path 3 (Advanced): Build your own binary</h3>
             <pre><code>./build.sh
@@ -422,14 +431,20 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
             <h3>setup.sh - Setup Script</h3>
             <div class="mermaid">
                 graph TD
-                    A["<b>setup.sh</b><br/>START"] --> B["Check Python 3.10<br/>availability"]
-                    B --> C{"Python 3.10<br/>found?"}
-                    C -->|No| D["Error:<br/>Install Python 3.10"]
-                    D --> E["<b>END (Failed)</b>"]
-                    C -->|Yes| F["Create Python environment<br/>(venv/)"]
-                    F --> G["Enable system-site-packages<br/>for GTK3/PyGObject"]
-                    G --> H["Upgrade pip &<br/>setuptools"]
-                    H --> I["<b>END (Success)</b><br/>Python environment ready"]
+                    A["<b>setup.sh</b><br/>START"] --> B["Check LM Studio Daemon"]
+                    B --> C["Check Desktop App"]
+                    C --> D["Check Python 3.10"]
+                    D --> E{"Binary release<br/>detected?"}
+                    E -->|Yes| F["✓ Binary Found"]
+                    F --> G["<b>END (Success)</b><br/>No venv needed"]
+                    E -->|No| H["Python Release Detected"]
+                    H --> I{"Python 3.10<br/>installed?"}
+                    I -->|No| J["Install Python 3.10<br/>via apt"]
+                    I -->|Yes| K["Create venv<br/>(./venv)"]
+                    J --> K
+                    K --> L["Enable system-site-packages<br/>for GTK3/PyGObject"]
+                    L --> M["Upgrade pip & setuptools"]
+                    M --> N["<b>END (Success)</b><br/>Python environment ready"]
             </div>
 
             <h3>lmstudio_autostart.sh - Daemon Orchestration Script</h3>

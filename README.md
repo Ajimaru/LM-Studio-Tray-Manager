@@ -59,6 +59,8 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
 ./lmstudio-tray-manager --auto-start-daemon
 ```
 
+**Note:** The setup script detects the binary release and skips Python virtual environment creation (all dependencies are already bundled in the binary).
+
 **Verify:**
 
 - `lms ps`
