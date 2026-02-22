@@ -101,32 +101,18 @@ This setup script:
 </details>
 <!-- markdownlint-enable MD033 -->
 
-#### Path 3 (Advanced): Build your own binary
-
-<!-- markdownlint-disable MD033 -->
-<details>
-<summary>Show advanced build steps</summary>
-
-```bash
-./build.sh
-./dist/lmstudio-tray-manager -a
-```
-
-</details>
-<!-- markdownlint-enable MD033 -->
-
 ## Requirements
 
 - **LM Studio Daemon** (llmster v0.0.3+): Headless backend for model inference
-- **Python 3** with PyGObject (for GTK3 system tray)
-- **Bash 5+** for automation scripts
+- **LM Studio Desktop App** (v0.4.3+): GUI frontend for model management and interaction
+- **Python 3.10** with PyGObject (for GTK3 system tray)
 - Linux system with GNOME/GTK3 support (Pop!_OS, Ubuntu, Fedora, etc.)
 
 ## Quick Reference
 
 <!-- markdownlint-disable MD033 -->
 <details>
-<summary>Click here</summary>
+<summary>Click to expand</summary>
 
 ```bash
 # First time setup
@@ -152,15 +138,15 @@ This setup script:
 ./lmstudio_autostart.sh --debug
 ./lmstudio_autostart.sh -d
 
-# Run the binary (release package) - auto-start daemon
+# Run the binary (release package) and daemon - long or short form
 ./lmstudio-tray-manager --auto-start-daemon
 ./lmstudio-tray-manager -a
 
-# Start the GUI directly via the binary
+# Start the GUI directly via the binary - long or short form
 ./lmstudio-tray-manager --gui
 ./lmstudio-tray-manager -g
 
-# Version and help
+# Version and help - long or short form
 ./lmstudio-tray-manager --version
 ./lmstudio-tray-manager -v
 ./lmstudio-tray-manager --help
