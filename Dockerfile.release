@@ -50,7 +50,7 @@ RUN bash -c ' \
     rm -rf release; \
     mkdir -p "$STAGE_DIR_SRC" "$STAGE_DIR_BIN"; \
     \
-    FILES=("lmstudio_autostart.sh" "lmstudio_tray.py" "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION" "requirements-build.txt"); \
+    FILES=("lmstudio_autostart.sh" "lmstudio_tray.py" "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"); \
     \
     for file in "${FILES[@]}"; do \
       if [[ -f "$file" ]]; then \
@@ -62,11 +62,6 @@ RUN bash -c ' \
       mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"; \
       cp -a "docs/SETUP.md" "$STAGE_DIR_SRC/docs/SETUP.md"; \
       cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"; \
-    fi; \
-    \
-    if [[ -f "docs/BUILD.md" ]]; then \
-      mkdir -p "$STAGE_DIR_BIN/docs"; \
-      cp -a "docs/BUILD.md" "$STAGE_DIR_BIN/docs/BUILD.md"; \
     fi; \
     \
     if [[ -d "assets" ]]; then \
