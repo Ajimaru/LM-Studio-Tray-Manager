@@ -83,11 +83,10 @@ a = Analysis(
         'gi.repository.Gtk',
         'gi.repository.Pango',
         'gi.repository.PangoCairo',
-        'pkg_resources.py2_warn',
-    ],
+        'gi.repository.PangoCairo',
+     ],
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
     excludes=[],
     optimize=0,
 )

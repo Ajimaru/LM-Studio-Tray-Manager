@@ -140,7 +140,6 @@ This setup script:
 ./setup.sh --dry-run
 
 # Setup script options
-./setup.sh --dry-run
 ./setup.sh --help
 
 # Start daemon with defaults
