@@ -477,33 +477,29 @@ def tray_module_fixture(monkeypatch, tmp_path):
 
     # Setup synchronization: when module-level variables are set,
     # also update _AppState to keep them in sync
-    original_setattr = monkeypatch.setattr
+    def _set_state(name, value):
+        """Set module-level state while keeping _AppState synchronized."""
+        if name == "script_dir":
+            module.sync_app_state_for_tests(script_dir_val=value)
+            setattr(module, name, value)
+            return
+        if name == "APP_VERSION":
+            module.sync_app_state_for_tests(app_version_val=value)
+            setattr(module, name, value)
+            return
+        if name == "AUTO_START_DAEMON":
+            module.sync_app_state_for_tests(auto_start_val=value)
+            setattr(module, name, value)
+            return
+        if name == "GUI_MODE":
+            module.sync_app_state_for_tests(gui_mode_val=value)
+            setattr(module, name, value)
+            return
+        setattr(module, name, value)
 
-    def synced_setattr(target, name, value, *args, **kwargs):
-        """Setattr with automatic _AppState synchronization."""
-        # If setting a module-level variable, also update _AppState
-        if target is module and name in (
-            "script_dir", "APP_VERSION",
-            "AUTO_START_DAEMON", "GUI_MODE"
-        ):
-            # Use public helper to sync module variables with _AppState
-            kwargs_map = {
-                "script_dir": "script_dir_val",
-                "APP_VERSION": "app_version_val",
-                "AUTO_START_DAEMON": "auto_start_val",
-                "GUI_MODE": "gui_mode_val",
-            }
-            sync_kwargs = {kwargs_map[name]: value}
-            module.sync_app_state_for_tests(**sync_kwargs)
-        return original_setattr(target, name, value, *args, **kwargs)
-
-    monkeypatch.setattr = synced_setattr
+    module._set_state_for_tests = _set_state
 
     yield module
-
-    # Restore original monkeypatch.setattr in teardown so other tests
-    # are not affected by the synced_setattr override
-    monkeypatch.setattr = original_setattr
 
 
 def _make_tray_instance(module):
