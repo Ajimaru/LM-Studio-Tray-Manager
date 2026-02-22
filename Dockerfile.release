@@ -47,7 +47,6 @@ RUN bash -c ' \
     \
     for file in "${FILES[@]}"; do \
       if [[ -f "$file" ]]; then \
-        mkdir -p "$STAGE_DIR_SRC/$(dirname "$file")"; \
         cp -a "$file" "$STAGE_DIR_SRC/$file"; \
       fi; \
     done; \
