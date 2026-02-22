@@ -32,6 +32,7 @@ RUN chown builder:builder /workspace
 COPY --chown=builder:builder . .
 
 # Build the binary
+USER builder
 RUN ./build.sh
 
 # Prepare release packages
