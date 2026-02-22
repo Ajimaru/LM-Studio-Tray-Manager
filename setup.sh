@@ -103,38 +103,6 @@ print_info() {
     log_output "INFO" "$1"
 }
 
-run_or_print() {
-    if [ "$DRY_RUN" = "1" ]; then
-        print_info "[DRY-RUN] Would run: $*"
-        log_output "DEBUG" "Command (dry-run): $*"
-        return 0
-    fi
-
-    # Log the command being executed
-    log_output "DEBUG" "Executing: $*"
-
-    # Execute and capture output
-    local cmd_output
-    local cmd_status
-
-    if cmd_output=$("$@" 2>&1); then
-        cmd_status=0
-        log_output "DEBUG" "Command succeeded: $*"
-        if [ -n "$cmd_output" ]; then
-            log_output "DEBUG" "Output: $cmd_output"
-        fi
-    else
-        cmd_status=$?
-        log_output "ERROR" "Command failed with exit code $cmd_status: $*"
-        if [ -n "$cmd_output" ]; then
-            log_output "ERROR" "Output: $cmd_output"
-        fi
-        return $cmd_status
-    fi
-
-    return 0
-}
-
 ask_yes_no() {
     local prompt="$1"
     local response
