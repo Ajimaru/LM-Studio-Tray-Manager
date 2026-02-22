@@ -254,7 +254,8 @@ def sync_app_state_for_tests(
 
 
 # === Module-level variables for test access and initialization defaults ===
-# These are synchronized with _AppState during initialization.
+# Set once from _AppState during initialization; production code should
+# read _AppState attributes directly rather than these module-level copies.
 script_dir = os.getcwd()
 APP_VERSION = DEFAULT_APP_VERSION
 AUTO_START_DAEMON = False
@@ -995,7 +996,7 @@ class TrayIcon:
 
         # Check for AppImage
         search_paths = [
-            script_dir,
+            _AppState.script_dir,
             os.path.expanduser("~/Apps"),
             os.path.expanduser("~/LM_Studio"),
             os.path.expanduser("~/Applications"),
