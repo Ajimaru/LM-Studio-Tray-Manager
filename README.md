@@ -232,6 +232,9 @@ cat .logs/lmstudio_tray.log
 
 ## Project Meta
 
+- **[Setup Guide](docs/SETUP.md)** - Comprehensive setup and troubleshooting documentation
+- **[Build Documentation](docs/BUILD.md)** - How to build binaries from source
+- **[Readme](docs/README.md)** - Documentation overview and quick links
 - **[Changelog](CHANGELOG.md)** - Notable project changes by release
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute and validate changes
 - **[Authors](AUTHORS)** - Project contributors displayed in the About dialog

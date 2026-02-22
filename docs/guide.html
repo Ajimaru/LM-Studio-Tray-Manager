@@ -400,11 +400,11 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
 
             <h3>System Architecture Overview</h3>
             <p>This diagram shows how the different scripts and components interact:</p>
-            <p>When a binary exists at <code>dist/lmstudio-tray-manager</code>, the autostart script prefers it. If not, it falls back to the Python tray script.</p>
+            <p><strong>Smart Detection:</strong> When setup.sh runs, it automatically detects whether you have a binary or Python package release, and displays the appropriate next commands (e.g., <code>./lmstudio-tray-manager --auto-start-daemon</code> for binaries, or <code>./lmstudio_autostart.sh</code> for source packages).</p>
             <div class="mermaid">
                 graph TB
                     User["👤 User"]
-                    Setup["<b>setup.sh</b><br/>Setup & Environment Checks"]
+                    Setup["<b>setup.sh</b><br/>Setup & Environment Checks<br/>(Shows context-specific commands)"]
                     Autostart["<b>lmstudio_autostart.sh</b><br/>Daemon Orchestration"]
                     Build["<b>build.sh</b><br/>Builds standalone binary"]
                     TrayBin["<b>lmstudio-tray-manager</b><br/>Standalone tray binary"]
@@ -414,8 +414,10 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     Models["Model Files"]
 
                     User -->|"1. First run"| Setup
-                    Setup -->|"Prepares Python environment"| Autostart
+                    Setup -->|"Prepares Python environment<br/>(if not binary)"| Autostart
+                    Setup -->|"Shows binary commands<br/>(if binary release)"| TrayBin
                     User -->|"2. Regular use"| Autostart
+                    User -->|"2. Regular use<br/>(binary release)"| TrayBin
                     Autostart -->|"Starts & manages"| Daemon
                     Autostart -->|"Loads models"| Models
                     Daemon -->|"Provides"| API
@@ -428,7 +430,12 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     TrayBin -->|"Monitors"| API
             </div>
 
-            <h3>setup.sh - Setup Script</h3>
+            <h3>setup.sh - Smart Setup with Context-Aware Output</h3>
+            <p><strong>New in v0.3.1:</strong> The setup script now displays context-specific next-steps based on installation type:</p>
+            <ul>
+                <li><strong>Binary Release:</strong> Shows <code>./lmstudio-tray-manager --auto-start-daemon</code>, <code>--gui</code>, <code>--debug</code>, etc.</li>
+                <li><strong>Python Package:</strong> Shows <code>./lmstudio_autostart.sh</code> with available options</li>
+            </ul>
             <div class="mermaid">
                 graph TD
                     A["<b>setup.sh</b><br/>START"] --> B["Check LM Studio Daemon"]
@@ -436,15 +443,19 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     C --> D["Check Python 3.10"]
                     D --> E{"Binary release<br/>detected?"}
                     E -->|Yes| F["✓ Binary Found"]
-                    F --> G["<b>END (Success)</b><br/>No venv needed"]
-                    E -->|No| H["Python Release Detected"]
-                    H --> I{"Python 3.10<br/>installed?"}
-                    I -->|No| J["Install Python 3.10<br/>via apt"]
-                    I -->|Yes| K["Create venv<br/>(./venv)"]
-                    J --> K
-                    K --> L["Enable system-site-packages<br/>for GTK3/PyGObject"]
-                    L --> M["Upgrade pip & setuptools"]
-                    M --> N["<b>END (Success)</b><br/>Python environment ready"]
+                    F --> G["Show Binary Commands"]
+                    G --> G1["📦 Using pre-built binary release<br/>./lmstudio-tray-manager --auto-start-daemon<br/>./lmstudio-tray-manager --gui<br/>./lmstudio-tray-manager --debug<br/>etc."]
+                    G1 --> H["<b>END (Success)</b><br/>No venv needed"]
+                    E -->|No| I["Python Release Detected"]
+                    I --> J{"Python 3.10<br/>installed?"}
+                    J -->|No| K["Install Python 3.10<br/>via apt"]
+                    J -->|Yes| L["Create venv<br/>(./venv)"]
+                    K --> L
+                    L --> M["Enable system-site-packages<br/>for GTK3/PyGObject"]
+                    M --> N["Upgrade pip & setuptools"]
+                    N --> O["Show Python Commands"]
+                    O --> O1["1. Run the automation script:<br/>./lmstudio_autostart.sh<br/>2. Or use with specific options:<br/>./lmstudio_autostart.sh --model<br/>./lmstudio_autostart.sh --debug<br/>etc."]
+                    O1 --> P["<b>END (Success)</b><br/>Python environment ready"]
             </div>
 
             <h3>lmstudio_autostart.sh - Daemon Orchestration Script</h3>

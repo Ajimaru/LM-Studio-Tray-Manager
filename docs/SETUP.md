@@ -45,33 +45,33 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
 
 ## What setup.sh Does
 
-The setup script checks for and optionally installs:
+The setup script automatically detects your installation type and configures accordingly. It checks for and optionally installs:
 
-1. **LM Studio Daemon (llmster)** - Headless backend for model inference
+1. **Installation Type Detection** - Automatically determines setup path
+   - **Binary Release:** Detects `lmstudio-tray-manager` binary in script directory
+   - **Python Package:** No binary found - proceeds with Python setup
+   - This detection is **non-intrusive**: just a file existence check
+
+2. **LM Studio Daemon (llmster)** - Headless backend for model inference
    - Checks if `lms` CLI is available
    - If not found: Opens download page and asks to install
 
-2. **LM Studio Desktop App** - GUI for model management
+3. **LM Studio Desktop App** - GUI for model management
    - Intelligently detects .deb package installation
    - Searches for AppImage in: script directory, $HOME/Apps, $HOME/LM_Studio, $HOME/Applications, $HOME/.local/bin, /opt/lm-studio
    - Auto-detects both standard and versioned AppImage formats (e.g., LM-Studio-0.4.3-*.AppImage)
    - Allows manual AppImage path input
    - Optional (only needed for `--gui` option)
 
-3. **Python 3.10** - Required for PyGObject/GTK3 compatibility
-   - Checks for availability
+4. **Python 3.10** - Required for PyGObject/GTK3 compatibility
+   - Only checked if using Python package release
    - Installs automatically if missing (via `apt`)
-   - Skipped if using binary release
-
-4. **Installation Type Detection** - Determines setup path
-   - Detects `lmstudio-tray-manager` binary (if present)
-   - For binary releases: Skips Python venv creation (dependencies bundled)
-   - For Python package releases: Creates Python virtual environment
+   - Binary releases do not require this check
 
 5. **Python Virtual Environment** - Isolated Python environment (Python releases only)
    - Creates venv with system site-packages
    - Enables GTK3 introspection and PyGObject
-   - Skipped for binary releases
+   - **Skipped entirely for binary releases** (all dependencies already bundled)
 
 ## Installation Types
 
