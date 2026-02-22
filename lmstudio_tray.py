@@ -493,12 +493,18 @@ def load_config():
 
 def save_config(api_host, api_port):
     """Persist config values for the LM Studio API endpoint."""
+    host = api_host.strip() if isinstance(api_host, str) else ""
+    port = _normalize_api_port(api_port)
+
+    if not host or port is None:
+        raise ValueError("Invalid api_host/api_port")
+
     config_path = _get_config_path()
     config_dir = os.path.dirname(config_path)
     os.makedirs(config_dir, exist_ok=True)
     payload = {
-        "api_host": api_host,
-        "api_port": api_port,
+        "api_host": host,
+        "api_port": port,
     }
     with open(config_path, "w", encoding="utf-8") as config_file:
         json.dump(payload, config_file, indent=2)
