@@ -134,12 +134,11 @@ The setup script automatically detects your installation type:
 
 # For binary release:
 ./lmstudio-tray-manager --auto-start-daemon
+tail -f .logs/lmstudio_tray.log
 
 # For Python package:
 ./lmstudio_autostart.sh
-
-# Check logs in .logs directory
-tail -f .logs/lmstudio_tray.log
+tail -f .logs/lmstudio_autostart.log
 
 ```
 
