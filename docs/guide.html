@@ -331,7 +331,8 @@ EOF</code></pre>
                 <li>Tray icon with status indicators (active/warning/error)</li>
                 <li>Right-click menu for actions</li>
                 <li>Notifications for status changes</li>
-                <li>Automatic update checks with manual "Check for updates" action</li>
+                <li>Automatic update checks with manual "Check for updates" action under Options</li>
+                <li>Configurable LM Studio API host/port (Options &gt; Configuration)</li>
                 <li>About dialog shows update status and AUTHORS contributors</li>
                 <li>Automatic termination of duplicate instances</li>
             </ul>
@@ -368,7 +369,8 @@ EOF</code></pre>
                 <li><strong>Stop Desktop App:</strong> Stops LM Studio desktop process</li>
                 <li><strong>Stop Daemon:</strong> Stops llmster daemon process</li>
                 <li><strong>Show Status:</strong> Displays current LM Studio status in a dialog</li>
-                <li><strong>Check for updates:</strong> Manual GitHub release check</li>
+                <li><strong>Options &gt; Configuration:</strong> Configure LM Studio API host/port</li>
+                <li><strong>Options &gt; Check for updates:</strong> Manual GitHub release check</li>
                 <li><strong>About:</strong> Shows version, update status, and authors</li>
                 <li><strong>Quit Tray:</strong> Terminates the tray monitor</li>
             </ul>
@@ -410,7 +412,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     TrayBin["<b>lmstudio-tray-manager</b><br/>Standalone tray binary"]
                     Tray["<b>lmstudio_tray.py</b><br/>GTK3 System Tray Monitor"]
                     Daemon["LM Studio Daemon<br/>(llmster)"]
-                    API["LM Studio API<br/>localhost:1234"]
+                    API["LM Studio API<br/>host:port (configurable)"]
                     Models["Model Files"]
 
                     User -->|"1. First run"| Setup
@@ -469,7 +471,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     E --> L["Start tray monitor\n(binary preferred; passes --gui)" ]
                     L --> I["<b>END</b>"]
                     C -->|No| F[Start LM Studio daemon]
-                    F --> G[Wait for API<br/>localhost:1234]
+                    F --> G[Wait for API<br/>host:port (configurable)]
                     G --> H{Model specified?}
                     H -->|Yes| J[Load model via lms CLI]
                     H -->|No| K[Skip model loading]
@@ -612,7 +614,12 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
             <p>This creates a Python 3.10 environment with PyGObject/GTK3 support in the <code>venv/</code> directory. For detailed information, see <a href="SETUP.md" target="_blank" rel="noopener">SETUP.md</a>.</p>
 
             <h3>Configuration Files</h3>
-            <p>No configuration file is required for the daemon workflow. You can delete <code>config.json</code> if it only contains AppImage paths.</p>
+            <p>The tray monitor stores its configuration in <code>~/.config/lmstudio_tray.json</code>.</p>
+            <p>Current settings:</p>
+            <ul>
+                <li><code>api_host</code>: LM Studio API host (default: <code>localhost</code>)</li>
+                <li><code>api_port</code>: LM Studio API port (default: <code>1234</code>)</li>
+            </ul>
 
             <h3>Environment Variables</h3>
             <p>Customize behavior with environment variables:</p>

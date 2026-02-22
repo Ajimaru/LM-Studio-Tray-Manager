@@ -60,6 +60,7 @@ class DummyMenuItem:
         self.label = label
         self.sensitive = True
         self.connected = []
+        self.submenu = None
 
     def set_sensitive(self, value):
         """Set whether the item is interactive."""
@@ -68,6 +69,10 @@ class DummyMenuItem:
     def connect(self, event, callback):
         """Store a signal connection tuple."""
         self.connected.append((event, callback))
+
+    def set_submenu(self, submenu):
+        """Store submenu reference."""
+        self.submenu = submenu
 
 
 class DummySeparatorMenuItem(DummyMenuItem):
@@ -271,11 +276,173 @@ class DummyGtkModule(ModuleType):
         """
         OK = 1
 
+    class ResponseType:
+        """Dialog response constants."""
+        OK = 1
+        CANCEL = 0
+
+    class Align:
+        """Alignment constants for GTK widgets."""
+        START = 0
+
+    class Dialog:
+        """Dummy dialog for configuration UI."""
+        def __init__(self, title="", flags=None):
+            self.title = title
+            self.flags = flags
+            self._content = DummyGtkModule.Grid()
+            self._response = DummyGtkModule.ResponseType.CANCEL
+
+        def add_buttons(self, *_args):
+            """Add buttons to the interface.
+
+            Args:
+                *_args: Variable length argument list (unused).
+
+            Returns:
+                None
+            """
+            return None
+
+        def get_content_area(self):
+            """
+            Get the content area of the widget.
+
+            Returns:
+                QWidget: The content area widget.
+            """
+            return self._content
+
+        def show_all(self):
+            """Show all items in the tray menu.
+
+            This is a mock method that simulates showing all tray menu items.
+            Used for testing purposes to verify tray menu behavior.
+
+            Returns:
+                None: This method always returns None as it's a mock
+                    implementation.
+            """
+            return None
+
+        def run(self):
+            """
+            Execute and return the prepared response.
+
+            Returns:
+                The pre-configured response object for this test instance.
+            """
+            return self._response
+
+        def destroy(self):
+            """
+            Mock destroy method that simulates window destruction.
+
+            Returns:
+                None: Always returns None to simulate successful destruction.
+            """
+            return None
+
+    class Grid:
+        """Dummy grid container."""
+        def __init__(self):
+            self.rows = []
+
+        def set_column_spacing(self, _value):
+            """Set the column spacing for the tray manager.
+
+            Args:
+                _value: The column spacing value to set.
+
+            Returns:
+                None
+            """
+            return None
+
+        def set_row_spacing(self, _value):
+            """Mock implementation of set_row_spacing.
+
+            Args:
+                _value: The row spacing value (unused in mock).
+
+            Returns:
+                None
+            """
+            return None
+
+        def attach(self, widget, *_args):
+            """
+            Attach a widget to the list box.
+
+            This is a mock implementation that appends widgets to an
+            internal list instead of performing actual GTK widget
+            attachment.
+
+            Args:
+                widget: The widget to attach to the list box.
+                *_args: Additional positional arguments (ignored for
+                    mock purposes).
+            """
+            self.rows.append(widget)
+
+        def add(self, widget):
+            """
+            Add a widget to the collection of rows.
+
+            Args:
+                widget: The widget to be added to the rows list.
+            """
+            self.rows.append(widget)
+
+    class Label:
+        """Dummy label widget."""
+        def __init__(self, label=""):
+            self.label = label
+
+        def set_halign(self, _value):
+            """
+            Set the horizontal alignment of the widget.
+
+            Args:
+                _value: The horizontal alignment value (unused in
+                    mock implementation).
+
+            Returns:
+                None
+            """
+            return None
+
+    class Entry:
+        """Dummy entry widget."""
+        def __init__(self):
+            self._text = ""
+
+        def set_text(self, text):
+            """Set the text value for this object.
+
+            Args:
+                text: The text string to be set.
+            """
+            self._text = text
+
+        def get_text(self):
+            """
+            Retrieve the text content.
+
+            Returns:
+                str: The stored text value.
+            """
+            return self._text
+
     Menu = DummyMenu
     MenuItem = DummyMenuItem
     SeparatorMenuItem = DummySeparatorMenuItem
     MessageDialog = DummyMessageDialog
     AboutDialog = DummyAboutDialog
+    Dialog = Dialog
+    Grid = Grid
+    Label = Label
+    Entry = Entry
 
     @staticmethod
     def main_quit():
@@ -1968,6 +2135,146 @@ def test_check_api_models_error(tray_module, monkeypatch):
     assert tray_module.check_api_models() is False  # nosec B101
 
 
+def test_get_api_models_url_defaults(tray_module):
+    """Build API URL from default host and port."""
+    tray_module.sync_app_state_for_tests(
+        api_host_val="localhost",
+        api_port_val=1234,
+    )
+    assert tray_module.get_api_models_url() == (
+        "http://localhost:1234/v1/models"
+    )  # nosec B101
+
+
+def test_load_config_missing_defaults(tray_module, tmp_path, monkeypatch):
+    """Keep defaults when config is missing."""
+    tray_module.sync_app_state_for_tests(
+        script_dir_val=str(tmp_path),
+        api_host_val="localhost",
+        api_port_val=1234,
+    )
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda _p: str(tmp_path / "config.json"),
+    )
+    tray_module.load_config()
+    assert tray_module._AppState.API_HOST == "localhost"  # nosec B101
+    assert tray_module._AppState.API_PORT == 1234  # nosec B101
+
+
+def test_load_config_valid_values(tray_module, tmp_path, monkeypatch):
+    """Load valid config values into app state."""
+    config_file = tmp_path / "config.json"
+    config_file.write_text(
+        json.dumps({"api_host": "10.0.0.5", "api_port": 8080}),
+        encoding="utf-8",
+    )
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path))
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda _p: str(config_file),
+    )
+    tray_module.load_config()
+    assert tray_module._AppState.API_HOST == "10.0.0.5"  # nosec B101
+    assert tray_module._AppState.API_PORT == 8080  # nosec B101
+
+
+def test_load_config_invalid_port(tray_module, tmp_path, monkeypatch):
+    """Ignore invalid port values."""
+    config_file = tmp_path / "config.json"
+    config_file.write_text(
+        json.dumps({"api_host": "example", "api_port": 99999}),
+        encoding="utf-8",
+    )
+    tray_module.sync_app_state_for_tests(
+        script_dir_val=str(tmp_path),
+        api_port_val=1234,
+    )
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda _p: str(config_file),
+    )
+    tray_module.load_config()
+    assert tray_module._AppState.API_HOST == "example"  # nosec B101
+    assert tray_module._AppState.API_PORT == 1234  # nosec B101
+
+
+def test_normalize_api_port(tray_module):
+    """Normalize API port values from strings and invalid inputs."""
+    assert tray_module._normalize_api_port("8080") == 8080  # nosec B101
+    assert tray_module._normalize_api_port(65535) == 65535  # nosec B101
+    assert tray_module._normalize_api_port(0) is None  # nosec B101
+    assert tray_module._normalize_api_port("bad") is None  # nosec B101
+
+
+def test_show_config_dialog_cancel(tray_module, monkeypatch):
+    """Canceling the config dialog leaves settings unchanged."""
+    tray = _make_tray_instance(tray_module)
+    tray_module.sync_app_state_for_tests(
+        api_host_val="localhost",
+        api_port_val=1234,
+    )
+
+    original_dialog = tray_module.Gtk.Dialog
+
+    def _dialog_factory(*_args, **_kwargs):
+        dialog = original_dialog(**_kwargs)
+        dialog._response = tray_module.Gtk.ResponseType.CANCEL
+        return dialog
+
+    monkeypatch.setattr(tray_module.Gtk, "Dialog", _dialog_factory)
+    tray.show_config_dialog(None)
+    assert tray_module._AppState.API_HOST == "localhost"  # nosec B101
+    assert tray_module._AppState.API_PORT == 1234  # nosec B101
+
+
+def test_show_config_dialog_save(tray_module, monkeypatch, tmp_path):
+    """Saving the config dialog persists host and port."""
+    tray = _make_tray_instance(tray_module)
+    tray_module.sync_app_state_for_tests(
+        script_dir_val=str(tmp_path),
+        api_host_val="localhost",
+        api_port_val=1234,
+    )
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda _p: str(tmp_path / "config.json"),
+    )
+
+    original_dialog = tray_module.Gtk.Dialog
+
+    def _dialog_factory(*_args, **_kwargs):
+        dialog = original_dialog(**_kwargs)
+        dialog._response = tray_module.Gtk.ResponseType.OK
+        return dialog
+
+    monkeypatch.setattr(tray_module.Gtk, "Dialog", _dialog_factory)
+    tray.show_config_dialog(None)
+    config_file = tmp_path / "config.json"
+    data = json.loads(config_file.read_text(encoding="utf-8"))
+    assert data["api_host"] == "localhost"  # nosec B101
+    assert data["api_port"] == 1234  # nosec B101
+
+
+def test_save_config_writes_file(tray_module, tmp_path, monkeypatch):
+    """Persist config values to disk."""
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path))
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda _p: str(tmp_path / "config.json"),
+    )
+    tray_module.save_config("host", 4321)
+    config_file = tmp_path / "config.json"
+    data = json.loads(config_file.read_text(encoding="utf-8"))
+    assert data["api_host"] == "host"  # nosec B101
+    assert data["api_port"] == 4321  # nosec B101
+
+
 def test_build_menu_running_entries(tray_module, monkeypatch):
     """Build menu entries for running daemon and desktop app."""
     tray = _make_tray_instance(tray_module)
@@ -2057,7 +2364,7 @@ def test_get_desktop_app_status_variants(tray_module, monkeypatch, tmp_path):
     app_dir = tmp_path / "Apps"
     app_dir.mkdir()
     (app_dir / "LM-Studio.AppImage").write_text("x", encoding="utf-8")
-    monkeypatch.setattr(tray_module.sys, "argv", ["x", "m", str(app_dir)])
+    tray_module.sync_app_state_for_tests(script_dir_val=str(app_dir))
     monkeypatch.setattr(
         tray_module.subprocess,
         "run",

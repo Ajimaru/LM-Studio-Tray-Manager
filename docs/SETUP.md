@@ -421,8 +421,8 @@ tail -f .logs/*.log
 ### Update Check Issues
 
 The tray monitor periodically checks GitHub releases and also exposes a manual
-"Check for updates" menu action. If you see "Unable to check for updates.",
-review the tray log for details:
+"Check for updates" action under the Options menu. If you see
+"Unable to check for updates.", review the tray log for details:
 
 ```bash
 tail -f .logs/lmstudio_tray.log
@@ -433,6 +433,9 @@ Common causes:
 - GitHub API rate limits (HTTP 403)
 - No internet access or proxy/firewall restrictions
 - Temporary GitHub outages
+
+The tray configuration (LM Studio API host/port) is stored in
+`~/.config/lmstudio_tray.json`.
 
 ### View tray monitor logs
 

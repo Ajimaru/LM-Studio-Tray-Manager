@@ -146,6 +146,8 @@ class _AppState:
     GUI_MODE: bool = False
     AUTO_START_DAEMON: bool = False
     APP_VERSION: str = DEFAULT_APP_VERSION
+    API_HOST: str = "localhost"
+    API_PORT: int = 1234
 
     # GTK module refs - populated by main() before TrayIcon is created.
     Gtk: Optional[ModuleType] = None
@@ -207,6 +209,8 @@ def sync_app_state_for_tests(
     app_version_val: Optional[str] = None,
     auto_start_val: Optional[bool] = None,
     gui_mode_val: Optional[bool] = None,
+    api_host_val: Optional[str] = None,
+    api_port_val: Optional[int] = None,
 ) -> None:
     """Synchronize test mocks with _AppState and module-level variables.
 
@@ -223,6 +227,8 @@ def sync_app_state_for_tests(
         app_version_val (str, optional): APP_VERSION value to set.
         auto_start_val (bool, optional): AUTO_START_DAEMON value to set.
         gui_mode_val (bool, optional): GUI_MODE value to set.
+        api_host_val (str, optional): API host value to set.
+        api_port_val (int, optional): API port value to set.
 
     Returns:
         None.
@@ -251,6 +257,10 @@ def sync_app_state_for_tests(
     if gui_mode_val is not None:
         module_globals["GUI_MODE"] = gui_mode_val
         _AppState.GUI_MODE = gui_mode_val
+    if api_host_val is not None:
+        _AppState.API_HOST = api_host_val
+    if api_port_val is not None:
+        _AppState.API_PORT = api_port_val
 
 
 # === Module-level variables for test access and initialization defaults ===
@@ -311,6 +321,8 @@ def main():
 
     # === Model name from argument or default ===
     _AppState.apply_cli_args(args)
+
+    load_config()
 
     # Keep legacy module-level globals in sync with _AppState
     module_globals = globals()
@@ -438,6 +450,70 @@ def get_asset_path(*path_components):
         return cwd_asset
 
     return None
+
+
+def _get_config_path():
+    """Return the config file path under the script directory."""
+    return os.path.expanduser("~/.config/lmstudio_tray.json")
+
+
+def _normalize_api_port(value):
+    """Normalize and validate the API port value."""
+    try:
+        port = int(value)
+    except (TypeError, ValueError):
+        return None
+    if 1 <= port <= 65535:
+        return port
+    return None
+
+
+def load_config():
+    """Load config values for the LM Studio API endpoint.
+
+    Updates _AppState.API_HOST and _AppState.API_PORT when valid values are
+    present in the config file.
+    """
+    config_path = _get_config_path()
+    try:
+        with open(config_path, "r", encoding="utf-8") as config_file:
+            data = json.load(config_file)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return
+
+    host = data.get("api_host") if isinstance(data, dict) else None
+    if isinstance(host, str) and host.strip():
+        _AppState.API_HOST = host.strip()
+
+    port = _normalize_api_port(data.get("api_port") if isinstance(data, dict)
+                               else None)
+    if port is not None:
+        _AppState.API_PORT = port
+
+
+def save_config(api_host, api_port):
+    """Persist config values for the LM Studio API endpoint."""
+    config_path = _get_config_path()
+    config_dir = os.path.dirname(config_path)
+    os.makedirs(config_dir, exist_ok=True)
+    payload = {
+        "api_host": api_host,
+        "api_port": api_port,
+    }
+    with open(config_path, "w", encoding="utf-8") as config_file:
+        json.dump(payload, config_file, indent=2)
+
+
+def get_api_base_url():
+    """Return the base URL for the configured LM Studio API endpoint."""
+    host = _AppState.API_HOST
+    port = _AppState.API_PORT
+    return f"http://{host}:{port}"
+
+
+def get_api_models_url():
+    """Return the full URL for the LM Studio API models endpoint."""
+    return f"{get_api_base_url()}/v1/models"
 
 
 def get_authors():
@@ -622,7 +698,7 @@ def get_dpkg_cmd():
 def check_api_models():
     """Check if any models are loaded via LM Studio API.
 
-    Queries localhost:1234/v1/models to check if models are loaded.
+    Queries the configured API endpoint to check if models are loaded.
     This is a fallback when 'lms ps' fails (e.g., desktop app running
     without daemon).
 
@@ -631,7 +707,7 @@ def check_api_models():
     """
     try:
         req = urllib_request.Request(
-            "http://localhost:1234/v1/models",
+            get_api_models_url(),
             headers={"User-Agent": "lmstudio-tray-manager"},
         )
         with urllib_request.urlopen(req, timeout=2) as response:
@@ -961,9 +1037,18 @@ class TrayIcon:
         status_item.connect("activate", self.show_status_dialog)
         self.menu.append(status_item)
 
+        options_menu = gtk.Menu()
+        options_item = gtk.MenuItem(label="Options")
+        options_item.set_submenu(options_menu)
+        self.menu.append(options_item)
+
+        config_item = gtk.MenuItem(label="Configuration")
+        config_item.connect("activate", self.show_config_dialog)
+        options_menu.append(config_item)
+
         update_item = gtk.MenuItem(label="Check for updates")
         update_item.connect("activate", self.manual_check_updates)
-        self.menu.append(update_item)
+        options_menu.append(update_item)
 
         about_item = gtk.MenuItem(label="About")
         about_item.connect("activate", self.show_about_dialog)
@@ -1789,6 +1874,67 @@ class TrayIcon:
         dialog.run()
         dialog.destroy()
 
+    def show_config_dialog(self, _widget):
+        """Show configuration dialog for LM Studio API endpoint."""
+        gtk = _AppState.Gtk
+        if gtk is None:
+            logging.error(
+                "GTK module is not initialized; cannot show config dialog"
+            )
+            return
+
+        dialog = gtk.Dialog(
+            title="Configuration",
+            flags=gtk.DialogFlags.MODAL,
+        )
+        dialog.add_buttons(
+            "Cancel",
+            gtk.ResponseType.CANCEL,
+            "Save",
+            gtk.ResponseType.OK,
+        )
+
+        content = dialog.get_content_area()
+        grid = gtk.Grid()
+        grid.set_column_spacing(10)
+        grid.set_row_spacing(6)
+
+        host_label = gtk.Label(label="LM Studio API host")
+        host_label.set_halign(gtk.Align.START)
+        host_entry = gtk.Entry()
+        host_entry.set_text(_AppState.API_HOST)
+
+        port_label = gtk.Label(label="LM Studio API port")
+        port_label.set_halign(gtk.Align.START)
+        port_entry = gtk.Entry()
+        port_entry.set_text(str(_AppState.API_PORT))
+
+        grid.attach(host_label, 0, 0, 1, 1)
+        grid.attach(host_entry, 1, 0, 1, 1)
+        grid.attach(port_label, 0, 1, 1, 1)
+        grid.attach(port_entry, 1, 1, 1, 1)
+
+        content.add(grid)
+        dialog.show_all()
+
+        response = dialog.run()
+        if response == gtk.ResponseType.OK:
+            host = host_entry.get_text().strip()
+            port = _normalize_api_port(port_entry.get_text())
+            if host and port is not None:
+                _AppState.API_HOST = host
+                _AppState.API_PORT = port
+                save_config(host, port)
+                logging.info(
+                    "Updated API endpoint to http://%s:%s",
+                    host,
+                    port,
+                )
+            else:
+                logging.warning("Invalid API host/port; config not saved")
+
+        dialog.destroy()
+
     def get_version_label(self):
         """Return version text with update status for the About dialog.
 
@@ -1954,9 +2100,10 @@ class TrayIcon:
                                 ICON_OK,
                                 "Model loaded"
                             )
-                else:
-                    current_status = "INFO"
-                    self.indicator.set_icon_full(ICON_INFO, "No model loaded")
+                # When daemon is not installed, check API directly
+                elif any_running and check_api_models():
+                    current_status = "OK"
+                    self.indicator.set_icon_full(ICON_OK, "Model loaded")
 
             if (
                 self.last_status != current_status
