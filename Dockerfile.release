@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /workspace
 RUN chown builder:builder /workspace
 
-COPY --chown=builder:builder . .
+COPY . .
+RUN chown -R builder:builder /workspace
 
 # Build the binary
 USER builder
