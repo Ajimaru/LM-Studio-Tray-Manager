@@ -1970,9 +1970,9 @@ class TrayIcon:
                     error_dialog = gtk.MessageDialog(
                         parent=dialog,
                         flags=modal_flag,
-                        type=gtk.MessageType.ERROR,
+                        message_type=gtk.MessageType.ERROR,
                         buttons=gtk.ButtonsType.OK,
-                        message_format=(
+                        text=(
                             "Failed to save configuration.\n"
                             "Please check disk space and permissions."
                         ),
