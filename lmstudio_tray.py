@@ -453,7 +453,7 @@ def get_asset_path(*path_components):
 
 
 def _get_config_path():
-    """Return the config file path under the script directory."""
+    """Return the user config file path in the home config directory."""
     return os.path.expanduser("~/.config/lmstudio_tray.json")
 
 
