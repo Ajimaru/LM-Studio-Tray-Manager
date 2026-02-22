@@ -315,6 +315,9 @@ def main():
     # Keep legacy module-level globals in sync with _AppState
     module_globals = globals()
     module_globals["script_dir"] = _AppState.script_dir
+    module_globals["AUTO_START_DAEMON"] = _AppState.AUTO_START_DAEMON
+    module_globals["GUI_MODE"] = _AppState.GUI_MODE
+    module_globals["APP_VERSION"] = _AppState.APP_VERSION
 
     if args.auto_start_daemon and args.gui:
         print(
