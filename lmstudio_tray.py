@@ -512,9 +512,9 @@ def save_config(api_host, api_port):
         with open(tmp_path, "w", encoding="utf-8") as config_file:
             json.dump(payload, config_file, indent=2)
         os.replace(tmp_path, config_path)
-    except OSError:
+    except OSError as exc:
         logging.exception("Failed to write config: %s", config_path)
-        return False
+        raise exc
 
 
 def get_api_base_url():
