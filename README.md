@@ -191,18 +191,18 @@ cat .logs/lmstudio_tray.log
 
 ## Documentation
 
-- **[Readme](docs/README.md)** - Documentation overview and quick links
-- **[Docs Landing Page](docs/index.html)** - GitHub Pages entry point with links to all docs
-- **[Setup Guide](docs/SETUP.md)** - Complete setup.sh guide, Python environment configuration, and troubleshooting
-- **[Python Docstrings Reference](docs/python_docstrings.html)** - Static API-style view of `lmstudio_tray.py` docstrings
+- [Readme](docs/README.md) - Documentation overview and quick links
+- [Docs Landing Page](docs/index.html) - GitHub Pages entry point with links to all docs
+- [Setup Guide](docs/SETUP.md) - Complete setup.sh guide, Python environment configuration, and troubleshooting
+- [Python Docstrings Reference](docs/python_docstrings.html) - Static API-style view of `lmstudio_tray.py` docstrings
 
 [![Docs](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml)
 
 ## Security & Community
 
-- **[Security Policy](SECURITY.md)** - Supported versions, reporting, and response process
-- **[Code of Conduct](CODE_OF_CONDUCT.md)** - Expected behavior for contributors
-- **[Third-Party Licenses](THIRD_PARTY_LICENSES.md)** - Overview of external runtime and CI dependencies
+- [Security Policy](SECURITY.md) - Supported versions, reporting, and response process
+- [Code of Conduct](CODE_OF_CONDUCT.md) - Expected behavior for contributors
+- [Third-Party Licenses](THIRD_PARTY_LICENSES.md) - Overview of external runtime and CI dependencies
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/008764f58bb046ef886c86bccd336b85)](https://app.codacy.com/gh/Ajimaru/LM-Studio-Tray-Manager/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![CI](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml)
