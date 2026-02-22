@@ -1840,10 +1840,12 @@ class TrayIcon:
                 if result.returncode == 0 and result.stdout.strip():
                     text = result.stdout.strip()
                 else:
-                    # Fallback: lms ps failed (daemon not running or no
-                    # models), try API for desktop app check
-                    if check_api_models():
-                        # Query API to get model details
+                    model_names = "\n".join(
+                        [
+                            (m.get("id") or "Unknown") if isinstance(m, dict) else "Unknown"
+                            for m in models
+                        ]
+                    )
                         try:
                             api_url = get_api_models_url()
                             _validate_url_scheme(api_url)
