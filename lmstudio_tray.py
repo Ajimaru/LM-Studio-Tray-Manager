@@ -141,7 +141,11 @@ class _AppState:
     """Mutable application state shared across the module."""
 
     MODEL: str = "no-model-passed"
-    script_dir: str = os.getcwd()
+    script_dir: str = (
+        os.path.dirname(os.path.abspath(sys.argv[0]))
+        if sys.argv and sys.argv[0]
+        else os.getcwd()
+    )
     DEBUG_MODE: bool = False
     GUI_MODE: bool = False
     AUTO_START_DAEMON: bool = False
