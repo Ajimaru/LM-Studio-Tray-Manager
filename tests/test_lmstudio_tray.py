@@ -1625,7 +1625,7 @@ def test_start_desktop_app_popen_kwargs(tray_module, monkeypatch):
     # Capture Popen kwargs to verify correct process isolation settings
     captured_kwargs = {}
 
-    def mock_popen(args, **kwargs):
+    def mock_popen(_args, **kwargs):
         captured_kwargs.update(kwargs)
         return SimpleNamespace(pid=12345)
 
@@ -1704,7 +1704,7 @@ def test_start_desktop_app_popen_oserror(tray_module, monkeypatch):
 
 
 def test_start_desktop_app_unsafe_path_error(
-    tray_module, monkeypatch
+    tray_module, monkeypatch, tmp_path
 ):
     """Test that an AppImage in an unsafe location triggers an error."""
     tray = _make_tray_instance(tray_module)
@@ -1720,8 +1720,8 @@ def test_start_desktop_app_unsafe_path_error(
     monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: None)
 
     # Set script_dir to an unsafe path (not in safe_paths)
-    unsafe_dir = "/tmp/lmstudio-test-unsafe"
-    tray_module._AppState.script_dir = unsafe_dir
+    unsafe_dir = str(tmp_path / "lmstudio-test-unsafe")
+    tray_module.sync_app_state_for_tests(script_dir_val=unsafe_dir)
 
     # Simulate finding an AppImage in the unsafe directory
     monkeypatch.setattr(

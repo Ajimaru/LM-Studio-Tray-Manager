@@ -254,8 +254,9 @@ def sync_app_state_for_tests(
 
 
 # === Module-level variables for test access and initialization defaults ===
-# Set once from _AppState during initialization; production code should
-# read _AppState attributes directly rather than these module-level copies.
+# Only script_dir is synchronized from _AppState in main(); AUTO_START_DAEMON
+# and GUI_MODE are only updated by sync_app_state_for_tests() for testing.
+# Production code should read _AppState attributes directly.
 script_dir = os.getcwd()
 APP_VERSION = DEFAULT_APP_VERSION
 AUTO_START_DAEMON = False
@@ -312,8 +313,8 @@ def main():
     _AppState.apply_cli_args(args)
 
     # Keep legacy module-level globals in sync with _AppState
-    global script_dir
-    script_dir = _AppState.script_dir
+    module_globals = globals()
+    module_globals["script_dir"] = _AppState.script_dir
 
     if args.auto_start_daemon and args.gui:
         print(
@@ -1622,7 +1623,6 @@ class TrayIcon:
         """Handle the tray quit action by logging and exiting the Gtk main
         loop.
         """
-        _ = _widget
         logging.info("Tray icon terminated")
         gtk = _AppState.Gtk
         if gtk is None:
@@ -1678,7 +1678,6 @@ class TrayIcon:
 
     def show_about_dialog(self, _widget):
         """Show application information in a GTK dialog."""
-        _ = _widget
         gtk = _AppState.Gtk
         gdk_pixbuf = _AppState.GdkPixbuf
         glib = _AppState.GLib

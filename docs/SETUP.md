@@ -155,7 +155,7 @@ Dry-run mode:
 - Does **not** install packages, remove folders, create venvs, or modify files
 - Writes a dry-run summary to `.logs/setup.log`
 
-Example output (shortened):
+Example output for Python package releases (Steps 4 and 5 are skipped for binary releases):
 
 ```text
 [INFO] Running setup in dry-run mode (no changes will be applied)
@@ -167,6 +167,8 @@ Example output (shortened):
 [DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
 [DONE] Dry-run completed successfully (0 changes applied)
 ```
+
+**Note:** For binary releases, the Python environment steps (Steps 4 and 5) are automatically skipped by the gating logic in `setup.sh`, so you will not see the virtualenv or pip installation lines in the dry-run output.
 
 ## Setup Script Outputs
 
