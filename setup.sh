@@ -157,7 +157,6 @@ ask_yes_no() {
 # Check OS
 if [[ "$OSTYPE" != "linux"* ]]; then
     print_error "This script only works on Linux"
-    log_output "ERROR" "Unsupported OS detected: $OSTYPE"
     exit 1
 fi
 
