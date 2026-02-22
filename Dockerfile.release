@@ -53,9 +53,11 @@ RUN bash -c ' \
     FILES=("lmstudio_autostart.sh" "lmstudio_tray.py" "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"); \
     \
     for file in "${FILES[@]}"; do \
-      if [[ -f "$file" ]]; then \
-        cp -a "$file" "$STAGE_DIR_SRC/$file"; \
+      if [[ ! -f "$file" ]]; then \
+        echo "Error: Required file missing: $file" >&2; \
+        exit 1; \
       fi; \
+      cp -a "$file" "$STAGE_DIR_SRC/$file"; \
     done; \
     \
     if [[ -f "docs/SETUP.md" ]]; then \
