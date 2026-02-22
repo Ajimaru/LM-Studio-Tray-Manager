@@ -619,6 +619,35 @@ def get_dpkg_cmd():
     return shutil.which("dpkg")
 
 
+def check_api_models():
+    """Check if any models are loaded via LM Studio API.
+
+    Queries localhost:1234/v1/models to check if models are loaded.
+    This is a fallback when 'lms ps' fails (e.g., desktop app running
+    without daemon).
+
+    Returns:
+        bool: True if at least one model is loaded, False otherwise.
+    """
+    try:
+        req = urllib_request.Request(
+            "http://localhost:1234/v1/models",
+            headers={"User-Agent": "lmstudio-tray-manager"},
+        )
+        with urllib_request.urlopen(req, timeout=2) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            models = data.get("data", [])
+            return len(models) > 0
+    except (
+        urllib_error.HTTPError,
+        urllib_error.URLError,
+        OSError,
+        ValueError,
+        json.JSONDecodeError,
+    ):
+        return False
+
+
 def _run_safe_command(command):
     """Run a pre-validated command list via subprocess.
 
@@ -1730,10 +1759,31 @@ class TrayIcon:
                     logo_path,
                     e,
                 )
-        else:
-            logging.debug(
-                "Asset not found: assets/img/lm-studio-tray-manager.svg"
-            )
+                logo_path = None
+
+        if (not logo_path) and gdk_pixbuf is not None:
+            png_path = get_asset_path("img", "lm-studio-tray-manager.png")
+            if png_path:
+                error_types = (OSError,)
+                if glib is not None:
+                    error_types = (OSError, glib.Error)
+                try:
+                    logo = gdk_pixbuf.Pixbuf.new_from_file_at_scale(
+                        png_path, 128, 128, True
+                    )
+                    dialog.set_logo(logo)
+                except error_types as e:
+                    logging.warning(
+                        "Failed to load logo from %s: %s",
+                        png_path,
+                        e,
+                    )
+            else:
+                logging.debug(
+                    "Asset not found: assets/img/lm-studio-tray-manager.png"
+                )
+        elif gdk_pixbuf is None:
+            logging.debug("GdkPixbuf not initialized; skipping logo")
 
         dialog.set_modal(True)
         dialog.run()
@@ -1895,6 +1945,15 @@ class TrayIcon:
                     if result.returncode == 0 and result.stdout.strip():
                         current_status = "OK"
                         self.indicator.set_icon_full(ICON_OK, "Model loaded")
+                    else:
+                        # Fallback: lms ps failed (e.g., desktop app running),
+                        # query API directly
+                        if check_api_models():
+                            current_status = "OK"
+                            self.indicator.set_icon_full(
+                                ICON_OK,
+                                "Model loaded"
+                            )
                 else:
                     current_status = "INFO"
                     self.indicator.set_icon_full(ICON_INFO, "No model loaded")

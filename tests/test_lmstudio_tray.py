@@ -127,6 +127,7 @@ class DummyAboutDialog:
         self.website = ""
         self.website_label = ""
         self.comments = ""
+        self.logo = None
         self.modal = False
         self.ran = False
         self.destroyed = False
@@ -155,6 +156,10 @@ class DummyAboutDialog:
     def set_comments(self, comments):
         """Store comments."""
         self.comments = comments
+
+    def set_logo(self, logo):
+        """Store logo pixbuf reference."""
+        self.logo = logo
 
     def set_modal(self, modal):
         """Store modal setting."""
@@ -292,6 +297,8 @@ class DummyGLibModule(ModuleType):
     of the GLib module by providing minimal implementations that return
     successful responses.
     """
+    Error = Exception
+
     @staticmethod
     def timeout_add_seconds(_seconds, _callback):
         """Stub timer registration and report success."""
@@ -1808,6 +1815,79 @@ def test_show_about_dialog_contains_version_and_repo(tray_module, monkeypatch):
     assert dialog.destroyed  # nosec B101
 
 
+def test_show_about_dialog_sets_logo(tray_module, monkeypatch):
+    """Load the SVG logo when GdkPixbuf is available."""
+    tray = _make_tray_instance(tray_module)
+    gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
+    tray_module.sync_app_state_for_tests(gdk_pixbuf_mod=gdk_mod)
+
+    fake_logo = object()
+    monkeypatch.setattr(
+        gdk_mod.Pixbuf,
+        "new_from_file_at_scale",
+        lambda *_a, **_k: fake_logo,
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_asset_path",
+        lambda *_a, **_k: "/tmp/logo.svg",
+    )
+
+    tray.show_about_dialog(None)
+    dialog = tray_module.Gtk.AboutDialog.last_instance
+    assert dialog.logo is fake_logo  # nosec B101
+
+
+def test_show_about_dialog_logo_error(tray_module, monkeypatch):
+    """Ignore logo loading errors and still show dialog."""
+    tray = _make_tray_instance(tray_module)
+    gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
+    tray_module.sync_app_state_for_tests(gdk_pixbuf_mod=gdk_mod)
+
+    def _raise_error(*_a, **_k):
+        raise tray_module.GLib.Error("boom")
+
+    monkeypatch.setattr(
+        gdk_mod.Pixbuf,
+        "new_from_file_at_scale",
+        _raise_error,
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_asset_path",
+        lambda *_a, **_k: "/tmp/logo.svg",
+    )
+
+    tray.show_about_dialog(None)
+    dialog = tray_module.Gtk.AboutDialog.last_instance
+    assert dialog.ran is True  # nosec B101
+    assert dialog.destroyed is True  # nosec B101
+
+
+def test_show_about_dialog_png_fallback(tray_module, monkeypatch):
+    """Fallback to PNG when SVG is unavailable."""
+    tray = _make_tray_instance(tray_module)
+    gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
+    tray_module.sync_app_state_for_tests(gdk_pixbuf_mod=gdk_mod)
+
+    fake_logo = object()
+    monkeypatch.setattr(
+        gdk_mod.Pixbuf,
+        "new_from_file_at_scale",
+        lambda *_a, **_k: fake_logo,
+    )
+
+    def _asset_path(*_args):
+        if _args[-1] == "lm-studio-tray-manager.svg":
+            return None
+        return "/tmp/logo.png"
+
+    monkeypatch.setattr(tray_module, "get_asset_path", _asset_path)
+    tray.show_about_dialog(None)
+    dialog = tray_module.Gtk.AboutDialog.last_instance
+    assert dialog.logo is fake_logo  # nosec B101
+
+
 def test_check_model_fail_warn_info_ok(tray_module, monkeypatch):
     """Cover FAIL/WARN/INFO/OK icon and transition handling."""
     tray = _make_tray_instance(tray_module)
@@ -1844,6 +1924,48 @@ def test_check_model_fail_warn_info_ok(tray_module, monkeypatch):
         lambda *_a, **_k: _completed(returncode=0, stdout="loaded"),
     )
     assert tray.check_model() is True  # nosec B101
+
+
+def test_check_model_api_fallback(tray_module, monkeypatch):
+    """Use API fallback when lms ps fails but models exist."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "running")
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=1, stdout=""),
+    )
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
+
+    assert tray.check_model() is True  # nosec B101
+    assert tray.indicator.icon_calls[-1] == (  # nosec B101
+        tray_module.ICON_OK,
+        "Model loaded",
+    )
+
+
+def test_check_api_models_success(tray_module, monkeypatch):
+    """Return True when API reports loaded models."""
+    payload = json.dumps({"data": [{"id": "model"}]}).encode("utf-8")
+
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        lambda *_a, **_k: DummyUrlResponse(payload),
+    )
+
+    assert tray_module.check_api_models() is True  # nosec B101
+
+
+def test_check_api_models_error(tray_module, monkeypatch):
+    """Return False when API errors or returns invalid JSON."""
+    def _raise_error(*_a, **_k):
+        raise tray_module.urllib_error.URLError("down")
+
+    monkeypatch.setattr(tray_module.urllib_request, "urlopen", _raise_error)
+    assert tray_module.check_api_models() is False  # nosec B101
 
 
 def test_build_menu_running_entries(tray_module, monkeypatch):

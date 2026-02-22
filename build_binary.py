@@ -140,7 +140,8 @@ def get_hidden_imports():
 
 def get_data_files():
     """
-    Collect package data files and directories to include with the built binary.
+    Collect package data files and directories to include with the
+    built binary.
 
     Includes the repository's VERSION and AUTHORS files (if present) and
     the assets directory (if present).
@@ -151,22 +152,35 @@ def get_data_files():
         ``destination`` is the target path relative to the binary root.
     """
     data_files = []
+    seen = set()
     base_dir = Path(__file__).parent.resolve()
+
+    def add_data_file(source, destination):
+        """Add a data file entry if not already present."""
+        entry = (str(source), destination)
+        if entry in seen:
+            return
+        data_files.append(entry)
+        seen.add(entry)
 
     # Include VERSION file
     version_path = base_dir / "VERSION"
     if version_path.exists():
-        data_files.append((str(version_path), "."))
+        add_data_file(version_path, ".")
 
     # Include AUTHORS file
     authors_path = base_dir / "AUTHORS"
     if authors_path.exists():
-        data_files.append((str(authors_path), "."))
+        add_data_file(authors_path, ".")
 
     # Include assets directory if it exists
     assets_path = base_dir / "assets"
     if assets_path.exists():
-        data_files.append((str(assets_path), "assets"))
+        add_data_file(assets_path, "assets")
+
+    icon_path = assets_path / "img" / "lm-studio-tray-manager.svg"
+    if icon_path.exists():
+        add_data_file(icon_path, "assets/img")
 
     return data_files
 
