@@ -35,6 +35,8 @@ import logging
 import shutil
 import importlib
 import json
+from typing import Optional
+from types import ModuleType
 from urllib import request as urllib_request
 from urllib import error as urllib_error
 from urllib import parse as urllib_parse
@@ -135,20 +137,141 @@ def parse_args():
     return parser.parse_args()
 
 
-# === Module-level defaults for args-derived globals ===
-# These are overridden by main() when run as __main__.
-MODEL = "no-model-passed"
-script_dir = os.getcwd()
-DEBUG_MODE = False
-GUI_MODE = False
-AUTO_START_DAEMON = False
-APP_VERSION = DEFAULT_APP_VERSION
+class _AppState:
+    """Mutable application state shared across the module."""
 
-# GTK module globals - populated by main() before TrayIcon is created.
-Gtk = None
-GLib = None
-AppIndicator3 = None
-GdkPixbuf = None
+    MODEL: str = "no-model-passed"
+    script_dir: str = os.getcwd()
+    DEBUG_MODE: bool = False
+    GUI_MODE: bool = False
+    AUTO_START_DAEMON: bool = False
+    APP_VERSION: str = DEFAULT_APP_VERSION
+    API_HOST: str = "localhost"
+    API_PORT: int = 1234
+
+    # GTK module refs - populated by main() before TrayIcon is created.
+    Gtk: Optional[ModuleType] = None
+    GLib: Optional[ModuleType] = None
+    AppIndicator3: Optional[ModuleType] = None
+    GdkPixbuf: Optional[ModuleType] = None
+
+    @classmethod
+    def apply_cli_args(cls, args: argparse.Namespace) -> None:
+        """Apply parsed command-line arguments to app state.
+
+        Args:
+            args (argparse.Namespace): Parsed command-line arguments.
+                Expected fields: model, script_dir, debug, gui,
+                auto_start_daemon.
+
+        Returns:
+            None.
+        """
+        cls.MODEL = args.model
+        cls.script_dir = args.script_dir
+        cls.DEBUG_MODE = args.debug
+        cls.GUI_MODE = args.gui
+        cls.AUTO_START_DAEMON = args.auto_start_daemon and not cls.GUI_MODE
+
+    @classmethod
+    def set_gtk_modules(
+        cls,
+        gtk_module: ModuleType,
+        glib_module: ModuleType,
+        app_indicator_module: ModuleType,
+        gdk_pixbuf_module: ModuleType,
+    ) -> None:
+        """Store imported GTK-related module references on the class.
+
+        Args:
+            gtk_module (ModuleType): The Gtk module to store as cls.Gtk.
+            glib_module (ModuleType): The GLib module to store as cls.GLib.
+            app_indicator_module (ModuleType): The AppIndicator3 module
+                to store as cls.AppIndicator3.
+            gdk_pixbuf_module (ModuleType): The GdkPixbuf module to store
+                as cls.GdkPixbuf.
+
+        Returns:
+            None.
+        """
+        cls.Gtk = gtk_module
+        cls.GLib = glib_module
+        cls.AppIndicator3 = app_indicator_module
+        cls.GdkPixbuf = gdk_pixbuf_module
+
+
+def sync_app_state_for_tests(
+    gtk_mod: Optional[ModuleType] = None,
+    glib_mod: Optional[ModuleType] = None,
+    app_mod: Optional[ModuleType] = None,
+    gdk_pixbuf_mod: Optional[ModuleType] = None,
+    script_dir_val: Optional[str] = None,
+    app_version_val: Optional[str] = None,
+    auto_start_val: Optional[bool] = None,
+    gui_mode_val: Optional[bool] = None,
+    api_host_val: Optional[str] = None,
+    api_port_val: Optional[int] = None,
+) -> None:
+    """Synchronize test mocks with _AppState and module-level variables.
+
+    This public helper function allows tests to update both _AppState
+    (private class) and module-level variables in a coordinated way,
+    avoiding direct access to _AppState.
+
+    Args:
+        gtk_mod (ModuleType, optional): GTK module to set.
+        glib_mod (ModuleType, optional): GLib module to set.
+        app_mod (ModuleType, optional): AppIndicator3 module to set.
+        gdk_pixbuf_mod (ModuleType, optional): GdkPixbuf module to set.
+        script_dir_val (str, optional): script_dir value to set.
+        app_version_val (str, optional): APP_VERSION value to set.
+        auto_start_val (bool, optional): AUTO_START_DAEMON value to set.
+        gui_mode_val (bool, optional): GUI_MODE value to set.
+        api_host_val (str, optional): API host value to set.
+        api_port_val (int, optional): API port value to set.
+
+    Returns:
+        None.
+    """
+    # Set GTK module references on _AppState
+    if gtk_mod is not None:
+        _AppState.Gtk = gtk_mod
+    if glib_mod is not None:
+        _AppState.GLib = glib_mod
+    if app_mod is not None:
+        _AppState.AppIndicator3 = app_mod
+    if gdk_pixbuf_mod is not None:
+        _AppState.GdkPixbuf = gdk_pixbuf_mod
+
+    # Set module-level variables synchronized with _AppState
+    module_globals = globals()
+    if script_dir_val is not None:
+        module_globals["script_dir"] = script_dir_val
+        _AppState.script_dir = script_dir_val
+    if app_version_val is not None:
+        module_globals["APP_VERSION"] = app_version_val
+        _AppState.APP_VERSION = app_version_val
+    if auto_start_val is not None:
+        module_globals["AUTO_START_DAEMON"] = auto_start_val
+        _AppState.AUTO_START_DAEMON = auto_start_val
+    if gui_mode_val is not None:
+        module_globals["GUI_MODE"] = gui_mode_val
+        _AppState.GUI_MODE = gui_mode_val
+    if api_host_val is not None:
+        _AppState.API_HOST = api_host_val
+    if api_port_val is not None:
+        _AppState.API_PORT = api_port_val
+
+
+# === Module-level variables for test access and initialization defaults ===
+# Only script_dir is synchronized from _AppState in main(); AUTO_START_DAEMON
+# and GUI_MODE are only updated by sync_app_state_for_tests() for testing.
+# Production code should read _AppState attributes directly.
+script_dir = os.getcwd()
+APP_VERSION = DEFAULT_APP_VERSION
+AUTO_START_DAEMON = False
+GUI_MODE = False
+
 
 INTERVAL = 10
 UPDATE_CHECK_INTERVAL = 60 * 60 * 24
@@ -180,7 +303,7 @@ def get_app_version():
         str: Version string read from the VERSION file, or
             DEFAULT_APP_VERSION if loading fails.
     """
-    return load_version_from_dir(script_dir)
+    return load_version_from_dir(_AppState.script_dir)
 
 
 def main():
@@ -194,16 +317,19 @@ def main():
     Raises:
         SystemExit: When --version flag is provided (via sys.exit(0)).
     """
-    global MODEL, script_dir, DEBUG_MODE, GUI_MODE, AUTO_START_DAEMON
-    global Gtk, GLib, AppIndicator3, GdkPixbuf, APP_VERSION
-
     args = parse_args()
 
     # === Model name from argument or default ===
-    MODEL = args.model
-    script_dir = args.script_dir
-    DEBUG_MODE = args.debug
-    GUI_MODE = args.gui
+    _AppState.apply_cli_args(args)
+
+    load_config()
+
+    # Keep legacy module-level globals in sync with _AppState
+    module_globals = globals()
+    module_globals["script_dir"] = _AppState.script_dir
+    module_globals["AUTO_START_DAEMON"] = _AppState.AUTO_START_DAEMON
+    module_globals["GUI_MODE"] = _AppState.GUI_MODE
+    module_globals["APP_VERSION"] = _AppState.APP_VERSION
 
     if args.auto_start_daemon and args.gui:
         print(
@@ -212,27 +338,42 @@ def main():
             file=sys.stderr
         )
 
-    AUTO_START_DAEMON = args.auto_start_daemon and not GUI_MODE
-
     if args.version:
-        print(load_version_from_dir(script_dir))
+        print(load_version_from_dir(_AppState.script_dir))
         sys.exit(0)
+
+    if gi is None:
+        print(
+            "Error: PyGObject (gi) is not installed.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     gi.require_version("Gtk", "3.0")
     gi.require_version("AyatanaAppIndicator3", "0.1")
-    Gtk = importlib.import_module("gi.repository.Gtk")
-    GLib = importlib.import_module("gi.repository.GLib")
-    GdkPixbuf = importlib.import_module("gi.repository.GdkPixbuf")
-    AppIndicator3 = importlib.import_module(
+    gtk_module = importlib.import_module("gi.repository.Gtk")
+    glib_module = importlib.import_module("gi.repository.GLib")
+    gdk_pixbuf_module = importlib.import_module(
+        "gi.repository.GdkPixbuf"
+    )
+    app_indicator_module = importlib.import_module(
         "gi.repository.AyatanaAppIndicator3"
     )
-    logs_dir = os.path.join(script_dir, ".logs")
+    _AppState.set_gtk_modules(
+        gtk_module,
+        glib_module,
+        app_indicator_module,
+        gdk_pixbuf_module,
+    )
+    logs_dir = os.path.join(_AppState.script_dir, ".logs")
 
     # === Create logs directory if not exists ===
     os.makedirs(logs_dir, exist_ok=True)
 
     # === Set up logging ===
-    LOG_LEVEL = logging.DEBUG if DEBUG_MODE else logging.INFO
+    log_level = (
+        logging.DEBUG if _AppState.DEBUG_MODE else logging.INFO
+    )
     log_file = os.path.join(logs_dir, "lmstudio_tray.log")
 
     # Write header to log file
@@ -244,14 +385,14 @@ def main():
 
     logging.basicConfig(
         filename=log_file,
-        level=LOG_LEVEL,
+        level=log_level,
         format="%(asctime)s - %(levelname)s - %(message)s",
         filemode='a',
         force=True,
     )
 
     # Redirect Python warnings to log file in debug mode
-    if DEBUG_MODE:
+    if _AppState.DEBUG_MODE:
         logging.captureWarnings(True)
         warnings_logger = logging.getLogger('py.warnings')
         warnings_logger.setLevel(logging.DEBUG)
@@ -259,13 +400,17 @@ def main():
             "Debug mode enabled - capturing warnings to log file"
         )
 
-    APP_VERSION = get_app_version()
+    _AppState.APP_VERSION = get_app_version()
+    globals()["APP_VERSION"] = _AppState.APP_VERSION
 
     kill_existing_instances()
     logging.info("Tray script started")
 
     TrayIcon()
-    Gtk.main()
+    gtk = _AppState.Gtk
+    if gtk is None:
+        raise RuntimeError("GTK module is not initialized")
+    gtk.main()
 
 
 def get_asset_path(*path_components):
@@ -284,14 +429,18 @@ def get_asset_path(*path_components):
         str | None: Full path to the asset file if found, None otherwise.
     """
     # Check if running as PyInstaller bundle
-    if hasattr(sys, "_MEIPASS"):
-        meipass_asset = os.path.join(sys._MEIPASS, "assets",
-                                      *path_components)
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass is not None:
+        meipass_asset = os.path.join(
+            meipass, "assets", *path_components
+        )
         if os.path.isfile(meipass_asset):
             return meipass_asset
 
     # Check in script_dir
-    script_asset = os.path.join(script_dir, "assets", *path_components)
+    script_asset = os.path.join(
+        _AppState.script_dir, "assets", *path_components
+    )
     if os.path.isfile(script_asset):
         return script_asset
 
@@ -303,9 +452,151 @@ def get_asset_path(*path_components):
     return None
 
 
+def _get_config_path():
+    """Return the user config file path in the home config directory."""
+    return os.path.expanduser("~/.config/lmstudio_tray.json")
+
+
+def _normalize_api_port(value):
+    """Normalize and validate the API port value."""
+    try:
+        port = int(value)
+    except (TypeError, ValueError):
+        return None
+    if 1 <= port <= 65535:
+        return port
+    return None
+
+
+def load_config():
+    """Load config values for the LM Studio API endpoint.
+
+    Updates _AppState.API_HOST and _AppState.API_PORT when valid values are
+    present in the config file.
+    """
+    config_path = _get_config_path()
+    try:
+        with open(config_path, "r", encoding="utf-8") as config_file:
+            data = json.load(config_file)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return
+
+    host = data.get("api_host") if isinstance(data, dict) else None
+    if isinstance(host, str) and host.strip():
+        _AppState.API_HOST = host.strip()
+
+    port = _normalize_api_port(
+        data.get("api_port") if isinstance(data, dict) else None
+    )
+    if port is not None:
+        _AppState.API_PORT = port
+
+
+def save_config(api_host, api_port):
+    """Persist config values for the LM Studio API endpoint."""
+    host = api_host.strip() if isinstance(api_host, str) else ""
+    port = _normalize_api_port(api_port)
+
+    if not host or port is None:
+        raise ValueError("Invalid api_host/api_port")
+
+    config_path = _get_config_path()
+    config_dir = os.path.dirname(config_path)
+    os.makedirs(config_dir, exist_ok=True)
+    payload = {
+        "api_host": host,
+        "api_port": port,
+    }
+    tmp_path = f"{config_path}.tmp"
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as config_file:
+            json.dump(payload, config_file, indent=2)
+            config_file.flush()
+            os.fsync(config_file.fileno())
+        os.replace(tmp_path, config_path)
+    except OSError:
+        logging.exception("Failed to write config: %s", config_path)
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+def _validate_url_scheme(url):
+    """Validate that URL uses only permitted schemes (http/https).
+
+    Args:
+        url: URL string to validate.
+
+    Raises:
+        ValueError: If URL scheme is not http or https.
+    """
+    parsed = urllib_parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(
+            f"URL scheme '{parsed.scheme}' not permitted; "
+            f"only 'http' and 'https' are allowed"
+        )
+
+    host = (_AppState.API_HOST or "").strip()
+    if not host or any(ch.isspace() for ch in host):
+        raise ValueError("Invalid API host")
+
+    # Disallow embedding a scheme/path/query in the host field.
+    if "://" in host or "/" in host or "?" in host or "#" in host:
+        raise ValueError("Invalid API host")
+
+    # Bracket IPv6 literals for URL formatting, but reject host:port.
+    if ":" in host and not host.startswith("["):
+        # A single colon is most likely "host:port", which is invalid here
+        # because the port must be configured separately.
+        if host.count(":") == 1:
+            raise ValueError("Invalid API host")
+        host = f"[{host}]"
+
+    port = _normalize_api_port(_AppState.API_PORT)
+    if port is None:
+        raise ValueError("Invalid API port")
+    return f"http://{host}:{port}"
+
+
+def get_api_base_url():
+    """Return the base URL for the LM Studio API endpoint.
+
+    Constructs the URL using the configured API_HOST and API_PORT
+    from _AppState.
+
+    Returns:
+        str: Base API URL in format http://host:port
+
+    Raises:
+        ValueError: If the API host or port configuration is invalid.
+    """
+    return _validate_url_scheme(
+        f"http://{_AppState.API_HOST}:{_AppState.API_PORT}"
+    )
+
+
+def get_api_models_url():
+    """Return the full URL for the LM Studio API models endpoint."""
+    return f"{get_api_base_url()}/v1/models"
+
+
 def get_authors():
-    """Load authors from AUTHORS file in script directory."""
-    authors_path = os.path.join(script_dir, "AUTHORS")
+    """Load authors from AUTHORS file in script directory.
+
+    Reads the AUTHORS file located in _AppState.script_dir and parses
+    author names from markdown list format. If the file cannot be read
+    or contains no valid authors, a fallback list containing
+    APP_MAINTAINER is returned instead.
+
+    Returns:
+        list: List of author name strings extracted from the AUTHORS file.
+            If the file cannot be read or contains no valid authors,
+            returns a list containing APP_MAINTAINER as a fallback.
+    """
+    authors_path = os.path.join(_AppState.script_dir, "AUTHORS")
     authors = []
     try:
         with open(authors_path, "r", encoding="utf-8") as authors_file:
@@ -471,6 +762,43 @@ def get_dpkg_cmd():
     return shutil.which("dpkg")
 
 
+def check_api_models():
+    """Check if any models are loaded via LM Studio API.
+
+    Queries the configured API endpoint to check if models are loaded.
+    This is a fallback when 'lms ps' fails (e.g., desktop app running
+    without daemon).
+
+    Returns:
+        bool: True if at least one model is loaded, False otherwise.
+    """
+    try:
+        api_url = get_api_models_url()
+        _validate_url_scheme(api_url)
+        req = urllib_request.Request(
+            api_url,
+            headers={"User-Agent": "lmstudio-tray-manager"},
+        )
+        with urllib_request.urlopen(req, timeout=2) as response:
+            payload = response.read()
+            data = json.loads(payload.decode("utf-8"))
+            if not isinstance(data, dict):
+                return False
+            models = data.get("data", [])
+            if not isinstance(models, list):
+                return False
+            return len(models) > 0
+    except (
+        urllib_error.HTTPError,
+        urllib_error.URLError,
+        OSError,
+        ValueError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ):
+        return False
+
+
 def _run_safe_command(command):
     """Run a pre-validated command list via subprocess.
 
@@ -497,13 +825,15 @@ def _run_safe_command(command):
     if not os.path.isabs(exe):
         raise ValueError(f"Executable must be absolute path: {exe}")
 
-    return subprocess.run(  # nosec B603 B607
+    # nosemgrep: python.lang.security.audit
+    # .dangerous-subprocess-use-audit
+    return subprocess.run(
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
         check=False,
-        shell=False,
+        shell=False,  # nosec B603 B607
     )
 
 
@@ -613,13 +943,21 @@ class TrayIcon:
     """
     def __init__(self):
         """Initialize tray indicator, menu, and periodic status checks."""
+        gtk = _AppState.Gtk
+        glib = _AppState.GLib
+        app_indicator3 = _AppState.AppIndicator3
+        if gtk is None or glib is None or app_indicator3 is None:
+            raise RuntimeError("GTK/AppIndicator modules are not initialized")
+
         # Use AppIndicator3 instead of deprecated StatusIcon
-        self.indicator = AppIndicator3.Indicator.new(
+        self.indicator = app_indicator3.Indicator.new(
             "lmstudio-monitor",
             ICON_WARN,
-            AppIndicator3.IndicatorCategory.APPLICATION_STATUS
+            app_indicator3.IndicatorCategory.APPLICATION_STATUS
         )
-        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+        self.indicator.set_status(
+            app_indicator3.IndicatorStatus.ACTIVE
+        )
         self.indicator.set_title("LM Studio Monitor")
         self.action_lock_until = 0.0
         self.last_update_version = None
@@ -628,23 +966,23 @@ class TrayIcon:
         self.last_update_error = None
 
         # Create persistent menu (AppIndicator requires static menu)
-        self.menu = Gtk.Menu()
+        self.menu = gtk.Menu()
         self.build_menu()
         self.indicator.set_menu(self.menu)
         self.last_status = None
         self.check_model()
-        GLib.timeout_add_seconds(INTERVAL, self.check_model)
-        GLib.timeout_add_seconds(5, self._initial_update_check)
-        GLib.timeout_add_seconds(
+        glib.timeout_add_seconds(INTERVAL, self.check_model)
+        glib.timeout_add_seconds(5, self._initial_update_check)
+        glib.timeout_add_seconds(
             UPDATE_CHECK_INTERVAL,
             self._check_updates_tick,
         )
-        GLib.idle_add(self._maybe_auto_start_daemon)
-        GLib.idle_add(self._maybe_start_gui)
+        glib.idle_add(self._maybe_auto_start_daemon)
+        glib.idle_add(self._maybe_start_gui)
 
     def _maybe_auto_start_daemon(self):
         """Start llmster daemon on launch when enabled."""
-        if not AUTO_START_DAEMON:
+        if not _AppState.AUTO_START_DAEMON:
             return False
 
         if self.get_daemon_status() == "running":
@@ -657,7 +995,7 @@ class TrayIcon:
 
     def _maybe_start_gui(self):
         """Start LM Studio GUI on launch when enabled."""
-        if not GUI_MODE:
+        if not _AppState.GUI_MODE:
             return False
 
         logging.info("Auto-starting GUI (flag --gui)")
@@ -679,10 +1017,37 @@ class TrayIcon:
         self.action_lock_until = now + seconds
         return True
 
+    def _schedule_menu_refresh(self, delay_seconds=2):
+        """Schedule a delayed menu refresh when GLib is available.
+
+        Args:
+            delay_seconds (int): Number of seconds to delay before
+                refreshing the menu. Defaults to 2 seconds.
+        """
+        glib = _AppState.GLib
+        if glib is None:
+            logging.debug("GLib is not initialized; skipping menu refresh")
+            return
+
+        delay_seconds = max(0, int(delay_seconds))
+
+        def _refresh_once():
+            try:
+                self.build_menu()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logging.exception("Delayed menu refresh failed: %s", exc)
+            return False
+
+        glib.timeout_add_seconds(delay_seconds, _refresh_once)
+
     def build_menu(self):
         """Build or rebuild the context menu with current status and
         options.
         """
+        gtk = _AppState.Gtk
+        if gtk is None:
+            raise RuntimeError("GTK module is not initialized")
+
         # Clear existing menu items
         for item in self.menu.get_children():
             self.menu.remove(item)
@@ -695,24 +1060,24 @@ class TrayIcon:
 
         # === DAEMON CONTROL ===
         if daemon_status == "running":
-            daemon_item = Gtk.MenuItem(
+            daemon_item = gtk.MenuItem(
                 label=f"{daemon_indicator} Daemon (Running)"
             )
             daemon_item.set_sensitive(False)
             self.menu.append(daemon_item)
-            stop_daemon_item = Gtk.MenuItem(
+            stop_daemon_item = gtk.MenuItem(
                 label="  → Stop Daemon"
             )
             stop_daemon_item.connect("activate", self.stop_daemon)
             self.menu.append(stop_daemon_item)
         elif daemon_status == "stopped":
-            start_daemon_item = Gtk.MenuItem(
+            start_daemon_item = gtk.MenuItem(
                 label=f"{daemon_indicator} Start Daemon (Headless)"
             )
             start_daemon_item.connect("activate", self.start_daemon)
             self.menu.append(start_daemon_item)
         else:  # not_found
-            not_found_item = Gtk.MenuItem(
+            not_found_item = gtk.MenuItem(
                 label=f"{daemon_indicator} Daemon (Not Installed)"
             )
             not_found_item.set_sensitive(False)
@@ -720,44 +1085,53 @@ class TrayIcon:
 
         # === DESKTOP APP CONTROL ===
         if app_status == "running":
-            app_item = Gtk.MenuItem(
+            app_item = gtk.MenuItem(
                 label=f"{app_indicator} Desktop App (Running)"
             )
             app_item.set_sensitive(False)
             self.menu.append(app_item)
-            stop_app_item = Gtk.MenuItem(label="  → Stop Desktop App")
+            stop_app_item = gtk.MenuItem(label="  → Stop Desktop App")
             stop_app_item.connect("activate", self.stop_desktop_app)
             self.menu.append(stop_app_item)
         elif app_status == "stopped":
-            start_app_item = Gtk.MenuItem(
+            start_app_item = gtk.MenuItem(
                 label=f"{app_indicator} Start Desktop App"
             )
             start_app_item.connect("activate", self.start_desktop_app)
             self.menu.append(start_app_item)
         elif app_status == "not_found":
-            not_found_item = Gtk.MenuItem(
+            not_found_item = gtk.MenuItem(
                 label=f"{app_indicator} Desktop App (Not Installed)"
             )
             not_found_item.set_sensitive(False)
             self.menu.append(not_found_item)
 
-        self.menu.append(Gtk.SeparatorMenuItem())
+        self.menu.append(gtk.SeparatorMenuItem())
 
-        status_item = Gtk.MenuItem(label="Show Status")
+        status_item = gtk.MenuItem(label="Show Status")
         status_item.connect("activate", self.show_status_dialog)
         self.menu.append(status_item)
 
-        update_item = Gtk.MenuItem(label="Check for updates")
-        update_item.connect("activate", self.manual_check_updates)
-        self.menu.append(update_item)
+        options_menu = gtk.Menu()
+        options_item = gtk.MenuItem(label="Options")
+        options_item.set_submenu(options_menu)
+        self.menu.append(options_item)
 
-        about_item = Gtk.MenuItem(label="About")
+        config_item = gtk.MenuItem(label="Configuration")
+        config_item.connect("activate", self.show_config_dialog)
+        options_menu.append(config_item)
+
+        update_item = gtk.MenuItem(label="Check for updates")
+        update_item.connect("activate", self.manual_check_updates)
+        options_menu.append(update_item)
+
+        about_item = gtk.MenuItem(label="About")
         about_item.connect("activate", self.show_about_dialog)
         self.menu.append(about_item)
 
-        self.menu.append(Gtk.SeparatorMenuItem())
+        self.menu.append(gtk.SeparatorMenuItem())
 
-        quit_item = Gtk.MenuItem(label="Quit Tray")
+        quit_item = gtk.MenuItem(label="Quit Tray")
         quit_item.connect("activate", self.quit_app)
         self.menu.append(quit_item)
 
@@ -824,7 +1198,7 @@ class TrayIcon:
 
         # Check for AppImage
         search_paths = [
-            script_dir,
+            _AppState.script_dir,
             os.path.expanduser("~/Apps"),
             os.path.expanduser("~/LM_Studio"),
             os.path.expanduser("~/Applications"),
@@ -1111,9 +1485,7 @@ class TrayIcon:
                         [notify_cmd, "Error", error_msg]
                     )
             self.build_menu()
-            GLib.timeout_add_seconds(
-                2, lambda: (self.build_menu(), False)[1]
-            )
+            self._schedule_menu_refresh()
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Error starting llmster daemon: %s", e)
             notify_cmd = get_notify_send_cmd()
@@ -1179,9 +1551,7 @@ class TrayIcon:
                     )
 
             self.build_menu()
-            GLib.timeout_add_seconds(
-                2, lambda: (self.build_menu(), False)[1]
-            )
+            self._schedule_menu_refresh()
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Error stopping llmster daemon: %s", e)
             notify_cmd = get_notify_send_cmd()
@@ -1260,7 +1630,7 @@ class TrayIcon:
         # If .deb not found, search for AppImage
         if not app_found:
             search_paths = [
-                script_dir,
+                _AppState.script_dir,
                 os.path.expanduser("~/Apps"),
                 os.path.expanduser("~/LM_Studio"),
                 os.path.expanduser("~/Applications"),
@@ -1335,23 +1705,21 @@ class TrayIcon:
                            f"locations: {app_path}")
                     raise ValueError(msg)
 
-                # Create validated command list
-                validated_cmd = [app_path]
-
-                # Use context manager for proper resource management
-                # pylint: disable=consider-using-with
-                # nosec B603 B607 - app_path validated against whitelist
-                process = subprocess.Popen(
-                    validated_cmd,
+                # Launch validated executable via Popen with a new
+                # session so the child is fully detached and any
+                # launch failure is raised immediately in the parent.
+                subprocess.Popen(  # nosec B603
+                    [app_path],
+                    start_new_session=True,
+                    close_fds=True,
+                    stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    shell=False,
                 )
-                # Process is intentionally detached - no need to wait
+
                 logging.info(
-                    "Started LM Studio desktop app: %s (PID: %s)",
-                    app_path,
-                    process.pid
+                    "Started LM Studio desktop app: %s",
+                    app_path
                 )
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
@@ -1363,10 +1731,8 @@ class TrayIcon:
                         ]
                     )
                 self.build_menu()
-                GLib.timeout_add_seconds(
-                    2, lambda: (self.build_menu(), False)[1]
-                )
-            except (OSError, subprocess.SubprocessError) as e:
+                self._schedule_menu_refresh()
+            except (OSError, subprocess.SubprocessError, ValueError) as e:
                 logging.error("Failed to start desktop app: %s", e)
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
@@ -1442,9 +1808,7 @@ class TrayIcon:
                         ]
                     )
             self.build_menu()
-            GLib.timeout_add_seconds(
-                2, lambda: (self.build_menu(), False)[1]
-            )
+            self._schedule_menu_refresh()
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Failed to stop desktop app: %s", e)
             notify_cmd = get_notify_send_cmd()
@@ -1462,25 +1826,113 @@ class TrayIcon:
         loop.
         """
         logging.info("Tray icon terminated")
-        Gtk.main_quit()
+        gtk = _AppState.Gtk
+        if gtk is None:
+            logging.error(
+                "GTK module is not initialized; "
+                "cannot quit main loop"
+            )
+            return
+        gtk.main_quit()
 
     def show_status_dialog(self, _widget):
         """
         Show a GTK message dialog containing the LM Studio CLI status output.
 
-        Runs `lms ps` to retrieve status information, formats a friendly
-        message on success or error, and displays it in an informational
-        dialog. Errors are caught and shown to the user instead of raising.
+        Runs `lms ps` to retrieve status information. If daemon is not
+        running, falls back to querying the LM Studio API directly.
+        Formats a friendly message on success or error, and displays it in
+        an informational dialog. Errors are caught and shown to the user
+        instead of raising.
         """
+        _ = _widget
+        text = "No models loaded or error."
         try:
             lms_cmd = get_lms_cmd()
-            if not lms_cmd:
-                raise RuntimeError("lms CLI not found")
-            result = _run_safe_command([lms_cmd, "ps"])
-            if result.returncode == 0 and result.stdout.strip():
-                text = result.stdout.strip()
+            if lms_cmd:
+                result = _run_safe_command([lms_cmd, "ps"])
+                if result.returncode == 0 and result.stdout.strip():
+                    text = result.stdout.strip()
+                else:
+                    try:
+                        api_url = get_api_models_url()
+                        _validate_url_scheme(api_url)
+                        req = urllib_request.Request(
+                            api_url,
+                            headers={"User-Agent":
+                                     "lmstudio-tray-manager"},
+                        )
+                        with urllib_request.urlopen(
+                            req, timeout=2
+                        ) as response:
+                            payload = response.read()
+                            data = json.loads(
+                                payload.decode("utf-8")
+                            )
+                            if isinstance(data, dict):
+                                models = data.get("data", [])
+                                if (isinstance(models, list) and
+                                        len(models) > 0):
+                                    model_names = "\n".join(
+                                        [m.get("id", "Unknown")
+                                         for m in models]
+                                    )
+                                    text = (
+                                        "Models loaded via desktop app:\n"
+                                        f"{model_names}"
+                                    )
+                                else:
+                                    text = (
+                                        "No models loaded or error."
+                                    )
+                    except (
+                        urllib_error.HTTPError,
+                        urllib_error.URLError,
+                        OSError,
+                        ValueError,
+                        UnicodeDecodeError,
+                        json.JSONDecodeError,
+                    ):
+                        text = "No models loaded or error."
             else:
-                text = "No models loaded or error."
+                # lms not available, try API directly
+                if check_api_models():
+                    try:
+                        api_url = get_api_models_url()
+                        _validate_url_scheme(api_url)
+                        req = urllib_request.Request(
+                            api_url,
+                            headers={"User-Agent":
+                                     "lmstudio-tray-manager"},
+                        )
+                        with urllib_request.urlopen(
+                            req, timeout=2
+                        ) as response:
+                            payload = response.read()
+                            data = json.loads(payload.decode("utf-8"))
+                            if isinstance(data, dict):
+                                models = data.get("data", [])
+                                if (isinstance(models, list) and
+                                        len(models) > 0):
+                                    model_names = "\n".join(
+                                        [m.get("id", "Unknown")
+                                         for m in models]
+                                    )
+                                    text = (
+                                        "Models loaded via desktop app:\n"
+                                        f"{model_names}"
+                                    )
+                                else:
+                                    text = "No models loaded or error."
+                    except (
+                        urllib_error.HTTPError,
+                        urllib_error.URLError,
+                        OSError,
+                        ValueError,
+                        UnicodeDecodeError,
+                        json.JSONDecodeError,
+                    ):
+                        text = "No models loaded or error."
         except (
             OSError,
             RuntimeError,
@@ -1489,11 +1941,18 @@ class TrayIcon:
         ) as e:
             text = f"Error retrieving status: {str(e)}"
 
-        dialog = Gtk.MessageDialog(
+        gtk = _AppState.Gtk
+        if gtk is None:
+            logging.error(
+                "GTK module is not initialized; cannot show status dialog"
+            )
+            return
+
+        dialog = gtk.MessageDialog(
             parent=None,
             modal=True,
-            message_type=Gtk.MessageType.INFO,
-            buttons=Gtk.ButtonsType.OK,
+            message_type=gtk.MessageType.INFO,
+            buttons=gtk.ButtonsType.OK,
             text="LM Studio Status"
         )
         dialog.format_secondary_text(text)
@@ -1502,7 +1961,17 @@ class TrayIcon:
 
     def show_about_dialog(self, _widget):
         """Show application information in a GTK dialog."""
-        dialog = Gtk.AboutDialog()
+        gtk = _AppState.Gtk
+        gdk_pixbuf = _AppState.GdkPixbuf
+        glib = _AppState.GLib
+
+        if gtk is None:
+            logging.error(
+                "GTK module is not initialized; cannot show about dialog"
+            )
+            return
+
+        dialog = gtk.AboutDialog()
         dialog.set_program_name(APP_NAME)
         dialog.set_version(self.get_version_label())
         dialog.set_authors(get_authors())
@@ -1514,21 +1983,132 @@ class TrayIcon:
 
         # Load and set the application logo
         logo_path = get_asset_path("img", "lm-studio-tray-manager.svg")
-        if logo_path and GdkPixbuf is not None:
+        if logo_path and gdk_pixbuf is not None:
+            error_types = (OSError,)
+            if glib is not None:
+                error_types = (OSError, glib.Error)
+
             try:
-                logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                logo = gdk_pixbuf.Pixbuf.new_from_file_at_scale(
                     logo_path, 128, 128, True
                 )
                 dialog.set_logo(logo)
-            except (OSError, GLib.Error) as e:
-                logging.warning("Failed to load logo from %s: %s",
-                                logo_path, e)
-        else:
-            logging.debug("Asset not found: assets/img/"
-                         "lm-studio-tray-manager.svg")
+            except error_types as e:
+                logging.warning(
+                    "Failed to load logo from %s: %s",
+                    logo_path,
+                    e,
+                )
+                logo_path = None
+
+        if (not logo_path) and gdk_pixbuf is not None:
+            png_path = get_asset_path("img", "lm-studio-tray-manager.png")
+            if png_path:
+                error_types = (OSError,)
+                if glib is not None:
+                    error_types = (OSError, glib.Error)
+                try:
+                    logo = gdk_pixbuf.Pixbuf.new_from_file_at_scale(
+                        png_path, 128, 128, True
+                    )
+                    dialog.set_logo(logo)
+                except error_types as e:
+                    logging.warning(
+                        "Failed to load logo from %s: %s",
+                        png_path,
+                        e,
+                    )
+            else:
+                logging.debug(
+                    "Asset not found: assets/img/lm-studio-tray-manager.png"
+                )
+        elif gdk_pixbuf is None:
+            logging.debug("GdkPixbuf not initialized; skipping logo")
 
         dialog.set_modal(True)
         dialog.run()
+        dialog.destroy()
+
+    def show_config_dialog(self, _widget):
+        """Show configuration dialog for LM Studio API endpoint."""
+        gtk = _AppState.Gtk
+        if gtk is None:
+            logging.error(
+                "GTK module is not initialized; cannot show config dialog"
+            )
+            return
+
+        dialog_flags = getattr(gtk, "DialogFlags", None)
+        modal_flag = getattr(dialog_flags, "MODAL", 0) if dialog_flags else 0
+        dialog = gtk.Dialog(
+            title="Configuration",
+            flags=modal_flag,
+        )
+        dialog.add_buttons(
+            "Cancel",
+            gtk.ResponseType.CANCEL,
+            "Save",
+            gtk.ResponseType.OK,
+        )
+
+        content = dialog.get_content_area()
+        grid = gtk.Grid()
+        grid.set_column_spacing(10)
+        grid.set_row_spacing(6)
+
+        host_label = gtk.Label(label="LM Studio API host")
+        host_label.set_halign(gtk.Align.START)
+        host_entry = gtk.Entry()
+        host_entry.set_text(_AppState.API_HOST)
+
+        port_label = gtk.Label(label="LM Studio API port")
+        port_label.set_halign(gtk.Align.START)
+        port_entry = gtk.Entry()
+        port_entry.set_text(str(_AppState.API_PORT))
+
+        grid.attach(host_label, 0, 0, 1, 1)
+        grid.attach(host_entry, 1, 0, 1, 1)
+        grid.attach(port_label, 0, 1, 1, 1)
+        grid.attach(port_entry, 1, 1, 1, 1)
+
+        content.add(grid)
+        dialog.show_all()
+
+        response = dialog.run()
+        if response == gtk.ResponseType.OK:
+            host = host_entry.get_text().strip()
+            port = _normalize_api_port(port_entry.get_text())
+            if host and port is not None:
+                try:
+                    save_config(host, port)
+                    _AppState.API_HOST = host
+                    _AppState.API_PORT = port
+                    logging.info(
+                        "Updated API endpoint to http://%s:%s",
+                        host,
+                        port,
+                    )
+                except (OSError, ValueError) as exc:
+                    logging.error(
+                        "Failed to save configuration: %s",
+                        exc,
+                        exc_info=True,
+                    )
+                    error_dialog = gtk.MessageDialog(
+                        parent=dialog,
+                        flags=modal_flag,
+                        message_type=gtk.MessageType.ERROR,
+                        buttons=gtk.ButtonsType.OK,
+                        text=(
+                            "Failed to save configuration.\n"
+                            "Please check disk space and permissions."
+                        ),
+                    )
+                    error_dialog.run()
+                    error_dialog.destroy()
+            else:
+                logging.warning("Invalid API host/port; config not saved")
+
         dialog.destroy()
 
     def get_version_label(self):
@@ -1538,7 +2118,7 @@ class TrayIcon:
             str: Version text in the format '<APP_VERSION> (<status>)'.
         """
         status = self.update_status or "Unknown"
-        return f"{APP_VERSION} ({status})"
+        return f"{_AppState.APP_VERSION} ({status})"
 
     def _check_updates_tick(self):
         """Run the update check for scheduled timers."""
@@ -1554,11 +2134,12 @@ class TrayIcon:
         """Build the update check notification message."""
         if status == "Update available" and latest:
             return (
-                f"New version available: {latest} (current {APP_VERSION})"
+                "New version available: "
+                f"{latest} (current {_AppState.APP_VERSION})"
             )
 
         messages = {
-            "Up to date": f"You are up to date ({APP_VERSION})",
+            "Up to date": f"You are up to date ({_AppState.APP_VERSION})",
             "Dev build": "Dev build: update checks disabled",
         }
         message = messages.get(status)
@@ -1588,7 +2169,7 @@ class TrayIcon:
         Returns:
             bool: True if a notification was sent.
         """
-        if APP_VERSION == DEFAULT_APP_VERSION:
+        if _AppState.APP_VERSION == DEFAULT_APP_VERSION:
             self.update_status = "Dev build"
             logging.debug("Update check skipped: dev build")
             return False
@@ -1603,7 +2184,7 @@ class TrayIcon:
         self.latest_update_version = latest
         self.last_update_error = None
 
-        newer = is_newer_version(APP_VERSION, latest)
+        newer = is_newer_version(_AppState.APP_VERSION, latest)
         self.update_status = "Update available" if newer else "Up to date"
         logging.debug(
             "Update check status: %s (latest %s)",
@@ -1621,7 +2202,8 @@ class TrayIcon:
         notify_cmd = get_notify_send_cmd()
         if notify_cmd:
             message = (
-                f"New version available: {latest} (current {APP_VERSION})"
+                "New version available: "
+                f"{latest} (current {_AppState.APP_VERSION})"
             )
             self._run_validated_command(
                 [notify_cmd, "Update Available", message]
@@ -1671,12 +2253,6 @@ class TrayIcon:
                     "Daemon and desktop app stopped"
                 )
             else:
-                current_status = "INFO"
-                self.indicator.set_icon_full(
-                    ICON_INFO,
-                    "No model loaded"
-                )
-
                 # Query lms ps whenever daemon or desktop app is running.
                 # This avoids daemon wake-up in fully stopped state while still
                 # allowing model detection in GUI-only mode.
@@ -1685,9 +2261,31 @@ class TrayIcon:
                     if result.returncode == 0 and result.stdout.strip():
                         current_status = "OK"
                         self.indicator.set_icon_full(ICON_OK, "Model loaded")
+                    else:
+                        # Fallback: lms ps failed (e.g., desktop app running),
+                        # query API directly
+                        if check_api_models():
+                            current_status = "OK"
+                            self.indicator.set_icon_full(
+                                ICON_OK,
+                                "Model loaded"
+                            )
+                        else:
+                            current_status = "INFO"
+                            self.indicator.set_icon_full(
+                                ICON_INFO,
+                                "No model loaded"
+                            )
+                # When daemon is not installed, check API directly
+                elif any_running and check_api_models():
+                    current_status = "OK"
+                    self.indicator.set_icon_full(ICON_OK, "Model loaded")
                 else:
                     current_status = "INFO"
-                    self.indicator.set_icon_full(ICON_INFO, "No model loaded")
+                    self.indicator.set_icon_full(
+                        ICON_INFO,
+                        "No model loaded"
+                    )
 
             if (
                 self.last_status != current_status

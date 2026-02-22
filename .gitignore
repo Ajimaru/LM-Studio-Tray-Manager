@@ -20,6 +20,7 @@ build/
 .pytype/
 .mypy_cache/
 .pyright/
+release/
 
 #Ignore AI rules
 .github/instructions/codacy.instructions.md

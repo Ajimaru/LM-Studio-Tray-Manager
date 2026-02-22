@@ -1,0 +1,104 @@
+# Release Build Container (mimics GitHub Actions ubuntu-22.04)
+FROM ubuntu:22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bc \
+    pkg-config \
+    python3.10 \
+    python3.10-venv \
+    python3.10-dev \
+    python3.10-distutils \
+    python3-pip \
+    python3-gi \
+    gobject-introspection \
+    gir1.2-gtk-3.0 \
+    gir1.2-ayatanaappindicator3-0.1 \
+    libgirepository1.0-dev \
+    git \
+    curl \
+    ca-certificates \
+    tar \
+    gzip \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r builder \
+    && useradd -r -g builder -d /home/builder -s /sbin/nologin \
+       -c "Non-root build user" builder \
+    && mkdir -p /home/builder \
+    && chown -R builder:builder /home/builder
+
+ENV PYTHON=/usr/bin/python3.10
+
+WORKDIR /workspace
+RUN chown builder:builder /workspace
+
+COPY . .
+RUN chown -R builder:builder /workspace
+
+# Build the binary
+USER builder
+RUN ./build.sh
+
+# Prepare release packages
+RUN bash -c ' \
+    set -euo pipefail; \
+    TAG=$(cat VERSION); \
+    echo "Build version: ${TAG}"; \
+    PKG_NAME_SRC="LM-Studio-Tray-Manager-${TAG}"; \
+    PKG_NAME_BIN="LM-Studio-Tray-Manager-${TAG}-binary"; \
+    STAGE_DIR_SRC="release/${PKG_NAME_SRC}"; \
+    STAGE_DIR_BIN="release/${PKG_NAME_BIN}"; \
+    \
+    rm -rf release; \
+    mkdir -p "$STAGE_DIR_SRC" "$STAGE_DIR_BIN"; \
+    \
+    FILES=("lmstudio_autostart.sh" "lmstudio_tray.py" "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"); \
+    \
+    for file in "${FILES[@]}"; do \
+      if [[ ! -f "$file" ]]; then \
+        echo "Error: Required file missing: $file" >&2; \
+        exit 1; \
+      fi; \
+      mkdir -p "$STAGE_DIR_SRC/$(dirname "$file")"; \
+      cp -a "$file" "$STAGE_DIR_SRC/$file"; \
+      if [[ "$file" == *.sh ]]; then \
+        chmod 0755 "$STAGE_DIR_SRC/$file"; \
+      fi; \
+    done; \
+    \
+    if [[ -f "docs/SETUP.md" ]]; then \
+      mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"; \
+      cp -a "docs/SETUP.md" "$STAGE_DIR_SRC/docs/SETUP.md"; \
+      cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"; \
+    fi; \
+    \
+    if [[ -d "assets" ]]; then \
+      cp -a "assets" "$STAGE_DIR_SRC/assets"; \
+      cp -a "assets" "$STAGE_DIR_BIN/assets"; \
+    fi; \
+    \
+    for file in "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"; do \
+      if [[ -f "$file" ]]; then \
+        mkdir -p "$STAGE_DIR_BIN/$(dirname "$file")"; \
+        cp -a "$file" "$STAGE_DIR_BIN/$file"; \
+      fi; \
+    done; \
+    \
+    if [[ ! -f "dist/lmstudio-tray-manager" ]]; then \
+      echo "Error: Binary not found"; \
+      exit 1; \
+    fi; \
+    cp -a "dist/lmstudio-tray-manager" "$STAGE_DIR_BIN/lmstudio-tray-manager"; \
+    \
+    tar -czf "release/${PKG_NAME_SRC}.tar.gz" -C release "$PKG_NAME_SRC"; \
+    tar -czf "release/${PKG_NAME_BIN}.tar.gz" -C release "$PKG_NAME_BIN"; \
+    \
+    cd release && sha256sum *.tar.gz > SHA256SUMS.txt; \
+    ls -lh *.tar.gz SHA256SUMS.txt \
+'
+
+USER builder
+
+CMD ["/bin/bash"]

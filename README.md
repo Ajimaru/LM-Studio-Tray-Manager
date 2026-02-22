@@ -16,16 +16,10 @@ Automation scripts for LM Studio - a powerful desktop and server application for
 
 ## Features
 
-- **⚙️ Daemon/Desktop Orchestration** (`lmstudio_autostart.sh`): Default mode starts `llmster` + tray monitor
-- **🖥️ System Tray Monitor** (`lmstudio_tray.py`): GTK3 tray integration with live daemon/app controls and status transitions
+- **🖥️ System Tray Monitor**: GTK3 tray integration with live daemon/app controls and status transitions
 - **🎛️ Tray Menu Controls**: Start/stop daemon and start/stop desktop app, including conflict-safe switching between both modes
-- **🔎 Update Checks**: Periodic GitHub release checks with a manual "Check for updates" menu action
 - **🚦 Icon Status Schema**: `❌` not installed, `⚠️` both stopped, `ℹ️` runtime active but no model loaded, `✅` model loaded
-- **🛡️ Robust Runtime Handling**: Cooldown guard against double-click actions and best-effort process stop fallbacks
-- **🧠 Interactive Model Selection**: Choose from local models via `--list-models` and auto-load the selection in daemon mode
-- **🧰 Comprehensive Setup Script** (`setup.sh`): Checks for and installs dependencies, sets up Python environment, and provides a `--dry-run` option
-- **🧾 About Dialog Metadata**: Shows update status and loads contributors from `AUTHORS`
-- **📦 Standalone Binary Build** (`build.sh`): Creates a single executable via PyInstaller
+- **🔎 Update Checks**: Periodic GitHub release checks with a manual "Check for updates" action under the Options menu
 
 ## Getting Started
 
@@ -56,8 +50,10 @@ tar -xzf LM-Studio-Tray-Manager-vX.Y.Z-binary.tar.gz
 cd LM-Studio-Tray-Manager-vX.Y.Z-binary
 
 ./setup.sh
-./lmstudio-tray-manager --auto-start-daemon
+./lmstudio-tray-manager -a
 ```
+
+**Note:** The setup script detects the binary release and skips Python virtual environment creation (all dependencies are already bundled in the binary).
 
 **Verify:**
 
@@ -113,7 +109,7 @@ This setup script:
 
 ```bash
 ./build.sh
-./dist/lmstudio-tray-manager --auto-start-daemon
+./dist/lmstudio-tray-manager -a
 ```
 
 </details>
@@ -209,8 +205,8 @@ cat .logs/lmstudio_tray.log
 
 ## Documentation
 
+- **[Readme](docs/README.md)** - Documentation overview and quick links
 - **[Docs Landing Page](docs/index.html)** - GitHub Pages entry point with links to all docs
-- **[Full Documentation](docs/guide.html)** - Detailed usage examples, flow diagrams, and architecture
 - **[Setup Guide](docs/SETUP.md)** - Complete setup.sh guide, Python environment configuration, and troubleshooting
 - **[Python Docstrings Reference](docs/python_docstrings.html)** - Static API-style view of `lmstudio_tray.py` docstrings
 

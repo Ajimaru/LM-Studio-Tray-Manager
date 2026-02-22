@@ -139,30 +139,44 @@ def get_hidden_imports():
 
 
 def get_data_files():
-    """Return list of data files to bundle.
+    """
+    Collect package data files and directories to include with the
+    built binary.
+
+    Includes the repository's VERSION and AUTHORS files (if present) and
+    the assets directory (if present).
 
     Returns:
-        list[tuple[str, str]]: List of (source, destination) tuples
-            representing files and directories to bundle with the binary.
-            source is the file/directory path, destination is the target
-            path relative to the binary root.
+        list[tuple[str, str]]: List of (source, destination) tuples where
+        ``source`` is the filesystem path to a file or directory and
+        ``destination`` is the target path relative to the binary root.
     """
     data_files = []
+    seen = set()
+    base_dir = Path(__file__).parent.resolve()
+
+    def add_data_file(source, destination):
+        """Add a data file entry if not already present."""
+        entry = (str(source), destination)
+        if entry in seen:
+            return
+        data_files.append(entry)
+        seen.add(entry)
 
     # Include VERSION file
-    version_path = Path("VERSION")
+    version_path = base_dir / "VERSION"
     if version_path.exists():
-        data_files.append((str(version_path.resolve()), "."))
+        add_data_file(version_path, ".")
 
     # Include AUTHORS file
-    authors_path = Path("AUTHORS")
+    authors_path = base_dir / "AUTHORS"
     if authors_path.exists():
-        data_files.append((str(authors_path.resolve()), "."))
+        add_data_file(authors_path, ".")
 
     # Include assets directory if it exists
-    assets_path = Path("assets")
+    assets_path = base_dir / "assets"
     if assets_path.exists():
-        data_files.append((str(assets_path.resolve()), "assets"))
+        add_data_file(assets_path, "assets")
 
     return data_files
 

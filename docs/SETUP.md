@@ -7,6 +7,9 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
 - [Setup Guide](#setup-guide)
   - [Table of Contents](#table-of-contents)
   - [What setup.sh Does](#what-setupsh-does)
+  - [Installation Types](#installation-types)
+    - [Binary Release (Recommended)](#binary-release-recommended)
+    - [Python Package Release](#python-package-release)
   - [Quick Start](#quick-start)
   - [Dry-run Mode](#dry-run-mode)
   - [Setup Script Outputs](#setup-script-outputs)
@@ -15,6 +18,8 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
     - [If Python 3.10 is Missing](#if-python-310-is-missing)
   - [What's Inside the venv?](#whats-inside-the-venv)
   - [File Structure After Setup](#file-structure-after-setup)
+    - [For Binary Release](#for-binary-release)
+    - [For Python Package](#for-python-package)
   - [Environment Variables](#environment-variables)
   - [Log File Format](#log-file-format)
     - [setup.log](#setuplog)
@@ -26,7 +31,7 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
   - [Troubleshooting](#troubleshooting)
     - [venv not found](#venv-not-found)
     - [Checking Logs](#checking-logs)
-      - [Update Check Issues](#update-check-issues)
+    - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
     - [View tray monitor logs](#view-tray-monitor-logs)
     - [View both in real-time (in separate terminals)](#view-both-in-real-time-in-separate-terminals)
   - [PyGObject Import Errors](#pygobject-import-errors)
@@ -40,7 +45,7 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
 
 ## What setup.sh Does
 
-The setup script checks for and optionally installs:
+The setup script automatically detects your installation type and configures accordingly. It checks for and optionally installs:
 
 1. **LM Studio Daemon (llmster)** - Headless backend for model inference
    - Checks if `lms` CLI is available
@@ -53,18 +58,65 @@ The setup script checks for and optionally installs:
    - Allows manual AppImage path input
    - Optional (only needed for `--gui` option)
 
-3. **Python 3.10** - Required for PyGObject/GTK3 compatibility
-   - Checks for availability
-   - Installs automatically if missing (via `apt`)
+3. **Installation Type Detection** - Automatically determines setup path
+   - **Binary Release:** Detects `lmstudio-tray-manager` binary in script directory
+   - **Python Package:** No binary found - proceeds with Python setup
+   - This detection is **non-intrusive**: just a file existence check
 
-4. **Python Virtual Environment** - Isolated Python environment
+4. **Python 3.10** - Required for PyGObject/GTK3 compatibility
+   - **Only checked for Python package releases** (step 3 must detect no binary)
+   - Installs automatically if missing (via `apt`)
+   - Binary releases skip this step entirely
+
+5. **Python Virtual Environment** - Isolated Python environment (Python releases only)
    - Creates venv with system site-packages
    - Enables GTK3 introspection and PyGObject
+   - **Skipped entirely for binary releases** (all dependencies already bundled)
+
+## Installation Types
+
+The setup script automatically detects your installation type:
+
+### Binary Release (Recommended)
+
+**Detection:** Script finds `lmstudio-tray-manager` binary in the script directory
+
+**What happens:**
+
+- ✓ No Python venv needed (dependencies bundled in binary)
+- ✓ Fast setup (only checks dependencies)
+- ✓ Checks for LM Studio daemon
+- ✓ Checks for LM Studio desktop app
+- ✓ Minimal dependencies (no Python installation required)
+
+**Next steps:**
+
+```bash
+./lmstudio-tray-manager --auto-start-daemon
+```
+
+### Python Package Release
+
+**Detection:** No `lmstudio-tray-manager` binary found
+
+**What happens:**
+
+- ✓ Creates Python virtual environment (./venv)
+- ✓ Checks for LM Studio daemon
+- ✓ Checks for LM Studio desktop app
+- ✓ Checks for Python 3.10 (installs if missing)
+- ✓ Sets up GTK3 and PyGObject support
+
+**Next steps:**
+
+```bash
+./lmstudio_autostart.sh
+```
 
 ## Quick Start
 
 ```bash
-# Run the setup script (handles all checks and installations)
+# Run the setup script (auto-detects installation type)
 ./setup.sh
 
 # Preview setup actions without changing your system
@@ -76,21 +128,17 @@ The setup script checks for and optionally installs:
 # The setup will:
 # ✓ Check for LM Studio daemon
 # ✓ Check for LM Studio desktop app
-# ✓ Install Python 3.10 if needed
-# ✓ Create venv in ./venv/
+# ✓ Detect if binary or Python package
+# ✓ Create venv (Python packages only)
+# ✓ Install Python 3.10 if needed (Python packages only)
 
-# After setup, run the automation script
+# For binary release:
+./lmstudio-tray-manager --auto-start-daemon
+tail -f .logs/lmstudio_tray.log
+
+# For Python package:
 ./lmstudio_autostart.sh
-
-# Check logs in .logs directory
 tail -f .logs/lmstudio_autostart.log
-
-# If a binary exists at dist/lmstudio-tray-manager,
-# lmstudio_autostart.sh will prefer it over Python and pass:
-# - --auto-start-daemon (default mode)
-# - --debug (when --debug is used)
-# - --gui (when --gui is used)
-# Otherwise the same flags are forwarded to the Python tray script.
 
 ```
 
@@ -107,7 +155,7 @@ Dry-run mode:
 - Does **not** install packages, remove folders, create venvs, or modify files
 - Writes a dry-run summary to `.logs/setup.log`
 
-Example output (shortened):
+Example output for Python package releases (Steps 4 and 5 are skipped for binary releases):
 
 ```text
 [INFO] Running setup in dry-run mode (no changes will be applied)
@@ -119,6 +167,8 @@ Example output (shortened):
 [DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
 [DONE] Dry-run completed successfully (0 changes applied)
 ```
+
+**Note:** For binary releases, the Python environment steps (Steps 4 and 5) are automatically skipped by the gating logic in `setup.sh`, so you will not see the virtualenv or pip installation lines in the dry-run output.
 
 ## Setup Script Outputs
 
@@ -182,11 +232,28 @@ Selecting `y` installs Python 3.10 via `apt` (requires sudo password).
 
 ## File Structure After Setup
 
-After running `./setup.sh`, your project directory will contain:
+### For Binary Release
+
+After running `./setup.sh`:
+
+```files
+.
+├── lmstudio-tray-manager       # Pre-built binary
+├── .logs/                      # 📝 Log files directory
+│   └── setup.log               # Setup script log (created during setup)
+```
+
+**Note:** No venv created; binary is self-contained.
+
+### For Python Package
+
+After running `./setup.sh`:
 
 ```files
 .
 ├── venv/                       # 🆕 Python virtual environment
+├── lmstudio_autostart.sh       # Automation script
+├── lmstudio_tray.py            # Tray monitor script
 ├── .logs/                      # 📝 Log files directory
 │   ├── setup.log               # Setup script log (created during setup)
 │   ├── lmstudio_autostart.log  # Daemon script log
@@ -351,20 +418,23 @@ grep -i 'error' .logs/*.log
 tail -f .logs/*.log
 ```
 
-### Update Check Issues
+### Network Prerequisites for Updates
 
-The tray monitor periodically checks GitHub releases and also exposes a manual
-"Check for updates" menu action. If you see "Unable to check for updates.",
-review the tray log for details:
+The tray monitor requires outbound HTTPS access to GitHub for update checks. If you see "Unable to check for updates.", verify network connectivity:
 
 ```bash
+# Test GitHub API access
+curl -I https://api.github.com/repos/Ajimaru/LM-Studio-Tray-Manager/releases
+
+# Review tray logs for details
 tail -f .logs/lmstudio_tray.log
 ```
 
 Common causes:
 
 - GitHub API rate limits (HTTP 403)
-- No internet access or proxy/firewall restrictions
+- No internet access or firewall/proxy restrictions
+- Corporate SSL interception or proxy blocking HTTPS
 - Temporary GitHub outages
 
 ### View tray monitor logs
