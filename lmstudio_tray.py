@@ -1889,9 +1889,11 @@ class TrayIcon:
             )
             return
 
+        dialog_flags = getattr(gtk, "DialogFlags", None)
+        modal_flag = getattr(dialog_flags, "MODAL", 0) if dialog_flags else 0
         dialog = gtk.Dialog(
             title="Configuration",
-            flags=gtk.DialogFlags.MODAL,
+            flags=modal_flag,
         )
         dialog.add_buttons(
             "Cancel",
