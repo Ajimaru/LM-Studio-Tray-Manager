@@ -87,8 +87,7 @@ The setup script automatically detects your installation type:
 - ✓ Fast setup (only checks dependencies)
 - ✓ Checks for LM Studio daemon
 - ✓ Checks for LM Studio desktop app
-- ✓ Checks for Python 3.10 (not installed if missing)
-- ✓ Minimal dependencies
+- ✓ Minimal dependencies (no Python installation required)
 
 **Next steps:**
 
@@ -105,7 +104,7 @@ The setup script automatically detects your installation type:
 - ✓ Creates Python virtual environment (./venv)
 - ✓ Checks for LM Studio daemon
 - ✓ Checks for LM Studio desktop app
-- ✓ Installs Python 3.10 if missing
+- ✓ Checks for Python 3.10 (installs if missing)
 - ✓ Sets up GTK3 and PyGObject support
 
 **Next steps:**

@@ -198,6 +198,61 @@ class _AppState:
         cls.GdkPixbuf = gdk_pixbuf_module
 
 
+def sync_app_state_for_tests(
+    gtk_mod: Optional[ModuleType] = None,
+    glib_mod: Optional[ModuleType] = None,
+    app_mod: Optional[ModuleType] = None,
+    gdk_pixbuf_mod: Optional[ModuleType] = None,
+    script_dir_val: Optional[str] = None,
+    app_version_val: Optional[str] = None,
+    auto_start_val: Optional[bool] = None,
+    gui_mode_val: Optional[bool] = None,
+) -> None:
+    """Synchronize test mocks with _AppState and module-level variables.
+
+    This public helper function allows tests to update both _AppState
+    (private class) and module-level variables in a coordinated way,
+    avoiding direct access to _AppState.
+
+    Args:
+        gtk_mod (ModuleType, optional): GTK module to set.
+        glib_mod (ModuleType, optional): GLib module to set.
+        app_mod (ModuleType, optional): AppIndicator3 module to set.
+        gdk_pixbuf_mod (ModuleType, optional): GdkPixbuf module to set.
+        script_dir_val (str, optional): script_dir value to set.
+        app_version_val (str, optional): APP_VERSION value to set.
+        auto_start_val (bool, optional): AUTO_START_DAEMON value to set.
+        gui_mode_val (bool, optional): GUI_MODE value to set.
+
+    Returns:
+        None.
+    """
+    # Set GTK module references on _AppState
+    if gtk_mod is not None:
+        _AppState.Gtk = gtk_mod
+    if glib_mod is not None:
+        _AppState.GLib = glib_mod
+    if app_mod is not None:
+        _AppState.AppIndicator3 = app_mod
+    if gdk_pixbuf_mod is not None:
+        _AppState.GdkPixbuf = gdk_pixbuf_mod
+
+    # Set module-level variables synchronized with _AppState
+    module_globals = globals()
+    if script_dir_val is not None:
+        module_globals["script_dir"] = script_dir_val
+        _AppState.script_dir = script_dir_val
+    if app_version_val is not None:
+        module_globals["APP_VERSION"] = app_version_val
+        _AppState.APP_VERSION = app_version_val
+    if auto_start_val is not None:
+        module_globals["AUTO_START_DAEMON"] = auto_start_val
+        _AppState.AUTO_START_DAEMON = auto_start_val
+    if gui_mode_val is not None:
+        module_globals["GUI_MODE"] = gui_mode_val
+        _AppState.GUI_MODE = gui_mode_val
+
+
 # === Module-level variables for test access and initialization defaults ===
 # These are synchronized with _AppState during initialization.
 script_dir = os.getcwd()
@@ -376,7 +431,25 @@ def get_asset_path(*path_components):
 
 
 def get_authors():
-    """Load authors from AUTHORS file in script directory."""
+    """Load authors from AUTHORS file in script directory.
+
+    Reads the AUTHORS file located in _AppState.script_dir and parses
+    author names from markdown list format. Returns a fallback list
+    containing APP_MAINTAINER if no authors are found.
+
+    Args:
+        None.
+
+    Returns:
+        list: List of author name strings extracted from the AUTHORS file.
+            If the file cannot be read or contains no valid authors,
+            returns a list containing APP_MAINTAINER as a fallback.
+
+    Raises:
+        No exceptions are raised to the caller. OSError and FileNotFoundError
+        that may occur when opening the AUTHORS file are caught and handled
+        internally by returning the fallback author list.
+    """
     authors_path = os.path.join(_AppState.script_dir, "AUTHORS")
     authors = []
     try:
@@ -1278,11 +1351,7 @@ class TrayIcon:
                     )
 
             self.build_menu()
-            glib = _AppState.GLib
-            if glib is not None:
-                glib.timeout_add_seconds(
-                    2, lambda: (self.build_menu(), False)[1]
-                )
+            self._schedule_menu_refresh()
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Error stopping llmster daemon: %s", e)
             notify_cmd = get_notify_send_cmd()
@@ -1437,24 +1506,44 @@ class TrayIcon:
                     raise ValueError(msg)
 
                 # Launch validated executable without subprocess.
+                # Use double-fork daemonization to avoid zombie processes.
                 devnull_fd = os.open(os.devnull, os.O_RDWR)
                 try:
+                    # First fork: create intermediate child
                     child_pid = os.fork()
                     if child_pid == 0:
+                        # Intermediate child process
                         try:
-                            os.dup2(devnull_fd, 1)
-                            os.dup2(devnull_fd, 2)
-                            os.execv(app_path, [app_path])
-                        finally:
-                            os._exit(127)
+                            # Second fork: create grandchild daemon
+                            grandchild_pid = os.fork()
+                            if grandchild_pid == 0:
+                                # Grandchild (daemon) process
+                                try:
+                                    os.dup2(devnull_fd, 1)
+                                    os.dup2(devnull_fd, 2)
+                                    # nosec B606
+                                    os.execv(app_path, [app_path])
+                                except OSError:
+                                    pass
+                                finally:
+                                    os._exit(127)
+                            else:
+                                # Intermediate child: exit after
+                                # grandchild is spawned
+                                os._exit(0)
+                        except OSError:
+                            os._exit(1)
+                    else:
+                        # Parent process: reap the
+                        # intermediate child to avoid zombies
+                        os.waitpid(child_pid, 0)
                 finally:
                     os.close(devnull_fd)
 
-                # Process is intentionally detached - no need to wait
+                # Process is intentionally detached and properly reaped
                 logging.info(
-                    "Started LM Studio desktop app: %s (PID: %s)",
-                    app_path,
-                    child_pid
+                    "Started LM Studio desktop app: %s",
+                    app_path
                 )
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
@@ -1543,11 +1632,7 @@ class TrayIcon:
                         ]
                     )
             self.build_menu()
-            glib = _AppState.GLib
-            if glib is not None:
-                glib.timeout_add_seconds(
-                    2, lambda: (self.build_menu(), False)[1]
-                )
+            self._schedule_menu_refresh()
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logging.error("Failed to stop desktop app: %s", e)
             notify_cmd = get_notify_send_cmd()

@@ -1,7 +1,7 @@
 # Release Build Container (mimics GitHub Actions ubuntu-22.04)
 FROM ubuntu:22.04
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     bc \
     pkg-config \
     python3.10 \
@@ -19,22 +19,26 @@ RUN apt-get update && apt-get install -y \
     tar \
     gzip \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python
+    && ln -sf /usr/bin/python3.10 /usr/bin/python \
+    && groupadd -r builder \
+    && useradd -r -g builder -d /home/builder -s /sbin/nologin \
+       -c "Non-root build user" builder \
+    && mkdir -p /home/builder \
+    && chown -R builder:builder /home/builder
 
 WORKDIR /workspace
+RUN chown builder:builder /workspace
 
-COPY . .
+COPY --chown=builder:builder . .
 
 # Build the binary
 RUN ./build.sh
-
-# Read version
-RUN VERSION=$(cat VERSION) && echo "Build version: $VERSION"
 
 # Prepare release packages
 RUN bash -c ' \
     set -euo pipefail; \
     TAG=$(cat VERSION); \
+    echo "Build version: ${TAG}"; \
     PKG_NAME_SRC="LM-Studio-Tray-Manager-${TAG}"; \
     PKG_NAME_BIN="LM-Studio-Tray-Manager-${TAG}-binary"; \
     STAGE_DIR_SRC="release/${PKG_NAME_SRC}"; \
@@ -43,7 +47,7 @@ RUN bash -c ' \
     rm -rf release; \
     mkdir -p "$STAGE_DIR_SRC" "$STAGE_DIR_BIN"; \
     \
-    FILES=("lmstudio_autostart.sh" "lmstudio_tray.py" "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"); \
+    FILES=("lmstudio_autostart.sh" "lmstudio_tray.py" "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION" "requirements-build.txt"); \
     \
     for file in "${FILES[@]}"; do \
       if [[ -f "$file" ]]; then \
@@ -86,5 +90,7 @@ RUN bash -c ' \
     cd release && sha256sum *.tar.gz > SHA256SUMS.txt; \
     ls -lh *.tar.gz SHA256SUMS.txt \
 '
+
+USER builder
 
 CMD ["/bin/bash"]

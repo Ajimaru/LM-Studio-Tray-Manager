@@ -468,11 +468,12 @@ def tray_module_fixture(monkeypatch, tmp_path):
     setattr(module, "GLib", glib_mod)
     setattr(module, "AppIndicator3", app_mod)
 
-    # Also set on _AppState for internal use
-    app_state = getattr(module, "_AppState")
-    app_state.Gtk = gtk_mod
-    app_state.GLib = glib_mod
-    app_state.AppIndicator3 = app_mod
+    # Sync GTK modules and module-level variables via public helper
+    module.sync_app_state_for_tests(
+        gtk_mod=gtk_mod,
+        glib_mod=glib_mod,
+        app_mod=app_mod,
+    )
 
     # Setup synchronization: when module-level variables are set,
     # also update _AppState to keep them in sync
@@ -485,7 +486,15 @@ def tray_module_fixture(monkeypatch, tmp_path):
             "script_dir", "APP_VERSION",
             "AUTO_START_DAEMON", "GUI_MODE"
         ):
-            setattr(app_state, name, value)
+            # Use public helper to sync module variables with _AppState
+            kwargs_map = {
+                "script_dir": "script_dir_val",
+                "APP_VERSION": "app_version_val",
+                "AUTO_START_DAEMON": "auto_start_val",
+                "GUI_MODE": "gui_mode_val",
+            }
+            sync_kwargs = {kwargs_map[name]: value}
+            module.sync_app_state_for_tests(**sync_kwargs)
         return original_setattr(target, name, value, *args, **kwargs)
 
     monkeypatch.setattr = synced_setattr
@@ -1625,12 +1634,18 @@ def test_start_desktop_app_fork_child_process(tray_module, monkeypatch):
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
 
-    # Test CHILD process - mock fork to return 0 (simulating child)
+    # Test CHILD process with double-fork daemonization.
+    # Simulate: first fork returns 0 (intermediate child),
+    # second fork returns 0 (grandchild daemon).
     dup2_calls = []
     exit_calls = []
+    fork_call_count = [0]
 
     def mock_fork():
-        return 0  # Simulate child process
+        fork_call_count[0] += 1
+        # Both first and second fork return 0 to simulate
+        # being in the grandchild daemon process
+        return 0
 
     def mock_dup2(fd1, fd2):
         dup2_calls.append((fd1, fd2))
@@ -1646,6 +1661,7 @@ def test_start_desktop_app_fork_child_process(tray_module, monkeypatch):
     monkeypatch.setattr(tray_module.os, "dup2", mock_dup2)
     monkeypatch.setattr(tray_module.os, "close", lambda *_a: None)
     monkeypatch.setattr(tray_module.os, "_exit", mock_exit)
+    monkeypatch.setattr(tray_module.os, "waitpid", lambda *_a: None)
 
     notifications = []
 
@@ -1711,6 +1727,79 @@ def test_start_desktop_app_fork_oserror(tray_module, monkeypatch):
     # Error handling should have tried to send notification
     # (if notify-send is available)
     assert tray is not None  # nosec B101
+
+
+def test_start_desktop_app_fork_parent_reaps_child(
+    tray_module, monkeypatch
+):
+    """Test parent process path in double-fork: waitpid succeeds."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=0, stdout="lm-studio"),
+    )
+    monkeypatch.setattr(
+        tray_module.shutil,
+        "which",
+        lambda _x: "/usr/bin/lm-studio",
+    )
+    monkeypatch.setattr(tray_module.os.path, "isfile", lambda _p: True)
+    monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
+
+    def is_safe_dir(path):
+        return path == "/usr/bin"
+
+    monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
+
+    # Test PARENT process path - mock fork to return non-zero
+    # (indicating parent gets child PID)
+    fork_calls = []
+    waitpid_calls = []
+    close_calls = []
+
+    def mock_fork():
+        fork_calls.append(None)
+        # Return non-zero to simulate parent process
+        return 12345
+
+    def mock_waitpid(pid, options):
+        waitpid_calls.append((pid, options))
+        return pid
+
+    def mock_close(fd):
+        close_calls.append(fd)
+
+    monkeypatch.setattr(tray_module.os, "fork", mock_fork)
+    monkeypatch.setattr(tray_module.os, "open", lambda *_a: 3)
+    monkeypatch.setattr(tray_module.os, "close", mock_close)
+    monkeypatch.setattr(tray_module.os, "waitpid", mock_waitpid)
+
+    notifications = []
+
+    def capture_notify(cmd):
+        notifications.append(cmd)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
+
+    # Should succeed and reap the intermediate child
+    tray.start_desktop_app(None)
+    # Verify fork was called at least once
+    assert len(fork_calls) > 0  # nosec B101
+    # Verify waitpid was called to reap intermediate child
+    assert len(waitpid_calls) > 0  # nosec B101
+    # Verify fd was closed
+    assert len(close_calls) > 0  # nosec B101
 
 
 def test_stop_desktop_app_no_process_path(tray_module, monkeypatch):
