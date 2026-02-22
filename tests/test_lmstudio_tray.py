@@ -523,18 +523,18 @@ def _call_member(instance, member_name, *args, **kwargs):
     return member(*args, **kwargs)
 
 
-def test_get_app_version_reads_file(tray_module, tmp_path, monkeypatch):
+def test_get_app_version_reads_file(tray_module, tmp_path):
     """Read version string from a VERSION file."""
-    monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path))
     (tmp_path / "VERSION").write_text("v1.2.3\n", encoding="utf-8")
     version = tray_module.get_app_version()
     if version != "v1.2.3":
         pytest.fail(f"Expected version 'v1.2.3' but got '{version}'")
 
 
-def test_get_app_version_fallback_default(tray_module, tmp_path, monkeypatch):
+def test_get_app_version_fallback_default(tray_module, tmp_path):
     """Fall back to default version when file is absent."""
-    monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path))
     assert (
         tray_module.get_app_version()
         == tray_module.DEFAULT_APP_VERSION
@@ -769,7 +769,7 @@ def test_get_latest_release_version_no_tag(tray_module, monkeypatch):
 def test_check_updates_notifies_once(tray_module, monkeypatch):
     """Send a single update notification per latest version."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    tray_module.sync_app_state_for_tests(app_version_val="v1.0.0")
     monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
     monkeypatch.setattr(
         tray_module,
@@ -797,7 +797,7 @@ def test_check_updates_notifies_once(tray_module, monkeypatch):
 def test_check_updates_dev_build(tray_module, monkeypatch):
     """Set update_status to 'Dev build' when running a dev build."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "APP_VERSION", "dev")
+    tray_module.sync_app_state_for_tests(app_version_val="dev")
     monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
     tray.check_updates()
     assert tray.update_status == "Dev build"  # nosec B101
@@ -806,7 +806,7 @@ def test_check_updates_dev_build(tray_module, monkeypatch):
 def test_check_updates_error_path(tray_module, monkeypatch):
     """Set update_status to 'Unknown' when version fetch fails."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    tray_module.sync_app_state_for_tests(app_version_val="v1.0.0")
     monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
     monkeypatch.setattr(
         tray_module,
@@ -850,7 +850,7 @@ def test_manual_check_updates_reports_update_available(
 ):
     """Notify user when an update is available."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    tray_module.sync_app_state_for_tests(app_version_val="v1.0.0")
     monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
     monkeypatch.setattr(
         tray_module,
@@ -879,7 +879,7 @@ def test_manual_check_updates_reports_update_available(
 def test_manual_check_updates_reports_dev_build(tray_module, monkeypatch):
     """Notify user when running a development build."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "APP_VERSION", "dev")
+    tray_module.sync_app_state_for_tests(app_version_val="dev")
     monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
     monkeypatch.setattr(
         tray_module,
@@ -911,7 +911,7 @@ def test_manual_check_updates_reports_error_with_details(
 ):
     """Notify user when update check fails with error details."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    tray_module.sync_app_state_for_tests(app_version_val="v1.0.0")
     monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
     monkeypatch.setattr(
         tray_module,
@@ -993,7 +993,7 @@ def test_manual_check_updates_reports_error_without_details(
 ):
     """Notify user when update check fails without details."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "APP_VERSION", "v1.0.0")
+    tray_module.sync_app_state_for_tests(app_version_val="v1.0.0")
     monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
     monkeypatch.setattr(
         tray_module,
@@ -1020,9 +1020,9 @@ def test_manual_check_updates_reports_error_without_details(
     assert "Unable to check for updates" in msg  # nosec B101
 
 
-def test_get_authors_reads_file(tray_module, tmp_path, monkeypatch):
+def test_get_authors_reads_file(tray_module, tmp_path):
     """Read authors from AUTHORS file."""
-    monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path))
     authors_content = """# Contributors
 
     - Ajimaru (@Ajimaru) - Project creator
@@ -1037,10 +1037,9 @@ def test_get_authors_reads_file(tray_module, tmp_path, monkeypatch):
 def test_get_authors_parsing_handles_dashes_and_handles(
     tray_module,
     tmp_path,
-    monkeypatch,
 ):
     """Strip handles and descriptions from authors list."""
-    monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path))
     (tmp_path / "AUTHORS").write_text(
         "- Jane Doe (@jane) - contributor\n",
         encoding="utf-8",
@@ -1051,7 +1050,7 @@ def test_get_authors_parsing_handles_dashes_and_handles(
 
 def test_get_authors_fallback_maintainer(tray_module, tmp_path, monkeypatch):
     """Fall back to APP_MAINTAINER when AUTHORS file is absent."""
-    monkeypatch.setattr(tray_module, "script_dir", str(tmp_path))
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path))
     monkeypatch.setattr(tray_module, "APP_MAINTAINER", "TestMaintainer")
     authors = tray_module.get_authors()
     assert authors == ["TestMaintainer"]  # nosec B101
@@ -1786,7 +1785,7 @@ def test_show_status_dialog_success(tray_module, monkeypatch):
 def test_show_about_dialog_contains_version_and_repo(tray_module, monkeypatch):
     """Show about dialog including version and repository metadata."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "APP_VERSION", "v2.0.0")
+    tray_module.sync_app_state_for_tests(app_version_val="v2.0.0")
     monkeypatch.setattr(tray_module, "APP_MAINTAINER", "TestMaintainer")
     monkeypatch.setattr(
         tray_module,
@@ -2464,7 +2463,7 @@ def test_trayicon_constructor_idle_add(monkeypatch, tray_module):
 def test_maybe_auto_start_daemon(monkeypatch, tray_module):
     """Invoke auto-start path when enabled and daemon is stopped."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "AUTO_START_DAEMON", True)
+    tray_module.sync_app_state_for_tests(auto_start_val=True)
     monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
     calls = []
 
@@ -2480,7 +2479,7 @@ def test_maybe_auto_start_daemon(monkeypatch, tray_module):
 def test_maybe_start_gui(monkeypatch, tray_module):
     """Invoke GUI start path when enabled."""
     tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "GUI_MODE", True)
+    tray_module.sync_app_state_for_tests(gui_mode_val=True)
     calls = []
 
     def record_start(_widget):
