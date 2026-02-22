@@ -3424,3 +3424,277 @@ def test_parse_args_long_hand_still_works(tray_module):
         assert args.auto_start_daemon is True  # nosec B101
     finally:
         sys.argv = old_argv
+
+
+def test_validate_url_scheme_valid_http(tray_module):
+    """Validate that _validate_url_scheme accepts http URLs."""
+    tray_module._validate_url_scheme("http://localhost:1234")
+
+
+def test_validate_url_scheme_valid_https(tray_module):
+    """Validate that _validate_url_scheme accepts https URLs."""
+    tray_module._validate_url_scheme("https://api.example.com")
+
+
+def test_validate_url_scheme_invalid_file(tray_module):
+    """Reject file:// URLs for security."""
+    with pytest.raises(ValueError, match="scheme 'file' not permitted"):
+        tray_module._validate_url_scheme("file:///etc/passwd")
+
+
+def test_validate_url_scheme_invalid_ftp(tray_module):
+    """Reject ftp:// URLs for security."""
+    with pytest.raises(ValueError, match="scheme 'ftp' not permitted"):
+        tray_module._validate_url_scheme("ftp://ftp.example.com")
+
+
+def test_show_status_dialog_api_fallback_lms_fail(
+    tray_module, monkeypatch
+):
+    """Test show_status_dialog API fallback when lms ps fails."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=1, stdout=""),
+    )
+
+    api_response = {
+        "data": [
+            {"id": "mistralai/mistral-7b"},
+            {"id": "openai/gpt-3"},
+        ]
+    }
+
+    def mock_urlopen_json(*_a, **_k):
+        response = DummyContextManager()
+        response.payload = json.dumps(api_response).encode("utf-8")
+        return response
+
+    class DummyContextManager:
+        """Dummy context manager for testing purposes.
+
+        This class simulates a context manager that can be used in
+        with statements. It provides a read() method that returns a
+        payload and supports the context manager protocol via
+        __enter__ and __exit__ methods.
+
+        Attributes:
+            payload (bytes): The data returned by read(). Defaults
+                to an empty bytes object.
+        """
+        payload = b""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self):
+            """
+            Retrieve the payload data.
+
+            Returns:
+                Any: The payload data stored in this object.
+            """
+            return self.payload
+
+    monkeypatch.setattr(
+        tray_module.urllib_request, "urlopen", mock_urlopen_json
+    )
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
+
+    tray.show_status_dialog(None)
+    dialog = tray_module.Gtk.MessageDialog.last_instance
+    assert "Models loaded via desktop app:" in dialog.secondary  # nosec
+
+
+def test_show_status_dialog_api_fallback_no_lms(
+    tray_module, monkeypatch
+):
+    """Test show_status_dialog API fallback when lms not available."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
+
+    api_response = {"data": [{"id": "meta/llama2"}]}
+
+    def mock_urlopen_json(*_a, **_k):
+        response = DummyContextManager()
+        response.payload = json.dumps(api_response).encode("utf-8")
+        return response
+
+    class DummyContextManager:
+        """A dummy context manager for testing purposes.
+
+        This class simulates a context manager that holds a
+        payload of bytes data. It can be used in with statements
+        and provides a read method to retrieve the stored payload.
+        """
+        payload = b""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self):
+            """Retrieve the payload data.
+
+            Returns:
+                The payload content stored in this instance.
+            """
+            return self.payload
+
+    monkeypatch.setattr(
+        tray_module.urllib_request, "urlopen", mock_urlopen_json
+    )
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
+
+    tray.show_status_dialog(None)
+    dialog = tray_module.Gtk.MessageDialog.last_instance
+    assert "Models loaded via desktop app:" in dialog.secondary  # nosec B101
+
+
+def test_show_status_dialog_api_invalid_json(
+    tray_module, monkeypatch
+):
+    """Test show_status_dialog with invalid JSON from API."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=1, stdout=""),
+    )
+
+    def mock_urlopen_bad(*_a, **_k):
+        response = DummyContextManager()
+        response.payload = b"invalid json"
+        return response
+
+    class DummyContextManager:
+        """A dummy context manager for testing purposes.
+
+        This class simulates a context manager that holds a
+        payload of bytes data. It can be used in with statements
+        and provides a read() method to retrieve the stored
+        payload.
+
+        Attributes:
+            payload (bytes): The data payload stored in this
+                context manager.
+        """
+        payload = b""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self):
+            """Return the payload data stored in this object.
+
+            Returns:
+                The payload data.
+            """
+            return self.payload
+
+    monkeypatch.setattr(
+        tray_module.urllib_request, "urlopen", mock_urlopen_bad
+    )
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
+
+    tray.show_status_dialog(None)
+    dialog = tray_module.Gtk.MessageDialog.last_instance
+    assert "No models loaded" in dialog.secondary  # nosec B101
+
+
+def test_show_status_dialog_api_non_dict_response(
+    tray_module, monkeypatch
+):
+    """Test show_status_dialog with non-dict from API."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=1, stdout=""),
+    )
+
+    class DummyContextManager:
+        """Dummy context manager for API response testing."""
+
+        payload = b""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self):
+            """
+            Retrieve the payload data.
+
+            Returns:
+                The stored payload object.
+            """
+            return self.payload
+
+    def mock_urlopen_list(*_a, **_k):
+        """Return a list instead of dict to test error handling."""
+        response = DummyContextManager()
+        response.payload = b"[]"
+        return response
+
+    monkeypatch.setattr(
+        tray_module.urllib_request, "urlopen", mock_urlopen_list
+    )
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
+
+    tray.show_status_dialog(None)
+    dialog = tray_module.Gtk.MessageDialog.last_instance
+    assert "No models loaded" in dialog.secondary  # nosec B101
+
+
+def test_check_api_models_with_invalid_data(tray_module, monkeypatch):
+    """Test check_api_models with invalid data structure."""
+
+    def mock_urlopen_invalid(*_a, **_k):
+        response = DummyContextManager()
+        response.payload = json.dumps({"invalid": "structure"}).encode(
+            "utf-8"
+        )
+        return response
+
+    class DummyContextManager:
+        """
+        Dummy context manager for API response testing.
+        This class simulates a context manager that can be used in
+        with statements. It provides a read() method that returns a
+        payload and supports the context manager protocol via
+        __enter__ and __exit__ methods."""
+
+        payload = b""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self):
+            """
+            Read and return the payload data.
+
+            Returns:
+                The payload content stored in the instance."""
+            return self.payload
+
+    monkeypatch.setattr(
+        tray_module.urllib_request, "urlopen", mock_urlopen_invalid
+    )

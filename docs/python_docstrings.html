@@ -209,7 +209,7 @@
         
         <div class="intro" id="overview">
             <p>This documentation provides detailed information about the functions and classes in the LM Studio Tray Manager project.</p>
-            <p><strong>Last updated:</strong> 2026-02-21</p>
+            <p><strong>Last updated:</strong> 2026-02-22</p>
         </div>
 
         <section id="main-module">
@@ -268,6 +268,80 @@ Supported flags (short and long forms):
                 </div>
                 <div class="item-signature">get_authors()</div>
                 <div class="item-doc">Load authors from AUTHORS file in script directory.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">load_config</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">load_config()</div>
+                <div class="item-doc">Load config values for the LM Studio API endpoint.
+
+Updates _AppState.API_HOST and _AppState.API_PORT when valid values are
+present in the config file (~/.config/lmstudio_tray.json).
+
+Config format:
+    {
+        "api_host": "localhost",
+        "api_port": 1234
+    }
+
+Invalid or missing config files are silently ignored; defaults are used.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">save_config</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">save_config(api_host, api_port)</div>
+                <div class="item-doc">Persist config values for the LM Studio API endpoint.
+
+Saves configuration to ~/.config/lmstudio_tray.json with atomic
+writes (tmp file + rename) to prevent corruption.
+
+Args:
+    api_host (str): API host address (e.g., "localhost").
+    api_port (int): API port number (e.g., 1234).
+
+Raises:
+    ValueError: If api_host or api_port are invalid.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_validate_url_scheme</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_validate_url_scheme(url)</div>
+                <div class="item-doc">Validate that URL uses only permitted schemes (http/https).
+
+Security validation function to prevent URL scheme injection attacks.
+Rejects file://, ftp://, and other non-HTTP schemes.
+
+Args:
+    url: URL string to validate.
+
+Raises:
+    ValueError: If URL scheme is not http or https, or if API host is invalid.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">check_api_models</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">check_api_models()</div>
+                <div class="item-doc">Check if any models are loaded via LM Studio API.
+
+Queries the configured API endpoint to check if models are loaded.
+This is a fallback when 'lms ps' fails (e.g., desktop app running
+without daemon).
+
+Returns:
+    bool: True if at least one model is loaded, False otherwise.
+        Silently catches HTTP errors, timeouts, and JSON parsing errors.</div>
             </div>
 
             <div class="item">
@@ -688,9 +762,16 @@ loop.</div>
                 <div class="item-signature">show_status_dialog(self, _widget)</div>
                 <div class="item-doc">Show a GTK message dialog containing the LM Studio CLI status output.
 
-Runs `lms ps` to retrieve status information, formats a friendly
-message on success or error, and displays it in an informational
-dialog. Errors are caught and shown to the user instead of raising.</div>
+Runs `lms ps` to retrieve status information. If daemon is not
+running, falls back to querying the LM Studio API directly and
+displays loaded models. Formats a friendly message on success or
+error, and displays it in an informational dialog. Errors are caught
+and shown to the user instead of raising.
+
+Connection flow:
+    1. Try `lms ps` command (preferred when daemon is running)
+    2. Fall back to API query if lms fails or returns no output
+    3. Show error message if both fail</div>
             </div>
 
             <div class="item">
@@ -710,7 +791,9 @@ dialog. Errors are caught and shown to the user instead of raising.</div>
                 <div class="item-signature">check_model(self)</div>
                 <div class="item-doc">Check LM Studio runtime/model status and update the tray icon.
 
-Updates the tray icon using this schema:
+Queries model status using `lms ps` command (when daemon is running)
+or falls back to API query (when only desktop app is running or lms
+is unavailable). Updates the tray icon using this schema:
 - FAIL: neither daemon nor desktop app is installed
 - WARN: neither daemon nor desktop app is running
 - INFO: daemon or desktop app is running, but no model is loaded

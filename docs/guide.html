@@ -165,6 +165,7 @@
             <li><a href="#usage">Usage</a></li>
             <li><a href="#configuration">Configuration</a></li>
             <li><a href="#logging-troubleshooting">Logging & Troubleshooting</a></li>
+            <li><a href="#python-docstrings">Python Docstrings</a></li>
             <li><a href="#resources">Official Resources</a></li>
         </ul>
     </nav>
@@ -191,12 +192,6 @@
             </ul>
             <p>The <code>lmstudio_autostart.sh</code> script ensures the LM Studio daemon is running, waits for the API, optionally loads a model, and starts the tray monitor. When <code>dist/lmstudio-tray-manager</code> exists, the autostart script prefers the binary and forwards flags. The <code>lmstudio_tray.py</code> script provides a system tray icon for real-time monitoring and quick actions.</p>
             <p><strong>All log files are written to the <code>.logs/</code> directory</strong> for easy access and cleanup.</p>
-        </section>
-
-        <section id="python-docstrings">
-            <h2>Python Docstrings</h2>
-            <p>The static docstrings documentation for <code>lmstudio_tray.py</code> is available as a dedicated page and uses the same visual design as this documentation.</p>
-            <p><a href="python_docstrings.html">Open Python Docstrings Reference</a></p>
         </section>
 
         <section id="setup-guide">
@@ -368,12 +363,34 @@ EOF</code></pre>
                 </li>
                 <li><strong>Stop Desktop App:</strong> Stops LM Studio desktop process</li>
                 <li><strong>Stop Daemon:</strong> Stops llmster daemon process</li>
-                <li><strong>Show Status:</strong> Displays current LM Studio status in a dialog</li>
-                <li><strong>Options &gt; Configuration:</strong> Configure LM Studio API host/port</li>
+                <li><strong>Show Status:</strong> Displays current LM Studio status via <code>lms ps</code> output. If daemon is not running, falls back to querying the LM Studio API directly and displays loaded models. Shows "No models loaded or error." if neither succeeds.</li>
+                <li><strong>Options &gt; Configuration:</strong> Configure LM Studio API host/port endpoint. Default: <code>localhost:1234</code>. Configuration is persisted at <code>~/.config/lmstudio_tray.json</code></li>
                 <li><strong>Options &gt; Check for updates:</strong> Manual GitHub release check</li>
                 <li><strong>About:</strong> Shows version, update status, and authors</li>
                 <li><strong>Quit Tray:</strong> Terminates the tray monitor</li>
             </ul>
+
+            <h3>Model Detection & API Fallback</h3>
+            <p>The tray monitor uses a two-tier approach for model detection to handle all runtime configurations:</p>
+            <ol>
+                <li><strong>Primary (lms ps):</strong> When daemon is running, queries <code>lms ps</code> CLI command to get model status. This is the most reliable method.</li>
+                <li><strong>Fallback (API):</strong> When <code>lms</code> command fails (e.g., desktop app running independently) or returns no output, queries the LM Studio API directly at the configured endpoint. This enables model detection when only the desktop app is running.</li>
+            </ol>
+            <p>This approach ensures accurate model status display across all daemon modes:</p>
+            <ul>
+                <li><strong>Daemon Mode:</strong> Uses <code>lms ps</code> primarily, optional API fallback</li>
+                <li><strong>Desktop-App Mode:</strong> Automatically falls back to API when <code>lms</code> is not available</li>
+                <li><strong>Hybrid Mode</strong> (daemon + desktop app): Uses <code>lms ps</code> (preferred) or API fallback</li>
+            </ul>
+
+            <h3>API Configuration & Security</h3>
+            <p>The API endpoint is configurable via <strong>Options &gt; Configuration</strong>. Configuration is stored securely at <code>~/.config/lmstudio_tray.json</code> with the following settings:</p>
+            <ul>
+                <li><code>api_host</code>: LM Studio API host (default: <code>localhost</code>)</li>
+                <li><code>api_port</code>: LM Studio API port (default: <code>1234</code>)</li>
+            </ul>
+            <p><strong>Security Note:</strong> All API connections use HTTP/HTTPS schemes only. Other schemes (file://, ftp://, etc.) are rejected by the tray monitor to prevent URL scheme injection attacks. The configuration also validates that host and port values are properly formatted.</p>
+
         </section>
 
         <section id="binary-release">
@@ -468,16 +485,15 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     B --> C{--gui flag?}
                     C -->|Yes| D[Stop daemon]
                     D --> E[Start LM Studio GUI]
-                    E --> L["Start tray monitor\n(binary preferred; passes --gui)" ]
-                    L --> I["<b>END</b>"]
+                    E --> L["Start tray monitor<br/>(binary preferred; passes --gui)"]
                     C -->|No| F[Start LM Studio daemon]
-                    F --> G[Wait for API<br/>host:port (configurable)]
+                    F --> G[Wait for API<br/>host:port<br/>configurable]
                     G --> H{Model specified?}
                     H -->|Yes| J[Load model via lms CLI]
                     H -->|No| K[Skip model loading]
                     J --> L
                     K --> L
-                    L --> I
+                    L --> I["<b>END</b>"]
             </div>
 
             <h3>lmstudio_tray.py - GTK3 System Tray Monitor</h3>
@@ -614,12 +630,24 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
             <p>This creates a Python 3.10 environment with PyGObject/GTK3 support in the <code>venv/</code> directory. For detailed information, see <a href="SETUP.md" target="_blank" rel="noopener">SETUP.md</a>.</p>
 
             <h3>Configuration Files</h3>
-            <p>The tray monitor stores its configuration in <code>~/.config/lmstudio_tray.json</code>.</p>
-            <p>Current settings:</p>
+            <p>The tray monitor stores its configuration in <code>~/.config/lmstudio_tray.json</code>. This file is created and updated through the <strong>Options &gt; Configuration</strong> dialog in the tray menu.</p>
+            <p>Configuration file format:</p>
+            <pre><code>{
+  "api_host": "localhost",
+  "api_port": 1234
+}</code></pre>
+            <p><strong>Configuration Settings:</strong></p>
             <ul>
-                <li><code>api_host</code>: LM Studio API host (default: <code>localhost</code>)</li>
-                <li><code>api_port</code>: LM Studio API port (default: <code>1234</code>)</li>
+                <li><code>api_host</code>: LM Studio API host address for model status queries (default: <code>localhost</code>). Accepts hostnames and IP addresses.</li>
+                <li><code>api_port</code>: LM Studio API port number (default: <code>1234</code>). Must be a valid port number (1-65535).</li>
             </ul>
+            <p><strong>To Modify Configuration:</strong></p>
+            <ol>
+                <li>Right-click the tray icon and select <strong>Options &gt; Configuration</strong></li>
+                <li>Enter the API host and port values</li>
+                <li>Click <strong>Save</strong> to persist the configuration to <code>~/.config/lmstudio_tray.json</code></li>
+            </ol>
+            <p><strong>Security Validation:</strong> The tray monitor automatically validates API connections to ensure they use HTTP or HTTPS schemes only. Other schemes (file://, ftp://, etc.) are rejected to prevent security exploits.</p>
 
             <h3>Environment Variables</h3>
             <p>Customize behavior with environment variables:</p>
@@ -675,6 +703,12 @@ grep -i "error" .logs/*.log</code></pre>
             <h3>Clearing Logs</h3>
             <p>To clear old logs, simply delete the <code>.logs/</code> directory (logs will be recreated on next run):</p>
             <pre><code>rm -rf .logs</code></pre>
+        </section>
+
+        <section id="python-docstrings">
+            <h2>Python Docstrings</h2>
+            <p>The static docstrings documentation for <code>lmstudio_tray.py</code> is available as a dedicated page and uses the same visual design as this documentation.</p>
+            <p><a href="python_docstrings.html">Open Python Docstrings Reference</a></p>
         </section>
 
         <section id="resources">

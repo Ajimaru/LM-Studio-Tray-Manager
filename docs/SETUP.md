@@ -31,7 +31,7 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
   - [Troubleshooting](#troubleshooting)
     - [venv not found](#venv-not-found)
     - [Checking Logs](#checking-logs)
-    - [Update Check Issues](#update-check-issues)
+    - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
     - [View tray monitor logs](#view-tray-monitor-logs)
     - [View both in real-time (in separate terminals)](#view-both-in-real-time-in-separate-terminals)
   - [PyGObject Import Errors](#pygobject-import-errors)
@@ -418,22 +418,24 @@ grep -i 'error' .logs/*.log
 tail -f .logs/*.log
 ```
 
-### Update Check Issues
+### Network Prerequisites for Updates
 
-The tray monitor periodically checks GitHub releases and also exposes a manual
-`Options > Check for updates` action. If you see "Unable to check for updates.", review the tray log for details:
+The tray monitor requires outbound HTTPS access to GitHub for update checks. If you see "Unable to check for updates.", verify network connectivity:
 
 ```bash
+# Test GitHub API access
+curl -I https://api.github.com/repos/Ajimaru/LM-Studio-Tray-Manager/releases
+
+# Review tray logs for details
 tail -f .logs/lmstudio_tray.log
 ```
 
 Common causes:
 
 - GitHub API rate limits (HTTP 403)
-- No internet access or proxy/firewall restrictions
+- No internet access or firewall/proxy restrictions
+- Corporate SSL interception or proxy blocking HTTPS
 - Temporary GitHub outages
-
-The tray configuration (LM Studio API host/port) is stored in `~/.config/lmstudio_tray.json`.
 
 ### View tray monitor logs
 

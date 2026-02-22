@@ -539,14 +539,9 @@ def _validate_url_scheme(url):
             f"only 'http' and 'https' are allowed"
         )
 
-    port = _normalize_api_port(_AppState.API_PORT)
-    if port is None:
-        raise ValueError("Invalid API port")
-    return f"http://{host}:{port}"
     host = (_AppState.API_HOST or "").strip()
     if not host or any(ch.isspace() for ch in host):
         raise ValueError("Invalid API host")
-
 
     # Disallow embedding a scheme/path/query in the host field.
     if "://" in host or "/" in host or "?" in host or "#" in host:
@@ -560,8 +555,27 @@ def _validate_url_scheme(url):
             raise ValueError("Invalid API host")
         host = f"[{host}]"
 
-    port = _AppState.API_PORT
+    port = _normalize_api_port(_AppState.API_PORT)
+    if port is None:
+        raise ValueError("Invalid API port")
     return f"http://{host}:{port}"
+
+
+def get_api_base_url():
+    """Return the base URL for the LM Studio API endpoint.
+
+    Constructs the URL using the configured API_HOST and API_PORT
+    from _AppState.
+
+    Returns:
+        str: Base API URL in format http://host:port
+
+    Raises:
+        ValueError: If the API host or port configuration is invalid.
+    """
+    return _validate_url_scheme(
+        f"http://{_AppState.API_HOST}:{_AppState.API_PORT}"
+    )
 
 
 def get_api_models_url():
@@ -1840,52 +1854,46 @@ class TrayIcon:
                 if result.returncode == 0 and result.stdout.strip():
                     text = result.stdout.strip()
                 else:
-                    model_names = "\n".join(
-                        [
-                            (m.get("id") or "Unknown") if isinstance(m, dict) else "Unknown"
-                            for m in models
-                        ]
-                    )
-                        try:
-                            api_url = get_api_models_url()
-                            _validate_url_scheme(api_url)
-                            req = urllib_request.Request(
-                                api_url,
-                                headers={"User-Agent":
-                                         "lmstudio-tray-manager"},
+                    try:
+                        api_url = get_api_models_url()
+                        _validate_url_scheme(api_url)
+                        req = urllib_request.Request(
+                            api_url,
+                            headers={"User-Agent":
+                                     "lmstudio-tray-manager"},
+                        )
+                        with urllib_request.urlopen(
+                            req, timeout=2
+                        ) as response:
+                            payload = response.read()
+                            data = json.loads(
+                                payload.decode("utf-8")
                             )
-                            with urllib_request.urlopen(
-                                req, timeout=2
-                            ) as response:
-                                payload = response.read()
-                                data = json.loads(
-                                    payload.decode("utf-8")
-                                )
-                                if isinstance(data, dict):
-                                    models = data.get("data", [])
-                                    if (isinstance(models, list) and
-                                            len(models) > 0):
-                                        model_names = "\n".join(
-                                            [m.get("id", "Unknown")
-                                             for m in models]
-                                        )
-                                        text = (
-                                            "Models loaded via desktop app:\n"
-                                            f"{model_names}"
-                                        )
-                                    else:
-                                        text = (
-                                            "No models loaded or error."
-                                        )
-                        except (
-                            urllib_error.HTTPError,
-                            urllib_error.URLError,
-                            OSError,
-                            ValueError,
-                            UnicodeDecodeError,
-                            json.JSONDecodeError,
-                        ):
-                            text = "No models loaded or error."
+                            if isinstance(data, dict):
+                                models = data.get("data", [])
+                                if (isinstance(models, list) and
+                                        len(models) > 0):
+                                    model_names = "\n".join(
+                                        [m.get("id", "Unknown")
+                                         for m in models]
+                                    )
+                                    text = (
+                                        "Models loaded via desktop app:\n"
+                                        f"{model_names}"
+                                    )
+                                else:
+                                    text = (
+                                        "No models loaded or error."
+                                    )
+                    except (
+                        urllib_error.HTTPError,
+                        urllib_error.URLError,
+                        OSError,
+                        ValueError,
+                        UnicodeDecodeError,
+                        json.JSONDecodeError,
+                    ):
+                        text = "No models loaded or error."
             else:
                 # lms not available, try API directly
                 if check_api_models():
