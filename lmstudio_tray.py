@@ -1936,14 +1936,33 @@ class TrayIcon:
             host = host_entry.get_text().strip()
             port = _normalize_api_port(port_entry.get_text())
             if host and port is not None:
-                _AppState.API_HOST = host
-                _AppState.API_PORT = port
-                save_config(host, port)
-                logging.info(
-                    "Updated API endpoint to http://%s:%s",
-                    host,
-                    port,
-                )
+                try:
+                    _AppState.API_HOST = host
+                    _AppState.API_PORT = port
+                    save_config(host, port)
+                    logging.info(
+                        "Updated API endpoint to http://%s:%s",
+                        host,
+                        port,
+                    )
+                except (OSError, ValueError) as exc:
+                    logging.error(
+                        "Failed to save configuration: %s",
+                        exc,
+                        exc_info=True,
+                    )
+                    error_dialog = gtk.MessageDialog(
+                        parent=dialog,
+                        flags=modal_flag,
+                        type=gtk.MessageType.ERROR,
+                        buttons=gtk.ButtonsType.OK,
+                        message_format=(
+                            "Failed to save configuration.\n"
+                            "Please check disk space and permissions."
+                        ),
+                    )
+                    error_dialog.run()
+                    error_dialog.destroy()
             else:
                 logging.warning("Invalid API host/port; config not saved")
 
