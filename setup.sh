@@ -464,6 +464,13 @@ if [ "$BINARY_RELEASE" = false ]; then
             SCRIPT_ABS="$(cd "$SCRIPT_DIR" && pwd -P)"
             log_output "DEBUG" "Venv absolute path: $VENV_ABS"
             log_output "DEBUG" "Script absolute path: $SCRIPT_ABS"
+            if [ -z "$VENV_ABS" ]; then
+                print_error \
+                    "Cannot resolve venv path '$VENV_DIR' (symlink or permission issue)"
+                log_output "ERROR" \
+                    "Failed to resolve absolute path for venv '$VENV_DIR'"
+                exit 1
+            fi
             case "$VENV_ABS" in
                 "$SCRIPT_ABS"/*)
                     log_output "INFO" "Venv path validated - removing $VENV_DIR"
