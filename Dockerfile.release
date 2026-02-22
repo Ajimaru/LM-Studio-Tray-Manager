@@ -68,14 +68,7 @@ RUN bash -c ' \
       cp -a "assets" "$STAGE_DIR_BIN/assets"; \
     fi; \
     \
-    BIN_FILES=(); \
-    for file in "${FILES[@]}"; do \
-      if [[ "$file" != "lmstudio_tray.py" ]]; then \
-        BIN_FILES+=("$file"); \
-      fi; \
-    done; \
-    \
-    for file in "${BIN_FILES[@]}"; do \
+    for file in "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"; do \
       if [[ -f "$file" ]]; then \
         mkdir -p "$STAGE_DIR_BIN/$(dirname "$file")"; \
         cp -a "$file" "$STAGE_DIR_BIN/$file"; \
