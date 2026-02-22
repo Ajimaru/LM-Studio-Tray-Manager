@@ -276,10 +276,14 @@ fi
 echo -e "\n${BLUE}Step 3: Checking Installation Type${NC}"
 
 BINARY_RELEASE=false
-if [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
+if [ -x "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
     print_step "Binary release detected (lmstudio-tray-manager)"
     print_info "Skipping Python virtual environment creation"
     BINARY_RELEASE=true
+elif [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
+    print_warning "Found lmstudio-tray-manager but it is not executable"
+    print_info "Treating this as a Python package release (will create venv)"
+    BINARY_RELEASE=false
 else
     print_info "Python package release detected"
     print_info "Python virtual environment will be created"
