@@ -230,6 +230,21 @@ def main():
             "for example:\n"
             "  - Debian/Ubuntu: sudo apt install python3-gi "
             "gir1.2-gtk-3.0\n"
+            "  - Fedora: sudo dnf install python3-gobject "
+            "gtk3\n"
+            "  - Arch: sudo pacman -S python-gobject gtk3",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if gi is None:
+        print(
+            "Error: PyGObject (gi) is not installed.\n"
+            "This application requires the 'gi' module provided by "
+            "PyGObject.\n"
+            "Please install the appropriate package for your system, "
+            "for example:\n"
+            "  - Debian/Ubuntu: sudo apt install python3-gi "
+            "gir1.2-gtk-3.0\n"
             "  - Fedora: sudo dnf install python3-gobject gtk3\n"
             "  - Arch: sudo pacman -S python-gobject gtk3",
             file=sys.stderr,
