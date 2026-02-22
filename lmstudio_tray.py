@@ -995,7 +995,7 @@ class TrayIcon:
 
         # Check for AppImage
         search_paths = [
-            script_dir,
+            _AppState.script_dir,
             os.path.expanduser("~/Apps"),
             os.path.expanduser("~/LM_Studio"),
             os.path.expanduser("~/Applications"),
