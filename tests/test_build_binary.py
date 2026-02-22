@@ -47,14 +47,30 @@ def test_get_gdk_pixbuf_loaders_found(
     def fake_run(*_args, **_kwargs):
         return _RunResult(returncode=0, stdout=loaders_dir + "\n")
 
-    def fake_exists(path):
-        return path in {loaders_dir, cache_file}
+    orig_isabs = build_binary_module.os.path.isabs
+
+    def fake_isdir(path):
+        return path == loaders_dir
+
+    def fake_isfile(path):
+        return path == cache_file
+
+    def fake_isabs(path):
+        if path in {loaders_dir, cache_file}:
+            return True
+        return orig_isabs(path)
 
     monkeypatch.setattr(
         build_binary_module.subprocess, "run", fake_run
     )
     monkeypatch.setattr(
-        build_binary_module.os.path, "exists", fake_exists
+        build_binary_module.os.path, "isdir", fake_isdir
+    )
+    monkeypatch.setattr(
+        build_binary_module.os.path, "isfile", fake_isfile
+    )
+    monkeypatch.setattr(
+        build_binary_module.os.path, "isabs", fake_isabs
     )
 
     found_dir, found_cache = (
