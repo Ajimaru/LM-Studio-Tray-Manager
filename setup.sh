@@ -271,42 +271,9 @@ if [ "$APP_INSTALLED" = true ]; then
 fi
 
 # ============================================================================
-# 3. Check Python 3.10
+# 3. Check if using binary release (skip venv creation if binary exists)
 # ============================================================================
-echo -e "\n${BLUE}Step 3: Checking Python 3.10${NC}"
-
-if command -v python3.10 >/dev/null 2>&1; then
-    print_step "Python 3.10 found"
-    PYTHON_VERSION=$(python3.10 --version)
-    echo "   $PYTHON_VERSION"
-else
-    print_warning "Python 3.10 not found"
-    echo ""
-    echo "Python 3.10 is required for PyGObject/GTK3 compatibility."
-    if [ "$DRY_RUN" = "1" ]; then
-        print_info "[DRY-RUN] Would install Python 3.10 via apt: python3.10 python3.10-venv python3.10-dev"
-    else
-        if ask_yes_no "Would you like to install Python 3.10?"; then
-            echo "Updating package manager..."
-            sudo apt update
-            echo "Installing Python 3.10..."
-            if sudo apt install -y python3.10 python3.10-venv python3.10-dev; then
-                print_step "Python 3.10 installed successfully"
-            else
-                print_error "Failed to install Python 3.10"
-                exit 1
-            fi
-        else
-            print_error "Python 3.10 is required. Setup cancelled."
-            exit 1
-        fi
-    fi
-fi
-
-# ============================================================================
-# 4. Check if using binary release (skip venv creation if binary exists)
-# ============================================================================
-echo -e "\n${BLUE}Step 4: Checking Installation Type${NC}"
+echo -e "\n${BLUE}Step 3: Checking Installation Type${NC}"
 
 BINARY_RELEASE=false
 if [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
@@ -316,6 +283,41 @@ if [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
 else
     print_info "Python package release detected"
     print_info "Python virtual environment will be created"
+fi
+
+# ============================================================================
+# 4. Check Python 3.10 (only for Python package releases)
+# ============================================================================
+if [ "$BINARY_RELEASE" = false ]; then
+    echo -e "\n${BLUE}Step 4: Checking Python 3.10${NC}"
+
+    if command -v python3.10 >/dev/null 2>&1; then
+        print_step "Python 3.10 found"
+        PYTHON_VERSION=$(python3.10 --version)
+        echo "   $PYTHON_VERSION"
+    else
+        print_warning "Python 3.10 not found"
+        echo ""
+        echo "Python 3.10 is required for PyGObject/GTK3 compatibility."
+        if [ "$DRY_RUN" = "1" ]; then
+            print_info "[DRY-RUN] Would install Python 3.10 via apt: python3.10 python3.10-venv python3.10-dev"
+        else
+            if ask_yes_no "Would you like to install Python 3.10?"; then
+                echo "Updating package manager..."
+                sudo apt update
+                echo "Installing Python 3.10..."
+                if sudo apt install -y python3.10 python3.10-venv python3.10-dev; then
+                    print_step "Python 3.10 installed successfully"
+                else
+                    print_error "Failed to install Python 3.10"
+                    exit 1
+                fi
+            else
+                print_error "Python 3.10 is required. Setup cancelled."
+                exit 1
+            fi
+        fi
+    fi
 fi
 
 # ============================================================================

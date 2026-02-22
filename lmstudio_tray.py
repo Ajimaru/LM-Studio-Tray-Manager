@@ -310,6 +310,10 @@ def main():
     # === Model name from argument or default ===
     _AppState.apply_cli_args(args)
 
+    # Keep legacy module-level globals in sync with _AppState
+    global script_dir
+    script_dir = _AppState.script_dir
+
     if args.auto_start_daemon and args.gui:
         print(
             "Warning: --auto-start-daemon and --gui are mutually exclusive; "
@@ -417,7 +421,7 @@ def get_asset_path(*path_components):
 
     # Check in script_dir
     script_asset = os.path.join(
-        script_dir, "assets", *path_components
+        _AppState.script_dir, "assets", *path_components
     )
     if os.path.isfile(script_asset):
         return script_asset
@@ -1430,7 +1434,7 @@ class TrayIcon:
         # If .deb not found, search for AppImage
         if not app_found:
             search_paths = [
-                script_dir,
+                _AppState.script_dir,
                 os.path.expanduser("~/Apps"),
                 os.path.expanduser("~/LM_Studio"),
                 os.path.expanduser("~/Applications"),
@@ -1505,42 +1509,17 @@ class TrayIcon:
                            f"locations: {app_path}")
                     raise ValueError(msg)
 
-                # Launch validated executable without subprocess.
-                # Use double-fork daemonization to avoid zombie processes.
-                devnull_fd = os.open(os.devnull, os.O_RDWR)
-                try:
-                    # First fork: create intermediate child
-                    child_pid = os.fork()
-                    if child_pid == 0:
-                        # Intermediate child process
-                        try:
-                            # Second fork: create grandchild daemon
-                            grandchild_pid = os.fork()
-                            if grandchild_pid == 0:
-                                # Grandchild (daemon) process
-                                try:
-                                    os.dup2(devnull_fd, 1)
-                                    os.dup2(devnull_fd, 2)
-                                    # nosec B606
-                                    os.execv(app_path, [app_path])
-                                except OSError:
-                                    pass
-                                finally:
-                                    os._exit(127)
-                            else:
-                                # Intermediate child: exit after
-                                # grandchild is spawned
-                                os._exit(0)
-                        except OSError:
-                            os._exit(1)
-                    else:
-                        # Parent process: reap the
-                        # intermediate child to avoid zombies
-                        os.waitpid(child_pid, 0)
-                finally:
-                    os.close(devnull_fd)
+                # Launch validated executable via Popen with a new
+                # session so the child is fully detached and any
+                # launch failure is raised immediately in the parent.
+                subprocess.Popen(  # nosec B603
+                    [app_path],
+                    start_new_session=True,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
 
-                # Process is intentionally detached and properly reaped
                 logging.info(
                     "Started LM Studio desktop app: %s",
                     app_path
@@ -1556,7 +1535,7 @@ class TrayIcon:
                     )
                 self.build_menu()
                 self._schedule_menu_refresh()
-            except (OSError, subprocess.SubprocessError) as e:
+            except (OSError, subprocess.SubprocessError, ValueError) as e:
                 logging.error("Failed to start desktop app: %s", e)
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
