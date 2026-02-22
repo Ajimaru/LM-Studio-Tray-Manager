@@ -13,6 +13,7 @@ The binary build process creates a single executable file that bundles:
 Note: GTK3 and GObject Introspection (GI) shared libraries and typelibs are
 not bundled into the executable. They must be installed and available on
 the target system at runtime.
+
 ## Quick Start
 
 ### Automated Build (Recommended)
