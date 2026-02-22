@@ -309,7 +309,7 @@ class DummyGtkModule(ModuleType):
             Get the content area of the widget.
 
             Returns:
-                QWidget: The content area widget.
+                DummyGtkModule.Grid: The content area widget.
             """
             return self._content
 
