@@ -851,7 +851,10 @@ class TrayIcon:
         delay_seconds = max(0, int(delay_seconds))
 
         def _refresh_once():
-            self.build_menu()
+            try:
+                self.build_menu()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logging.exception("Delayed menu refresh failed: %s", exc)
             return False
 
         glib.timeout_add_seconds(delay_seconds, _refresh_once)
