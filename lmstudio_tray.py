@@ -39,7 +39,10 @@ from urllib import request as urllib_request
 from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 
-import gi
+try:
+    import gi
+except ImportError:
+    gi = None
 
 DEFAULT_APP_VERSION = "dev"
 
