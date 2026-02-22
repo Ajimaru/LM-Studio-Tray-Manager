@@ -469,6 +469,13 @@ if [ "$BINARY_RELEASE" = false ]; then
                     "Cannot resolve venv path '$VENV_DIR' (symlink or permission issue)"
                 exit 1
             fi
+            if [ -z "$SCRIPT_ABS" ]; then
+                print_error \
+                    "Cannot resolve script directory path (symlink or permission issue)"
+                log_output "ERROR" \
+                    "Failed to resolve absolute path for script directory"
+                exit 1
+            fi
             case "$VENV_ABS" in
                 "$SCRIPT_ABS"/*)
                     log_output "INFO" "Venv path validated - removing $VENV_DIR"
