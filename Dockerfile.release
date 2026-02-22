@@ -20,12 +20,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tar \
     gzip \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python \
     && groupadd -r builder \
     && useradd -r -g builder -d /home/builder -s /sbin/nologin \
        -c "Non-root build user" builder \
     && mkdir -p /home/builder \
     && chown -R builder:builder /home/builder
+
+ENV PYTHON=/usr/bin/python3.10
 
 WORKDIR /workspace
 RUN chown builder:builder /workspace
