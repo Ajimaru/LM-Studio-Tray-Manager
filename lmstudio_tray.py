@@ -485,8 +485,9 @@ def load_config():
     if isinstance(host, str) and host.strip():
         _AppState.API_HOST = host.strip()
 
-    port = _normalize_api_port(data.get("api_port") if isinstance(data, dict)
-                               else None)
+    port = _normalize_api_port(
+        data.get("api_port") if isinstance(data, dict) else None
+    )
     if port is not None:
         _AppState.API_PORT = port
 
