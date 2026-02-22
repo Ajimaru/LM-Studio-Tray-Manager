@@ -45,7 +45,11 @@ jobs:
             libgirepository1.0-dev
 
           # UPX package name varies by repo; try both.
-          sudo apt-get install -y upx || sudo apt-get install -y upx-ucl
+          if apt-cache show upx > /dev/null 2>&1; then
+            sudo apt-get install -y upx
+          else
+            sudo apt-get install -y upx-ucl
+          fi
 
       - name: Build standalone binary
         run: |
