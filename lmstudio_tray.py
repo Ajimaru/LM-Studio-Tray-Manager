@@ -844,9 +844,14 @@ class TrayIcon:
         if glib is None:
             logging.debug("GLib is not initialized; skipping menu refresh")
             return
-        glib.timeout_add_seconds(
-            delay_seconds, lambda: (self.build_menu(), False)[1]
-        )
+
+        delay_seconds = max(0, int(delay_seconds))
+
+        def _refresh_once():
+            self.build_menu()
+            return False
+
+        glib.timeout_add_seconds(delay_seconds, _refresh_once)
 
     def build_menu(self):
         """Build or rebuild the context menu with current status and
