@@ -535,8 +535,10 @@ def _validate_url_scheme(url):
 
 
 def get_api_base_url():
-    """Return the base URL for the configured LM Studio API endpoint."""
     host = (_AppState.API_HOST or "").strip()
+    if not host or any(ch.isspace() for ch in host):
+        raise ValueError("Invalid API host")
+
 
     # Disallow embedding a scheme/path/query in the host field.
     if "://" in host or "/" in host or "?" in host or "#" in host:
