@@ -185,14 +185,16 @@ Left-click on the tray icon to open the context menu with available options.
 
 The menu shows the following options (availability depends on current state):
 
-- **Start LM Studio Daemon** - Starts the headless daemon
-- **Stop LM Studio Daemon** - Stops the running daemon
-- **Start LM Studio Desktop App** - Launches the GUI (stops daemon first)
-- **Stop LM Studio Desktop App** - Closes the desktop app
-- **Reload Status** - Manually refresh the tray status
-- **Check for Updates** - Check GitHub for new releases
-- **Open Settings** - (if implemented) Access application settings
-- **Quit** - Exit the tray manager
+- **Start Daemon (Headless)** - Starts the headless daemon
+- **Stop Daemon** - Stops the running daemon
+- **Start Desktop App** - Launches the GUI (stops daemon first)
+- **Stop Desktop App** - Closes the desktop app
+- **Show Status** - Manually refresh and display the tray status
+- **Options** - Submenu containing:
+  - **Configuration** - Access application settings
+  - **Check for updates** - Check GitHub for new releases
+- **About** - Display application information
+- **Quit Tray** - Exit the tray manager
 
 Each option is **context-aware**: unavailable actions are grayed out.
 

@@ -349,7 +349,7 @@ tail -f .logs/*.log
 
 ### Network Prerequisites for Updates
 
-The tray monitor requires outbound HTTPS access to GitHub for update checks. If you see "Unable to check for updates.", verify network connectivity and check logs. See [USE.md](USE.md) for detailed troubleshooting steps.
+The tray monitor requires outbound HTTPS access to GitHub for update checks. If you see "Unable to check for updates." or encounter network issues, verify network connectivity and check logs. See [USE.md](USE.md) for detailed troubleshooting steps.
 
 ### PyGObject Import Errors
 
@@ -364,20 +364,6 @@ If you see `ImportError: cannot import name '_gi'`:
 2. See [USE.md](USE.md) for log viewing instructions.
 
 ### System Tray Icon Not Appearing
-
-If you encounter network issues, verify connectivity and check logs.
-
-1. See [USE.md](USE.md) for detailed troubleshooting steps.
-
-If you see `ImportError: cannot import name '_gi'`:
-
-1. Verify Python 3.10 is being used:
-
-   ```bash
-      ./venv/bin/python3 --version
-      ```
-
-2. See [USE.md](USE.md) for log viewing instructions.
 
 If the tray monitor is running but icon not visible:
 
