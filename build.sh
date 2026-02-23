@@ -101,7 +101,8 @@ VENV_PYTHON="$VENV_DIR/bin/python"
 if ! "$VENV_PYTHON" -m PyInstaller --version &> /dev/null; then
     echo -e "${YELLOW}Installing PyInstaller in venv...${NC}"
     "$VENV_PYTHON" -m pip install --upgrade pip
-    "$VENV_PYTHON" -m pip install -r "$SCRIPT_DIR/requirements-build.txt"
+    # Use --require-hashes to enforce integrity verification
+    "$VENV_PYTHON" -m pip install --require-hashes -r "$SCRIPT_DIR/requirements-build.txt"
 
 fi
 
