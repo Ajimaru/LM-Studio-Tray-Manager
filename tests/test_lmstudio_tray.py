@@ -1604,6 +1604,9 @@ def test_start_daemon_missing_binaries_notifies(tray_module, monkeypatch):
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
     monkeypatch.setattr(tray, "_build_daemon_attempts", lambda _x: [])
+    monkeypatch.setattr(
+        tray_module, "get_notify_send_cmd", lambda: "/usr/bin/notify-send"
+    )
     calls = []
     monkeypatch.setattr(
         tray_module.subprocess,
@@ -1670,6 +1673,9 @@ def test_stop_daemon_success_path(tray_module, monkeypatch):
         "timeout_add_seconds",
         lambda *_a, **_k: True,
     )
+    monkeypatch.setattr(
+        tray_module, "get_notify_send_cmd", lambda: "/usr/bin/notify-send"
+    )
     calls = []
     monkeypatch.setattr(
         tray_module.subprocess,
@@ -1720,6 +1726,9 @@ def test_start_desktop_app_missing_lms(tray_module, monkeypatch):
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(
+        tray_module, "get_notify_send_cmd", lambda: "/usr/bin/notify-send"
+    )
     calls = []
     monkeypatch.setattr(
         tray_module.subprocess,
@@ -2913,6 +2922,9 @@ def test_start_daemon_fails_when_desktop_cannot_stop(tray_module, monkeypatch):
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "running")
     monkeypatch.setattr(tray, "_stop_desktop_app_processes", lambda: False)
+    monkeypatch.setattr(
+        tray_module, "get_notify_send_cmd", lambda: "/usr/bin/notify-send"
+    )
     calls = []
     monkeypatch.setattr(
         tray_module.subprocess,
@@ -3285,6 +3297,9 @@ def test_start_daemon_runtime_error(tray_module, monkeypatch):
         tray, "_build_daemon_attempts", lambda _x: [["/usr/bin/llmster"]]
     )
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(
+        tray_module, "get_notify_send_cmd", lambda: "/usr/bin/notify-send"
+    )
 
     call_count = {"count": 0}
 
@@ -3349,6 +3364,9 @@ def test_stop_desktop_app_pkill_not_found(tray_module, monkeypatch):
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(tray_module, "get_pkill_cmd", lambda: None)
+    monkeypatch.setattr(
+        tray_module, "get_notify_send_cmd", lambda: "/usr/bin/notify-send"
+    )
 
     notifications = []
 
