@@ -18,7 +18,7 @@ This guide covers how to use the LM Studio Tray Manager application after setup.
     - [Example Usage](#example-usage)
   - [System Tray Interface](#system-tray-interface)
     - [Status Indicators](#status-indicators)
-    - [Right-Click Menu](#right-click-menu)
+    - [Left-Click Menu](#left-click-menu)
     - [Menu Options](#menu-options)
   - [Desktop App Launch](#desktop-app-launch)
     - [How "Start Desktop App" Works](#how-start-desktop-app-works)
@@ -27,12 +27,16 @@ This guide covers how to use the LM Studio Tray Manager application after setup.
   - [Model Management](#model-management)
     - [Interactive Model Selection](#interactive-model-selection)
     - [Autoload Models](#autoload-models)
+      - [Option 1: Via LM Studio CLI (Quick)](#option-1-via-lm-studio-cli-quick)
+      - [Option 2: Via LM Studio GUI](#option-2-via-lm-studio-gui)
+      - [Option 3: Via Daemon Configuration File](#option-3-via-daemon-configuration-file)
   - [Monitoring and Logs](#monitoring-and-logs)
     - [View Logs in Real-Time](#view-logs-in-real-time)
     - [Understanding Log Files](#understanding-log-files)
     - [Debug Mode](#debug-mode)
   - [Troubleshooting](#troubleshooting)
     - [Daemon Not Starting](#daemon-not-starting)
+    - [WebSocket Authentication Error](#websocket-authentication-error)
     - [Desktop App Won't Launch](#desktop-app-wont-launch)
     - [Tray Icon Issues](#tray-icon-issues)
     - [High CPU Usage](#high-cpu-usage)
@@ -116,11 +120,17 @@ cat > ~/.config/autostart/lmstudio-daemon.desktop << 'EOF'
 [Desktop Entry]
 Type=Application
 Name=LM Studio Daemon
-Exec=/path/to/LM-Studio/lmstudio_autostart.sh
+Exec=/full/path/to/your/lmstudio_autostart.sh
 X-GNOME-Autostart-enabled=true
 Hidden=false
 EOF
 ```
+
+**Important:** Replace `/full/path/to/your/lmstudio_autostart.sh` with the absolute path to your installed script:
+
+- If you installed to a system directory (e.g., via package manager): typically `/usr/bin/lmstudio_autostart.sh` or `/usr/local/bin/lmstudio_autostart.sh`
+- If you installed to your home directory: run `pwd` in your LM-Studio-Tray-Manager directory to get the full path, then append `/lmstudio_autostart.sh`
+- To find the script location quickly: `which lmstudio_autostart.sh` or check your SETUP.md installation section for default locations
 
 Then enable autostart in your desktop environment settings.
 
@@ -167,9 +177,9 @@ The tray icon changes based on application status:
 | ℹ️ | Info | Daemon or desktop app running, but no model loaded |
 | ✅ | OK | A model is loaded and ready |
 
-### Right-Click Menu
+### Left-Click Menu
 
-Right-click on the tray icon to open the context menu with available options.
+Left-click on the tray icon to open the context menu with available options.
 
 ### Menu Options
 
@@ -195,7 +205,11 @@ When you click "Start Desktop App":
 1. **Priority 1**: Looks for installed `.deb` package
 
    ```bash
-   which lm-studio  # or dpkg -l | grep lm-studio
+   # Quick check: Look for executable in PATH
+   which lm-studio
+
+   # Alternative: Check installed Debian packages (if which returns nothing)
+   dpkg -l | grep lm-studio
    ```
 
 2. **Priority 2**: Searches for AppImage in common locations:
@@ -224,9 +238,10 @@ When you click "Start Desktop App":
 When you click "Start LM Studio Daemon":
 
 1. **Tries CLI commands** in order:
-   - `lms`
-   - `llmster`
-   - Other daemon variants with fallback logic
+   - `lms daemon up` (preferred LM Studio CLI wrapper)
+   - `llmster daemon start` (direct daemon command)
+
+   If the primary commands fail, also tries: `lms up`, `lms start`, `llmster up`, `llmster start`
 
 2. **Conflict handling**:
    - Stops desktop app first (if running)
@@ -269,13 +284,46 @@ The script will:
 
 ### Autoload Models
 
-To automatically load a specific model on startup, set the model in LM Studio daemon settings:
+To automatically load a specific model on startup, configure a default model using one of these methods:
+
+#### Option 1: Via LM Studio CLI (Quick)
 
 ```bash
-lms ls  # List available models
+# List available models to find the exact name/ID
+lms ls
+
+# Load a specific model into the daemon
+lms load <model-name-or-id>
+
+# Verify it's set
+lms ps
 ```
 
-Then configure your default model in the daemon settings.
+Example:
+
+```bash
+lms load "meta-llama/llama-2-7b-hf"
+```
+
+#### Option 2: Via LM Studio GUI
+
+1. Start the desktop app: `./lmstudio_autostart.sh --gui`
+2. Select your desired model in the GUI
+3. The model will persist as default
+
+#### Option 3: Via Daemon Configuration File
+
+The LM Studio daemon stores its configuration in `~/.lmstudio/config.json`. You can manually edit this file and set the default model key to `"default_model": "<model-id>"`.
+
+Example configuration snippet (add the `"default_model"` key to your existing config file, don't replace the entire file):
+
+```json
+{
+  "default_model": "meta-llama/llama-2-7b-hf"
+}
+```
+
+**Note**: After setting a default model with any method, the next time the daemon starts (via `lmstudio_autostart.sh` or `lms daemon up`), it will automatically load your configured model.
 
 ## Monitoring and Logs
 
@@ -355,7 +403,7 @@ Debug mode shows:
 - Detailed process state changes
 - API communication logs
 - Model loading information
-- SystemTray icon changes
+- System tray icon changes
 - Error stack traces
 
 ## Troubleshooting
@@ -391,6 +439,48 @@ Debug mode shows:
 
    ```bash
    ./lmstudio-tray-manager --debug
+   ```
+
+### WebSocket Authentication Error
+
+**Problem**: Error message `Invalid passkey for lms CLI client` appears
+
+**Cause**: Stale daemon processes with outdated authentication tokens
+
+**Automatic Handling**: The script automatically:
+
+- Cleans up old daemon processes on startup
+- Clears stale authentication tokens
+- Restarts the daemon fresh
+
+**Manual Solutions** (if automatic cleanup fails):
+
+1. Kill all LM Studio daemon processes:
+
+   ```bash
+   pkill -f "lms"
+   pkill -f "llmster"
+   ```
+
+2. Clear authentication tokens:
+
+   ```bash
+   # Remove token files (location may vary by LM Studio version)
+   rm -f ~/.lmstudio/auth_token
+   rm -f ~/.config/lm-studio/auth_token
+   ```
+
+3. Restart the tray manager:
+
+   ```bash
+   ./lmstudio_autostart.sh
+   ```
+
+4. Verify daemon is running with fresh authentication:
+
+   ```bash
+   lms ps
+   # Should show no authentication errors
    ```
 
 ### Desktop App Won't Launch
@@ -461,7 +551,7 @@ Debug mode shows:
 4. Check logs:
 
    ```bash
-   cat .logs/lmstudio_tray.log | grep -i "error\|icon\|tray"
+   grep -i "error\|icon\|tray" .logs/lmstudio_tray.log
    ```
 
 5. Try debug mode:

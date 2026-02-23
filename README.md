@@ -178,7 +178,7 @@ For comprehensive troubleshooting guidance:
 - **Setup issues**: See [SETUP.md](docs/SETUP.md)
 - **Runtime issues**: See [USE.md](docs/USE.md)
 - **Build problems**: See [BUILD.md](docs/BUILD.md)
-- **WebSocket Authentication Error**: If you encounter the error `Invalid passkey for lms CLI client`, this is typically caused by stale daemon processes. The script automatically handles this by cleaning up old daemon processes on startup, clearing stale authentication tokens, and restarting the daemon fresh.
+- **WebSocket Authentication Error**: See [USE.md - WebSocket Authentication Error](docs/USE.md#websocket-authentication-error)
 
 Check the logs if issues persist:
 

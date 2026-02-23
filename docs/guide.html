@@ -225,7 +225,7 @@
   "api_host": "localhost",
   "api_port": 1234
 }</code></pre>
-            <p>Edit via <strong>Right-click → Options → Configuration</strong> in the tray menu.</p>
+            <p>Edit via <strong>Left-click → Options → Configuration</strong> in the tray menu.</p>
 
             <h3>Environment Variables</h3>
             <ul>
@@ -329,7 +329,7 @@ EOF</code></pre>
                 <li>Live status display for daemon and desktop app in menu</li>
                 <li>Desktop app launcher (supports .deb and AppImage detection)</li>
                 <li>Tray icon with status indicators (active/warning/error)</li>
-                <li>Right-click menu for actions</li>
+                <li>Left-click menu for actions</li>
                 <li>Notifications for status changes</li>
                 <li>Automatic update checks with manual "Check for updates" action under Options</li>
                 <li>Configurable LM Studio API host/port (Options &gt; Configuration)</li>
@@ -337,7 +337,7 @@ EOF</code></pre>
                 <li>Automatic termination of duplicate instances</li>
             </ul>
             <h3>Status Indicators (in Menu)</h3>
-            <p>When you right-click the tray icon, the menu shows live status for each option:</p>
+            <p>When you left-click the tray icon, the menu shows live status for each option:</p>
             <ul>
                 <li><strong>🟢 (Green Circle)</strong> - Component is currently running/active</li>
                 <li><strong>🟡 (Yellow Circle)</strong> - Component is installed but not running</li>
@@ -506,7 +506,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                 graph TD
                     A["<b>lmstudio_tray.py</b><br/>START"] --> B[Kill existing instances]
                     B --> C[Create GTK3 tray icon]
-                    C --> D[Set up right-click menu]
+                    C --> D[Set up left-click menu]
                     D --> E[Start daemon/API monitoring]
                     E --> F{Status check}
                     F --> G{Model loaded?}
@@ -554,7 +554,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     Gui --> RunStart
                     Default --> RunStart
                     RunStart --> E["Create GTK3<br/>tray icon"]
-                    E --> F["Set up right-click<br/>menu"]
+                    E --> F["Set up left-click<br/>menu"]
                     F --> G["Start daemon/API<br/>monitoring"]
                     G --> H{Status<br/>check}
                     H --> I{Model<br/>loaded?}

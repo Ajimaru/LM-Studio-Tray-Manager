@@ -4,40 +4,38 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
 
 ## Table of Contents
 
-- [Setup Guide](#setup-guide)
-  - [Table of Contents](#table-of-contents)
-  - [What setup.sh Does](#what-setupsh-does)
-  - [Installation Types](#installation-types)
-    - [Binary Release (Recommended)](#binary-release-recommended)
-    - [Python Package Release](#python-package-release)
-  - [Quick Start](#quick-start)
-  - [Dry-run Mode](#dry-run-mode)
-  - [Setup Script Outputs](#setup-script-outputs)
-    - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
-    - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
-    - [If Python 3.10 is Missing](#if-python-310-is-missing)
-  - [What's Inside the venv?](#whats-inside-the-venv)
-  - [File Structure After Setup](#file-structure-after-setup)
-    - [For Binary Release](#for-binary-release)
-    - [For Python Package](#for-python-package)
-  - [Environment Variables](#environment-variables)
-  - [Log File Format](#log-file-format)
-    - [setup.log](#setuplog)
-    - [lmstudio\_autostart.log](#lmstudio_autostartlog)
-    - [lmstudio\_tray.log](#lmstudio_traylog)
-  - [Troubleshooting](#troubleshooting)
-    - [venv not found](#venv-not-found)
-    - [Checking Logs](#checking-logs)
-    - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
-    - [PyGObject Import Errors](#pygobject-import-errors)
-    - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
-  - [Why Python 3.10?](#why-python-310)
-  - [Python 3.12+ Support](#python-312-support)
-    - [Option 1: Install Build Tools (not recommended)](#option-1-install-build-tools-not-recommended)
-    - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
-    - [Option 3: Use Docker (alternative)](#option-3-use-docker-alternative)
-    - [Our Solution: Python 3.10 venv](#our-solution-python-310-venv)
-  - [Next Steps](#next-steps)
+- [What setup.sh Does](#what-setupsh-does)
+- [Installation Types](#installation-types)
+  - [Binary Release (Recommended)](#binary-release-recommended)
+  - [Python Package Release](#python-package-release)
+- [Quick Start](#quick-start)
+- [Dry-run Mode](#dry-run-mode)
+- [Setup Script Outputs](#setup-script-outputs)
+  - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
+  - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
+  - [If Python 3.10 is Missing](#if-python-310-is-missing)
+- [What's Inside the venv?](#whats-inside-the-venv)
+- [File Structure After Setup](#file-structure-after-setup)
+  - [For Binary Release](#for-binary-release)
+  - [For Python Package](#for-python-package)
+- [Environment Variables](#environment-variables)
+- [Log File Format](#log-file-format)
+  - [setup.log](#setuplog)
+  - [lmstudio_autostart.log](#lmstudio_autostartlog)
+  - [lmstudio_tray.log](#lmstudio_traylog)
+- [Troubleshooting](#troubleshooting)
+  - [venv not found](#venv-not-found)
+  - [Checking Logs](#checking-logs)
+  - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
+  - [PyGObject Import Errors](#pygobject-import-errors)
+  - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
+- [Why Python 3.10?](#why-python-310)
+- [Python 3.12+ Support](#python-312-support)
+  - [Option 1: Install Build Tools (not recommended)](#option-1-install-build-tools-not-recommended)
+  - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
+  - [Option 3: Use Docker (alternative)](#option-3-use-docker-alternative)
+  - [Our Solution: Python 3.10 venv](#our-solution-python-310-venv)
+- [Next Steps](#next-steps)
 
 ## What setup.sh Does
 
@@ -367,7 +365,9 @@ If you see `ImportError: cannot import name '_gi'`:
 
 ### System Tray Icon Not Appearing
 
-```bashencounter network issues, verify connectivity and check logs. See [USE.md](USE.md) for detailed troubleshooting steps. Errors
+If you encounter network issues, verify connectivity and check logs.
+
+1. See [USE.md](USE.md) for detailed troubleshooting steps.
 
 If you see `ImportError: cannot import name '_gi'`:
 
@@ -376,10 +376,8 @@ If you see `ImportError: cannot import name '_gi'`:
    ```bash
       ./venv/bin/python3 --version
       ```
-   
-   2. See [USE.md](USE.md) for log viewing instructions.
-   
-   ### System Tray Icon Not Appearing
+
+2. See [USE.md](USE.md) for log viewing instructions.
 
 If the tray monitor is running but icon not visible:
 

@@ -20,7 +20,7 @@ docs/
 ├── guide.html              # Main comprehensive documentation (full guide)
 ├── BUILD.md                # Binary build and runtime guide
 ├── SETUP.md                # Comprehensive setup and environment guide
-├── USE.md                  # Application usage and runtime guide
+├── USE.md                  # Application usage, CLI options, system tray interface, and troubleshooting
 ├── python_docstrings.html  # Static docstrings reference for lmstudio_tray.py
 └── README.md               # This file
 ```
@@ -29,13 +29,13 @@ docs/
 
 If you encounter issues:
 
-1. Check **[USE.md](USE.md)** for application-specific troubleshooting
-2. Review **[SETUP.md](SETUP.md)** for setup and environment-specific issues
-3. Check **[BUILD.md](BUILD.md)** for build-related problems
-4. Check the log files in the `.logs` directory from the project root:
+1. Runtime/tray issues: **[USE.md](USE.md)** (includes log viewing and common failures)
+2. Setup/venv/Python issues: **[SETUP.md](SETUP.md)**
+3. Build/PyInstaller issues: **[BUILD.md](BUILD.md)**
+4. Logs (project root `.logs/`):
    - `.logs/setup.log` - Setup script installation log
    - `.logs/lmstudio_autostart.log` - Daemon and startup logs
-   - `.logs/lmstudio_tray.log` - System tray monitor logs
+   - `.logs/lmstudio_tray.log` - Tray monitor logs
 
 ## Opening the Documentation
 
