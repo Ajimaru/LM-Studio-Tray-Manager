@@ -107,7 +107,11 @@ def parse_args():
     parser.add_argument(
         "script_dir",
         nargs="?",
-        default=os.getcwd(),
+        default=(
+            os.path.dirname(os.path.abspath(sys.argv[0]))
+            if sys.argv and sys.argv[0]
+            else os.getcwd()
+        ),
         help="Script directory for logs and VERSION file"
     )
     parser.add_argument(
@@ -404,8 +408,15 @@ def main():
             "Debug mode enabled - capturing warnings to log file"
         )
 
+    # Log critical paths for troubleshooting
+    logging.info("Script directory: %s", _AppState.script_dir)
+    logging.info("Log file location: %s", log_file)
+    logging.info("sys.argv[0]: %s", sys.argv[0] if sys.argv else "N/A")
+    logging.info("os.getcwd(): %s", os.getcwd())
+
     _AppState.APP_VERSION = get_app_version()
     globals()["APP_VERSION"] = _AppState.APP_VERSION
+    logging.info("App version: %s", _AppState.APP_VERSION)
 
     kill_existing_instances()
     logging.info("Tray script started")

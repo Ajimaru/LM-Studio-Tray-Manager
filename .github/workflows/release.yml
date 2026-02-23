@@ -92,11 +92,6 @@ jobs:
             cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"
           fi
 
-          if [[ -f "docs/BUILD.md" ]]; then
-            mkdir -p "$STAGE_DIR_BIN/docs"
-            cp -a "docs/BUILD.md" "$STAGE_DIR_BIN/docs/BUILD.md"
-          fi
-
           # Copy assets to both packages
           if [[ -d "assets" ]]; then
             cp -a "assets" "$STAGE_DIR_SRC/assets"
@@ -105,7 +100,7 @@ jobs:
 
           BIN_FILES=()
           for file in "${FILES[@]}"; do
-            if [[ "$file" != "lmstudio_tray.py" ]]; then
+            if [[ "$file" != "lmstudio_tray.py" ]] && [[ "$file" != "lmstudio_autostart.sh" ]]; then
               BIN_FILES+=("$file")
             fi
           done
