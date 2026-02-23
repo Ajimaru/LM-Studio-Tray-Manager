@@ -45,7 +45,7 @@ def get_gdk_pixbuf_loaders():
             text=True,
             check=False,
             timeout=5,
-            shell=False, # nosec B603 - command is static and validated
+            shell=False,  # nosec B603 - command is static and validated
         )
         if result.returncode == 0:
             loaders_dir = result.stdout.strip()
