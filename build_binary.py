@@ -251,9 +251,14 @@ def build_binary():
 
     # Add GdkPixbuf loaders and cache
     if loaders_dir and cache_file:
+        seen_loaders = set()
         for so_file in glob.glob(os.path.join(loaders_dir, "*.so*")):
+            real_so = os.path.realpath(so_file)
+            if not os.path.exists(real_so) or real_so in seen_loaders:
+                continue
+            seen_loaders.add(real_so)
             binary_value = (
-                f"{os.path.realpath(so_file)}{os.pathsep}" +
+                f"{real_so}{os.pathsep}" +
                 "lib/gdk-pixbuf/loaders"
             )
             cmd.extend([
