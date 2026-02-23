@@ -2005,47 +2005,51 @@ class TrayIcon:
         )
 
         # Load and set the application logo
-        logo_path = get_asset_path("img", "lm-studio-tray-manager.svg")
-        if logo_path and gdk_pixbuf is not None:
+        # Prefer PNG for PyInstaller binaries (better compatibility)
+        is_frozen = getattr(sys, "_MEIPASS", None) is not None
+        logo_loaded = False
+
+        if gdk_pixbuf is not None:
             error_types = (OSError,)
             if glib is not None:
                 error_types = (OSError, glib.Error)
 
-            try:
-                logo = gdk_pixbuf.Pixbuf.new_from_file_at_scale(
-                    logo_path, 128, 128, True
-                )
-                dialog.set_logo(logo)
-            except error_types as e:
-                logging.warning(
-                    "Failed to load logo from %s: %s",
-                    logo_path,
-                    e,
-                )
-                logo_path = None
+            # Try PNG first for frozen binaries, SVG first otherwise
+            primary_ext = "png" if is_frozen else "svg"
+            fallback_ext = "svg" if is_frozen else "png"
 
-        if (not logo_path) and gdk_pixbuf is not None:
-            png_path = get_asset_path("img", "lm-studio-tray-manager.png")
-            if png_path:
-                error_types = (OSError,)
-                if glib is not None:
-                    error_types = (OSError, glib.Error)
+            for ext in (primary_ext, fallback_ext):
+                logo_path = get_asset_path(
+                    "img", f"lm-studio-tray-manager.{ext}"
+                )
+                if not logo_path:
+                    continue
+
                 try:
                     logo = gdk_pixbuf.Pixbuf.new_from_file_at_scale(
-                        png_path, 128, 128, True
+                        logo_path, 128, 128, True
                     )
                     dialog.set_logo(logo)
+                    logo_loaded = True
+                    break
                 except error_types as e:
-                    logging.warning(
+                    # Log as debug for expected failures (SVG in frozen)
+                    log_level = (
+                        logging.DEBUG if (is_frozen and ext == "svg")
+                        else logging.WARNING
+                    )
+                    logging.log(
+                        log_level,
                         "Failed to load logo from %s: %s",
-                        png_path,
+                        logo_path,
                         e,
                     )
-            else:
+
+            if not logo_loaded:
                 logging.debug(
-                    "Asset not found: assets/img/lm-studio-tray-manager.png"
+                    "Could not load any logo format"
                 )
-        elif gdk_pixbuf is None:
+        else:
             logging.debug("GdkPixbuf not initialized; skipping logo")
 
         dialog.set_modal(True)
@@ -2163,6 +2167,10 @@ class TrayIcon:
 
         messages = {
             "Up to date": f"You are up to date ({_AppState.APP_VERSION})",
+            "Ahead of release": (
+                f"Ahead of release "
+                f"(current {_AppState.APP_VERSION}, latest {latest})"
+            ),
             "Dev build": "Dev build: update checks disabled",
         }
         message = messages.get(status)
@@ -2208,7 +2216,19 @@ class TrayIcon:
         self.last_update_error = None
 
         newer = is_newer_version(_AppState.APP_VERSION, latest)
-        self.update_status = "Update available" if newer else "Up to date"
+        current_parts = parse_version(_AppState.APP_VERSION)
+        latest_parts = parse_version(latest)
+        is_ahead = current_parts > latest_parts if (
+            current_parts and latest_parts
+        ) else False
+
+        if newer:
+            self.update_status = "Update available"
+        elif is_ahead:
+            self.update_status = "Ahead of release"
+        else:
+            self.update_status = "Up to date"
+
         logging.debug(
             "Update check status: %s (latest %s)",
             self.update_status,
