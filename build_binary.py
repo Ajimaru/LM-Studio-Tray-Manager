@@ -246,6 +246,7 @@ def build_binary():
         "--exclude-module=pkg_resources",
         "--exclude-module=setuptools",
         "--exclude-module=distutils",
+        "--noupx",
     ]
 
     # Add hidden imports
