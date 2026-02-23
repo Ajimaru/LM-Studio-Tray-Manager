@@ -253,7 +253,7 @@ def build_binary():
         cmd.extend(["--add-data", f"{src}{os.pathsep}{dest}"])
 
     # Add GdkPixbuf loaders and cache
-    if loaders_dir and cache_file:
+    if loaders_dir:
         seen_loaders = set()
         for so_file in glob.glob(os.path.join(loaders_dir, "*.so*")):
             real_so = os.path.realpath(so_file)
@@ -268,11 +268,19 @@ def build_binary():
                 "--add-binary",
                 binary_value
             ])
-        cmd.extend([
-            "--add-data",
-            f"{os.path.realpath(cache_file)}{os.pathsep}lib/gdk-pixbuf"
-        ])
-        print("✓ Added GdkPixbuf loaders to binary\n")
+        if cache_file:
+            cmd.extend([
+                "--add-data",
+                f"{os.path.realpath(cache_file)}{os.pathsep}"
+                "lib/gdk-pixbuf"
+            ])
+            print("✓ Added GdkPixbuf loaders and cache to binary\n")
+        else:
+            print(
+                "✓ Added GdkPixbuf loaders to binary\n"
+                "⚠ loaders.cache not found - icons may not render"
+                " correctly!\n"
+            )
     else:
         print("⚠ Building without GdkPixbuf loaders - icons may not work!\n")
 
