@@ -93,11 +93,14 @@ fi
 echo -e "${GREEN}✓${NC} Activating virtual environment..."
 source "$VENV_DIR/bin/activate"
 
+# Use explicit path to venv python
+VENV_PYTHON="$VENV_DIR/bin/python"
+
 # Ensure PyInstaller is available in the venv
-if ! python -m PyInstaller --version &> /dev/null; then
+if ! "$VENV_PYTHON" -m PyInstaller --version &> /dev/null; then
     echo -e "${YELLOW}Installing PyInstaller in venv...${NC}"
-    python -m pip install --upgrade pip
-    python -m pip install -r "$SCRIPT_DIR/requirements-build.txt"
+    "$VENV_PYTHON" -m pip install --upgrade pip
+    "$VENV_PYTHON" -m pip install -r "$SCRIPT_DIR/requirements-build.txt"
 
 fi
 
