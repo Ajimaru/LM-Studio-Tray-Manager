@@ -269,8 +269,7 @@ def build_binary():
             cmd.extend([
                 "--add-data",
                 f"{os.path.realpath(cache_file)}{os.pathsep}"
-                "lib/gdk-pixbuf"
-            ])
+                f"{os.path.realpath(cache_file)}{os.pathsep}lib/gdk-pixbuf"
             print("✓ Added GdkPixbuf loaders and cache to binary\n")
         else:
             print(
