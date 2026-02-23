@@ -31,12 +31,10 @@ def get_gdk_pixbuf_loaders():
             error occurs.
     """
     pkg_config_path = shutil.which("pkg-config")
+    pkg_config_path = shutil.which("pkg-config")
     if not pkg_config_path:
-        print(
-            "⚠ pkg-config not found in PATH; "
-            "falling back to 'pkg-config'"
-        )
-        pkg_config_path = "pkg-config"
+        print("⚠ pkg-config not found")
+        return None, None
 
     try:
         # Get loaders directory from pkg-config
