@@ -298,10 +298,20 @@ def test_build_binary_timeout(build_binary_module, monkeypatch):
 def test_get_gdk_pixbuf_loaders_no_pkg_config(
     build_binary_module, monkeypatch
 ):
-    """Return None when pkg-config is not found."""
+    """Return None when pkg-config is not found and fallback fails."""
+    # Mock both shutil.which and subprocess.run to ensure failure
     monkeypatch.setattr(
         build_binary_module.shutil, "which", lambda _n: None
     )
+    
+    def fake_run_fail(*_args, **_kwargs):
+        # pkg-config fallback attempt fails
+        return _RunResult(returncode=1, stdout="")
+    
+    monkeypatch.setattr(
+        build_binary_module.subprocess, "run", fake_run_fail
+    )
+    
     found_dir, found_cache = (
         build_binary_module.get_gdk_pixbuf_loaders()
     )
