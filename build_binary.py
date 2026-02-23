@@ -292,7 +292,7 @@ def build_binary():
     # Run PyInstaller with timeout
     try:
         validate_pyinstaller_cmd(cmd)
-        result = subprocess.run(  # nosemgrep
+        result = subprocess.run(  # nosec B603
             cmd,
             check=False,
             timeout=3600,
