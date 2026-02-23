@@ -30,17 +30,17 @@ def get_gdk_pixbuf_loaders():
             Both elements are None if the loaders cannot be found or an
             error occurs.
     """
-    # Validate pkg-config exists
-    pkg_config = shutil.which("pkg-config")
-    if not pkg_config:
+    pkg_config_path = shutil.which("pkg-config")
+    if not pkg_config_path:
         print("⚠ pkg-config not found")
         return None, None
 
     try:
         # Get loaders directory from pkg-config
-        # nosec B603 - pkg-config path validated via shutil.which
-        result = subprocess.run(  # nosec B603
-            [pkg_config, "--variable=gdk_pixbuf_moduledir",
+        # Use resolved path from shutil.which to avoid PATH manipulation
+        # nosec B603 - uses resolved binary path, literals, and shell=False
+        result = subprocess.run(
+            [pkg_config_path, "--variable=gdk_pixbuf_moduledir",
              "gdk-pixbuf-2.0"],
             capture_output=True,
             text=True,
@@ -99,12 +99,12 @@ def check_dependencies():
 
     print("Installing PyInstaller...")
     try:
-        # nosec B603 - req_file is validated as a local file
-        subprocess.run(
+        # nosec B603 - req_file validated; uses sys.executable and literals
+        subprocess.run(  # nosec B603
             [sys.executable, "-m", "pip", "install", "-r",
              str(req_file_resolved)],
             check=True,
-            shell=False,
+            shell=False,  # nosec B603
         )
     except subprocess.CalledProcessError as e:
         print(f"\n❌ Failed to install PyInstaller: {e}")
@@ -236,6 +236,10 @@ def build_binary():
         "--windowed",  # No console window
         "--clean",
         "--specpath", str(spec_dir),
+        "--exclude-module=pkg_resources",
+        "--exclude-module=setuptools",
+        "--exclude-module=distutils",
+        "--noupx",
     ]
 
     # Add hidden imports
@@ -247,18 +251,33 @@ def build_binary():
         cmd.extend(["--add-data", f"{src}{os.pathsep}{dest}"])
 
     # Add GdkPixbuf loaders and cache
-    if loaders_dir and cache_file:
+    if loaders_dir:
+        seen_loaders = set()
         for so_file in glob.glob(os.path.join(loaders_dir, "*.so*")):
+            real_so = os.path.realpath(so_file)
+            if not os.path.exists(real_so) or real_so in seen_loaders:
+                continue
+            seen_loaders.add(real_so)
+            binary_value = (
+                f"{real_so}{os.pathsep}" +
+                "lib/gdk-pixbuf/loaders"
+            )
             cmd.extend([
                 "--add-binary",
-                f"{os.path.realpath(so_file)}{os.pathsep}"
-                "lib/gdk-pixbuf/loaders"
+                binary_value
             ])
-        cmd.extend([
-            "--add-data",
-            f"{os.path.realpath(cache_file)}{os.pathsep}lib/gdk-pixbuf"
-        ])
-        print("✓ Added GdkPixbuf loaders to binary\n")
+        if cache_file:
+            cmd.extend([
+                "--add-data",
+                f"{os.path.realpath(cache_file)}{os.pathsep}lib/gdk-pixbuf"
+            ])
+            print("✓ Added GdkPixbuf loaders and cache to binary\n")
+        else:
+            print(
+                "✓ Added GdkPixbuf loaders to binary\n"
+                "⚠ loaders.cache not found - icons may not render"
+                " correctly!\n"
+            )
     else:
         print("⚠ Building without GdkPixbuf loaders - icons may not work!\n")
 
@@ -302,7 +321,9 @@ def build_binary():
     print("\nNext steps:")
     print("1. Test: ./dist/lmstudio-tray-manager --version")
     print("2. Optimize: strip dist/lmstudio-tray-manager")
-    print("3. Compress: upx --best dist/lmstudio-tray-manager")
+    print(
+        "Note: UPX compression is disabled (causes binary corruption)."
+    )
     return 0
 
 
