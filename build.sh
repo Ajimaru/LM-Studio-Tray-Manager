@@ -149,31 +149,11 @@ else
     STRIPPED_SIZE=$UNOPT_SIZE
 fi
 
-# Compress with UPX
-if command -v upx &> /dev/null; then
-    echo -e "${GREEN}Compressing with UPX...${NC}"
-    upx --best --lzma "$BINARY_PATH" 2>/dev/null || upx --best \
-        "$BINARY_PATH"
-    FINAL_SIZE=$(get_file_size "$BINARY_PATH")
-    FINAL_SIZE_MB=$(awk -v n="$FINAL_SIZE" \
-        'BEGIN {printf "%.2f", n / 1048576}')
-    TOTAL_SAVED=$(awk -v a="$UNOPT_SIZE" -v b="$FINAL_SIZE" \
-        'BEGIN {printf "%.2f", (a - b) / 1048576}')
-    DIFF_BYTES=$((UNOPT_SIZE - FINAL_SIZE))
-    if [ "$UNOPT_SIZE" -gt 0 ]; then
-        REDUCTION=$(awk -v d="$DIFF_BYTES" -v t="$UNOPT_SIZE" \
-            'BEGIN {printf "%.1f", (d * 100) / t}')
-        echo "Final size: ${FINAL_SIZE_MB} MB (saved ${TOTAL_SAVED} MB, ${REDUCTION}% reduction)"
-    else
-        echo "Final size: ${FINAL_SIZE_MB} MB (saved ${TOTAL_SAVED} MB)"
-    fi
-else
-    echo -e "${YELLOW}Warning: upx not found, skipping compression${NC}"
-    echo "Install upx for better compression: sudo apt install upx"
-    FINAL_SIZE=$STRIPPED_SIZE
-    FINAL_SIZE_MB=$(awk -v n="$FINAL_SIZE" \
-        'BEGIN {printf "%.2f", n / 1048576}')
-fi
+# Skip UPX compression (can cause PyInstaller archive corruption)
+echo -e "${YELLOW}Info: UPX compression disabled to ensure binary stability${NC}"
+FINAL_SIZE=$STRIPPED_SIZE
+FINAL_SIZE_MB=$(awk -v n="$FINAL_SIZE" \
+    'BEGIN {printf "%.2f", n / 1048576}')
 
 echo
 echo "======================================"
