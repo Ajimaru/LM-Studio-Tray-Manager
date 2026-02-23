@@ -30,14 +30,6 @@ def get_gdk_pixbuf_loaders():
             Both elements are None if the loaders cannot be found or an
             error occurs.
     """
-    # Validate pkg-config exists and is safe to use
-    if not shutil.which("pkg-config"):
-        print("⚠ pkg-config not found")
-        return None, None
-
-    try:
-        # Get loaders directory from pkg-config
-        # Use static literal command array to satisfy security linter
     pkg_config_path = shutil.which("pkg-config")
     if not pkg_config_path:
         print("⚠ pkg-config not found")
@@ -45,7 +37,7 @@ def get_gdk_pixbuf_loaders():
 
     try:
         # Get loaders directory from pkg-config
-        # Use static literal command array to satisfy security linter
+        # Use resolved path from shutil.which to avoid PATH manipulation
         result = subprocess.run(
             [pkg_config_path, "--variable=gdk_pixbuf_moduledir",
              "gdk-pixbuf-2.0"],

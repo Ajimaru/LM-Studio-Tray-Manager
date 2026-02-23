@@ -83,7 +83,6 @@ a = Analysis(
         'gi.repository.Gtk',
         'gi.repository.Pango',
         'gi.repository.PangoCairo',
-        'gi.repository.PangoCairo',
      ],
     hookspath=[],
     hooksconfig={},
