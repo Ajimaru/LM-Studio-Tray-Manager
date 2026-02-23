@@ -91,6 +91,7 @@ if [ ! -f "$VENV_DIR/bin/activate" ]; then
 fi
 
 echo -e "${GREEN}✓${NC} Activating virtual environment..."
+# shellcheck source=/dev/null
 source "$VENV_DIR/bin/activate"
 
 # Use explicit path to venv python
@@ -113,7 +114,7 @@ fi
 # Run PyInstaller build
 echo
 echo "Running PyInstaller build..."
-"$VENV_DIR/bin/python" build_binary.py
+"$VENV_PYTHON" build_binary.py
 
 # Check if binary was created
 BINARY_PATH="dist/lmstudio-tray-manager"
