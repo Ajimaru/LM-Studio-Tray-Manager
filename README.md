@@ -173,18 +173,17 @@ lms daemon down
 
 ## Troubleshooting
 
-### WebSocket Authentication Error
+For comprehensive troubleshooting guidance:
 
-If you encounter the error `Invalid passkey for lms CLI client`, this is typically caused by stale daemon processes. The script automatically handles this by:
+- **Setup issues**: See [SETUP.md](docs/SETUP.md)
+- **Runtime issues**: See [USE.md](docs/USE.md)
+- **Build problems**: See [BUILD.md](docs/BUILD.md)
+- **WebSocket Authentication Error**: If you encounter the error `Invalid passkey for lms CLI client`, this is typically caused by stale daemon processes. The script automatically handles this by cleaning up old daemon processes on startup, clearing stale authentication tokens, and restarting the daemon fresh.
 
-- Cleaning up old daemon processes on startup
-- Clearing stale authentication tokens
-- Restarting the daemon fresh
-
-The fix runs automatically when you start the script. Check the logs if issues persist:
+Check the logs if issues persist:
 
 ```bash
-cat .logs/build.log
+cat .logs/setup.log
 cat .logs/lmstudio_autostart.log
 cat .logs/lmstudio_tray.log
 ```
@@ -193,8 +192,6 @@ cat .logs/lmstudio_tray.log
 
 - [Readme](docs/README.md) - Documentation overview and quick links
 - [Docs Landing Page](docs/index.html) - GitHub Pages entry point with links to all docs
-- [Setup Guide](docs/SETUP.md) - Complete setup.sh guide, Python environment configuration, and troubleshooting
-- [Python Docstrings Reference](docs/python_docstrings.html) - Static API-style view of `lmstudio_tray.py` docstrings
 
 [![Docs](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml)
 

@@ -1,6 +1,6 @@
 # Setup Guide
 
-The `setup.sh` script automates the complete setup process for LM Studio automation.
+The `setup.sh` script automates the complete setup process for LM Studio Tray Manager.
 
 ## Table of Contents
 
@@ -25,23 +25,19 @@ The `setup.sh` script automates the complete setup process for LM Studio automat
     - [setup.log](#setuplog)
     - [lmstudio\_autostart.log](#lmstudio_autostartlog)
     - [lmstudio\_tray.log](#lmstudio_traylog)
-  - [Desktop App Launch via Tray Monitor](#desktop-app-launch-via-tray-monitor)
-    - [Recommended Setup](#recommended-setup)
-    - [How "Start Desktop App" Works](#how-start-desktop-app-works)
   - [Troubleshooting](#troubleshooting)
     - [venv not found](#venv-not-found)
     - [Checking Logs](#checking-logs)
     - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
-    - [View tray monitor logs](#view-tray-monitor-logs)
-    - [View both in real-time (in separate terminals)](#view-both-in-real-time-in-separate-terminals)
-  - [PyGObject Import Errors](#pygobject-import-errors)
-  - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
+    - [PyGObject Import Errors](#pygobject-import-errors)
+    - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
   - [Why Python 3.10?](#why-python-310)
   - [Python 3.12+ Support](#python-312-support)
     - [Option 1: Install Build Tools (not recommended)](#option-1-install-build-tools-not-recommended)
     - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
     - [Option 3: Use Docker (alternative)](#option-3-use-docker-alternative)
     - [Our Solution: Python 3.10 venv](#our-solution-python-310-venv)
+  - [Next Steps](#next-steps)
 
 ## What setup.sh Does
 
@@ -124,23 +120,15 @@ The setup script automatically detects your installation type:
 
 # Show available setup options
 ./setup.sh --help
-
-# The setup will:
-# ✓ Check for LM Studio daemon
-# ✓ Check for LM Studio desktop app
-# ✓ Detect if binary or Python package
-# ✓ Create venv (Python packages only)
-# ✓ Install Python 3.10 if needed (Python packages only)
-
-# For binary release:
-./lmstudio-tray-manager --auto-start-daemon
-tail -f .logs/lmstudio_tray.log
-
-# For Python package:
-./lmstudio_autostart.sh
-tail -f .logs/lmstudio_autostart.log
-
 ```
+
+The setup will:
+
+- ✓ Check for LM Studio daemon
+- ✓ Check for LM Studio desktop app
+- ✓ Detect if binary or Python package
+- ✓ Create venv (Python packages only)
+- ✓ Install Python 3.10 if needed (Python packages only)
 
 ## Dry-run Mode
 
@@ -319,62 +307,7 @@ Started: 2026-02-20 21:55:18
 ...
 ```
 
-Each log file is **recreated** (cleared) when the corresponding script starts, ensuring fresh logs for each run. View logs in real-time with:
-
-```bash
-tail -f .logs/setup.log
-tail -f .logs/lmstudio_autostart.log
-tail -f .logs/lmstudio_tray.log
-```
-
-## Desktop App Launch via Tray Monitor
-
-The system tray monitor (`lmstudio_tray.py`) provides mode switching between headless daemon and desktop GUI with conflict-safe transitions.
-
-### Recommended Setup
-
-1. Place `./lmstudio_autostart.sh` (without `--gui` flag) in your system autostart:
-
-```bash
-mkdir -p ~/.config/autostart/
-cat > ~/.config/autostart/lmstudio-daemon.desktop << 'EOF'
-[Desktop Entry]
-Type=Application
-Name=LM Studio Daemon
-Exec=/path/to/LM-Studio/lmstudio_autostart.sh
-X-GNOME-Autostart-enabled=true
-Hidden=false
-EOF
-```
-
-2. On login, the daemon and tray monitor will start automatically
-3. Click the tray icon (right-click) and select **"Start Desktop App"** to launch the GUI
-4. The tray will stop daemon first, then launch the desktop app
-
-### How "Start Desktop App" Works
-
-The menu shows status indicators before each option when you right-click the tray:
-
-**Tray Icon Meaning:**
-
-- **❌ (Fail)** - Daemon and desktop app are both not installed
-- **⚠️ (Warn)** - Neither daemon nor desktop app is running
-- **ℹ️ (Info)** - Daemon or desktop app is running, but no model is loaded
-- **✅ (OK)** - A model is loaded
-
-**For "Start Desktop App":**
-
-- **Priority 1**: Looks for installed `.deb` package
-- **Priority 2**: Searches for AppImage in common locations and script directory (preferred locations: `~/Apps`, `~/LM_Studio`, `$SCRIPT_DIR`, etc.)
-- **On Launch**: Stops daemon first (if running), then launches GUI
-- **Notifications**: Desktop notifications confirm app start or display errors
-- **Logging**: All actions logged to `.logs/lmstudio_tray.log`
-
-**For "Start LM Studio Daemon":**
-
-- **Conflict handling**: Stops desktop app first (if running), then starts daemon
-- **Start path**: Tries `lms` first, then `llmster` variants with fallback logic
-- **Stop path**: Uses graceful stop attempts with force-stop fallback when needed
+All output is logged to the `.logs/` directory (view logs in [USE.md](USE.md)).
 
 ## Troubleshooting
 
@@ -386,15 +319,13 @@ If the autostart script doesn't find your venv:
 # Set VENV_DIR explicitly (or add to .bashrc/.zshrc)
 export VENV_DIR=$(pwd)/venv
 ./lmstudio_autostart.sh
-
 ```
 
-Or use it directly:
+Or activate and use directly:
 
 ```bash
 source ./venv/bin/activate
 python3 ./lmstudio_tray.py
-
 ```
 
 ### Checking Logs
@@ -420,32 +351,9 @@ tail -f .logs/*.log
 
 ### Network Prerequisites for Updates
 
-The tray monitor requires outbound HTTPS access to GitHub for update checks. If you see "Unable to check for updates.", verify network connectivity:
+The tray monitor requires outbound HTTPS access to GitHub for update checks. If you see "Unable to check for updates.", verify network connectivity and check logs. See [USE.md](USE.md) for detailed troubleshooting steps.
 
-```bash
-# Test GitHub API access
-curl -I https://api.github.com/repos/Ajimaru/LM-Studio-Tray-Manager/releases
-
-# Review tray logs for details
-tail -f .logs/lmstudio_tray.log
-```
-
-Common causes:
-
-- GitHub API rate limits (HTTP 403)
-- No internet access or firewall/proxy restrictions
-- Corporate SSL interception or proxy blocking HTTPS
-- Temporary GitHub outages
-
-### View tray monitor logs
-
-tail -f .logs/lmstudio_tray.log
-
-### View both in real-time (in separate terminals)
-
-tail -f .logs/*.log
-
-## PyGObject Import Errors
+### PyGObject Import Errors
 
 If you see `ImportError: cannot import name '_gi'`:
 
@@ -453,25 +361,25 @@ If you see `ImportError: cannot import name '_gi'`:
 
    ```bash
    ./venv/bin/python3 --version
-
    ```
 
-2. Check that system site-packages are enabled:
+2. See [USE.md](USE.md) for log viewing instructions.
+
+### System Tray Icon Not Appearing
+
+```bashencounter network issues, verify connectivity and check logs. See [USE.md](USE.md) for detailed troubleshooting steps. Errors
+
+If you see `ImportError: cannot import name '_gi'`:
+
+1. Verify Python 3.10 is being used:
 
    ```bash
-   ./venv/bin/python3 -c "import sys; print(sys.prefix, sys.base_prefix)"
-
-   ```
-
-3. Reinstall the venv:
-
-   ```bash
-   rm -rf venv/
-   ./setup.sh
-
-   ```
-
-## System Tray Icon Not Appearing
+      ./venv/bin/python3 --version
+      ```
+   
+   2. See [USE.md](USE.md) for log viewing instructions.
+   
+   ### System Tray Icon Not Appearing
 
 If the tray monitor is running but icon not visible:
 
@@ -525,7 +433,6 @@ To support Python 3.12 natively would require one of these approaches:
 ```bash
 sudo apt install libgirepository-1.0-dev pkg-config build-essential
 pip install PyGObject  # This would compile from source
-
 ```
 
 - ❌ Slow (compilation takes 2-5 minutes)
@@ -537,7 +444,6 @@ pip install PyGObject  # This would compile from source
 ```bash
 # Would work when these are available (Python 3.12 LTS support)
 sudo apt install python3.12-gi gir1.2-gtk-3.0
-
 ```
 
 - ❌ Not yet available in most distributions
@@ -548,7 +454,6 @@ sudo apt install python3.12-gi gir1.2-gtk-3.0
 ```dockerfile
 FROM python:3.12
 RUN apt install -y libgirepository-1.0-dev python3-gi
-
 ```
 
 - ❌ Adds container complexity
@@ -558,7 +463,6 @@ RUN apt install -y libgirepository-1.0-dev python3-gi
 
 ```bash
 ./setup.sh  # 5 seconds, uses pre-compiled binaries
-
 ```
 
 - ✅ Pre-compiled binaries
@@ -567,3 +471,7 @@ RUN apt install -y libgirepository-1.0-dev python3-gi
 - ✅ Clean isolation
 
 We recommend staying with **Python 3.10** for the foreseeable future.
+
+## Next Steps
+
+After setup is complete, proceed to [USE.md](USE.md) to learn how to run and use the application.
