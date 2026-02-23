@@ -74,24 +74,15 @@ RUN bash -c ' \
       cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"; \
     fi; \
     \
-    if [[ -f "docs/BUILD.md" ]]; then \
-      mkdir -p "$STAGE_DIR_BIN/docs"; \
-      cp -a "docs/BUILD.md" "$STAGE_DIR_BIN/docs/BUILD.md"; \
-    fi; \
-    \
     if [[ -d "assets" ]]; then \
       cp -a "assets" "$STAGE_DIR_SRC/assets"; \
       cp -a "assets" "$STAGE_DIR_BIN/assets"; \
     fi; \
     \
-    BIN_FILES=("setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION" "lmstudio_autostart.sh"); \
-    for file in "${BIN_FILES[@]}"; do \
+    for file in "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"; do \
       if [[ -f "$file" ]]; then \
         mkdir -p "$STAGE_DIR_BIN/$(dirname "$file")"; \
         cp -a "$file" "$STAGE_DIR_BIN/$file"; \
-        if [[ "$file" == *.sh ]]; then \
-          chmod 0755 "$STAGE_DIR_BIN/$file"; \
-        fi; \
       fi; \
     done; \
     \
