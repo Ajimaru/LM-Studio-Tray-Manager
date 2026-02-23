@@ -41,14 +41,14 @@ def get_gdk_pixbuf_loaders():
     try:
         # Get loaders directory from pkg-config
         # Use resolved path from shutil.which to avoid PATH manipulation
-        result = subprocess.run(
+        result = subprocess.run(  # nosemgrep
             [pkg_config_path, "--variable=gdk_pixbuf_moduledir",
              "gdk-pixbuf-2.0"],
             capture_output=True,
             text=True,
             check=False,
             timeout=5,
-            shell=False,  # nosec B603 - command is static and validated
+            shell=False,
         )
         if result.returncode == 0:
             loaders_dir = result.stdout.strip()
@@ -286,12 +286,11 @@ def build_binary():
     # Run PyInstaller with timeout
     try:
         validate_pyinstaller_cmd(cmd)
-        # nosec B602,B603 - cmd validated by validate_pyinstaller_cmd()
-        result = subprocess.run(
+        result = subprocess.run(  # nosemgrep
             cmd,
             check=False,
             timeout=3600,
-            shell=False,  # nosec B603
+            shell=False,
         )
     except subprocess.TimeoutExpired:
         print("\n❌ Build failed: PyInstaller timed out after 3600 seconds")
