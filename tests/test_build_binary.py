@@ -215,6 +215,52 @@ def test_build_binary_success_with_loaders(
     assert any("--add-binary" in cmd for cmd in commands[0])
 
 
+def test_build_binary_loaders_without_cache(
+    build_binary_module, monkeypatch, tmp_path
+):
+    """Loader .so binaries are bundled even when loaders.cache is absent."""
+    monkeypatch.chdir(tmp_path)
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+    binary_path = dist_dir / "lmstudio-tray-manager"
+    binary_path.write_text("bin", encoding="utf-8")
+
+    monkeypatch.setattr(
+        build_binary_module, "check_dependencies", lambda: None
+    )
+    loaders_dir = tmp_path / "loaders"
+    loaders_dir.mkdir()
+    (loaders_dir / "libpixbufloader-png.so").write_bytes(b"")
+    monkeypatch.setattr(
+        build_binary_module,
+        "get_gdk_pixbuf_loaders",
+        lambda: (str(loaders_dir), None),
+    )
+    monkeypatch.setattr(
+        build_binary_module, "get_hidden_imports", lambda: []
+    )
+    monkeypatch.setattr(
+        build_binary_module, "get_data_files", lambda: []
+    )
+
+    commands = []
+
+    def fake_run(args, **_kwargs):
+        commands.append(args)
+        return _RunResult(returncode=0)
+
+    monkeypatch.setattr(build_binary_module.subprocess, "run", fake_run)
+    result = build_binary_module.build_binary()
+    assert result == 0
+    pyinstaller_cmd = commands[0]
+    assert any("--add-binary" in arg for arg in pyinstaller_cmd)
+    has_cache_data = any(
+        "--add-data" in arg and "loaders.cache" in str(arg)
+        for arg in pyinstaller_cmd
+    )
+    assert not has_cache_data
+
+
 def test_build_binary_missing_output(
     build_binary_module, monkeypatch, tmp_path
 ):
