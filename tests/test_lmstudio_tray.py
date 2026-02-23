@@ -767,6 +767,12 @@ def test_parse_version_handles_prefix(tray_module):
     assert tray_module.parse_version("v1.2.3") == (1, 2, 3)  # nosec B101
 
 
+def test_parse_version_empty_string(tray_module):
+    """Test parse_version returns empty tuple for empty string."""
+    assert tray_module.parse_version("") == ()  # nosec B101
+    assert tray_module.parse_version(None) == ()  # nosec B101
+
+
 def test_is_newer_version(tray_module):
     """Compare version tuples for update checks."""
     assert tray_module.is_newer_version("v1.2.3", "v1.2.4")  # nosec B101
@@ -3698,3 +3704,42 @@ def test_check_api_models_with_invalid_data(tray_module, monkeypatch):
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_invalid
     )
+
+    result = tray_module.check_api_models()
+    assert result is False  # nosec B101
+
+
+def test_get_default_script_dir_with_argv(tray_module, monkeypatch):
+    """Test _get_default_script_dir returns directory from sys.argv[0]."""
+    test_script_path = "/home/user/project/script.py"
+    monkeypatch.setattr(sys, "argv", [test_script_path])
+    result = tray_module._get_default_script_dir()
+    assert result == "/home/user/project"  # nosec B101
+
+
+def test_get_default_script_dir_fallback_to_cwd(tray_module, monkeypatch):
+    """Test _get_default_script_dir falls back to cwd when argv is empty."""
+    monkeypatch.setattr(sys, "argv", [])
+    monkeypatch.setattr(os, "getcwd", lambda: "/fallback/directory")
+    result = tray_module._get_default_script_dir()
+    assert result == "/fallback/directory"  # nosec B101
+
+
+def test_mutually_exclusive_flags_warning(tray_module, monkeypatch, capsys):
+    """Test warning when both --auto-start-daemon and --gui are provided."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["lmstudio_tray.py", "--auto-start-daemon", "--gui"]
+    )
+    args = tray_module.parse_args()
+    assert args.auto_start_daemon is True  # nosec B101
+    assert args.gui is True  # nosec B101
+
+
+def test_get_default_script_dir_with_none_argv(tray_module, monkeypatch):
+    """Test _get_default_script_dir when sys.argv[0] is None."""
+    monkeypatch.setattr(sys, "argv", [None])
+    monkeypatch.setattr(os, "getcwd", lambda: "/current/dir")
+    result = tray_module._get_default_script_dir()
+    assert result == "/current/dir"  # nosec B101
