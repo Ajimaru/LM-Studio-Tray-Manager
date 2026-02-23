@@ -173,36 +173,33 @@ lms daemon down
 
 ## Troubleshooting
 
-### WebSocket Authentication Error
+For comprehensive troubleshooting guidance:
 
-If you encounter the error `Invalid passkey for lms CLI client`, this is typically caused by stale daemon processes. The script automatically handles this by:
+- **Setup issues**: See [SETUP.md](docs/SETUP.md)
+- **Runtime issues**: See [USE.md](docs/USE.md)
+- **Build problems**: See [BUILD.md](docs/BUILD.md)
+- **WebSocket Authentication Error**: See [USE.md - WebSocket Authentication Error](docs/USE.md#websocket-authentication-error)
 
-- Cleaning up old daemon processes on startup
-- Clearing stale authentication tokens
-- Restarting the daemon fresh
-
-The fix runs automatically when you start the script. Check the logs if issues persist:
+Check the logs if issues persist:
 
 ```bash
-cat .logs/build.log
+cat .logs/setup.log
 cat .logs/lmstudio_autostart.log
 cat .logs/lmstudio_tray.log
 ```
 
 ## Documentation
 
-- **[Readme](docs/README.md)** - Documentation overview and quick links
-- **[Docs Landing Page](docs/index.html)** - GitHub Pages entry point with links to all docs
-- **[Setup Guide](docs/SETUP.md)** - Complete setup.sh guide, Python environment configuration, and troubleshooting
-- **[Python Docstrings Reference](docs/python_docstrings.html)** - Static API-style view of `lmstudio_tray.py` docstrings
+- [Readme](docs/README.md) - Documentation overview and quick links
+- [Docs Landing Page](docs/index.html) - GitHub Pages entry point with links to all docs
 
 [![Docs](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml)
 
 ## Security & Community
 
-- **[Security Policy](SECURITY.md)** - Supported versions, reporting, and response process
-- **[Code of Conduct](CODE_OF_CONDUCT.md)** - Expected behavior for contributors
-- **[Third-Party Licenses](THIRD_PARTY_LICENSES.md)** - Overview of external runtime and CI dependencies
+- [Security Policy](SECURITY.md) - Supported versions, reporting, and response process
+- [Code of Conduct](CODE_OF_CONDUCT.md) - Expected behavior for contributors
+- [Third-Party Licenses](THIRD_PARTY_LICENSES.md) - Overview of external runtime and CI dependencies
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/008764f58bb046ef886c86bccd336b85)](https://app.codacy.com/gh/Ajimaru/LM-Studio-Tray-Manager/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![CI](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml)

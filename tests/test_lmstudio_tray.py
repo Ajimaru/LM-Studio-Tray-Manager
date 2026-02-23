@@ -767,11 +767,26 @@ def test_parse_version_handles_prefix(tray_module):
     assert tray_module.parse_version("v1.2.3") == (1, 2, 3)  # nosec B101
 
 
+def test_parse_version_empty_string(tray_module):
+    """Test parse_version returns empty tuple for empty string."""
+    assert tray_module.parse_version("") == ()  # nosec B101
+    assert tray_module.parse_version(None) == ()  # nosec B101
+    # Test version with non-digit characters
+    assert tray_module.parse_version("v1.2.3-beta") == (1, 2, 3)  # nosec B101
+    # Test version with only letters
+    assert tray_module.parse_version("beta") == ()  # nosec B101
+
+
 def test_is_newer_version(tray_module):
     """Compare version tuples for update checks."""
     assert tray_module.is_newer_version("v1.2.3", "v1.2.4")  # nosec B101
     assert not tray_module.is_newer_version("v1.2.3", "v1.2.3")  # nosec B101
     assert not tray_module.is_newer_version("dev", "v1.2.3")  # nosec B101
+    # Test both empty versions
+    assert not tray_module.is_newer_version("", "")  # nosec B101
+    # Test invalid version strings
+    assert not tray_module.is_newer_version("invalid", "")  # nosec B101
+    assert not tray_module.is_newer_version("", "v1.0.0")  # nosec B101
 
 
 def test_get_latest_release_version_reads_tag(tray_module, monkeypatch):
@@ -991,6 +1006,36 @@ def test_check_updates_error_path(tray_module, monkeypatch):
     assert tray.update_status == "Unknown"  # nosec B101
 
 
+def test_check_updates_ahead_of_release(tray_module, monkeypatch):
+    """Set update_status to 'Ahead of release' when current > latest."""
+    tray = _make_tray_instance(tray_module)
+    tray_module.sync_app_state_for_tests(app_version_val="v0.4.2")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: ("v0.4.1", None),
+    )
+    result = tray.check_updates()
+    assert tray.update_status == "Ahead of release"  # nosec B101
+    assert result is False  # nosec B101
+
+
+def test_check_updates_up_to_date(tray_module, monkeypatch):
+    """Set update_status to 'Up to date' when versions match."""
+    tray = _make_tray_instance(tray_module)
+    tray_module.sync_app_state_for_tests(app_version_val="v1.0.0")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: ("v1.0.0", None),
+    )
+    result = tray.check_updates()
+    assert tray.update_status == "Up to date"  # nosec B101
+    assert result is False  # nosec B101
+
+
 def test_manual_check_updates_reports_up_to_date(tray_module, monkeypatch):
     """Notify user when already up to date."""
     tray = _make_tray_instance(tray_module)
@@ -1109,6 +1154,38 @@ def test_manual_check_updates_reports_error_with_details(
     msg = str(notify_calls[0])
     assert "Update Check" in msg  # nosec B101
     assert "Unable to check for updates" in msg  # nosec B101
+
+
+def test_manual_check_updates_reports_ahead_of_release(
+    tray_module,
+    monkeypatch,
+):
+    """Notify user when running ahead of latest release."""
+    tray = _make_tray_instance(tray_module)
+    tray_module.sync_app_state_for_tests(app_version_val="v0.4.2")
+    monkeypatch.setattr(tray_module, "DEFAULT_APP_VERSION", "dev")
+    monkeypatch.setattr(
+        tray_module,
+        "get_latest_release_version",
+        lambda: ("v0.4.1", None),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    notify_calls = []
+
+    def capture_notify_call(cmd):
+        """Record notify command calls."""
+        notify_calls.append(cmd)
+
+    monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
+    tray.manual_check_updates(None)
+    assert len(notify_calls) == 1  # nosec B101
+    msg = str(notify_calls[0])
+    assert "Update Check" in msg  # nosec B101
+    assert "Ahead of release" in msg  # nosec B101
 
 
 def test_update_check_helpers(tray_module):
@@ -2053,6 +2130,67 @@ def test_show_about_dialog_png_fallback(tray_module, monkeypatch):
     tray.show_about_dialog(None)
     dialog = tray_module.Gtk.AboutDialog.last_instance
     assert dialog.logo is fake_logo  # nosec B101
+
+
+def test_show_about_dialog_frozen_binary_prefers_png(
+    tray_module,
+    monkeypatch,
+):
+    """Prefer PNG over SVG in frozen PyInstaller binary."""
+    tray = _make_tray_instance(tray_module)
+    gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
+    tray_module.sync_app_state_for_tests(gdk_pixbuf_mod=gdk_mod)
+
+    fake_logo = object()
+    load_attempts = []
+
+    def track_load_attempts(path, *_args, **_kwargs):
+        """Track which file types are attempted in order."""
+        load_attempts.append(path)
+        return fake_logo
+
+    monkeypatch.setattr(
+        gdk_mod.Pixbuf,
+        "new_from_file_at_scale",
+        track_load_attempts,
+    )
+
+    def _asset_path(*args):
+        ext = args[-1].split(".")[-1]
+        return f"/tmp/_MEIPASS/assets/img/logo.{ext}"
+
+    monkeypatch.setattr(tray_module, "get_asset_path", _asset_path)
+    # Simulate frozen binary by setting sys._MEIPASS
+    monkeypatch.setattr(
+        tray_module.sys,
+        "_MEIPASS",
+        "/tmp/_MEIPASS",
+        raising=False,
+    )
+
+    tray.show_about_dialog(None)
+    dialog = tray_module.Gtk.AboutDialog.last_instance
+    assert dialog.logo is fake_logo  # nosec B101
+    # Verify PNG was tried first in frozen mode
+    assert len(load_attempts) >= 1  # nosec B101
+    assert load_attempts[0].endswith(".png")  # nosec B101
+
+
+def test_show_about_dialog_no_logo_files_found(tray_module, monkeypatch):
+    """Handle case when no logo files are found."""
+    tray = _make_tray_instance(tray_module)
+    gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
+    tray_module.sync_app_state_for_tests(gdk_pixbuf_mod=gdk_mod)
+
+    # Make get_asset_path return None (no logo files)
+    monkeypatch.setattr(tray_module, "get_asset_path", lambda *_a: None)
+
+    tray.show_about_dialog(None)
+    dialog = tray_module.Gtk.AboutDialog.last_instance
+    assert dialog.ran is True  # nosec B101
+    assert dialog.destroyed is True  # nosec B101
+    # Logo should not be set when files not found
+    assert dialog.logo is None  # nosec B101
 
 
 def test_check_model_fail_warn_info_ok(tray_module, monkeypatch):
@@ -3698,3 +3836,42 @@ def test_check_api_models_with_invalid_data(tray_module, monkeypatch):
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_invalid
     )
+
+    result = tray_module.check_api_models()
+    assert result is False  # nosec B101
+
+
+def test_get_default_script_dir_with_argv(tray_module, monkeypatch):
+    """Test _get_default_script_dir returns directory from sys.argv[0]."""
+    test_script_path = "/home/user/project/script.py"
+    monkeypatch.setattr(sys, "argv", [test_script_path])
+    result = tray_module._get_default_script_dir()
+    assert result == "/home/user/project"  # nosec B101
+
+
+def test_get_default_script_dir_fallback_to_cwd(tray_module, monkeypatch):
+    """Test _get_default_script_dir falls back to cwd when argv is empty."""
+    monkeypatch.setattr(sys, "argv", [])
+    monkeypatch.setattr(os, "getcwd", lambda: "/fallback/directory")
+    result = tray_module._get_default_script_dir()
+    assert result == "/fallback/directory"  # nosec B101
+
+
+def test_parse_args_both_flags_true(tray_module, monkeypatch):
+    """Test parsing when both --auto-start-daemon and --gui are provided."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["lmstudio_tray.py", "--auto-start-daemon", "--gui"]
+    )
+    args = tray_module.parse_args()
+    assert args.auto_start_daemon is True  # nosec B101
+    assert args.gui is True  # nosec B101
+
+
+def test_get_default_script_dir_with_none_argv(tray_module, monkeypatch):
+    """Test _get_default_script_dir when sys.argv[0] is None."""
+    monkeypatch.setattr(sys, "argv", [None])
+    monkeypatch.setattr(os, "getcwd", lambda: "/current/dir")
+    result = tray_module._get_default_script_dir()
+    assert result == "/current/dir"  # nosec B101

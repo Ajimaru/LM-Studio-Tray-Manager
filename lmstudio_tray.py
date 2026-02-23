@@ -70,6 +70,22 @@ def load_version_from_dir(base_dir):
     return DEFAULT_APP_VERSION
 
 
+def _get_default_script_dir():
+    """Get the default script directory.
+
+    Returns the directory containing the currently executing script,
+    or the current working directory if the script path cannot be determined.
+
+    Returns:
+        str: Absolute path to the script directory.
+    """
+    return (
+        os.path.dirname(os.path.abspath(sys.argv[0]))
+        if sys.argv and sys.argv[0]
+        else os.getcwd()
+    )
+
+
 def parse_args():
     """Parse command-line arguments from sys.argv.
 
@@ -107,7 +123,7 @@ def parse_args():
     parser.add_argument(
         "script_dir",
         nargs="?",
-        default=os.getcwd(),
+        default=_get_default_script_dir(),
         help="Script directory for logs and VERSION file"
     )
     parser.add_argument(
@@ -141,11 +157,7 @@ class _AppState:
     """Mutable application state shared across the module."""
 
     MODEL: str = "no-model-passed"
-    script_dir: str = (
-        os.path.dirname(os.path.abspath(sys.argv[0]))
-        if sys.argv and sys.argv[0]
-        else os.getcwd()
-    )
+    script_dir: str = _get_default_script_dir()
     DEBUG_MODE: bool = False
     GUI_MODE: bool = False
     AUTO_START_DAEMON: bool = False
@@ -404,8 +416,15 @@ def main():
             "Debug mode enabled - capturing warnings to log file"
         )
 
+    # Log critical paths for troubleshooting
+    logging.debug("Script directory: %s", _AppState.script_dir)
+    logging.debug("Log file location: %s", log_file)
+    logging.debug("sys.argv[0]: %s", sys.argv[0] if sys.argv else "N/A")
+    logging.debug("os.getcwd(): %s", os.getcwd())
+
     _AppState.APP_VERSION = get_app_version()
     globals()["APP_VERSION"] = _AppState.APP_VERSION
+    logging.info("App version: %s", _AppState.APP_VERSION)
 
     kill_existing_instances()
     logging.info("Tray script started")
@@ -1986,47 +2005,51 @@ class TrayIcon:
         )
 
         # Load and set the application logo
-        logo_path = get_asset_path("img", "lm-studio-tray-manager.svg")
-        if logo_path and gdk_pixbuf is not None:
+        # Prefer PNG for PyInstaller binaries (better compatibility)
+        is_frozen = getattr(sys, "_MEIPASS", None) is not None
+        logo_loaded = False
+
+        if gdk_pixbuf is not None:
             error_types = (OSError,)
             if glib is not None:
                 error_types = (OSError, glib.Error)
 
-            try:
-                logo = gdk_pixbuf.Pixbuf.new_from_file_at_scale(
-                    logo_path, 128, 128, True
-                )
-                dialog.set_logo(logo)
-            except error_types as e:
-                logging.warning(
-                    "Failed to load logo from %s: %s",
-                    logo_path,
-                    e,
-                )
-                logo_path = None
+            # Try PNG first for frozen binaries, SVG first otherwise
+            primary_ext = "png" if is_frozen else "svg"
+            fallback_ext = "svg" if is_frozen else "png"
 
-        if (not logo_path) and gdk_pixbuf is not None:
-            png_path = get_asset_path("img", "lm-studio-tray-manager.png")
-            if png_path:
-                error_types = (OSError,)
-                if glib is not None:
-                    error_types = (OSError, glib.Error)
+            for ext in (primary_ext, fallback_ext):
+                logo_path = get_asset_path(
+                    "img", f"lm-studio-tray-manager.{ext}"
+                )
+                if not logo_path:
+                    continue
+
                 try:
                     logo = gdk_pixbuf.Pixbuf.new_from_file_at_scale(
-                        png_path, 128, 128, True
+                        logo_path, 128, 128, True
                     )
                     dialog.set_logo(logo)
+                    logo_loaded = True
+                    break
                 except error_types as e:
-                    logging.warning(
+                    # Log as debug for expected failures (SVG in frozen)
+                    log_level = (
+                        logging.DEBUG if (is_frozen and ext == "svg")
+                        else logging.WARNING
+                    )
+                    logging.log(
+                        log_level,
                         "Failed to load logo from %s: %s",
-                        png_path,
+                        logo_path,
                         e,
                     )
-            else:
+
+            if not logo_loaded:
                 logging.debug(
-                    "Asset not found: assets/img/lm-studio-tray-manager.png"
+                    "Could not load any logo format"
                 )
-        elif gdk_pixbuf is None:
+        else:
             logging.debug("GdkPixbuf not initialized; skipping logo")
 
         dialog.set_modal(True)
@@ -2144,6 +2167,10 @@ class TrayIcon:
 
         messages = {
             "Up to date": f"You are up to date ({_AppState.APP_VERSION})",
+            "Ahead of release": (
+                f"Ahead of release "
+                f"(current {_AppState.APP_VERSION}, latest {latest})"
+            ),
             "Dev build": "Dev build: update checks disabled",
         }
         message = messages.get(status)
@@ -2189,7 +2216,19 @@ class TrayIcon:
         self.last_update_error = None
 
         newer = is_newer_version(_AppState.APP_VERSION, latest)
-        self.update_status = "Update available" if newer else "Up to date"
+        current_parts = parse_version(_AppState.APP_VERSION)
+        latest_parts = parse_version(latest)
+        is_ahead = current_parts > latest_parts if (
+            current_parts and latest_parts
+        ) else False
+
+        if newer:
+            self.update_status = "Update available"
+        elif is_ahead:
+            self.update_status = "Ahead of release"
+        else:
+            self.update_status = "Up to date"
+
         logging.debug(
             "Update check status: %s (latest %s)",
             self.update_status,

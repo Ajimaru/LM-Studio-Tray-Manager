@@ -1,5 +1,31 @@
 # Build-time dependencies for creating the standalone binary.
-# Pin to a specific vetted version to mitigate supply-chain risks.
-pyinstaller==6.13.0
-pyinstaller-hooks-contrib>=2025.2,<2026.0  # transitive dep; pin to known-good range
-altgraph>=0.17,<0.18  # transitive dep used by PyInstaller
+# All dependencies are pinned to exact versions with SHA256 hashes
+# to mitigate supply-chain risks and ensure reproducible builds.
+#
+# To update: download new versions, verify integrity, and update hashes:
+#   pip download --no-deps <package>==<version>
+#   sha256sum <downloaded-file>
+
+# PyInstaller 6.13.0 (source: pyinstaller-6.13.0.tar.gz)
+pyinstaller==6.13.0 \
+    --hash=sha256:38911feec2c5e215e5159a7e66fdb12400168bd116143b54a8a7a37f08733456
+
+# altgraph 0.17.5 (source: altgraph-0.17.5-py2.py3-none-any.whl)
+# Transitive dependency used by PyInstaller
+altgraph==0.17.5 \
+    --hash=sha256:f3a22400bce1b0c701683820ac4f3b159cd301acab067c51c653e06961600597
+
+# pyinstaller-hooks-contrib 2025.2 (source: pyinstaller_hooks_contrib-2025.2-py3-none-any.whl)
+# Transitive dependency for PyInstaller hooks
+pyinstaller-hooks-contrib==2025.2 \
+    --hash=sha256:0b2bc7697075de5eb071ff13ef4a156d3beae6c19c7cbdcd70f37978d2013e30
+
+# setuptools 82.0.0 (source: setuptools-82.0.0-py3-none-any.whl)
+# Required by PyInstaller (>=42.0.0)
+setuptools==82.0.0 \
+    --hash=sha256:70b18734b607bd1da571d097d236cfcfacaf01de45717d59e6e04b96877532e0
+
+# packaging 26.0 (source: packaging-26.0-py3-none-any.whl)
+# Required by PyInstaller (>=22.0)
+packaging==26.0 \
+    --hash=sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529

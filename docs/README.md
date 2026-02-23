@@ -6,8 +6,9 @@ Welcome to the LM-Studio-Tray-Manager documentation.
 
 - **[Landing Page](index.html)** - GitHub Pages start page with links to all documentation formats
 - **[Full HTML Guide](guide.html)** - Detailed usage guide, flow diagrams, and architecture
+- **[Build Guide](BUILD.md)** - PyInstaller build and runtime requirements
 - **[Setup Guide](SETUP.md)** - Complete setup.sh and Python environment guide
-- **[Binary Build Guide](BUILD.md)** - PyInstaller build and runtime requirements
+- **[Usage Guide](USE.md)** - Application usage, CLI options, system tray interface, and troubleshooting
 - **[Python Docstrings Reference](python_docstrings.html)** - Static API-style documentation from `lmstudio_tray.py`
 - **[Third-Party Licenses](../THIRD_PARTY_LICENSES.md)** – Overview of external runtime and CI dependencies
 
@@ -19,6 +20,7 @@ docs/
 ├── guide.html              # Main comprehensive documentation (full guide)
 ├── BUILD.md                # Binary build and runtime guide
 ├── SETUP.md                # Comprehensive setup and environment guide
+├── USE.md                  # Application usage, CLI options, system tray interface, and troubleshooting
 ├── python_docstrings.html  # Static docstrings reference for lmstudio_tray.py
 └── README.md               # This file
 ```
@@ -27,13 +29,13 @@ docs/
 
 If you encounter issues:
 
-1. Check **[index.html](index.html)** for troubleshooting sections
-2. Review **[SETUP.md](SETUP.md)** for setup and environment-specific issues
-3. Check the log files in the `.logs` directory from the project root:
-   - `.logs/build.log` - Binary build process log
+1. Runtime/tray issues: **[USE.md](USE.md)** (includes log viewing and common failures)
+2. Setup/venv/Python issues: **[SETUP.md](SETUP.md)**
+3. Build/PyInstaller issues: **[BUILD.md](BUILD.md)**
+4. Logs (project root `.logs/`):
    - `.logs/setup.log` - Setup script installation log
    - `.logs/lmstudio_autostart.log` - Daemon and startup logs
-   - `.logs/lmstudio_tray.log` - System tray monitor logs
+   - `.logs/lmstudio_tray.log` - Tray monitor logs
 
 ## Opening the Documentation
 

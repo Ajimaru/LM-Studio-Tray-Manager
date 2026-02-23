@@ -156,15 +156,14 @@
         </div>
         <ul class="toc">
             <li><a href="#introduction">Introduction</a></li>
-            <li><a href="#python-docstrings">Python Docstrings</a></li>
             <li><a href="#setup-guide">Setup Guide</a></li>
+            <li><a href="#configuration">Configuration</a></li>
+            <li><a href="#usage">Usage</a></li>
+            <li><a href="#logging-troubleshooting">Logging & Troubleshooting</a></li>
             <li><a href="#autostart-script">LM Studio Autostart Script</a></li>
             <li><a href="#tray-script">Tray Monitor Script</a></li>
             <li><a href="#binary-release">Binary Release</a></li>
             <li><a href="#flow-diagrams">Flow Diagrams</a></li>
-            <li><a href="#usage">Usage</a></li>
-            <li><a href="#configuration">Configuration</a></li>
-            <li><a href="#logging-troubleshooting">Logging & Troubleshooting</a></li>
             <li><a href="#python-docstrings">Python Docstrings</a></li>
             <li><a href="#resources">Official Resources</a></li>
         </ul>
@@ -196,83 +195,89 @@
 
         <section id="setup-guide">
             <h2>Setup Guide</h2>
-            <p>The setup process is handled by an intelligent setup script that automatically detects your installation type and configures accordingly:</p>
-
-            <h3>Installation Types</h3>
-            <p>The script automatically detects whether you have a binary or Python package release:</p>
-            <ul>
-                <li><strong>Binary Release:</strong> Contains <code>lmstudio-tray-manager</code> binary. Setup skips Python venv creation (all dependencies bundled).</li>
-                <li><strong>Python Package Release:</strong> Contains source files. Setup creates Python venv with PyGObject/GTK3 support.</li>
-            </ul>
-
-            <h3>Step 1: Run Comprehensive Setup Script</h3>
-            <p>The setup script handles all prerequisite checks and installations:</p>
+            <p>The setup process automatically detects your installation type and handles all prerequisite checks:</p>
+            <h3>Quick Start</h3>
             <pre><code>./setup.sh</code></pre>
-            <p>You can preview setup actions without changing your system:</p>
-            <pre><code>./setup.sh --dry-run</code></pre>
-            <p>To list setup options, run:</p>
-            <pre><code>./setup.sh --help</code></pre>
-            <p>Example dry-run output (binary release):</p>
-            <pre><code>[INFO] Running setup in dry-run mode (no changes will be applied)
-[CHECK] LM Studio daemon (lms): found
-[CHECK] LM Studio desktop app: not found
-[CHECK] Installation type: Binary release detected
-[DONE] Dry-run completed successfully (0 changes applied)</code></pre>
-            <p>In normal mode (<code>./setup.sh</code>), the script checks for:</p>
+            <p>The setup script will:</p>
             <ul>
-                <li><strong>LM Studio Daemon</strong> - Verifies <code>lms</code> CLI is installed (llmster v0.0.3+)</li>
-                <li><strong>LM Studio Desktop App</strong> - Detects .deb package or AppImage installation
-                    <ul class="nested-list">
-                        <li>Searches in: script directory, <code>$HOME/Apps</code>, <code>$HOME/LM_Studio</code>, <code>$HOME/Applications</code>, <code>$HOME/.local/bin</code>, <code>/opt/lm-studio</code></li>
-                        <li>Supports both standard and versioned AppImage formats</li>
-                    </ul>
-                </li>
-                <li><strong>Installation Type</strong> - Detects if <code>lmstudio-tray-manager</code> binary is present
-                    <ul class="nested-list">
-                        <li>Binary Release: Skips Python venv (dependencies bundled)</li>
-                        <li>Python Release: Creates Python virtual environment with PyGObject/GTK3</li>
-                    </ul>
-                </li>
-                <li><strong>Python 3.10</strong> - Installs via apt if missing (Python releases only)</li>
+                <li>✓ Check for LM Studio daemon and desktop app</li>
+                <li>✓ Detect binary vs. Python release</li>
+                <li>✓ Create Python venv (if needed)</li>
+                <li>✓ Install Python 3.10 (if needed)</li>
+                <li>✓ Log all operations to <code>.logs/setup.log</code></li>
             </ul>
-            <p>The script will prompt for missing components with helpful guidance and log all operations to <code>.logs/setup.log</code>. In dry-run mode, it logs the planned actions only and does not modify the system.</p>
-            <p>After setup completes, check the setup log:</p>
-            <pre><code>cat .logs/setup.log</code></pre>
-            <p>For detailed information, see <a href="SETUP.md">SETUP.md</a>.</p>
+            <p>After setup, run:</p>
+            <pre><code># Binary release
+./lmstudio-tray-manager --auto-start-daemon
 
-            <h3>Path 1 (Recommended): Binary release</h3>
-            <p>If you downloaded the binary release archive, the setup script automatically detects the binary and skips Python venv creation:</p>
-            <pre><code>tar -xzf LM-Studio-Tray-Manager-vX.Y.Z-binary.tar.gz
-cd LM-Studio-Tray-Manager-vX.Y.Z-binary
-
-./setup.sh
-./lmstudio-tray-manager --auto-start-daemon</code></pre>
-            <p>The binary is self-contained at <code>./lmstudio-tray-manager</code> after extraction. No Python venv needed.</p>
-
-            <h3>Path 2: Python package</h3>
-            <p>Use the source package when you want the full Python setup. The setup script creates a Python venv with PyGObject/GTK3:</p>
-            <pre><code>tar -xzf LM-Studio-Tray-Manager-vX.Y.Z.tar.gz
-cd LM-Studio-Tray-Manager-vX.Y.Z
-
-./setup.sh
+# Python package release
 ./lmstudio_autostart.sh</code></pre>
-            <p>This will create a venv, start the daemon, wait for the API, and launch the system tray monitor. If a binary exists at <code>dist/lmstudio-tray-manager</code>, it is used automatically and launched with <code>--auto-start-daemon</code> (default mode) and <code>--debug</code> when enabled.</p>
+            <p><strong>For complete setup instructions, advanced options, troubleshooting, and detailed configuration:</strong> See <a href="SETUP.md">SETUP.md</a></p>
+            <p><strong>For building your own binary:</strong> See <a href="BUILD.md">BUILD.md</a></p>
+        </section>
 
-            <h3>Path 3 (Advanced): Build your own binary</h3>
-            <pre><code>./build.sh
-./dist/lmstudio-tray-manager --auto-start-daemon</code></pre>
+        <section id="configuration">
+            <h2>Configuration</h2>
 
-            <h3>Troubleshooting Setup</h3>
-            <p>If you encounter issues, check the logs:</p>
-            <pre><code># View setup installation log
-cat .logs/setup.log
+            <h3>Tray Monitor API Configuration</h3>
+            <p>The tray monitor stores its configuration in <code>~/.config/lmstudio_tray.json</code>:</p>
+            <pre><code>{
+  "api_host": "localhost",
+  "api_port": 1234
+}</code></pre>
+            <p>Edit via <strong>Left-click → Options → Configuration</strong> in the tray menu.</p>
 
-# View daemon startup log
-tail -f .logs/lmstudio_autostart.log
+            <h3>Environment Variables</h3>
+            <ul>
+                <li><code>VENV_DIR</code>: Custom venv location (default: <code>./venv</code>)</li>
+                <li><code>LM_AUTOSTART_DEBUG=1</code>: Enable debug logging</li>
+                <li><code>LM_AUTOSTART_SELECT_TIMEOUT=60</code>: Model selection timeout (seconds)</li>
+            </ul>
 
-# Search for errors
-grep -i error .logs/*.log</code></pre>
-            <p>For detailed setup help, see <a href="SETUP.md">SETUP.md</a>.</p>
+            <p><strong>For detailed configuration options, environment setup, and troubleshooting:</strong> See <a href="SETUP.md">SETUP.md</a></p>
+        </section>
+
+        <section id="usage">
+            <h2>Usage</h2>
+            <h3>Common Commands</h3>
+            <pre><code># Start daemon with tray monitor
+./lmstudio_autostart.sh
+
+# Start GUI (stops daemon first)
+./lmstudio_autostart.sh --gui
+
+# Interactive model selection
+./lmstudio_autostart.sh --list-models
+
+# Debug mode
+./lmstudio_autostart.sh --debug
+
+# Binary release
+./lmstudio-tray-manager --auto-start-daemon</code></pre>
+
+            <h3>Monitor Logs</h3>
+            <pre><code>tail -f .logs/lmstudio_tray.log</code></pre>
+
+            <p><strong>For complete usage guide, all CLI options, system tray interface, model management, and application troubleshooting:</strong> See <a href="USE.md">USE.md</a></p>
+        </section>
+
+        <section id="logging-troubleshooting">
+            <h2>Logging & Troubleshooting</h2>
+            <p>All logs are written to the <code>.logs/</code> directory:</p>
+            <ul>
+                <li><code>.logs/setup.log</code> - Setup script log</li>
+                <li><code>.logs/lmstudio_autostart.log</code> - Daemon startup log</li>
+                <li><code>.logs/lmstudio_tray.log</code> - Tray monitor log</li>
+            </ul>
+
+            <h3>View Logs</h3>
+            <pre><code>tail -f .logs/lmstudio_tray.log
+grep -i "error" .logs/*.log</code></pre>
+
+            <h3>Enable Debug Mode</h3>
+            <pre><code>./lmstudio_autostart.sh --debug</code></pre>
+
+            <p><strong>For detailed troubleshooting, setup issues, runtime problems, and comprehensive error guidance:</strong> See <a href="SETUP.md">SETUP.md</a> and <a href="USE.md">USE.md</a></p>
         </section>
 
         <section id="autostart-script">
@@ -324,7 +329,7 @@ EOF</code></pre>
                 <li>Live status display for daemon and desktop app in menu</li>
                 <li>Desktop app launcher (supports .deb and AppImage detection)</li>
                 <li>Tray icon with status indicators (active/warning/error)</li>
-                <li>Right-click menu for actions</li>
+                <li>Left-click menu for actions</li>
                 <li>Notifications for status changes</li>
                 <li>Automatic update checks with manual "Check for updates" action under Options</li>
                 <li>Configurable LM Studio API host/port (Options &gt; Configuration)</li>
@@ -332,7 +337,7 @@ EOF</code></pre>
                 <li>Automatic termination of duplicate instances</li>
             </ul>
             <h3>Status Indicators (in Menu)</h3>
-            <p>When you right-click the tray icon, the menu shows live status for each option:</p>
+            <p>When you left-click the tray icon, the menu shows live status for each option:</p>
             <ul>
                 <li><strong>🟢 (Green Circle)</strong> - Component is currently running/active</li>
                 <li><strong>🟡 (Yellow Circle)</strong> - Component is installed but not running</li>
@@ -501,7 +506,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                 graph TD
                     A["<b>lmstudio_tray.py</b><br/>START"] --> B[Kill existing instances]
                     B --> C[Create GTK3 tray icon]
-                    C --> D[Set up right-click menu]
+                    C --> D[Set up left-click menu]
                     D --> E[Start daemon/API monitoring]
                     E --> F{Status check}
                     F --> G{Model loaded?}
@@ -549,7 +554,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     Gui --> RunStart
                     Default --> RunStart
                     RunStart --> E["Create GTK3<br/>tray icon"]
-                    E --> F["Set up right-click<br/>menu"]
+                    E --> F["Set up left-click<br/>menu"]
                     F --> G["Start daemon/API<br/>monitoring"]
                     G --> H{Status<br/>check}
                     H --> I{Model<br/>loaded?}
@@ -577,132 +582,6 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                     V --> H
                     W --> H
             </div>
-        </section>
-
-        <section id="usage">
-            <h2>Usage</h2>
-            <h3>Basic Startup</h3>
-            <pre><code>./lmstudio_autostart.sh</code></pre>
-            <p>This starts LM Studio with default settings, checking dependencies and configuration.</p>
-
-            <h3>Start GUI (stops daemon first)</h3>
-            <pre><code>./lmstudio_autostart.sh --gui</code></pre>
-            <p>Stops the daemon, starts the GUI, and starts the tray monitor.</p>
-
-            <h3>Interactive Model Selection</h3>
-            <pre><code>./lmstudio_autostart.sh --list-models</code></pre>
-            <p>In TTY mode, allows interactive selection of local models and then loads the selected model into the daemon.</p>
-
-            <h3>Debug Mode</h3>
-            <pre><code>./lmstudio_autostart.sh --debug</code></pre>
-            <p>Enables verbose logging and terminal output.</p>
-
-            <h3>Binary Usage</h3>
-            <pre><code># Build the binary
-./build.sh
-
-# Run with auto-start
-./dist/lmstudio-tray-manager --auto-start-daemon
-
-# Start GUI on launch
-./dist/lmstudio-tray-manager --gui
-
-# Debug mode
-./dist/lmstudio-tray-manager --debug
-
-# Help / Version
-./dist/lmstudio-tray-manager --help
-./dist/lmstudio-tray-manager --version</code></pre>
-
-            <h3>Check Logs</h3>
-            <p>Monitor daemon activity in real-time:</p>
-            <pre><code>tail -f .logs/lmstudio_autostart.log</code></pre>
-            <p>Monitor tray monitor activity:</p>
-            <pre><code>tail -f .logs/lmstudio_tray.log</code></pre>
-        </section>
-
-        <section id="configuration">
-            <h2>Configuration</h2>
-
-            <h3>Initial Setup</h3>
-            <p>After cloning the repository, run the setup script once to prepare the Python environment:</p>
-            <pre><code>./setup.sh</code></pre>
-            <p>This creates a Python 3.10 environment with PyGObject/GTK3 support in the <code>venv/</code> directory. For detailed information, see <a href="SETUP.md" target="_blank" rel="noopener">SETUP.md</a>.</p>
-
-            <h3>Configuration Files</h3>
-            <p>The tray monitor stores its configuration in <code>~/.config/lmstudio_tray.json</code>. This file is created and updated through the <strong>Options &gt; Configuration</strong> dialog in the tray menu.</p>
-            <p>Configuration file format:</p>
-            <pre><code>{
-  "api_host": "localhost",
-  "api_port": 1234
-}</code></pre>
-            <p><strong>Configuration Settings:</strong></p>
-            <ul>
-                <li><code>api_host</code>: LM Studio API host address for model status queries (default: <code>localhost</code>). Accepts hostnames and IP addresses.</li>
-                <li><code>api_port</code>: LM Studio API port number (default: <code>1234</code>). Must be a valid port number (1-65535).</li>
-            </ul>
-            <p><strong>To Modify Configuration:</strong></p>
-            <ol>
-                <li>Right-click the tray icon and select <strong>Options &gt; Configuration</strong></li>
-                <li>Enter the API host and port values</li>
-                <li>Click <strong>Save</strong> to persist the configuration to <code>~/.config/lmstudio_tray.json</code></li>
-            </ol>
-            <p><strong>Security Validation:</strong> The tray monitor automatically validates API connections to ensure they use HTTP or HTTPS schemes only. Other schemes (file://, ftp://, etc.) are rejected to prevent security exploits.</p>
-
-            <h3>Environment Variables</h3>
-            <p>Customize behavior with environment variables:</p>
-            <ul>
-                <li><code>VENV_DIR=/path/to/venv</code>: Specify custom venv location (default: <code>./venv</code>)</li>
-                <li><code>LM_AUTOSTART_DEBUG=1</code>: Force debug mode with verbose logging</li>
-                <li><code>LM_AUTOSTART_SELECT_TIMEOUT=30</code>: Timeout (seconds) for interactive model selection</li>
-            </ul>
-
-            <h3>Log Files</h3>
-            <p>All output is logged to the <code>.logs/</code> directory:</p>
-            <ul>
-                <li><code>.logs/setup.log</code> - Setup script installation log</li>
-                <li><code>.logs/lmstudio_autostart.log</code> - Daemon startup and model loading logs</li>
-                <li><code>.logs/lmstudio_tray.log</code> - System tray monitor logs</li>
-            </ul>
-            <p>Check logs in real-time:</p>
-            <pre><code>cat .logs/setup.log
-tail -f .logs/lmstudio_autostart.log
-tail -f .logs/lmstudio_tray.log</code></pre>
-        </section>
-
-        <section id="logging-troubleshooting">
-            <h2>Logging & Troubleshooting</h2>
-
-            <h3>Log Files Location</h3>
-            <p>All logs are written to the <code>.logs/</code> directory for easy access. View them with standard tools:</p>
-            <pre><code># Check setup installation log
-cat .logs/setup.log
-
-# Check the last 50 lines of daemon log
-tail -50 .logs/lmstudio_autostart.log
-
-# Watch logs in real-time
-tail -f .logs/lmstudio_autostart.log
-
-# Search for errors in all logs
-grep -i "error" .logs/*.log</code></pre>
-
-            <h3>Common Issues</h3>
-            <ul>
-                <li><strong>PyGObject Import Error</strong>: Ensure you ran <code>./setup.sh</code> and have Python 3.10. Check <code>.logs/setup.log</code> for installation errors. See <a href="SETUP.md">SETUP.md</a> for details.</li>
-                <li><strong>Tray Icon Not Appearing</strong>: Check <code>.logs/lmstudio_tray.log</code> for GTK3 errors. Verify GTK3 libraries are installed on your system.</li>
-                <li><strong>Daemon Not Starting</strong>: Verify LM Studio daemon is installed (run <code>lms status</code>). Check <code>.logs/lmstudio_autostart.log</code> for dependency issues.</li>
-                <li><strong>Model Loading Fails</strong>: Check that the model name is correct (use <code>./lmstudio_autostart.sh --list-models</code>) and disk space is available.</li>
-            </ul>
-
-            <h3>Debug Mode</h3>
-            <p>For detailed troubleshooting, run with debug mode:</p>
-            <pre><code>./lmstudio_autostart.sh --debug</code></pre>
-            <p>This enables verbose logging and shows all operations including API calls and model loading process.</p>
-
-            <h3>Clearing Logs</h3>
-            <p>To clear old logs, simply delete the <code>.logs/</code> directory (logs will be recreated on next run):</p>
-            <pre><code>rm -rf .logs</code></pre>
         </section>
 
         <section id="python-docstrings">

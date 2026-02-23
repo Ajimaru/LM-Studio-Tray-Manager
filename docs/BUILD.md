@@ -37,6 +37,7 @@ This document describes how to build a standalone binary of LM Studio Tray Manag
   - [AppImage](#appimage)
   - [Rust Rewrite](#rust-rewrite)
 - [Support](#support)
+- [Next Steps](#next-steps)
 
 ## Overview
 
@@ -419,3 +420,7 @@ For build issues or questions:
 - [Open an issue](https://github.com/Ajimaru/LM-Studio-Tray-Manager/issues)
 - [Discussions](https://github.com/Ajimaru/LM-Studio-Tray-Manager/discussions)
 - Check existing issues with `build` label
+
+## Next Steps
+
+After building the binary, proceed to [SETUP.md](SETUP.md) to configure and install it.

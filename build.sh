@@ -91,13 +91,18 @@ if [ ! -f "$VENV_DIR/bin/activate" ]; then
 fi
 
 echo -e "${GREEN}✓${NC} Activating virtual environment..."
+# shellcheck source=/dev/null
 source "$VENV_DIR/bin/activate"
 
+# Use explicit path to venv python
+VENV_PYTHON="$VENV_DIR/bin/python"
+
 # Ensure PyInstaller is available in the venv
-if ! python -m PyInstaller --version &> /dev/null; then
+if ! "$VENV_PYTHON" -m PyInstaller --version &> /dev/null; then
     echo -e "${YELLOW}Installing PyInstaller in venv...${NC}"
-    python -m pip install --upgrade pip
-    python -m pip install -r "$SCRIPT_DIR/requirements-build.txt"
+    "$VENV_PYTHON" -m pip install --upgrade pip
+    # Use --require-hashes to enforce integrity verification
+    "$VENV_PYTHON" -m pip install --require-hashes -r "$SCRIPT_DIR/requirements-build.txt"
 
 fi
 
@@ -110,7 +115,7 @@ fi
 # Run PyInstaller build
 echo
 echo "Running PyInstaller build..."
-"$VENV_DIR/bin/python" build_binary.py
+"$VENV_PYTHON" build_binary.py
 
 # Check if binary was created
 BINARY_PATH="dist/lmstudio-tray-manager"
