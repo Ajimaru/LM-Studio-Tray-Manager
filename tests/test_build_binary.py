@@ -613,3 +613,98 @@ def test_check_dependencies_pip_oserror(
         build_binary_module.check_dependencies()
     assert exc_info.value.code == 1
 
+
+def test_build_binary_symlink_chain_deduplication(
+    build_binary_module, monkeypatch, tmp_path
+):
+    """
+    Verify deduplication works with symlink chains.
+    
+    Tests a realistic scenario where GdkPixbuf loaders have symlink chains
+    like: lib.so -> lib.so.1 -> lib.so.1.0. The deduplication logic should
+    resolve all symlinks to the same real file and include it only once.
+    
+    This prevents runtime loading errors where GdkPixbuf might expect certain
+    filenames while the binary package contains only the canonical version.
+    """
+    monkeypatch.chdir(tmp_path)
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+    binary_path = dist_dir / "lmstudio-tray-manager"
+    binary_path.write_text("bin", encoding="utf-8")
+
+    monkeypatch.setattr(
+        build_binary_module, "check_dependencies", lambda: None
+    )
+    
+    loaders_dir = tmp_path / "loaders"
+    loaders_dir.mkdir()
+    
+    # Create realistic symlink chain: lib.so -> lib.so.1 -> lib.so.1.0
+    # All should resolve to the same real file
+    real_png = loaders_dir / "libpixbufloader-png.so.1.0"
+    real_png.write_bytes(b"fake_png_loader")
+    
+    # Create symlink chain
+    sym_png_1 = loaders_dir / "libpixbufloader-png.so.1"
+    sym_png_1.symlink_to(real_png)
+    
+    sym_png = loaders_dir / "libpixbufloader-png.so"
+    sym_png.symlink_to(sym_png_1)
+    
+    # Add another unrelated loader without symlinks
+    real_jpeg = loaders_dir / "libpixbufloader-jpeg.so"
+    real_jpeg.write_bytes(b"fake_jpeg_loader")
+    
+    monkeypatch.setattr(
+        build_binary_module,
+        "get_gdk_pixbuf_loaders",
+        lambda: (str(loaders_dir),
+                 str(tmp_path / "loaders.cache")),
+    )
+    monkeypatch.setattr(
+        build_binary_module,
+        "get_hidden_imports",
+        lambda: ["gi"],
+    )
+    monkeypatch.setattr(
+        build_binary_module, "get_data_files", lambda: []
+    )
+
+    commands = []
+
+    def fake_run(args, **_kwargs):
+        commands.append(args)
+        return _RunResult(returncode=0)
+
+    monkeypatch.setattr(build_binary_module.subprocess, "run", fake_run)
+    result = build_binary_module.build_binary()
+    assert result == 0
+    
+    # Verify command structure
+    cmd = commands[0]
+    binary_indices = [i for i, x in enumerate(cmd) if x == "--add-binary"]
+    
+    # Should have 2 entries (png loaders deduplicated to 1, jpeg to 1)
+    # NOT 4 entries (if symlinks were not deduplicated)
+    assert len(binary_indices) == 2, (
+        f"Expected 2 --add-binary entries for deduplicated loaders, "
+        f"got {len(binary_indices)}"
+    )
+    
+    # Collect the binary values (command[i+1])
+    binary_values = [cmd[i+1] for i in binary_indices]
+    
+    # Both should reference the loaders destination
+    assert all("lib/gdk-pixbuf/loaders" in val for val in binary_values), (
+        f"Unexpected binary values: {binary_values}"
+    )
+    
+    # Verify the real paths are included, not symlinks
+    real_paths = [val.split(build_binary_module.os.pathsep)[0] 
+                  for val in binary_values]
+    for real_path in real_paths:
+        # All paths should be real files, not symlinks
+        assert build_binary_module.os.path.isfile(real_path), (
+            f"{real_path} should be a file"
+        )
