@@ -35,3 +35,47 @@ jobs:
 
       - name: Shellcheck
         run: shellcheck lmstudio_autostart.sh
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        run-coverage: [true]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+
+      - name: Run tests (with coverage)
+        if: ${{ matrix.run-coverage }}
+        run: |
+          pytest -q --cov=lmstudio_tray --cov=build_binary --cov-branch --cov-report=xml:coverage.xml
+
+      - name: Upload coverage to Codecov
+        if: ${{ matrix.run-coverage && github.repository == 'Ajimaru/LM-Studio-Tray-Manager' }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          flags: unittests
+          fail_ci_if_error: false
+
+      - name: Upload coverage to Codacy
+        if: ${{ matrix.run-coverage && github.repository == 'Ajimaru/LM-Studio-Tray-Manager' }}
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          CODACY_ORGANIZATION_PROVIDER: ${{ vars.CODACY_ORGANIZATION_PROVIDER }}
+          CODACY_USERNAME: ${{ vars.CODACY_USERNAME }}
+          CODACY_PROJECT_NAME: ${{ vars.CODACY_PROJECT_NAME }}
+        continue-on-error: true
+        run: |
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t "$CODACY_API_TOKEN"
