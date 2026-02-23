@@ -31,7 +31,6 @@ def get_gdk_pixbuf_loaders():
             error occurs.
     """
     pkg_config_path = shutil.which("pkg-config")
-    pkg_config_path = shutil.which("pkg-config")
     if not pkg_config_path:
         print("⚠ pkg-config not found")
         return None, None
@@ -39,7 +38,8 @@ def get_gdk_pixbuf_loaders():
     try:
         # Get loaders directory from pkg-config
         # Use resolved path from shutil.which to avoid PATH manipulation
-        result = subprocess.run(  # nosemgrep
+        # nosec B603 - uses resolved binary path, literals, and shell=False
+        result = subprocess.run(
             [pkg_config_path, "--variable=gdk_pixbuf_moduledir",
              "gdk-pixbuf-2.0"],
             capture_output=True,
@@ -267,10 +267,10 @@ def build_binary():
                 binary_value
             ])
         if cache_file:
+        if cache_file:
             cmd.extend([
                 "--add-data",
-                f"{os.path.realpath(cache_file)}{os.pathsep}"
-                "lib/gdk-pixbuf"
+                f"{os.path.realpath(cache_file)}{os.pathsep}lib/gdk-pixbuf"
             ])
             print("✓ Added GdkPixbuf loaders and cache to binary\n")
         else:
@@ -292,7 +292,7 @@ def build_binary():
     # Run PyInstaller with timeout
     try:
         validate_pyinstaller_cmd(cmd)
-        result = subprocess.run(  # nosemgrep
+        result = subprocess.run(  # nosec B603
             cmd,
             check=False,
             timeout=3600,
