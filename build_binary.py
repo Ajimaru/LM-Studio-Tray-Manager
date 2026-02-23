@@ -38,8 +38,16 @@ def get_gdk_pixbuf_loaders():
     try:
         # Get loaders directory from pkg-config
         # Use static literal command array to satisfy security linter
+    pkg_config_path = shutil.which("pkg-config")
+    if not pkg_config_path:
+        print("⚠ pkg-config not found")
+        return None, None
+
+    try:
+        # Get loaders directory from pkg-config
+        # Use static literal command array to satisfy security linter
         result = subprocess.run(
-            ["pkg-config", "--variable=gdk_pixbuf_moduledir",
+            [pkg_config_path, "--variable=gdk_pixbuf_moduledir",
              "gdk-pixbuf-2.0"],
             capture_output=True,
             text=True,
