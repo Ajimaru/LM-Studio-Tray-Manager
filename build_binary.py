@@ -308,7 +308,9 @@ def build_binary():
     print("\nNext steps:")
     print("1. Test: ./dist/lmstudio-tray-manager --version")
     print("2. Optimize: strip dist/lmstudio-tray-manager")
-    print("3. Compress: upx --best dist/lmstudio-tray-manager")
+    print(
+        "Note: UPX compression is disabled (causes binary corruption)."
+    )
     return 0
 
 
