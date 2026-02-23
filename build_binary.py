@@ -38,7 +38,8 @@ def get_gdk_pixbuf_loaders():
     try:
         # Get loaders directory from pkg-config
         # Use resolved path from shutil.which to avoid PATH manipulation
-        result = subprocess.run(  # nosemgrep
+        # nosec B603 - uses resolved binary path, literals, and shell=False
+        result = subprocess.run(
             [pkg_config_path, "--variable=gdk_pixbuf_moduledir",
              "gdk-pixbuf-2.0"],
             capture_output=True,
