@@ -2,6 +2,7 @@
 
 from types import SimpleNamespace
 import importlib.util
+import os
 import sys
 from pathlib import Path
 import pytest
@@ -349,15 +350,15 @@ def test_get_gdk_pixbuf_loaders_no_pkg_config(
     monkeypatch.setattr(
         build_binary_module.shutil, "which", lambda _n: None
     )
-    
+
     def fake_run_fail(*_args, **_kwargs):
         # pkg-config fallback attempt fails
         return _RunResult(returncode=1, stdout="")
-    
+
     monkeypatch.setattr(
         build_binary_module.subprocess, "run", fake_run_fail
     )
-    
+
     found_dir, found_cache = (
         build_binary_module.get_gdk_pixbuf_loaders()
     )
@@ -400,7 +401,7 @@ def test_get_gdk_pixbuf_loaders_cache_missing(
     def fake_isdir(path):
         return path == loaders_dir
 
-    def fake_isfile(path):
+    def fake_isfile(_path):
         return False  # cache_file does not exist
 
     orig_isabs = build_binary_module.os.path.isabs
@@ -501,7 +502,6 @@ def test_validate_pyinstaller_cmd_invalid_data_value(build_binary_module):
 
 def test_validate_pyinstaller_cmd_valid(build_binary_module):
     """Validate accepts valid PyInstaller command."""
-    import os
     cmd = [
         build_binary_module.sys.executable,
         "-m",
@@ -526,7 +526,7 @@ def test_build_binary_with_loaders_deduplication(
     monkeypatch.setattr(
         build_binary_module, "check_dependencies", lambda: None
     )
-    
+
     loaders_dir = tmp_path / "loaders"
     loaders_dir.mkdir()
     # Create real file and symlink to it
@@ -534,7 +534,7 @@ def test_build_binary_with_loaders_deduplication(
     real_file.write_bytes(b"")
     symlink = loaders_dir / "libpixbufloader-png.so"
     symlink.symlink_to(real_file)
-    
+
     monkeypatch.setattr(
         build_binary_module,
         "get_gdk_pixbuf_loaders",
@@ -559,7 +559,7 @@ def test_build_binary_with_loaders_deduplication(
     monkeypatch.setattr(build_binary_module.subprocess, "run", fake_run)
     result = build_binary_module.build_binary()
     assert result == 0
-    
+
     # Verify only one --add-binary for the real file
     cmd = commands[0]
     binary_indices = [i for i, x in enumerate(cmd) if x == "--add-binary"]
@@ -587,46 +587,97 @@ def test_check_dependencies_path_escape(
 ):
     """Exit when requirements-build.txt path escapes project directory."""
     monkeypatch.setattr(importlib.util, "find_spec", lambda _n: None)
-    
+
     # Create a requirements file outside project root
     outside_file = tmp_path / "requirements-build.txt"
     outside_file.write_text("dummy")
-    
+
     # Mock Path to simulate a path escape
     original_path = build_binary_module.Path
-    
+
     class MockPath:
+        """Initialize the Path object with the original path implementation."""
         def __init__(self, *args, **kwargs):
             self._path = original_path(*args, **kwargs)
-        
+
         def is_file(self):
-            return self._path.is_file() if hasattr(self._path, 'is_file') else True
-        
+            """
+            Check if the path represents a file.
+
+            Returns:
+                bool: True if the path is a file or if the
+                      underlying path object does not have an
+                      is_file method, False otherwise.
+            """
+            if hasattr(self._path, 'is_file'):
+                return self._path.is_file()
+            return True
+
         def resolve(self):
+            """
+            Resolve the path to an absolute path.
+
+            Returns:
+                MockPath: A new MockPath instance with the resolved
+                    absolute path.
+            """
             mock = MockPath()
-            mock._path = self._path.resolve() if hasattr(self._path, 'resolve') else self._path
+            if hasattr(self._path, 'resolve'):
+                mock._path = self._path.resolve()
+            else:
+                mock._path = self._path
             return mock
-        
-        def is_relative_to(self, other):
+
+        def is_relative_to(self, _other):
+            """
+            Mock implementation that always returns False.
+
+            Simulates a path escape scenario by returning False for any
+            path comparison, indicating the path is not relative to the
+            given base path.
+
+            Args:
+                _other: The base path to check against (unused).
+
+            Returns:
+                bool: Always returns False to simulate path escape.
+            """
             # Always return False to simulate path escape
             return False
-        
+
         def __truediv__(self, other):
             mock = MockPath()
-            result = self._path / other if hasattr(self._path, '__truediv__') else self._path
+            result = (
+                self._path / other
+                if hasattr(self._path, '__truediv__')
+                else self._path
+            )
             mock._path = result
             return mock
-        
+
         @property
         def parent(self):
+            """
+            Get the parent directory of the current path.
+
+            Returns a MockPath instance with the parent directory path.
+            If the path object has a 'parent' attribute, uses it;
+            otherwise returns the current path.
+
+            Returns:
+                MockPath: A MockPath instance with the parent directory path.
+            """
             mock = MockPath()
-            mock._path = self._path.parent if hasattr(self._path, 'parent') else self._path
+            if hasattr(self._path, 'parent'):
+                mock._path = self._path.parent
+            else:
+                mock._path = self._path
             return mock
-    
+
     monkeypatch.setattr(
         build_binary_module, "Path", MockPath
     )
-    
+
     with pytest.raises(SystemExit) as exc_info:
         build_binary_module.check_dependencies()
     assert exc_info.value.code == 1
@@ -637,16 +688,16 @@ def test_check_dependencies_pip_install_fails(
 ):
     """Exit when pip install fails."""
     monkeypatch.setattr(importlib.util, "find_spec", lambda _n: None)
-    
+
     def fake_run_error(*args, **_kwargs):
         raise build_binary_module.subprocess.CalledProcessError(
             1, args[0]
         )
-    
+
     monkeypatch.setattr(
         build_binary_module.subprocess, "run", fake_run_error
     )
-    
+
     with pytest.raises(SystemExit) as exc_info:
         build_binary_module.check_dependencies()
     assert exc_info.value.code == 1
@@ -657,14 +708,14 @@ def test_check_dependencies_pip_oserror(
 ):
     """Exit when pip command raises OSError."""
     monkeypatch.setattr(importlib.util, "find_spec", lambda _n: None)
-    
+
     def fake_run_error(*_args, **_kwargs):
         raise OSError("Command not found")
-    
+
     monkeypatch.setattr(
         build_binary_module.subprocess, "run", fake_run_error
     )
-    
+
     with pytest.raises(SystemExit) as exc_info:
         build_binary_module.check_dependencies()
     assert exc_info.value.code == 1
@@ -675,11 +726,11 @@ def test_build_binary_symlink_chain_deduplication(
 ):
     """
     Verify deduplication works with symlink chains.
-    
+
     Tests a realistic scenario where GdkPixbuf loaders have symlink chains
     like: lib.so -> lib.so.1 -> lib.so.1.0. The deduplication logic should
     resolve all symlinks to the same real file and include it only once.
-    
+
     This prevents runtime loading errors where GdkPixbuf might expect certain
     filenames while the binary package contains only the canonical version.
     """
@@ -692,26 +743,26 @@ def test_build_binary_symlink_chain_deduplication(
     monkeypatch.setattr(
         build_binary_module, "check_dependencies", lambda: None
     )
-    
+
     loaders_dir = tmp_path / "loaders"
     loaders_dir.mkdir()
-    
+
     # Create realistic symlink chain: lib.so -> lib.so.1 -> lib.so.1.0
     # All should resolve to the same real file
     real_png = loaders_dir / "libpixbufloader-png.so.1.0"
     real_png.write_bytes(b"fake_png_loader")
-    
+
     # Create symlink chain
     sym_png_1 = loaders_dir / "libpixbufloader-png.so.1"
     sym_png_1.symlink_to(real_png)
-    
+
     sym_png = loaders_dir / "libpixbufloader-png.so"
     sym_png.symlink_to(sym_png_1)
-    
+
     # Add another unrelated loader without symlinks
     real_jpeg = loaders_dir / "libpixbufloader-jpeg.so"
     real_jpeg.write_bytes(b"fake_jpeg_loader")
-    
+
     monkeypatch.setattr(
         build_binary_module,
         "get_gdk_pixbuf_loaders",
@@ -736,28 +787,28 @@ def test_build_binary_symlink_chain_deduplication(
     monkeypatch.setattr(build_binary_module.subprocess, "run", fake_run)
     result = build_binary_module.build_binary()
     assert result == 0
-    
+
     # Verify command structure
     cmd = commands[0]
     binary_indices = [i for i, x in enumerate(cmd) if x == "--add-binary"]
-    
+
     # Should have 2 entries (png loaders deduplicated to 1, jpeg to 1)
     # NOT 4 entries (if symlinks were not deduplicated)
     assert len(binary_indices) == 2, (
         f"Expected 2 --add-binary entries for deduplicated loaders, "
         f"got {len(binary_indices)}"
     )
-    
+
     # Collect the binary values (command[i+1])
     binary_values = [cmd[i+1] for i in binary_indices]
-    
+
     # Both should reference the loaders destination
     assert all("lib/gdk-pixbuf/loaders" in val for val in binary_values), (
         f"Unexpected binary values: {binary_values}"
     )
-    
+
     # Verify the real paths are included, not symlinks
-    real_paths = [val.split(build_binary_module.os.pathsep)[0] 
+    real_paths = [val.split(build_binary_module.os.pathsep)[0]
                   for val in binary_values]
     for real_path in real_paths:
         # All paths should be real files, not symlinks
