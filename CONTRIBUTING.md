@@ -49,34 +49,6 @@ Optional checks:
   - manual tray action checks
   - docs link checks
 
-## Test Coverage Roadmap
-
-Current baseline for `lmstudio_tray.py` is at least 90%.
-
-To push coverage toward 92–95%, prioritize these still-uncovered branches:
-
-- `get_desktop_app_pids()` parsing edge cases:
-  - malformed `ps` lines
-  - non-digit PID values
-  - renderer process filtering (`--type=`)
-- `kill_existing_instances()` exception branches:
-  - `ProcessLookupError` / `PermissionError` while terminating stale PIDs
-- `get_desktop_app_status()` filesystem-search branches:
-  - `PermissionError` during AppImage directory scans
-  - search-path fallthrough behavior across multiple directories
-- Daemon/app stop force paths:
-  - repeated poll loops before stop success
-  - terminal fallback states after failed graceful stop attempts
-- `check_model()` transition notifications:
-  - explicit `INFO -> WARN`, `WARN -> FAIL`, `OK -> INFO` messaging paths
-  - timeout/error branches that retain last icon state
-
-Recommended test pattern for these cases:
-
-- Use `monkeypatch` with deterministic call sequences (`pop(0)` lists) for status polling.
-- Stub `subprocess.run`, `os.kill`, and `os.listdir` per branch.
-- Assert both behavior and side effects (notification command, icon call, menu rebuild).
-
 ## Documentation Expectations
 
 If you change setup or runtime behavior, update at least:
