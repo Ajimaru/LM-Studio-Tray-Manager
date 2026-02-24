@@ -2,13 +2,13 @@
 
 ![LM Studio Icon](assets/img/lm-studio-tray-manager.svg)
 
-Automation scripts for LM Studio - a powerful desktop and server application for running Large Language Models locally on consumer hardware.
+Automation scripts for LM Studio & llmster - to control and monitor the applications from the system tray.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/downloads/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://www.linux.org/)
 [![LM Studio App v0.4.3+](https://img.shields.io/badge/LM_Studio_App-v0.4.3+-green.svg)](https://lmstudio.ai/download)
-[![LM Studio Daemon v0.0.3+](https://img.shields.io/badge/LM_Studio_Daemon-v0.0.3+-green.svg)](https://lmstudio.ai)
+[![llmster v0.0.3+](https://img.shields.io/badge/llmster-v0.0.3+-green.svg)](https://lmstudio.ai)
 [![Release](https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ajimaru/LM-Studio-Tray-Manager/total.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases)
 
@@ -20,6 +20,14 @@ Automation scripts for LM Studio - a powerful desktop and server application for
 - **🎛️ Tray Menu Controls**: Start/stop daemon and start/stop desktop app, including conflict-safe switching between both modes
 - **🚦 Icon Status Schema**: `❌` not installed, `⚠️` both stopped, `ℹ️` runtime active but no model loaded, `✅` model loaded
 - **🔎 Update Checks**: Periodic GitHub release checks with a manual "Check for updates" action under the Options menu
+
+## Screenshots
+
+<!-- markdownlint-disable MD033 -->
+
+<img src="assets/img/tray-menu.png" alt="Tray Menu" style="width:15%;" />
+
+<!-- markdownlint-enable MD033 -->
 
 ## Getting Started
 
