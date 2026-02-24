@@ -134,9 +134,24 @@ class DummyAboutDialog:
         self.comments = ""
         self.logo = None
         self.modal = False
+        self.copyright = ""
         self.ran = False
         self.destroyed = False
+        self.signals = {}
+        self.added_labels = []
         DummyAboutDialog.last_instance = self
+
+    def get_content_area(self):
+        """Return self so pack_start can be called on the dialog."""
+        return self
+
+    def pack_start(self, widget, *_args, **_kwargs):
+        """Simulate packing a widget; capture markup if present."""
+        if hasattr(widget, 'markup') and widget.markup is not None:
+            if widget.markup not in self.added_labels:
+                self.added_labels.append(widget.markup)
+
+    # ... later define connect method etc ...
 
     def set_program_name(self, name):
         """Store program name."""
@@ -166,9 +181,21 @@ class DummyAboutDialog:
         """Store logo pixbuf reference."""
         self.logo = logo
 
+    def set_copyright(self, text):
+        """Store copyright string."""
+        self.copyright = text
+
     def set_modal(self, modal):
         """Store modal setting."""
         self.modal = modal
+
+    def connect(self, sig_name, callback):
+        """Register a fake signal handler for testing."""
+        self.signals[sig_name] = callback
+
+    def add_link_label(self, markup):
+        """Simulate adding a clickable label to the content area."""
+        self.added_labels.append(markup)
 
     def run(self):
         """Mark the dialog as shown."""
@@ -398,18 +425,36 @@ class DummyGtkModule(ModuleType):
         """Dummy label widget."""
         def __init__(self, label=""):
             self.label = label
+            self.markup = None
+            self.signals = {}
+            self._halign = None
+            self._xalign = None
+            self.centered = False
 
-        def set_halign(self, _value):
-            """
-            Set the horizontal alignment of the widget.
+        def set_halign(self, value):
+            self._halign = value
+            if hasattr(value, "name") and value.name == "CENTER":
+                self.centered = True
+            elif value == 0.5:
+                self.centered = True
+            return None
 
-            Args:
-                _value: The horizontal alignment value (unused in
-                    mock implementation).
+        def set_xalign(self, value):
+            self._xalign = value
+            if value == 0.5:
+                self.centered = True
+            return None
 
-            Returns:
-                None
-            """
+        def set_markup(self, markup):
+            """Store markup for later inspection."""
+            self.markup = markup
+
+        def connect(self, sig_name, callback):
+            """Record signal handlers for later invocation."""
+            self.signals[sig_name] = callback
+
+        def show(self):
+            """No-op for showing the widget."""
             return None
 
     class Entry:
@@ -1093,6 +1138,7 @@ def test_manual_check_updates_reports_update_available(
     msg = str(notify_calls[0])
     assert "Update Available" in msg  # nosec B101
     assert "v2.0.0" in msg  # nosec B101
+    assert "/releases" in msg  # nosec B101
 
 
 def test_manual_check_updates_reports_dev_build(tray_module, monkeypatch):
@@ -1194,6 +1240,7 @@ def test_update_check_helpers(tray_module):
     tray.update_status = None
     assert tray.get_version_label().endswith("(Unknown)")  # nosec B101
 
+    # when update available we should see the version string in the message
     message = _call_member(
         tray,
         "_format_update_check_message",
@@ -1202,6 +1249,14 @@ def test_update_check_helpers(tray_module):
         None,
     )
     assert "v1.2.3" in message  # nosec B101
+    assert "/releases" in message  # nosec B101
+
+    # verify version label does not include a URL when update pending
+    tray.update_status = "Update available"
+    tray.latest_update_version = "v9.9.9"
+    label = tray.get_version_label()
+    assert "v9.9.9" in label  # nosec B101
+    assert "/releases" not in label  # nosec B101
 
     message = _call_member(
         tray,
@@ -2043,7 +2098,10 @@ def test_show_status_dialog_success(tray_module, monkeypatch):
 
 
 def test_show_about_dialog_contains_version_and_repo(tray_module, monkeypatch):
-    """Show about dialog including version and repository metadata."""
+    """
+    Show about dialog includes version, repo link, documentation link,
+    and version info.
+    """
     tray = _make_tray_instance(tray_module)
     tray_module.sync_app_state_for_tests(app_version_val="v2.0.0")
     monkeypatch.setattr(tray_module, "APP_MAINTAINER", "TestMaintainer")
@@ -2051,6 +2109,11 @@ def test_show_about_dialog_contains_version_and_repo(tray_module, monkeypatch):
         tray_module,
         "APP_REPOSITORY",
         "https://github.com/test/repo"
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "APP_DOCUMENTATION",
+        "https://docs.example.com/foo"
     )
     monkeypatch.setattr(
         tray_module,
@@ -2064,8 +2127,56 @@ def test_show_about_dialog_contains_version_and_repo(tray_module, monkeypatch):
     assert dialog.authors == ["TestMaintainer"]  # nosec B101
     assert dialog.website == "https://github.com/test/repo"  # nosec B101
     assert dialog.website_label == "GitHub Repository"  # nosec B101
+    expected_comments = (
+        "Monitors and controls LM Studio daemon and desktop app."
+    )
+    assert dialog.comments == expected_comments  # nosec B101
+    assert (
+        '<a href="https://docs.example.com/foo">Documentation</a>'
+        in dialog.added_labels
+    )  # nosec B101
     assert dialog.ran  # nosec B101
     assert dialog.destroyed  # nosec B101
+
+
+def test_show_about_dialog_release_link(tray_module, monkeypatch):
+    """Website button should point to release when update pending."""
+    tray = _make_tray_instance(tray_module)
+    tray_module.sync_app_state_for_tests(app_version_val="v1.0.0")
+    repo_url = "https://github.com/foo/bar"
+    docs_url = "https://docs.foo/bar"
+    monkeypatch.setattr(tray_module, "APP_REPOSITORY", repo_url)
+    monkeypatch.setattr(tray_module, "APP_DOCUMENTATION", docs_url)
+    monkeypatch.setattr(tray_module, "get_authors", lambda: ["Me"])
+    tray.update_status = "Update available"
+    tray.latest_update_version = "v1.2.3"
+
+    tray.show_about_dialog(None)
+    dialog = tray_module.Gtk.AboutDialog.last_instance
+    expected_url = f"{repo_url}/releases/tag/v1.2.3"
+    assert dialog.website == expected_url  # nosec B101
+    assert dialog.website_label == "Release"  # nosec B101
+    expected_comments = (
+        "Monitors and controls "
+        "LM Studio daemon "
+        "and desktop app."
+    )
+    assert dialog.comments == expected_comments  # nosec B101
+    assert (
+        '<a href="https://docs.foo/bar">Documentation</a>'
+        in dialog.added_labels
+    )  # nosec B101
+    assert dialog.ran  # nosec B101
+    assert dialog.destroyed  # nosec B101
+
+
+def test_show_about_dialog_includes_copyright(tray_module, monkeypatch):
+    """About dialog should display 2025–2026 copyright."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "APP_MAINTAINER", "FooCorp")
+    tray.show_about_dialog(None)
+    dialog = tray_module.Gtk.AboutDialog.last_instance
+    assert "2025-2026" in dialog.copyright  # nosec B101
 
 
 def test_show_about_dialog_sets_logo(tray_module, monkeypatch):
@@ -2835,7 +2946,28 @@ def test_show_status_dialog_no_models(tray_module, monkeypatch):
         "_run_safe_command",
         lambda *_a, **_k: _completed(returncode=1, stdout=""),
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
+
+    class DummyResp:
+        """A context manager mock for simulating HTTP responses in tests.
+
+        This dummy response object mimics the behavior of a real HTTP response,
+        allowing it to be used with context manager syntax (with statement).
+        It returns an empty JSON model list when read.
+        """
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            return False
+
+        def read(self):
+            return b'{"data": []}'  # no models
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        lambda *args, **kwargs: DummyResp(),
+    )
+
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
     assert "No models loaded" in dialog.secondary  # nosec B101
@@ -3578,6 +3710,38 @@ def test_parse_args_long_hand_still_works(tray_module):
         assert args.debug is True  # nosec B101
         assert args.gui is True  # nosec B101
         assert args.auto_start_daemon is True  # nosec B101
+    finally:
+        sys.argv = old_argv
+
+
+def test_parse_args_script_dir_normalized(tmp_path, tray_module):
+    """When the user provides a relative script directory it becomes
+    absolute after applying CLI args.
+
+    The tray application should always operate with an absolute path
+    because various subsystems (logging, file lookups) depend on it.
+    This mirrors the behavior of :func:`_get_default_script_dir` for the
+    default case, but we now explicitly convert user input as well.
+    """
+    base = tmp_path / "base"
+    base.mkdir()
+    rel = "relative/dir"
+    abs_dir = os.path.abspath(os.path.join(str(base), rel))
+
+    old_argv = sys.argv[:]
+    try:
+        # pass a dummy model plus the relative path
+        sys.argv = ["prog", "mymodel", rel]
+        args = tray_module.parse_args()
+        # apply_cli_args performs normalization
+        tray_module._AppState.apply_cli_args(args)
+        assert tray_module._AppState.script_dir == os.path.abspath(rel)
+        assert os.path.isabs(tray_module._AppState.script_dir)
+        # when we set an already-absolute value it should be preserved
+        sys.argv = ["prog", "mymodel", abs_dir]
+        args2 = tray_module.parse_args()
+        tray_module._AppState.apply_cli_args(args2)
+        assert tray_module._AppState.script_dir == abs_dir
     finally:
         sys.argv = old_argv
 

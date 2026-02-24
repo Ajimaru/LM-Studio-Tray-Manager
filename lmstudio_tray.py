@@ -35,6 +35,7 @@ import logging
 import shutil
 import importlib
 import json
+import webbrowser
 from typing import Optional
 from types import ModuleType
 from urllib import request as urllib_request
@@ -124,7 +125,11 @@ def parse_args():
         "script_dir",
         nargs="?",
         default=_get_default_script_dir(),
-        help="Script directory for logs and VERSION file"
+        help=(
+            "Script directory for logs and VERSION file. If a relative path "
+            "is provided it will be resolved to an absolute path when "
+            "arguments are applied to the application state."
+        ),
     )
     parser.add_argument(
         "--debug",
@@ -178,13 +183,15 @@ class _AppState:
         Args:
             args (argparse.Namespace): Parsed command-line arguments.
                 Expected fields: model, script_dir, debug, gui,
-                auto_start_daemon.
+                auto_start_daemon.  ``script_dir`` will be converted to an
+                absolute path before assignment, so callers can safely supply
+                relative directory names.
 
         Returns:
             None.
         """
         cls.MODEL = args.model
-        cls.script_dir = args.script_dir
+        cls.script_dir = os.path.abspath(args.script_dir)
         cls.DEBUG_MODE = args.debug
         cls.GUI_MODE = args.gui
         cls.AUTO_START_DAEMON = args.auto_start_daemon and not cls.GUI_MODE
@@ -300,11 +307,64 @@ ICON_INFO = "help-info"            # ℹ️ Runtime active, no model
 APP_NAME = "LM Studio Tray Monitor"
 APP_MAINTAINER = "Ajimaru"
 APP_REPOSITORY = "https://github.com/Ajimaru/LM-Studio-Tray-Manager"
+APP_DOCUMENTATION = "https://ajimaru.github.io/LM-Studio-Tray-Manager/"
 LATEST_RELEASE_API_URL = (
     "https://api.github.com/repos/Ajimaru/LM-Studio-Tray-Manager"
     "/releases/latest"
 )
+
+
+def _copy_to_clipboard(url: str) -> None:
+    """Open *url* in the default web browser.
+
+    Historically this helper copied the link to the clipboard; the
+    behaviour was updated to perform an indirect open instead.  It remains
+    easily monkey‑patchable for unit tests.
+    """
+    try:
+        webbrowser.open(url)
+    except (OSError, ValueError):
+        # ignore failures gracefully
+        pass
+
+
+def _activate_link(url: str) -> bool:
+    """Open a link from GTK dialogs and report success.
+
+    Args:
+        url (str): URL from the activate-link signal.
+
+    Returns:
+        bool: True when the URL open was attempted successfully.
+    """
+    try:
+        webbrowser.open(url)
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def get_release_url(tag: Optional[str] = None) -> str:
+    """Return a GitHub URL for a release.
+
+    Args:
+        tag (str, optional): A release tag name (e.g. "v1.2.3"). If
+            provided the URL will point directly to that tag. If omitted
+            the generic ``/releases/latest`` URL is returned, which
+            GitHub redirects to the newest release.
+
+    Returns:
+        str: Absolute URL to the desired release page.
+    """
+    base = APP_REPOSITORY.rstrip("/")
+    if tag:
+        # explicit tag URL; useful when we know the version string
+        return f"{base}/releases/tag/{tag}"
+    return f"{base}/releases/latest"
+
 # === Path to lms-CLI ===
+
+
 LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 
@@ -1724,8 +1784,10 @@ class TrayIcon:
                     is_safe = True
 
                 if not is_safe:
-                    msg = ("App path not in safe "
-                           f"locations: {app_path}")
+                    msg = (
+                        "App path not in safe locations: "
+                        f"{app_path}"
+                    )
                     raise ValueError(msg)
 
                 # Launch validated executable via Popen with a new
@@ -1998,11 +2060,84 @@ class TrayIcon:
         dialog.set_program_name(APP_NAME)
         dialog.set_version(self.get_version_label())
         dialog.set_authors(get_authors())
-        dialog.set_website(APP_REPOSITORY)
-        dialog.set_website_label("GitHub Repository")
-        dialog.set_comments(
+
+        if (
+            self.update_status == "Update available"
+            and self.latest_update_version
+        ):
+            dialog.set_website(get_release_url(self.latest_update_version))
+            dialog.set_website_label("Release")
+        else:
+            dialog.set_website(APP_REPOSITORY)
+            dialog.set_website_label("GitHub Repository")
+
+        comment_text = (
             "Monitors and controls LM Studio daemon and desktop app."
         )
+        dialog.set_comments(comment_text)
+        dialog.set_copyright(f"© 2025-2026 {APP_MAINTAINER}")
+
+        def _iter_children(widget):
+            if not hasattr(widget, "get_children"):
+                return []
+            try:
+                return widget.get_children()
+            except (AttributeError, TypeError, ValueError):
+                return []
+
+        def _find_label(widget, target):
+            for child in _iter_children(widget):
+                if hasattr(child, "get_text"):
+                    try:
+                        if child.get_text() == target:
+                            return child
+                    except (AttributeError, TypeError, ValueError):
+                        pass
+                found = _find_label(child, target)
+                if found is not None:
+                    return found
+            return None
+
+        def _insert_link(parent, text, label, after_widget):
+            link_label = gtk.Label()
+            link_label.set_markup(f'<a href="{text}">{label}</a>')
+            align_center = getattr(
+                getattr(gtk, "Align", object),
+                "CENTER",
+                0.5
+            )
+            try:
+                link_label.set_halign(align_center)
+            except (AttributeError, TypeError, ValueError):
+                pass
+            if hasattr(link_label, "set_xalign"):
+                link_label.set_xalign(0.5)
+            link_label.connect(
+                "activate-link",
+                lambda _w, uri: _activate_link(uri),
+            )
+            parent.pack_start(link_label, False, False, 0)
+            if after_widget is not None and hasattr(parent, "reorder_child"):
+                try:
+                    idx = parent.get_children().index(after_widget)
+                    parent.reorder_child(link_label, idx + 1)
+                except (AttributeError, TypeError, ValueError):
+                    pass
+            link_label.show()
+            return link_label
+
+        content_area = dialog.get_content_area()
+        comment_label = _find_label(content_area, comment_text)
+        if comment_label is not None and hasattr(comment_label, "get_parent"):
+            try:
+                parent_box = comment_label.get_parent()
+            except (AttributeError, TypeError, ValueError):
+                parent_box = content_area
+        else:
+            parent_box = content_area
+
+        _insert_link(parent_box, APP_DOCUMENTATION, "Documentation",
+                     comment_label)
 
         # Load and set the application logo
         # Prefer PNG for PyInstaller binaries (better compatibility)
@@ -2141,10 +2276,17 @@ class TrayIcon:
     def get_version_label(self):
         """Return version text with update status for the About dialog.
 
+        The version string is deliberately kept free of URLs; when an update
+        is available the corresponding link is surfaced via the dialog's
+        "website" field instead (see :meth:`show_about_dialog`).
+
         Returns:
             str: Version text in the format '<APP_VERSION> (<status>)'.
         """
         status = self.update_status or "Unknown"
+        if status == "Update available" and self.latest_update_version:
+            # only show the version number, not the URL
+            status = f"Update available: {self.latest_update_version}"
         return f"{_AppState.APP_VERSION} ({status})"
 
     def _check_updates_tick(self):
@@ -2160,9 +2302,11 @@ class TrayIcon:
     def _format_update_check_message(self, status, latest, error):
         """Build the update check notification message."""
         if status == "Update available" and latest:
+            # include a clickable link to the release tag
+            url = get_release_url(latest)
             return (
                 "New version available: "
-                f"{latest} (current {_AppState.APP_VERSION})"
+                f"{latest} (current {_AppState.APP_VERSION}) {url}"
             )
 
         messages = {
@@ -2244,9 +2388,11 @@ class TrayIcon:
         self.last_update_version = latest
         notify_cmd = get_notify_send_cmd()
         if notify_cmd:
+            # include link in notification as well for convenience
+            url = get_release_url(latest)
             message = (
                 "New version available: "
-                f"{latest} (current {_AppState.APP_VERSION})"
+                f"{latest} (current {_AppState.APP_VERSION}) {url}"
             )
             self._run_validated_command(
                 [notify_cmd, "Update Available", message]
