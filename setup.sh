@@ -160,10 +160,10 @@ else
     log_output "WARN" "LM Studio daemon (lms) not found in PATH or ~/.lmstudio/bin/"
     echo ""
     print_info "The LM Studio daemon (llmster) is required for the automation scripts."
-    print_info "You can download it from: https://lmstudio.ai/download"
+    print_info "You can download it from: https://lmstudio.ai/"
     echo ""
     if [ "$DRY_RUN" = "1" ]; then
-        print_info "[DRY-RUN] Would prompt for daemon download and open https://lmstudio.ai/download"
+        print_info "[DRY-RUN] Would prompt for daemon download and open https://lmstudio.ai/"
         print_warning "Daemon is missing; real setup would stop here until installed"
         log_output "INFO" "DRY-RUN: Would prompt user to download LM Studio daemon"
     else
@@ -172,13 +172,13 @@ else
             print_info "Opening LM Studio download page..."
             if command -v xdg-open >/dev/null 2>&1; then
                 log_output "INFO" "Opening download page with xdg-open"
-                xdg-open "https://lmstudio.ai/download" &
+                xdg-open "https://lmstudio.ai/" &
             elif command -v firefox >/dev/null 2>&1; then
                 log_output "INFO" "Opening download page with firefox"
-                firefox "https://lmstudio.ai/download" &
+                firefox "https://lmstudio.ai/" &
             else
                 log_output "INFO" "No browser launcher found, displaying URL"
-                print_info "Please visit: https://lmstudio.ai/download"
+                print_info "Please visit: https://lmstudio.ai/"
             fi
             print_error "Please install LM Studio daemon and run this script again"
             log_output "ERROR" "Setup cancelled - LM Studio daemon not installed"
@@ -338,7 +338,7 @@ elif [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
             fi
         else
             log_output "ERROR" "User declined to make binary executable - cannot continue"
-            print_error "Binary exists but is not executable; cannot continue safely."
+            print_error "Binary exists but is not executable; cannot continue safely. Setup cancelled."
             print_info "Fix permissions and re-run: chmod +x ./lmstudio-tray-manager"
             exit 1
         fi
@@ -350,11 +350,78 @@ else
 fi
 
 # ============================================================================
-# 4. Check Python 3.10 (only for Python package releases)
+# 4. Check GTK3/GObject typelibs (required by both binary and Python releases)
+# ============================================================================
+
+check_gtk_typelibs() {
+    # try importing via system Python; this covers most cases and avoids hard
+    # coding paths. if python3 is missing, fall back to file existence tests.
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - <<'PYCODE' >/dev/null 2>&1
+import gi
+try:
+    gi.require_version("Gtk", "3.0")
+    from gi.repository import Gtk
+except Exception:
+    raise
+PYCODE
+        return $?
+    fi
+
+    # fallback: check for typelib files directly
+    for lib in "/usr/lib/girepository-1.0/Gtk-3.0.typelib" "/usr/lib/girepository-1.0/AyatanaAppIndicator3-0.1.typelib"; do
+        if [ ! -f "$lib" ]; then
+            return 1
+        fi
+    done
+    return 0
+}
+
+
+echo -e "\n${BLUE}Step 4: Checking GTK3/GObject typelibs${NC}"
+log_output "INFO" "Step 4: Checking for GTK3/GObject typelibs"
+
+if check_gtk_typelibs; then
+    print_step "GTK3/GObject typelibs already available"
+    log_output "INFO" "GTK3/GObject typelibs detected"
+else
+    print_warning "GTK3/GObject typelibs not found"
+    log_output "WARN" "GTK3/GObject typelibs missing"
+    echo ""
+    print_info "The application requires GTK3/GObject typelibs (gir1.2-gtk-3.0, ayatana indicator, etc.)."
+    if [ "$DRY_RUN" = "1" ]; then
+        print_info "[DRY-RUN] Would install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1"
+        log_output "INFO" "DRY-RUN: GTK typelibs installation skipped"
+    else
+        if ask_yes_no "Install required GTK3 packages now?"; then
+            log_output "INFO" "User chose to install GTK3 typelibs"
+            echo "Updating package manager..."
+            log_output "INFO" "Running apt update"
+            sudo apt update
+            echo "Installing GTK3 typelibs..."
+            log_output "INFO" "Installing packages: gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1"
+            if sudo apt install -y gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1; then
+                print_step "GTK3 typelibs installed successfully"
+                log_output "INFO" "GTK3 typelibs installed successfully"
+            else
+                print_error "Failed to install GTK3 typelibs"
+                log_output "ERROR" "apt install failed for GTK3 typelibs"
+                exit 1
+            fi
+        else
+            log_output "ERROR" "User declined GTK3 typelibs installation - setup cancelled"
+            print_error "GTK3/GObject libraries are required. Setup cancelled."
+            exit 1
+        fi
+    fi
+fi
+
+# ============================================================================
+# 5. Check Python 3.10 (only for Python package releases)
 # ============================================================================
 if [ "$BINARY_RELEASE" = false ]; then
-    echo -e "\n${BLUE}Step 4: Checking Python 3.10${NC}"
-    log_output "INFO" "Step 4: Checking for Python 3.10"
+    echo -e "\n${BLUE}Step 5: Checking Python 3.10${NC}"
+    log_output "INFO" "Step 5: Checking for Python 3.10"
 
     if command -v python3.10 >/dev/null 2>&1; then
         print_step "Python 3.10 found"
@@ -400,8 +467,8 @@ fi
 # 5. Create Python Virtual Environment (only for Python package)
 # ============================================================================
 if [ "$BINARY_RELEASE" = false ]; then
-    echo -e "\n${BLUE}Step 5: Creating Python Virtual Environment${NC}"
-    log_output "INFO" "Step 5: Creating Python virtual environment"
+    echo -e "\n${BLUE}Step 6: Creating Python Virtual Environment${NC}"
+    log_output "INFO" "Step 6: Creating Python virtual environment"
 
     if [ "$DRY_RUN" = "1" ]; then
         if [ -d "$VENV_DIR" ]; then

@@ -61,8 +61,10 @@ jobs:
           set -euo pipefail
 
           TAG="${GITHUB_REF_NAME}"
-          PKG_NAME_SRC="LM-Studio-Tray-Manager-${TAG}"
-          PKG_NAME_BIN="LM-Studio-Tray-Manager-${TAG}-binary"
+          # strip leading 'v' for version string and construct lowercase names
+          VERSION="${TAG#v}"
+          PKG_NAME_SRC="lmstudio-tray-manager-${VERSION}-linux-x86_64"
+          PKG_NAME_BIN="${PKG_NAME_SRC}-binary"
           STAGE_DIR_SRC="dist/${PKG_NAME_SRC}"
           STAGE_DIR_BIN="dist/${PKG_NAME_BIN}"
 

@@ -150,21 +150,15 @@ def test_check_dependencies_installs(
 
 def test_get_data_files(build_binary_module):
     """Include VERSION, AUTHORS, and assets when present."""
-    # get_data_files returns absolute paths from the project dir
-    # Just verify the function returns tuples with correct destinations
     data_files = build_binary_module.get_data_files()
-
-    # VERSION file should map to "."
     assert any(
         dest == "." and Path(src).name == "VERSION"
         for src, dest in data_files
     )
-    # AUTHORS file should map to "."
     assert any(
         dest == "." and Path(src).name == "AUTHORS"
         for src, dest in data_files
     )
-    # assets directory should map to "assets"
     assert any(
         dest == "assets" and Path(src).name == "assets"
         for src, dest in data_files
@@ -186,7 +180,6 @@ def test_build_binary_success_with_loaders(
     )
     loaders_dir = tmp_path / "loaders"
     loaders_dir.mkdir()
-    # Dummy .so files - content is not inspected; only the glob match matters.
     (loaders_dir / "libpixbufloader-png.so").write_bytes(b"")
     (loaders_dir / "libpixbufloader-jpeg.so").write_bytes(b"")
     monkeypatch.setattr(
@@ -346,13 +339,11 @@ def test_get_gdk_pixbuf_loaders_no_pkg_config(
     build_binary_module, monkeypatch
 ):
     """Return None when pkg-config is not found and fallback fails."""
-    # Mock both shutil.which and subprocess.run to ensure failure
     monkeypatch.setattr(
         build_binary_module.shutil, "which", lambda _n: None
     )
 
     def fake_run_fail(*_args, **_kwargs):
-        # pkg-config fallback attempt fails
         return _RunResult(returncode=1, stdout="")
 
     monkeypatch.setattr(
@@ -402,7 +393,7 @@ def test_get_gdk_pixbuf_loaders_cache_missing(
         return path == loaders_dir
 
     def fake_isfile(_path):
-        return False  # cache_file does not exist
+        return False
 
     orig_isabs = build_binary_module.os.path.isabs
 
@@ -456,7 +447,7 @@ def test_validate_pyinstaller_cmd_non_string_arg(build_binary_module):
         build_binary_module.sys.executable,
         "-m",
         "PyInstaller",
-        123,  # non-string arg
+        123,
     ]
     with pytest.raises(ValueError, match="must be strings"):
         build_binary_module.validate_pyinstaller_cmd(cmd)
@@ -481,7 +472,6 @@ def test_validate_pyinstaller_cmd_missing_data_value(build_binary_module):
         "-m",
         "PyInstaller",
         "--add-data",
-        # missing value (end of list)
     ]
     with pytest.raises(ValueError, match="Missing value"):
         build_binary_module.validate_pyinstaller_cmd(cmd)
@@ -494,7 +484,7 @@ def test_validate_pyinstaller_cmd_invalid_data_value(build_binary_module):
         "-m",
         "PyInstaller",
         "--add-data",
-        "invalid_format",  # missing os.pathsep separator
+        "invalid_format",
     ]
     with pytest.raises(ValueError, match="Invalid PyInstaller data"):
         build_binary_module.validate_pyinstaller_cmd(cmd)
@@ -509,7 +499,6 @@ def test_validate_pyinstaller_cmd_valid(build_binary_module):
         "--add-data",
         f"/src{os.pathsep}/dest",
     ]
-    # Should not raise
     build_binary_module.validate_pyinstaller_cmd(cmd)
 
 
@@ -529,7 +518,6 @@ def test_build_binary_with_loaders_deduplication(
 
     loaders_dir = tmp_path / "loaders"
     loaders_dir.mkdir()
-    # Create real file and symlink to it
     real_file = loaders_dir / "libpixbufloader-png.so.1.0"
     real_file.write_bytes(b"")
     symlink = loaders_dir / "libpixbufloader-png.so"
@@ -559,11 +547,8 @@ def test_build_binary_with_loaders_deduplication(
     monkeypatch.setattr(build_binary_module.subprocess, "run", fake_run)
     result = build_binary_module.build_binary()
     assert result == 0
-
-    # Verify only one --add-binary for the real file
     cmd = commands[0]
     binary_indices = [i for i, x in enumerate(cmd) if x == "--add-binary"]
-    # Should be 1 (symlink and target deduplicated)
     assert len(binary_indices) == 1
 
 
@@ -587,12 +572,8 @@ def test_check_dependencies_path_escape(
 ):
     """Exit when requirements-build.txt path escapes project directory."""
     monkeypatch.setattr(importlib.util, "find_spec", lambda _n: None)
-
-    # Create a requirements file outside project root
     outside_file = tmp_path / "requirements-build.txt"
     outside_file.write_text("dummy")
-
-    # Mock Path to simulate a path escape
     original_path = build_binary_module.Path
 
     class MockPath:
@@ -613,6 +594,10 @@ def test_check_dependencies_path_escape(
                 return self._path.is_file()
             return True
 
+        def get_path(self):
+            """Public accessor for the underlying path object."""
+            return self._path
+
         def resolve(self):
             """
             Resolve the path to an absolute path.
@@ -622,11 +607,17 @@ def test_check_dependencies_path_escape(
                     absolute path.
             """
             mock = MockPath()
-            if hasattr(self._path, 'resolve'):
-                mock._path = self._path.resolve()
+            base_path = self.get_path()
+            if hasattr(base_path, 'resolve'):
+                resolved = base_path.resolve()
             else:
-                mock._path = self._path
+                resolved = base_path
+            mock.set_path(resolved)
             return mock
+
+        def set_path(self, path):
+            """Set the underlying path object (public setter)."""
+            self._path = path
 
         def is_relative_to(self, _other):
             """
@@ -642,7 +633,6 @@ def test_check_dependencies_path_escape(
             Returns:
                 bool: Always returns False to simulate path escape.
             """
-            # Always return False to simulate path escape
             return False
 
         def __truediv__(self, other):
@@ -668,10 +658,10 @@ def test_check_dependencies_path_escape(
                 MockPath: A MockPath instance with the parent directory path.
             """
             mock = MockPath()
-            if hasattr(self._path, 'parent'):
-                mock._path = self._path.parent
+            if hasattr(self.get_path(), 'parent'):
+                mock.set_path(self.get_path().parent)
             else:
-                mock._path = self._path
+                mock.set_path(self.get_path())
             return mock
 
     monkeypatch.setattr(
@@ -747,19 +737,15 @@ def test_build_binary_symlink_chain_deduplication(
     loaders_dir = tmp_path / "loaders"
     loaders_dir.mkdir()
 
-    # Create realistic symlink chain: lib.so -> lib.so.1 -> lib.so.1.0
-    # All should resolve to the same real file
     real_png = loaders_dir / "libpixbufloader-png.so.1.0"
     real_png.write_bytes(b"fake_png_loader")
 
-    # Create symlink chain
     sym_png_1 = loaders_dir / "libpixbufloader-png.so.1"
     sym_png_1.symlink_to(real_png)
 
     sym_png = loaders_dir / "libpixbufloader-png.so"
     sym_png.symlink_to(sym_png_1)
 
-    # Add another unrelated loader without symlinks
     real_jpeg = loaders_dir / "libpixbufloader-jpeg.so"
     real_jpeg.write_bytes(b"fake_jpeg_loader")
 
@@ -788,30 +774,23 @@ def test_build_binary_symlink_chain_deduplication(
     result = build_binary_module.build_binary()
     assert result == 0
 
-    # Verify command structure
     cmd = commands[0]
     binary_indices = [i for i, x in enumerate(cmd) if x == "--add-binary"]
 
-    # Should have 2 entries (png loaders deduplicated to 1, jpeg to 1)
-    # NOT 4 entries (if symlinks were not deduplicated)
     assert len(binary_indices) == 2, (
         f"Expected 2 --add-binary entries for deduplicated loaders, "
         f"got {len(binary_indices)}"
     )
 
-    # Collect the binary values (command[i+1])
     binary_values = [cmd[i+1] for i in binary_indices]
 
-    # Both should reference the loaders destination
     assert all("lib/gdk-pixbuf/loaders" in val for val in binary_values), (
         f"Unexpected binary values: {binary_values}"
     )
 
-    # Verify the real paths are included, not symlinks
     real_paths = [val.split(build_binary_module.os.pathsep)[0]
                   for val in binary_values]
     for real_path in real_paths:
-        # All paths should be real files, not symlinks
         assert build_binary_module.os.path.isfile(real_path), (
             f"{real_path} should be a file"
         )

@@ -149,8 +149,6 @@ else
     STRIPPED_SIZE=$UNOPT_SIZE
 fi
 
-# Skip UPX compression (can cause PyInstaller archive corruption)
-echo -e "${YELLOW}Info: UPX compression disabled to ensure binary stability${NC}"
 FINAL_SIZE="$STRIPPED_SIZE"
 FINAL_SIZE_MB=$(awk -v n="$FINAL_SIZE" \
     'BEGIN {printf "%.2f", n / 1048576}')

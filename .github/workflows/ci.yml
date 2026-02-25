@@ -63,7 +63,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: ${{ matrix.run-coverage && github.repository == 'Ajimaru/LM-Studio-Tray-Manager' }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           files: coverage.xml
           flags: unittests

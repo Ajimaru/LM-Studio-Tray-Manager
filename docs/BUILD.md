@@ -4,40 +4,36 @@ This document describes how to build a standalone binary of LM Studio Tray Manag
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Quick Start](#quick-start)
-  - [Automated Build (Recommended)](#automated-build-recommended)
-  - [Manual Build](#manual-build)
-- [Requirements](#requirements)
-  - [Build Dependencies](#build-dependencies)
-  - [Python Packages](#python-packages)
-- [Build Methods](#build-methods)
-  - [Method 1: Shell Script (Easiest)](#method-1-shell-script-easiest)
-  - [Method 2: Python Script](#method-2-python-script)
-  - [Method 3: PyInstaller Spec File](#method-3-pyinstaller-spec-file)
-- [Optimization](#optimization)
-  - [Size Reduction](#size-reduction)
-  - [Expected Sizes](#expected-sizes)
-- [Testing](#testing)
-  - [Basic Tests](#basic-tests)
-  - [Full Test](#full-test)
-- [Troubleshooting](#troubleshooting)
-  - [Missing GTK3 Libraries](#missing-gtk3-libraries)
-  - [Runtime Requirements on Target Machine](#runtime-requirements-on-target-machine)
-  - [Binary Crashes on Startup](#binary-crashes-on-startup)
-  - [Large Binary Size](#large-binary-size)
-  - [UPX Not Working](#upx-not-working)
-- [Distribution](#distribution)
-  - [Creating Release Package](#creating-release-package)
-  - [Installation](#installation)
-- [CI/CD Integration](#cicd-integration)
-  - [GitHub Actions Example](#github-actions-example)
-- [Alternative Approaches](#alternative-approaches)
-  - [Nuitka](#nuitka)
-  - [AppImage](#appimage)
-  - [Rust Rewrite](#rust-rewrite)
-- [Support](#support)
-- [Next Steps](#next-steps)
+- [Building Binary Distribution](#building-binary-distribution)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Quick Start](#quick-start)
+    - [Automated Build (Recommended)](#automated-build-recommended)
+    - [Manual Build](#manual-build)
+  - [Requirements](#requirements)
+    - [Build Dependencies](#build-dependencies)
+    - [Python Packages](#python-packages)
+  - [Build Methods](#build-methods)
+    - [Method 1: Shell Script (Easiest)](#method-1-shell-script-easiest)
+    - [Method 2: Python Script](#method-2-python-script)
+    - [Method 3: PyInstaller Spec File](#method-3-pyinstaller-spec-file)
+  - [Optimization](#optimization)
+    - [Size Reduction](#size-reduction)
+    - [Expected Sizes](#expected-sizes)
+  - [Testing](#testing)
+    - [Basic Tests](#basic-tests)
+    - [Full Test](#full-test)
+  - [Troubleshooting](#troubleshooting)
+    - [Missing GTK3 Libraries](#missing-gtk3-libraries)
+    - [Runtime Requirements on Target Machine](#runtime-requirements-on-target-machine)
+    - [Binary Crashes on Startup](#binary-crashes-on-startup)
+    - [Large Binary Size](#large-binary-size)
+  - [Alternative Approaches](#alternative-approaches)
+    - [Nuitka](#nuitka)
+    - [AppImage (see issue #62)](#appimage-see-issue-62)
+    - [Rust Rewrite](#rust-rewrite)
+  - [Support](#support)
+  - [Next Steps](#next-steps)
 
 ## Overview
 
@@ -47,7 +43,7 @@ The binary build process creates a single executable file that bundles:
 - All Python application code and Python dependencies (PyGObject, etc.)
 - Application assets (icons, VERSION file, etc.)
 
-Note: GTK3 and GObject Introspection (GI) shared libraries and typelibs are
+**Note:** GTK3 and GObject Introspection (GI) shared libraries and typelibs are
 not bundled into the executable. They must be installed and available on
 the target system at runtime.
 
@@ -67,8 +63,7 @@ This will:
 3. Clean previous builds
 4. Run PyInstaller
 5. Strip debug symbols
-6. Compress with UPX
-7. Show final binary size
+6. Show final binary size
 
 ### Manual Build
 
@@ -89,13 +84,13 @@ pyinstaller lmstudio-tray-manager.spec
 
 ```bash
 # Ubuntu/Debian
-sudo apt install python3.10 python3.10-venv python3-pip upx binutils
+sudo apt install python3.10 python3.10-venv python3-pip binutils
 
 # Fedora
-sudo dnf install python3-pip upx binutils
+sudo dnf install python3-pip binutils
 
 # Arch Linux
-sudo pacman -S python-pip upx binutils
+sudo pacman -S python-pip binutils
 ```
 
 ### Python Packages
@@ -111,6 +106,7 @@ pip install -r requirements-build.txt
 The `build.sh` script automates the entire process with optimization:
 
 ```bash
+chmod +x build.sh
 ./build.sh
 ```
 
@@ -145,7 +141,7 @@ For advanced customization, edit `lmstudio-tray-manager.spec`:
 
 ```bash
 # Edit spec file
-vim lmstudio-tray-manager.spec
+nano lmstudio-tray-manager.spec
 
 # Build using spec
 pyinstaller lmstudio-tray-manager.spec
@@ -156,7 +152,7 @@ pyinstaller lmstudio-tray-manager.spec
 - Hidden imports list
 - Excluded modules
 - Data files
-- Build flags (strip, upx, console)
+- Build flags (strip, console)
 
 ## Optimization
 
@@ -168,15 +164,7 @@ pyinstaller lmstudio-tray-manager.spec
    strip dist/lmstudio-tray-manager
    ```
 
-2. **UPX compression** (saves ~50-70%):
-
-   ```bash
-   upx --best dist/lmstudio-tray-manager
-   # Or for maximum compression (slower):
-   upx --best --lzma dist/lmstudio-tray-manager
-   ```
-
-3. **Exclude unused modules** (edit spec file):
+2. **Exclude unused modules** (edit spec file):
 
    ```python
    excludes=[
@@ -193,7 +181,6 @@ pyinstaller lmstudio-tray-manager.spec
 | ---------- | ---- |
 | Unoptimized | 40-50 MB |
 | + Strip | 30-40 MB |
-| + UPX | 15-25 MB |
 | + Excludes | 10-20 MB |
 
 ## Testing
@@ -268,6 +255,7 @@ Optional (silences a warning):
 1. Check GTK3 is installed on target system:
 
    ```bash
+   # example for Debian/Ubuntu
    sudo apt install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1
    ```
 
@@ -277,8 +265,7 @@ Optional (silences a warning):
    ./dist/lmstudio-tray-manager 2>&1 | tee debug.log
    ```
 
-3. Build without UPX compression:
-   Edit spec file: `upx=False`
+3. Check `debug.log` for missing libraries or other errors.
 
 ### Large Binary Size
 
@@ -287,104 +274,12 @@ Optional (silences a warning):
 **Solutions:**
 
 1. Enable strip: `strip=True` in spec file
-2. Enable UPX: `upx=True` in spec file
-3. Exclude unused modules (see Optimization section)
-4. Use `--exclude-module` flag:
+2. Exclude unused modules (see Optimization section)
+3. Use `--exclude-module` flag:
 
    ```bash
    pyinstaller --exclude-module tkinter lmstudio_tray.py
    ```
-
-### UPX Not Working
-
-**Error:** `upx: not found` or UPX compression fails
-
-**Solutions:**
-
-1. Install UPX:
-
-   ```bash
-   sudo apt install upx
-   ```
-
-2. Disable UPX in spec file if problematic:
-
-   ```python
-   upx=False
-   ```
-
-## Distribution
-
-### Creating Release Package
-
-```bash
-# Create tarball
-cd dist/
-tar -czf lmstudio-tray-manager-$(cat ../VERSION)-linux-x86_64.tar.gz \
-    lmstudio-tray-manager
-
-# Create checksums
-sha256sum lmstudio-tray-manager-*-linux-x86_64.tar.gz > \
-    SHA256SUMS.txt
-```
-
-### Installation
-
-Users can install the binary:
-
-```bash
-# Extract
-tar -xzf lmstudio-tray-manager-*.tar.gz
-
-# Move to system path
-sudo mv lmstudio-tray-manager /usr/local/bin/
-
-# Make executable
-sudo chmod +x /usr/local/bin/lmstudio-tray-manager
-
-# Run
-lmstudio-tray-manager
-```
-
-## CI/CD Integration
-
-### GitHub Actions Example
-
-```yaml
-name: Build Binary
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y upx gir1.2-gtk-3.0
-          pip install -r requirements.txt
-          pip install -r requirements-build.txt
-      
-      - name: Build binary
-        run: ./build.sh
-      
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: lmstudio-tray-manager
-          path: dist/lmstudio-tray-manager
-```
 
 ## Alternative Approaches
 
@@ -397,7 +292,7 @@ For smaller binaries or different requirements, consider:
 - Faster startup time
 - More complex build process
 
-### AppImage
+### AppImage (see [issue #62](https://github.com/Ajimaru/LM-Studio-Tray-Manager/issues/62))
 
 - Standard Linux app format
 - Includes all dependencies

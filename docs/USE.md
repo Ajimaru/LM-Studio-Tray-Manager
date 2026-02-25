@@ -59,6 +59,9 @@ tail -f .logs/lmstudio_tray.log
 ### Python Package Release
 
 ```bash
+# Make autostart script executable (if needed)
+chmod +x ./lmstudio_autostart.sh
+
 # Run the autostart script
 ./lmstudio_autostart.sh
 
@@ -67,7 +70,8 @@ source ./venv/bin/activate
 python3 ./lmstudio_tray.py
 
 # Monitor logs (in another terminal)
-tail -f .logs/lmstudio_tray.log
+tail -f ./logs/lmstudio_autostart.log
+tail -f ./logs/lmstudio_tray.log
 ```
 
 ## Running the Application
@@ -99,8 +103,7 @@ Run via the convenience script:
 ./lmstudio_autostart.sh -L
 
 # With debug output
-export LM_AUTOSTART_DEBUG=1
-./lmstudio_autostart.sh
+./lmstudio_autostart.sh --debug
 ```
 
 Or run directly:
@@ -128,9 +131,8 @@ EOF
 
 **Important:** Replace `/full/path/to/your/lmstudio_autostart.sh` with the absolute path to your installed script:
 
-- If you installed to a system directory (e.g., via package manager): typically `/usr/bin/lmstudio_autostart.sh` or `/usr/local/bin/lmstudio_autostart.sh`
 - If you installed to your home directory: run `pwd` in your LM-Studio-Tray-Manager directory to get the full path, then append `/lmstudio_autostart.sh`
-- To find the script location quickly: `which lmstudio_autostart.sh` or check your SETUP.md installation section for default locations
+- To find the script location quickly: `which lmstudio_autostart.sh` or check your [SETUP.md](SETUP.md) installation section for default locations
 
 Then enable autostart in your desktop environment settings.
 
@@ -185,7 +187,7 @@ Left-click on the tray icon to open the context menu with available options.
 
 The menu shows the following options (availability depends on current state):
 
-- **Start Daemon (Headless)** - Starts the headless daemon
+- **Start Daemon (Headless)** - Starts the headless daemon (stops desktop app first if running)
 - **Stop Daemon** - Stops the running daemon
 - **Start Desktop App** - Launches the GUI (stops daemon first)
 - **Stop Desktop App** - Closes the desktop app
@@ -224,7 +226,7 @@ When you click "Start Desktop App":
 
 3. **Auto-detection**: Recognizes both standard and versioned formats:
 
-   ```text
+   ```bash
    LM-Studio.AppImage
    LM-Studio-0.4.3-*.AppImage
    ```
@@ -351,35 +353,43 @@ tail -f .logs/lmstudio_tray.log
 
 ### Understanding Log Files
 
-The tray manager creates three log files:
+The tray manager creates four log files:
 
 | Log File | Purpose | Created By |
 | -------- | ------- | ---------- |
 | `.logs/setup.log` | Installation history | `setup.sh` |
 | `.logs/lmstudio_autostart.log` | Daemon startup events | `lmstudio_autostart.sh` |
 | `.logs/lmstudio_tray.log` | Tray monitor activity | `lmstudio_tray.py` |
+| `.logs/build.log` | Build process details | `build.sh` or `build_binary.py` |
 
 **Log Format Examples:**
 
 Setup log:
 
-```text
+```bash
 [2026-02-20 21:54:38] [INFO] --- LM-Studio-Tray-Manager Setup ---
 [2026-02-20 21:54:38] [OK] LM Studio daemon found
 ```
 
 Autostart log:
 
-```text
+```bash
 2026-02-20 21:55:18 🚀 Starting llmster headless daemon...
 2026-02-20 21:55:18 ✅ llmster started.
 ```
 
 Tray log:
 
-```text
+```bash
 2026-02-20 21:55:18,988 - INFO - Tray script started
 2026-02-20 21:55:19,123 - INFO - Status change: WARN -> INFO
+```
+
+Build log:
+
+```bash
+[2026-02-20 22:00:00] [INFO] Starting build process...
+[2026-02-20 22:01:30] [OK] Build completed successfully.
 ```
 
 Each log file is **recreated** when the script starts, ensuring fresh logs for each run.

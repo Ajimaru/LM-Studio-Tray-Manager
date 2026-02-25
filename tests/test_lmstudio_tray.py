@@ -18,13 +18,12 @@ import importlib.util
 import json
 import os
 import signal
-import subprocess  # nosec B404 - subprocess module is mocked in tests
+import subprocess  # nosec B404
 import sys
 import urllib.error
 from email.message import Message
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
-
 import pytest
 
 
@@ -150,8 +149,6 @@ class DummyAboutDialog:
         if hasattr(widget, 'markup') and widget.markup is not None:
             if widget.markup not in self.added_labels:
                 self.added_labels.append(widget.markup)
-
-    # ... later define connect method etc ...
 
     def set_program_name(self, name):
         """Store program name."""
@@ -432,6 +429,17 @@ class DummyGtkModule(ModuleType):
             self.centered = False
 
         def set_halign(self, value):
+            """
+            Sets the horizontal alignment value and updates the 'centered'
+            attribute accordingly.
+
+            If the provided value has a 'name' attribute equal to 'CENTER'
+            or is equal to 0.5, the 'centered' attribute is set to True.
+
+            Args:
+                value: The horizontal alignment value. Can be an object with a
+                    'name' attribute or a numeric value.
+            """
             self._halign = value
             if hasattr(value, "name") and value.name == "CENTER":
                 self.centered = True
@@ -440,6 +448,17 @@ class DummyGtkModule(ModuleType):
             return None
 
         def set_xalign(self, value):
+            """
+            Set the horizontal alignment value and update the centered state.
+
+            Args:
+                value (float): The horizontal alignment value.
+                    If set to 0.5, the object is considered
+                    centered.
+
+            Returns:
+                None
+            """
             self._xalign = value
             if value == 0.5:
                 self.centered = True
@@ -681,21 +700,15 @@ def tray_module_fixture(monkeypatch, tmp_path):
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
-    # GTK globals are populated by main(); set them directly so tests
-    # that reference tray_module.Gtk / GLib / AppIndicator3 work.
     setattr(module, "Gtk", gtk_mod)
     setattr(module, "GLib", glib_mod)
     setattr(module, "AppIndicator3", app_mod)
-
-    # Sync GTK modules and module-level variables via public helper
     module.sync_app_state_for_tests(
         gtk_mod=gtk_mod,
         glib_mod=glib_mod,
         app_mod=app_mod,
     )
 
-    # Setup synchronization: when module-level variables are set,
-    # also update _AppState to keep them in sync
     def _set_state(name, value):
         """Set module-level state while keeping _AppState synchronized."""
         if name == "script_dir":
@@ -816,9 +829,7 @@ def test_parse_version_empty_string(tray_module):
     """Test parse_version returns empty tuple for empty string."""
     assert tray_module.parse_version("") == ()  # nosec B101
     assert tray_module.parse_version(None) == ()  # nosec B101
-    # Test version with non-digit characters
     assert tray_module.parse_version("v1.2.3-beta") == (1, 2, 3)  # nosec B101
-    # Test version with only letters
     assert tray_module.parse_version("beta") == ()  # nosec B101
 
 
@@ -827,9 +838,7 @@ def test_is_newer_version(tray_module):
     assert tray_module.is_newer_version("v1.2.3", "v1.2.4")  # nosec B101
     assert not tray_module.is_newer_version("v1.2.3", "v1.2.3")  # nosec B101
     assert not tray_module.is_newer_version("dev", "v1.2.3")  # nosec B101
-    # Test both empty versions
     assert not tray_module.is_newer_version("", "")  # nosec B101
-    # Test invalid version strings
     assert not tray_module.is_newer_version("invalid", "")  # nosec B101
     assert not tray_module.is_newer_version("", "v1.0.0")  # nosec B101
 
@@ -905,7 +914,6 @@ def test_get_latest_release_version_reads_tag(tray_module, monkeypatch):
         """Stand-in for urllib.request.OpenerDirector."""
 
     def dummy_request(url, data=None, headers=None, method=None):
-        # Minimal Request stand-in; attributes are only for compatibility.
         return SimpleNamespace(
             full_url=url,
             data=data,
@@ -1239,8 +1247,6 @@ def test_update_check_helpers(tray_module):
     tray = _make_tray_instance(tray_module)
     tray.update_status = None
     assert tray.get_version_label().endswith("(Unknown)")  # nosec B101
-
-    # when update available we should see the version string in the message
     message = _call_member(
         tray,
         "_format_update_check_message",
@@ -1250,8 +1256,6 @@ def test_update_check_helpers(tray_module):
     )
     assert "v1.2.3" in message  # nosec B101
     assert "/releases" in message  # nosec B101
-
-    # verify version label does not include a URL when update pending
     tray.update_status = "Update available"
     tray.latest_update_version = "v9.9.9"
     label = tray.get_version_label()
@@ -1318,7 +1322,6 @@ def test_manual_check_updates_reports_error_without_details(
         notify_calls.append(cmd)
 
     monkeypatch.setattr(tray, "_run_validated_command", capture_notify_call)
-    # Notify user when update check fails without details
     tray.manual_check_updates(None)
     assert len(notify_calls) == 1  # nosec B101
     msg = str(notify_calls[0])
@@ -1500,7 +1503,6 @@ def test_get_desktop_app_pids_excludes_daemon_workers(
             returncode=0, stdout=output
         ),
     )
-    # Only /usr/bin/lm-studio should be included; daemon workers excluded
     assert tray_module.get_desktop_app_pids() == [789]  # nosec B101
 
 
@@ -1573,7 +1575,7 @@ def test_run_daemon_attempts_stops_on_condition(tray_module, monkeypatch):
         lambda _r: True,
     )
     assert result.returncode == 0  # nosec B101
-    assert len(called) == 1  # nosec B101  # Stopped after first success
+    assert len(called) == 1  # nosec B101
 
 
 def test_stop_llmster_best_effort_with_force(tray_module, monkeypatch):
@@ -1650,7 +1652,7 @@ def test_stop_desktop_app_processes_force_kill(tray_module, monkeypatch):
 
     result = _call_member(tray, "_stop_desktop_app_processes")
     assert result is True  # nosec B101
-    assert (22, signal.SIGKILL) in killed  # nosec B101
+    assert (22, 9) in killed  # nosec B101
 
 
 def test_start_daemon_missing_binaries_notifies(tray_module, monkeypatch):
@@ -1809,7 +1811,7 @@ def test_start_desktop_app_appimage_found_and_started(
     app_dir.mkdir()
     app_file = app_dir / "LM-Studio.AppImage"
     app_file.write_text("bin", encoding="utf-8")
-    app_file.chmod(0o755)  # Make it executable
+    app_file.chmod(0o755)
 
     monkeypatch.setattr(tray_module.sys, "argv", ["x", "model", str(app_dir)])
 
@@ -1820,8 +1822,6 @@ def test_start_desktop_app_appimage_found_and_started(
         return _completed(returncode=0)
 
     monkeypatch.setattr(tray_module.subprocess, "run", fake_run)
-
-    # Mock subprocess.Popen to prevent actual child process
     popen_calls = []
 
     def mock_popen(*_a, **_k):
@@ -1847,7 +1847,7 @@ def test_start_desktop_app_appimage_found_and_started(
     )
 
     tray.start_desktop_app(None)
-    assert popen_calls  # nosec B101  # Popen should have been called
+    assert popen_calls  # nosec B101
 
 
 def test_start_desktop_app_deb_path(tray_module, monkeypatch):
@@ -1879,8 +1879,6 @@ def test_start_desktop_app_deb_path(tray_module, monkeypatch):
         return path == "/usr/bin"
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
-
-    # Mock subprocess.Popen to prevent actual child process
     popen_calls = []
 
     def mock_popen(*_a, **_k):
@@ -1931,8 +1929,6 @@ def test_start_desktop_app_popen_kwargs(tray_module, monkeypatch):
         return path == "/usr/bin"
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
-
-    # Capture Popen kwargs to verify correct process isolation settings
     captured_kwargs = {}
 
     def mock_popen(_args, **kwargs):
@@ -1992,12 +1988,9 @@ def test_start_desktop_app_popen_oserror(tray_module, monkeypatch):
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
 
-    # Make subprocess.Popen raise OSError to test error path
     def mock_popen(*_a, **_k):
         raise OSError("Permission denied")
-
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
-
     notifications = []
 
     def capture_notify(cmd):
@@ -2005,8 +1998,6 @@ def test_start_desktop_app_popen_oserror(tray_module, monkeypatch):
         return _completed(returncode=0)
 
     monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
-
-    # Should not raise, should handle gracefully and send error notification
     tray.start_desktop_app(None)
     assert any(  # nosec B101
         "Error" in str(n) for n in notifications
@@ -2028,12 +2019,8 @@ def test_start_desktop_app_unsafe_path_error(
     )
     # No dpkg → skip deb check; AppImage search will be used
     monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: None)
-
-    # Set script_dir to an unsafe path (not in safe_paths)
     unsafe_dir = str(tmp_path / "lmstudio-test-unsafe")
     tray_module.sync_app_state_for_tests(script_dir_val=unsafe_dir)
-
-    # Simulate finding an AppImage in the unsafe directory
     monkeypatch.setattr(
         tray_module.os.path, "isdir", lambda p: p == unsafe_dir
     )
@@ -2042,7 +2029,6 @@ def test_start_desktop_app_unsafe_path_error(
     )
     monkeypatch.setattr(tray_module.os.path, "isfile", lambda _p: True)
     monkeypatch.setattr(tray_module.os, "access", lambda _p, _m: True)
-    # which returns None so the "PATH-based" safe check also fails
     monkeypatch.setattr(
         tray_module.shutil, "which", lambda _x: None
     )
@@ -2054,10 +2040,7 @@ def test_start_desktop_app_unsafe_path_error(
         return _completed(returncode=0)
 
     monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
-
-    # Should handle ValueError from path validation gracefully
     tray.start_desktop_app(None)
-    # Error notification sent for the unsafe path
     assert any(  # nosec B101
         "Error" in str(n) for n in notifications
     )
@@ -2179,7 +2162,7 @@ def test_show_about_dialog_includes_copyright(tray_module, monkeypatch):
     assert "2025-2026" in dialog.copyright  # nosec B101
 
 
-def test_show_about_dialog_sets_logo(tray_module, monkeypatch):
+def test_show_about_dialog_sets_logo(tray_module, monkeypatch, tmp_path):
     """Load the SVG logo when GdkPixbuf is available."""
     tray = _make_tray_instance(tray_module)
     gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
@@ -2191,10 +2174,12 @@ def test_show_about_dialog_sets_logo(tray_module, monkeypatch):
         "new_from_file_at_scale",
         lambda *_a, **_k: fake_logo,
     )
+    # use secure temporary file
+    logo_file = tmp_path / "logo.svg"
     monkeypatch.setattr(
         tray_module,
         "get_asset_path",
-        lambda *_a, **_k: "/tmp/logo.svg",
+        lambda *_a, **_k: str(logo_file),
     )
 
     tray.show_about_dialog(None)
@@ -2202,7 +2187,7 @@ def test_show_about_dialog_sets_logo(tray_module, monkeypatch):
     assert dialog.logo is fake_logo  # nosec B101
 
 
-def test_show_about_dialog_logo_error(tray_module, monkeypatch):
+def test_show_about_dialog_logo_error(tray_module, monkeypatch, tmp_path):
     """Ignore logo loading errors and still show dialog."""
     tray = _make_tray_instance(tray_module)
     gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
@@ -2216,10 +2201,11 @@ def test_show_about_dialog_logo_error(tray_module, monkeypatch):
         "new_from_file_at_scale",
         _raise_error,
     )
+    logo_file = tmp_path / "logo.svg"
     monkeypatch.setattr(
         tray_module,
         "get_asset_path",
-        lambda *_a, **_k: "/tmp/logo.svg",
+        lambda *_a, **_k: str(logo_file),
     )
 
     tray.show_about_dialog(None)
@@ -2228,7 +2214,7 @@ def test_show_about_dialog_logo_error(tray_module, monkeypatch):
     assert dialog.destroyed is True  # nosec B101
 
 
-def test_show_about_dialog_png_fallback(tray_module, monkeypatch):
+def test_show_about_dialog_png_fallback(tray_module, monkeypatch, tmp_path):
     """Fallback to PNG when SVG is unavailable."""
     tray = _make_tray_instance(tray_module)
     gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
@@ -2244,7 +2230,8 @@ def test_show_about_dialog_png_fallback(tray_module, monkeypatch):
     def _asset_path(*_args):
         if _args[-1] == "lm-studio-tray-manager.svg":
             return None
-        return "/tmp/logo.png"
+        # fallback to a file in the pytest tmp_path fixture
+        return str(tmp_path / "logo.png")
 
     monkeypatch.setattr(tray_module, "get_asset_path", _asset_path)
     tray.show_about_dialog(None)
@@ -2255,6 +2242,7 @@ def test_show_about_dialog_png_fallback(tray_module, monkeypatch):
 def test_show_about_dialog_frozen_binary_prefers_png(
     tray_module,
     monkeypatch,
+    tmp_path,
 ):
     """Prefer PNG over SVG in frozen PyInstaller binary."""
     tray = _make_tray_instance(tray_module)
@@ -2275,23 +2263,25 @@ def test_show_about_dialog_frozen_binary_prefers_png(
         track_load_attempts,
     )
 
+    # create a fake _MEIPASS directory inside our temporary path
+    meipass_dir = tmp_path / "_MEIPASS" / "assets" / "img"
+    meipass_dir.mkdir(parents=True)
+
     def _asset_path(*args):
         ext = args[-1].split(".")[-1]
-        return f"/tmp/_MEIPASS/assets/img/logo.{ext}"
+        return str(meipass_dir / f"logo.{ext}")
 
     monkeypatch.setattr(tray_module, "get_asset_path", _asset_path)
-    # Simulate frozen binary by setting sys._MEIPASS
     monkeypatch.setattr(
         tray_module.sys,
         "_MEIPASS",
-        "/tmp/_MEIPASS",
+        str(tmp_path / "_MEIPASS"),
         raising=False,
     )
 
     tray.show_about_dialog(None)
     dialog = tray_module.Gtk.AboutDialog.last_instance
     assert dialog.logo is fake_logo  # nosec B101
-    # Verify PNG was tried first in frozen mode
     assert len(load_attempts) >= 1  # nosec B101
     assert load_attempts[0].endswith(".png")  # nosec B101
 
@@ -2301,15 +2291,11 @@ def test_show_about_dialog_no_logo_files_found(tray_module, monkeypatch):
     tray = _make_tray_instance(tray_module)
     gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
     tray_module.sync_app_state_for_tests(gdk_pixbuf_mod=gdk_mod)
-
-    # Make get_asset_path return None (no logo files)
     monkeypatch.setattr(tray_module, "get_asset_path", lambda *_a: None)
-
     tray.show_about_dialog(None)
     dialog = tray_module.Gtk.AboutDialog.last_instance
     assert dialog.ran is True  # nosec B101
     assert dialog.destroyed is True  # nosec B101
-    # Logo should not be set when files not found
     assert dialog.logo is None  # nosec B101
 
 
@@ -2324,24 +2310,17 @@ def test_check_model_fail_warn_info_ok(tray_module, monkeypatch):
         or _completed(returncode=0, stdout="modelX"),
     )
 
-    # FAIL
     monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
     tray.last_status = None
     assert tray.check_model() is True  # nosec B101
-
-    # WARN transition
     monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
     assert tray.check_model() is True  # nosec B101
-
-    # INFO transition
     monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
     assert tray.check_model() is True  # nosec B101
-
-    # OK transition
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
     monkeypatch.setattr(
         tray_module.subprocess,
@@ -2441,11 +2420,15 @@ def test_load_config_missing_defaults(tray_module, tmp_path, monkeypatch):
     monkeypatch.setattr(
         tray_module.os.path,
         "expanduser",
-        lambda _p: str(tmp_path / "config.json"),
+        lambda _unused: str(tmp_path / "config.json"),
     )
     tray_module.load_config()
-    assert tray_module._AppState.API_HOST == "localhost"  # nosec B101
-    assert tray_module._AppState.API_PORT == 1234  # nosec B101
+    assert (
+        _call_member(tray_module, "_AppState").API_HOST == "localhost"
+    )  # nosec B101
+    assert (
+        _call_member(tray_module, "_AppState").API_PORT == 1234
+    )  # nosec B101
 
 
 def test_load_config_valid_values(tray_module, tmp_path, monkeypatch):
@@ -2459,11 +2442,15 @@ def test_load_config_valid_values(tray_module, tmp_path, monkeypatch):
     monkeypatch.setattr(
         tray_module.os.path,
         "expanduser",
-        lambda _p: str(config_file),
+        lambda _unused: str(config_file),
     )
     tray_module.load_config()
-    assert tray_module._AppState.API_HOST == "10.0.0.5"  # nosec B101
-    assert tray_module._AppState.API_PORT == 8080  # nosec B101
+    assert (
+        _call_member(tray_module, "_AppState").API_HOST == "10.0.0.5"
+    )  # nosec B101
+    assert (
+        _call_member(tray_module, "_AppState").API_PORT == 8080
+    )  # nosec B101
 
 
 def test_load_config_invalid_port(tray_module, tmp_path, monkeypatch):
@@ -2483,16 +2470,28 @@ def test_load_config_invalid_port(tray_module, tmp_path, monkeypatch):
         lambda _p: str(config_file),
     )
     tray_module.load_config()
-    assert tray_module._AppState.API_HOST == "example"  # nosec B101
-    assert tray_module._AppState.API_PORT == 1234  # nosec B101
+    assert (
+        _call_member(tray_module, "_AppState").API_HOST == "example"
+    )  # nosec B101
+    assert (
+        _call_member(tray_module, "_AppState").API_PORT == 1234
+    )  # nosec B101
 
 
 def test_normalize_api_port(tray_module):
     """Normalize API port values from strings and invalid inputs."""
-    assert tray_module._normalize_api_port("8080") == 8080  # nosec B101
-    assert tray_module._normalize_api_port(65535) == 65535  # nosec B101
-    assert tray_module._normalize_api_port(0) is None  # nosec B101
-    assert tray_module._normalize_api_port("bad") is None  # nosec B101
+    assert (
+        _call_member(tray_module, "_normalize_api_port", "8080") == 8080
+    )  # nosec B101
+    assert (
+        _call_member(tray_module, "_normalize_api_port", 65535) == 65535
+    )  # nosec B101
+    assert (
+        _call_member(tray_module, "_normalize_api_port", 0) is None
+    )  # nosec B101
+    assert (
+        _call_member(tray_module, "_normalize_api_port", "bad") is None
+    )  # nosec B101
 
 
 def test_show_config_dialog_cancel(tray_module, monkeypatch):
@@ -2505,15 +2504,20 @@ def test_show_config_dialog_cancel(tray_module, monkeypatch):
 
     original_dialog = tray_module.Gtk.Dialog
 
-    def _dialog_factory(*_args, **_kwargs):
+    def _dialog_factory(*_args_unused, **_kwargs):
         dialog = original_dialog(**_kwargs)
-        dialog._response = tray_module.Gtk.ResponseType.CANCEL
+        dialog.response = tray_module.Gtk.ResponseType.CANCEL
         return dialog
 
     monkeypatch.setattr(tray_module.Gtk, "Dialog", _dialog_factory)
     tray.show_config_dialog(None)
-    assert tray_module._AppState.API_HOST == "localhost"  # nosec B101
-    assert tray_module._AppState.API_PORT == 1234  # nosec B101
+    # Use the _call_member helper to access _AppState safely
+    assert (
+        _call_member(tray_module, "_AppState").API_HOST == "localhost"
+    )  # nosec B101
+    assert (
+        _call_member(tray_module, "_AppState").API_PORT == 1234
+    )  # nosec B101
 
 
 def test_show_config_dialog_save(tray_module, monkeypatch, tmp_path):
@@ -2532,9 +2536,9 @@ def test_show_config_dialog_save(tray_module, monkeypatch, tmp_path):
 
     original_dialog = tray_module.Gtk.Dialog
 
-    def _dialog_factory(*_args, **_kwargs):
+    def _dialog_factory(**_kwargs):
         dialog = original_dialog(**_kwargs)
-        dialog._response = tray_module.Gtk.ResponseType.OK
+        dialog.response = tray_module.Gtk.ResponseType.OK
         return dialog
 
     monkeypatch.setattr(tray_module.Gtk, "Dialog", _dialog_factory)
@@ -2685,7 +2689,6 @@ def test_force_stop_llmster(tray_module, monkeypatch):
     )
     monkeypatch.setattr(tray_module.time, "sleep", lambda _x: None)
     _call_member(tray, "_force_stop_llmster")
-    # Check for pkill calls with absolute paths
     pkill_x = any(
         c[0].endswith("pkill") and "-x" in c for c in calls
     )
@@ -2715,7 +2718,7 @@ def test_stop_desktop_app_processes_force_kill_path(tray_module, monkeypatch):
     monkeypatch.setattr(tray_module.time, "sleep", lambda _x: None)
     result = _call_member(tray, "_stop_desktop_app_processes")
     assert result is True  # nosec B101
-    assert any(sig == signal.SIGKILL for _pid, sig in killed)  # nosec B101
+    assert any(sig == 9 for _unused_pid, sig in killed)  # nosec B101
 
 
 def test_start_daemon_success_after_stopping_app(tray_module, monkeypatch):
@@ -2870,8 +2873,6 @@ def test_start_desktop_app_popen_failure(tray_module, monkeypatch):
         return path == "/usr/bin"
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
-
-    # Make subprocess.Popen raise OSError to test failure path
     monkeypatch.setattr(
         tray_module.subprocess,
         "Popen",
@@ -2961,6 +2962,14 @@ def test_show_status_dialog_no_models(tray_module, monkeypatch):
             return False
 
         def read(self):
+            """
+            Simulates reading data by returning a bytes object
+            representing an empty JSON array of models.
+
+            Returns:
+                bytes: A JSON-formatted bytes object with an empty
+                    "data" list.
+            """
             return b'{"data": []}'  # no models
     monkeypatch.setattr(
         tray_module.urllib_request,
@@ -3278,15 +3287,14 @@ def test_is_llmster_running_second_probe_error(tray_module, monkeypatch):
 
 def test_run_safe_command_invalid_inputs(tray_module):
     """Raise ValueError for invalid command inputs."""
-    # pylint: disable=protected-access
     with pytest.raises(ValueError, match="non-empty list"):
-        tray_module._run_safe_command([])
+        _call_member(tray_module, "_run_safe_command", [])
     with pytest.raises(ValueError, match="non-empty list"):
-        tray_module._run_safe_command("string")
+        _call_member(tray_module, "_run_safe_command", "string")
     with pytest.raises(ValueError, match="must be strings"):
-        tray_module._run_safe_command(["/bin/ls", 123])
+        _call_member(tray_module, "_run_safe_command", ["/bin/ls", 123])
     with pytest.raises(ValueError, match="absolute path"):
-        tray_module._run_safe_command(["ls", "-l"])
+        _call_member(tray_module, "_run_safe_command", ["ls", "-l"])
 
 
 def test_is_llmster_running_file_not_found_error(tray_module, monkeypatch):
@@ -3333,11 +3341,10 @@ def test_get_desktop_app_pids_error_handling(tray_module, monkeypatch):
 
 def test_kill_existing_instances_errors(tray_module, monkeypatch):
     """Handle errors when terminating other instances."""
-    # First test: pgrep not found
-    monkeypatch.setattr(tray_module, "get_pgrep_cmd", lambda: None)
-    tray_module.kill_existing_instances()  # Should log warning
 
-    # Second test: PermissionError
+    monkeypatch.setattr(tray_module, "get_pgrep_cmd", lambda: None)
+    tray_module.kill_existing_instances()
+
     monkeypatch.setattr(
         tray_module, "get_pgrep_cmd", lambda: "/usr/bin/pgrep"
     )
@@ -3349,7 +3356,7 @@ def test_kill_existing_instances_errors(tray_module, monkeypatch):
     errors_raised = []
 
     def mock_getpid():
-        return 12345  # Different from 99999
+        return 12345
 
     def mock_kill(pid, _sig):
         if pid == 99999:
@@ -3359,7 +3366,7 @@ def test_kill_existing_instances_errors(tray_module, monkeypatch):
 
     monkeypatch.setattr(tray_module.os, "getpid", mock_getpid)
     monkeypatch.setattr(tray_module.os, "kill", mock_kill)
-    tray_module.kill_existing_instances()  # Should handle PermissionError
+    tray_module.kill_existing_instances()
     assert len(errors_raised) == 1  # nosec B101
 
 
@@ -3730,42 +3737,48 @@ def test_parse_args_script_dir_normalized(tmp_path, tray_module):
 
     old_argv = sys.argv[:]
     try:
-        # pass a dummy model plus the relative path
         sys.argv = ["prog", "mymodel", rel]
         args = tray_module.parse_args()
-        # apply_cli_args performs normalization
-        tray_module._AppState.apply_cli_args(args)
-        assert tray_module._AppState.script_dir == os.path.abspath(rel)
-        assert os.path.isabs(tray_module._AppState.script_dir)
-        # when we set an already-absolute value it should be preserved
+        _call_member(tray_module, "_AppState").apply_cli_args(args)
+        assert (
+            _call_member(tray_module, "_AppState").script_dir  # nosec B101
+            == os.path.abspath(rel)
+        )
+        assert os.path.isabs(_call_member(tray_module, "_AppState").script_dir)  # nosec B101
         sys.argv = ["prog", "mymodel", abs_dir]
         args2 = tray_module.parse_args()
-        tray_module._AppState.apply_cli_args(args2)
-        assert tray_module._AppState.script_dir == abs_dir
+        _call_member(tray_module, "_AppState").apply_cli_args(args2)
+        assert (
+            _call_member(tray_module, "_AppState").script_dir == abs_dir
+        )  # nosec B101
     finally:
         sys.argv = old_argv
 
 
 def test_validate_url_scheme_valid_http(tray_module):
     """Validate that _validate_url_scheme accepts http URLs."""
-    tray_module._validate_url_scheme("http://localhost:1234")
+    _call_member(tray_module, "_validate_url_scheme", "http://localhost:1234")
 
 
 def test_validate_url_scheme_valid_https(tray_module):
     """Validate that _validate_url_scheme accepts https URLs."""
-    tray_module._validate_url_scheme("https://api.example.com")
+    _call_member(
+        tray_module, "_validate_url_scheme", "https://api.example.com"
+    )
 
 
 def test_validate_url_scheme_invalid_file(tray_module):
     """Reject file:// URLs for security."""
     with pytest.raises(ValueError, match="scheme 'file' not permitted"):
-        tray_module._validate_url_scheme("file:///etc/passwd")
+        _call_member(tray_module, "_validate_url_scheme", "file:///etc/passwd")
 
 
 def test_validate_url_scheme_invalid_ftp(tray_module):
     """Reject ftp:// URLs for security."""
     with pytest.raises(ValueError, match="scheme 'ftp' not permitted"):
-        tray_module._validate_url_scheme("ftp://ftp.example.com")
+        _call_member(
+            tray_module, "_validate_url_scheme", "ftp://ftp.example.com"
+        )
 
 
 def test_show_status_dialog_api_fallback_lms_fail(
@@ -4027,7 +4040,7 @@ def test_get_default_script_dir_with_argv(tray_module, monkeypatch):
     """Test _get_default_script_dir returns directory from sys.argv[0]."""
     test_script_path = "/home/user/project/script.py"
     monkeypatch.setattr(sys, "argv", [test_script_path])
-    result = tray_module._get_default_script_dir()
+    result = _call_member(tray_module, "_get_default_script_dir")
     assert result == "/home/user/project"  # nosec B101
 
 
@@ -4035,7 +4048,7 @@ def test_get_default_script_dir_fallback_to_cwd(tray_module, monkeypatch):
     """Test _get_default_script_dir falls back to cwd when argv is empty."""
     monkeypatch.setattr(sys, "argv", [])
     monkeypatch.setattr(os, "getcwd", lambda: "/fallback/directory")
-    result = tray_module._get_default_script_dir()
+    result = _call_member(tray_module, "_get_default_script_dir")
     assert result == "/fallback/directory"  # nosec B101
 
 
@@ -4055,5 +4068,5 @@ def test_get_default_script_dir_with_none_argv(tray_module, monkeypatch):
     """Test _get_default_script_dir when sys.argv[0] is None."""
     monkeypatch.setattr(sys, "argv", [None])
     monkeypatch.setattr(os, "getcwd", lambda: "/current/dir")
-    result = tray_module._get_default_script_dir()
+    result = _call_member(tray_module, "_get_default_script_dir")
     assert result == "/current/dir"  # nosec B101
