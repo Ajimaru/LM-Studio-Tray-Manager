@@ -3279,13 +3279,13 @@ def test_is_llmster_running_second_probe_error(tray_module, monkeypatch):
 def test_run_safe_command_invalid_inputs(tray_module):
     """Raise ValueError for invalid command inputs."""
     with pytest.raises(ValueError, match="non-empty list"):
-        tray_module._run_safe_command([])
+        _call_member(tray_module, "_run_safe_command", [])
     with pytest.raises(ValueError, match="non-empty list"):
-        tray_module._run_safe_command("string")
+        _call_member(tray_module, "_run_safe_command", "string")
     with pytest.raises(ValueError, match="must be strings"):
-        tray_module._run_safe_command(["/bin/ls", 123])
+        _call_member(tray_module, "_run_safe_command", ["/bin/ls", 123])
     with pytest.raises(ValueError, match="absolute path"):
-        tray_module._run_safe_command(["ls", "-l"])
+        _call_member(tray_module, "_run_safe_command", ["ls", "-l"])
 
 
 def test_is_llmster_running_file_not_found_error(tray_module, monkeypatch):

@@ -607,11 +607,17 @@ def test_check_dependencies_path_escape(
                     absolute path.
             """
             mock = MockPath()
-            if hasattr(self.get_path(), 'resolve'):
-                mock._path = self.get_path().resolve()
+            base_path = self.get_path()
+            if hasattr(base_path, 'resolve'):
+                resolved = base_path.resolve()
             else:
-                mock._path = self.get_path()
+                resolved = base_path
+            mock.set_path(resolved)
             return mock
+
+        def set_path(self, path):
+            """Set the underlying path object (public setter)."""
+            self._path = path
 
         def is_relative_to(self, _other):
             """
@@ -652,10 +658,10 @@ def test_check_dependencies_path_escape(
                 MockPath: A MockPath instance with the parent directory path.
             """
             mock = MockPath()
-            if hasattr(self._path, 'parent'):
-                mock._path = self._path.parent
+            if hasattr(self.get_path(), 'parent'):
+                mock.set_path(self.get_path().parent)
             else:
-                mock._path = self._path
+                mock.set_path(self.get_path())
             return mock
 
     monkeypatch.setattr(
