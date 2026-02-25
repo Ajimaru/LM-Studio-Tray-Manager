@@ -57,12 +57,19 @@ The setup script automatically detects your installation type and configures acc
    - **Python Package:** No binary found - proceeds with Python setup
    - This detection is **non-intrusive**: just a file existence check
 
-4. **Python 3.10** - Required for PyGObject/GTK3 compatibility
+4. **GTK3/GObject typelibs** - Needed by both binary and Python package releases
+   - Checked on every run, regardless of installation type
+   - Uses a simple Python import test or file lookup
+   - If missing, prompts to install `gir1.2-gtk-3.0` and
+     `gir1.2-ayatanaappindicator3-0.1` (in dry‑run the action is shown)
+   - If the user declines, setup aborts with an explanatory error
+
+5. **Python 3.10** - Required for PyGObject/GTK3 compatibility (packages only)
    - **Only checked for Python package releases** (step 3 must detect no binary)
    - Installs automatically if missing (via `apt`)
    - Binary releases skip this step entirely
 
-5. **Python Virtual Environment** - Isolated Python environment (Python releases only)
+6. **Python Virtual Environment** - Isolated Python environment (Python releases only)
    - Creates venv with system site-packages
    - Enables GTK3 introspection and PyGObject
    - **Skipped entirely for binary releases** (all dependencies already bundled)
@@ -98,6 +105,7 @@ The setup script automatically detects your installation type:
 - ✓ Creates Python virtual environment (./venv)
 - ✓ Checks for LM Studio daemon
 - ✓ Checks for LM Studio desktop app
+- ✓ Checks for GTK3/GObject typelibs (installs if missing)
 - ✓ Checks for Python 3.10 (installs if missing)
 - ✓ Sets up GTK3 and PyGObject support
 
