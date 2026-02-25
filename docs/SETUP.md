@@ -1,41 +1,45 @@
 # Setup Guide
 
+> ⚠️ **Linux‑only application.** The tray manager relies on GTK3 and Debian/ AppImage installation patterns; Windows and macOS are not supported yet, by either the binary or Python packages.
+
 The `setup.sh` script automates the complete setup process for LM Studio Tray Manager.
 
 ## Table of Contents
 
-- [What setup.sh Does](#what-setupsh-does)
-- [Installation Types](#installation-types)
-  - [Binary Release (Recommended)](#binary-release-recommended)
-  - [Python Package Release](#python-package-release)
-- [Quick Start](#quick-start)
-- [Dry-run Mode](#dry-run-mode)
-- [Setup Script Outputs](#setup-script-outputs)
-  - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
-  - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
-  - [If Python 3.10 is Missing](#if-python-310-is-missing)
-- [What's Inside the venv?](#whats-inside-the-venv)
-- [File Structure After Setup](#file-structure-after-setup)
-  - [For Binary Release](#for-binary-release)
-  - [For Python Package](#for-python-package)
-- [Environment Variables](#environment-variables)
-- [Log File Format](#log-file-format)
-  - [setup.log](#setuplog)
-  - [lmstudio_autostart.log](#lmstudio_autostartlog)
-  - [lmstudio_tray.log](#lmstudio_traylog)
-- [Troubleshooting](#troubleshooting)
-  - [venv not found](#venv-not-found)
-  - [Checking Logs](#checking-logs)
-  - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
-  - [PyGObject Import Errors](#pygobject-import-errors)
-  - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
-- [Why Python 3.10?](#why-python-310)
-- [Python 3.12+ Support](#python-312-support)
-  - [Option 1: Install Build Tools (not recommended)](#option-1-install-build-tools-not-recommended)
-  - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
-  - [Option 3: Use Docker (alternative)](#option-3-use-docker-alternative)
-  - [Our Solution: Python 3.10 venv](#our-solution-python-310-venv)
-- [Next Steps](#next-steps)
+- [Setup Guide](#setup-guide)
+  - [Table of Contents](#table-of-contents)
+  - [What setup.sh Does](#what-setupsh-does)
+  - [Installation Types](#installation-types)
+    - [Binary Release (Recommended)](#binary-release-recommended)
+    - [Python Package Release](#python-package-release)
+  - [Quick Start](#quick-start)
+  - [Dry-run Mode](#dry-run-mode)
+  - [Setup Script Outputs](#setup-script-outputs)
+    - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
+    - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
+    - [If Python 3.10 is Missing](#if-python-310-is-missing)
+  - [What's Inside the venv?](#whats-inside-the-venv)
+  - [File Structure After Setup](#file-structure-after-setup)
+    - [For Binary Release](#for-binary-release)
+    - [For Python Package](#for-python-package)
+  - [Environment Variables](#environment-variables)
+  - [Log File Format](#log-file-format)
+    - [setup.log](#setuplog)
+    - [lmstudio\_autostart.log](#lmstudio_autostartlog)
+    - [lmstudio\_tray.log](#lmstudio_traylog)
+  - [Troubleshooting](#troubleshooting)
+    - [venv not found](#venv-not-found)
+    - [Checking Logs](#checking-logs)
+    - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
+    - [PyGObject Import Errors](#pygobject-import-errors)
+    - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
+  - [Why Python 3.10?](#why-python-310)
+  - [Python 3.12+ Support](#python-312-support)
+    - [Option 1: Install Build Tools (not recommended)](#option-1-install-build-tools-not-recommended)
+    - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
+    - [Option 3: Use Docker (alternative)](#option-3-use-docker-alternative)
+    - [Current Solution: Python 3.10 venv](#current-solution-python-310-venv)
+  - [Next Steps](#next-steps)
 
 ## What setup.sh Does
 
@@ -135,6 +139,7 @@ The setup will:
 - ✓ Detect if binary or Python package
 - ✓ Create venv (Python packages only)
 - ✓ Install Python 3.10 if needed (Python packages only)
+- ✓ Check for GTK3/GObject typelibs (installs if missing)
 
 ## Dry-run Mode
 
@@ -151,7 +156,7 @@ Dry-run mode:
 
 Example output for Python package releases (Steps 4 and 5 are skipped for binary releases):
 
-```text
+```bash
 [INFO] Running setup in dry-run mode (no changes will be applied)
 [CHECK] LM Studio daemon (lms): found
 [CHECK] LM Studio desktop app: not found
@@ -169,7 +174,7 @@ Example output for Python package releases (Steps 4 and 5 are skipped for binary
 
 ### If LM Studio Daemon is Missing
 
-```text
+```bash
 ⚠ LM Studio daemon not found
   The daemon (llmster) is required for the automation scripts.
   
@@ -177,11 +182,11 @@ Example output for Python package releases (Steps 4 and 5 are skipped for binary
 
 ```
 
-Selecting `y` opens the download page. You'll need to install it manually from <https://lmstudio.ai/download>
+Selecting `y` opens the download page. You'll need to install it manually from <https://lmstudio.ai/>
 
 ### If LM Studio Desktop App is Missing
 
-```text
+```bash
 ⚠ LM Studio desktop app not found
   The desktop app is required for the --gui option.
   
@@ -195,20 +200,22 @@ Selecting `y` opens the download page. You'll need to install it manually from <
 **Option 1**: Download .deb from <https://lmstudio.ai/download> and install:
 
 ```bash
-sudo apt install ./LM-Studio.deb
+# example (replace with actual file name)
+sudo apt install ./LM-Studio-0.4.4-1-x64.deb
 
 ```
 
 **Option 2**: Provide path to AppImage file:
 
-```text
-Enter path to AppImage file (or directory containing it): /home/user/Downloads/LM-Studio.AppImage
+```bash
+# example (replace with actual path and file name)
+Enter path to AppImage file (or directory containing it): /home/user/Downloads/LM-Studio-0.4.4-1-x64.AppImage
 
 ```
 
 ### If Python 3.10 is Missing
 
-```text
+```bash
 ⚠ Python 3.10 not found
   Python 3.10 is required for PyGObject/GTK3 compatibility.
   
@@ -280,7 +287,7 @@ All log files include a standardized header at the start that shows when the scr
 
 ### setup.log
 
-```text
+```bash
 ================================================================================
 LM Studio Setup Log
 Started: 2026-02-20 21:54:38
@@ -292,7 +299,7 @@ Started: 2026-02-20 21:54:38
 
 ### lmstudio_autostart.log
 
-```text
+```bash
 ================================================================================
 LM Studio Autostart Log
 Started: 2026-02-20 21:55:18
@@ -304,7 +311,7 @@ Started: 2026-02-20 21:55:18
 
 ### lmstudio_tray.log
 
-```text
+```bash
 ================================================================================
 LM Studio Tray Monitor Log
 Started: 2026-02-20 21:55:18
@@ -331,6 +338,19 @@ export VENV_DIR=$(pwd)/venv
 Or activate and use directly:
 
 ```bash
+# Linux example
+source ./venv/bin/activate
+python3 ./lmstudio_tray.py
+```
+
+```bash
+# Windows example (if using WSL or similar)
+source ./venv/Scripts/activate.ps1
+python ./lmstudio_tray.py
+```
+
+```bash
+# macOS example (if using pyenv or similar)
 source ./venv/bin/activate
 python3 ./lmstudio_tray.py
 ```
@@ -380,21 +400,18 @@ If the tray monitor is running but icon not visible:
 
    ```bash
    lms ps
-
    ```
 
 2. Verify the tray process is active:
 
    ```bash
    pgrep -f lmstudio_tray.py
-
    ```
 
 3. Check logs for errors:
 
    ```bash
    cat .logs/lmstudio_tray.log
-
    ```
 
 4. Manually test GTK3:
@@ -409,7 +426,7 @@ If the tray monitor is running but icon not visible:
 PyGObject (Python GTK3 bindings) has a complex setup:
 
 - **PyGObject binaries** (`.so` files) are pre-compiled for Python 3.10 in Debian/Ubuntu
-- System Python 3.12 doesn't have pre-compiled PyGObject binaries
+- System Python 3.12 doesn't have pre-compiled PyGObject binaries (as of early 2026)
 - Recompiling from source requires C compiler, GObject headers, and pkg-config
 - Python 3.10 is still actively maintained (until Oct 2026) and secure
 - venv with `--system-site-packages` gives us the best of both worlds:
@@ -452,7 +469,7 @@ RUN apt install -y libgirepository-1.0-dev python3-gi
 - ❌ Adds container complexity
 - ⏳ More setup overhead
 
-### Our Solution: Python 3.10 venv
+### Current Solution: Python 3.10 venv
 
 ```bash
 ./setup.sh  # 5 seconds, uses pre-compiled binaries

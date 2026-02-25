@@ -24,7 +24,7 @@ Notes:
     If the VERSION file is missing, a default version string is used.
 """
 
-# nosec B404 - subprocess is required for system process management
+# nosec B404
 import argparse
 import subprocess  # nosec B404
 import sys
@@ -169,8 +169,6 @@ class _AppState:
     APP_VERSION: str = DEFAULT_APP_VERSION
     API_HOST: str = "localhost"
     API_PORT: int = 1234
-
-    # GTK module refs - populated by main() before TrayIcon is created.
     Gtk: Optional[ModuleType] = None
     GLib: Optional[ModuleType] = None
     AppIndicator3: Optional[ModuleType] = None
@@ -256,7 +254,7 @@ def sync_app_state_for_tests(
     Returns:
         None.
     """
-    # Set GTK module references on _AppState
+
     if gtk_mod is not None:
         _AppState.Gtk = gtk_mod
     if glib_mod is not None:
@@ -265,8 +263,6 @@ def sync_app_state_for_tests(
         _AppState.AppIndicator3 = app_mod
     if gdk_pixbuf_mod is not None:
         _AppState.GdkPixbuf = gdk_pixbuf_mod
-
-    # Set module-level variables synchronized with _AppState
     module_globals = globals()
     if script_dir_val is not None:
         module_globals["script_dir"] = script_dir_val
@@ -286,10 +282,6 @@ def sync_app_state_for_tests(
         _AppState.API_PORT = api_port_val
 
 
-# === Module-level variables for test access and initialization defaults ===
-# Only script_dir is synchronized from _AppState in main(); AUTO_START_DAEMON
-# and GUI_MODE are only updated by sync_app_state_for_tests() for testing.
-# Production code should read _AppState attributes directly.
 script_dir = os.getcwd()
 APP_VERSION = DEFAULT_APP_VERSION
 AUTO_START_DAEMON = False
@@ -324,7 +316,6 @@ def _copy_to_clipboard(url: str) -> None:
     try:
         webbrowser.open(url)
     except (OSError, ValueError):
-        # ignore failures gracefully
         pass
 
 
@@ -358,7 +349,6 @@ def get_release_url(tag: Optional[str] = None) -> str:
     """
     base = APP_REPOSITORY.rstrip("/")
     if tag:
-        # explicit tag URL; useful when we know the version string
         return f"{base}/releases/tag/{tag}"
     return f"{base}/releases/latest"
 
@@ -400,7 +390,6 @@ def main():
 
     load_config()
 
-    # Keep legacy module-level globals in sync with _AppState
     module_globals = globals()
     module_globals["script_dir"] = _AppState.script_dir
     module_globals["AUTO_START_DAEMON"] = _AppState.AUTO_START_DAEMON
@@ -452,7 +441,6 @@ def main():
     )
     log_file = os.path.join(logs_dir, "lmstudio_tray.log")
 
-    # Write header to log file
     with open(log_file, 'w', encoding='utf-8') as f:
         f.write("="*80 + "\n")
         f.write("LM Studio Tray Monitor Log\n")
@@ -467,7 +455,6 @@ def main():
         force=True,
     )
 
-    # Redirect Python warnings to log file in debug mode
     if _AppState.DEBUG_MODE:
         logging.captureWarnings(True)
         warnings_logger = logging.getLogger('py.warnings')
@@ -476,7 +463,6 @@ def main():
             "Debug mode enabled - capturing warnings to log file"
         )
 
-    # Log critical paths for troubleshooting
     logging.debug("Script directory: %s", _AppState.script_dir)
     logging.debug("Log file location: %s", log_file)
     logging.debug("sys.argv[0]: %s", sys.argv[0] if sys.argv else "N/A")
@@ -511,7 +497,6 @@ def get_asset_path(*path_components):
     Returns:
         str | None: Full path to the asset file if found, None otherwise.
     """
-    # Check if running as PyInstaller bundle
     meipass = getattr(sys, "_MEIPASS", None)
     if meipass is not None:
         meipass_asset = os.path.join(
@@ -520,14 +505,12 @@ def get_asset_path(*path_components):
         if os.path.isfile(meipass_asset):
             return meipass_asset
 
-    # Check in script_dir
     script_asset = os.path.join(
         _AppState.script_dir, "assets", *path_components
     )
     if os.path.isfile(script_asset):
         return script_asset
 
-    # Check in current working directory
     cwd_asset = os.path.join(os.getcwd(), "assets", *path_components)
     if os.path.isfile(cwd_asset):
         return cwd_asset
@@ -626,14 +609,10 @@ def _validate_url_scheme(url):
     if not host or any(ch.isspace() for ch in host):
         raise ValueError("Invalid API host")
 
-    # Disallow embedding a scheme/path/query in the host field.
     if "://" in host or "/" in host or "?" in host or "#" in host:
         raise ValueError("Invalid API host")
 
-    # Bracket IPv6 literals for URL formatting, but reject host:port.
     if ":" in host and not host.startswith("["):
-        # A single colon is most likely "host:port", which is invalid here
-        # because the port must be configured separately.
         if host.count(":") == 1:
             raise ValueError("Invalid API host")
         host = f"[{host}]"
@@ -685,27 +664,21 @@ def get_authors():
         with open(authors_path, "r", encoding="utf-8") as authors_file:
             for line in authors_file:
                 line = line.strip()
-                # Skip empty lines, comments, and headers
                 if (
                     line
                     and not line.startswith("#")
                     and not line.startswith("<!--")
                     and line.startswith("-")
                 ):
-                    # Extract name from markdown list item
-                    # Format: "- Name (@handle) - description"
-                    author = line[1:].strip()  # Remove leading "-"
-                    # Take only the name part before any description
+                    author = line[1:].strip()
                     if " - " in author:
                         author = author.split(" - ")[0].strip()
-                    # Remove GitHub handle if present
                     if "(@" in author:
                         author = author.split(" (@")[0].strip()
                     if author:
                         authors.append(author)
     except OSError:
         pass
-    # Fallback to maintainer if no authors found
     return authors if authors else [APP_MAINTAINER]
 
 
@@ -771,7 +744,6 @@ def get_latest_release_version():
         LATEST_RELEASE_API_URL,
     )
     try:
-        # Create opener with HTTPS support and default handlers
         https_handler = urllib_request.HTTPSHandler()
         opener = urllib_request.build_opener(https_handler)
 
@@ -908,8 +880,6 @@ def _run_safe_command(command):
     if not os.path.isabs(exe):
         raise ValueError(f"Executable must be absolute path: {exe}")
 
-    # nosemgrep: python.lang.security.audit
-    # .dangerous-subprocess-use-audit
     return subprocess.run(
         command,
         stdout=subprocess.PIPE,
@@ -971,9 +941,6 @@ def get_desktop_app_pids():
             if "--type=" in cmd_args:
                 continue
 
-            # Exclude daemon worker processes (llmster, systemresourcesworker,
-            # liblmstudioworker, etc.). These are child processes managed by
-            # the daemon and should not count as desktop app running.
             if (
                 "systemresourcesworker" in cmd_args
                 or "liblmstudioworker" in cmd_args
@@ -1031,8 +998,6 @@ class TrayIcon:
         app_indicator3 = _AppState.AppIndicator3
         if gtk is None or glib is None or app_indicator3 is None:
             raise RuntimeError("GTK/AppIndicator modules are not initialized")
-
-        # Use AppIndicator3 instead of deprecated StatusIcon
         self.indicator = app_indicator3.Indicator.new(
             "lmstudio-monitor",
             ICON_WARN,
@@ -1047,8 +1012,6 @@ class TrayIcon:
         self.update_status = "Unknown"
         self.latest_update_version = None
         self.last_update_error = None
-
-        # Create persistent menu (AppIndicator requires static menu)
         self.menu = gtk.Menu()
         self.build_menu()
         self.indicator.set_menu(self.menu)
@@ -1117,7 +1080,7 @@ class TrayIcon:
         def _refresh_once():
             try:
                 self.build_menu()
-            except Exception as exc:  # pylint: disable=broad-exception-caught
+            except (OSError, RuntimeError, ValueError) as exc:
                 logging.exception("Delayed menu refresh failed: %s", exc)
             return False
 
@@ -1131,11 +1094,9 @@ class TrayIcon:
         if gtk is None:
             raise RuntimeError("GTK module is not initialized")
 
-        # Clear existing menu items
         for item in self.menu.get_children():
             self.menu.remove(item)
 
-        # Get current status indicators
         daemon_status = self.get_daemon_status()
         app_status = self.get_desktop_app_status()
         daemon_indicator = self.get_status_indicator(daemon_status)
@@ -1159,7 +1120,7 @@ class TrayIcon:
             )
             start_daemon_item.connect("activate", self.start_daemon)
             self.menu.append(start_daemon_item)
-        else:  # not_found
+        else:
             not_found_item = gtk.MenuItem(
                 label=f"{daemon_indicator} Daemon (Not Installed)"
             )
@@ -1232,11 +1193,8 @@ class TrayIcon:
             llmster_cmd = get_llmster_cmd()
             if not llmster_cmd:
                 return "not_found"
-
             if is_llmster_running():
                 return "running"
-
-            # llmster exists but daemon process is not active
             return "stopped"
         except (
             OSError,
@@ -1258,18 +1216,13 @@ class TrayIcon:
                  "stopped" if installed but not running,
                  "not_found" if not installed.
         """
-        # Check if LM Studio app process exists.
-        # On this system, LM Studio may run with --run-as-service while still
-        # representing the desktop app (minimized to tray), so count it as app
-        # running.
+
         try:
             if get_desktop_app_pids():
                 return "running"
         except (OSError, subprocess.SubprocessError):
             pass
 
-        # Check if app is available but not running
-        # Check for .deb package
         dpkg_cmd = get_dpkg_cmd()
         if dpkg_cmd and os.path.isabs(dpkg_cmd):
             try:
@@ -1279,7 +1232,6 @@ class TrayIcon:
             except (OSError, subprocess.SubprocessError):
                 pass
 
-        # Check for AppImage
         search_paths = [
             _AppState.script_dir,
             os.path.expanduser("~/Apps"),
@@ -1350,14 +1302,12 @@ class TrayIcon:
         """
         result = None
         for command in attempts:
-            # Validate command is a list of strings to prevent injection
             if not isinstance(command, list) or not all(
                 isinstance(arg, str) for arg in command
             ):
                 logging.error("Invalid command format: %s", command)
                 continue
 
-            # Ensure the executable is an absolute path
             exe = command[0] if command else ""
             if not os.path.isabs(exe):
                 logging.error(
@@ -1480,7 +1430,8 @@ class TrayIcon:
             desktop_pids = get_desktop_app_pids()
             for pid in desktop_pids:
                 try:
-                    os.kill(pid, signal.SIGKILL)
+                    sigkill = getattr(signal, "SIGKILL", 9)
+                    os.kill(pid, sigkill)
                 except (OSError, ProcessLookupError, PermissionError):
                     pass
 
@@ -1503,7 +1454,6 @@ class TrayIcon:
         if not self.begin_action_cooldown("start_daemon"):
             return
 
-        # Stop desktop app first to avoid daemon/app conflict
         if self.get_desktop_app_status() == "running":
             if not self._stop_desktop_app_processes():
                 logging.error(
@@ -1560,7 +1510,6 @@ class TrayIcon:
                 if result is not None:
                     err = result.stderr.strip() or result.stdout.strip() or err
                 logging.error("Failed to start llmster daemon: %s", err)
-                # Avoid f-string in subprocess to prevent injection
                 error_msg = "Daemon start failed: " + str(err)
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
@@ -1670,7 +1619,6 @@ class TrayIcon:
                 )
             return
 
-        # Stop headless daemon first to avoid LM Studio conflict dialog
         if is_llmster_running():
             stopped, _result = self._stop_llmster_best_effort()
 
@@ -1693,24 +1641,20 @@ class TrayIcon:
             logging.info("llmster daemon stopped before GUI launch")
             self.build_menu()
 
-        # Step 1: Look for desktop app - prefer .deb, then AppImage
         app_found = False
         app_path = None
 
-        # Check for .deb package
         dpkg_cmd = get_dpkg_cmd()
         if dpkg_cmd:
             try:
                 result = _run_safe_command([dpkg_cmd, "-l"])
                 if "lm-studio" in result.stdout:
-                    # Start via installed .deb package
                     app_path = "lm-studio"
                     app_found = True
                     logging.info("Found LM Studio .deb package")
             except (OSError, subprocess.SubprocessError) as e:
                 logging.warning("Error checking for .deb package: %s", e)
 
-        # If .deb not found, search for AppImage
         if not app_found:
             search_paths = [
                 _AppState.script_dir,
@@ -1735,11 +1679,8 @@ class TrayIcon:
                 except (OSError, PermissionError) as e:
                     logging.warning("Error searching %s: %s", search_path, e)
 
-        # Step 2: Start the app if found
         if app_found and app_path:
             try:
-                # Validate app_path to prevent command injection
-                # For .deb packages, resolve to absolute path
                 if app_path == "lm-studio":
                     resolved_path = shutil.which("lm-studio")
                     if not resolved_path or not os.path.isabs(resolved_path):
@@ -1748,21 +1689,15 @@ class TrayIcon:
                             " in PATH"
                         )
                     app_path = resolved_path
-
-                # Ensure app_path is absolute and exists
                 if not os.path.isabs(app_path):
                     raise ValueError(f"App path must be absolute: {app_path}")
                 if not os.path.isfile(app_path):
                     raise ValueError(f"App path does not exist: {app_path}")
                 if not os.access(app_path, os.X_OK):
                     raise ValueError(f"App path is not executable: {app_path}")
-
-                # Final validation: app_path must be a string and absolute
                 if not isinstance(app_path, str):
                     raise ValueError("App path must be a string")
 
-                # Additional security: validate path against
-                # known LM Studio locations
                 safe_paths = [
                     os.path.expanduser("~/Apps"),
                     os.path.expanduser("~/LM_Studio"),
@@ -1779,7 +1714,6 @@ class TrayIcon:
                     if os.path.isdir(safe_path)
                 )
 
-                # Also allow if it's the resolved lm-studio from PATH
                 if shutil.which("lm-studio") == app_path:
                     is_safe = True
 
@@ -1790,9 +1724,6 @@ class TrayIcon:
                     )
                     raise ValueError(msg)
 
-                # Launch validated executable via Popen with a new
-                # session so the child is fully detached and any
-                # launch failure is raised immediately in the parent.
                 subprocess.Popen(  # nosec B603
                     [app_path],
                     start_new_session=True,
@@ -1980,7 +1911,6 @@ class TrayIcon:
                     ):
                         text = "No models loaded or error."
             else:
-                # lms not available, try API directly
                 if check_api_models():
                     try:
                         api_url = get_api_models_url()
@@ -2139,8 +2069,6 @@ class TrayIcon:
         _insert_link(parent_box, APP_DOCUMENTATION, "Documentation",
                      comment_label)
 
-        # Load and set the application logo
-        # Prefer PNG for PyInstaller binaries (better compatibility)
         is_frozen = getattr(sys, "_MEIPASS", None) is not None
         logo_loaded = False
 
@@ -2149,7 +2077,6 @@ class TrayIcon:
             if glib is not None:
                 error_types = (OSError, glib.Error)
 
-            # Try PNG first for frozen binaries, SVG first otherwise
             primary_ext = "png" if is_frozen else "svg"
             fallback_ext = "svg" if is_frozen else "png"
 
@@ -2168,7 +2095,6 @@ class TrayIcon:
                     logo_loaded = True
                     break
                 except error_types as e:
-                    # Log as debug for expected failures (SVG in frozen)
                     log_level = (
                         logging.DEBUG if (is_frozen and ext == "svg")
                         else logging.WARNING
@@ -2302,7 +2228,6 @@ class TrayIcon:
     def _format_update_check_message(self, status, latest, error):
         """Build the update check notification message."""
         if status == "Update available" and latest:
-            # include a clickable link to the release tag
             url = get_release_url(latest)
             return (
                 "New version available: "
@@ -2388,7 +2313,6 @@ class TrayIcon:
         self.last_update_version = latest
         notify_cmd = get_notify_send_cmd()
         if notify_cmd:
-            # include link in notification as well for convenience
             url = get_release_url(latest)
             message = (
                 "New version available: "
@@ -2442,17 +2366,12 @@ class TrayIcon:
                     "Daemon and desktop app stopped"
                 )
             else:
-                # Query lms ps whenever daemon or desktop app is running.
-                # This avoids daemon wake-up in fully stopped state while still
-                # allowing model detection in GUI-only mode.
                 if any_running and lms_cmd:
                     result = _run_safe_command([lms_cmd, "ps"])
                     if result.returncode == 0 and result.stdout.strip():
                         current_status = "OK"
                         self.indicator.set_icon_full(ICON_OK, "Model loaded")
                     else:
-                        # Fallback: lms ps failed (e.g., desktop app running),
-                        # query API directly
                         if check_api_models():
                             current_status = "OK"
                             self.indicator.set_icon_full(
@@ -2465,7 +2384,6 @@ class TrayIcon:
                                 ICON_INFO,
                                 "No model loaded"
                             )
-                # When daemon is not installed, check API directly
                 elif any_running and check_api_models():
                     current_status = "OK"
                     self.indicator.set_icon_full(ICON_OK, "Model loaded")
@@ -2518,15 +2436,12 @@ class TrayIcon:
                     self.last_status,
                     current_status
                 )
-                # Update menu to reflect new status
                 self.build_menu()
 
             self.last_status = current_status
             self.build_menu()
 
         except subprocess.TimeoutExpired:
-            # Timeout usually means lms ps is slow. Keep previous status to
-            # avoid flashing tray state.
             logging.debug("Timeout in lms ps check (keeping previous status)")
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             self.indicator.set_icon_full(ICON_FAIL, "Error checking status")

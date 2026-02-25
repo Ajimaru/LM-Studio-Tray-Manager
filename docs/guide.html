@@ -403,8 +403,13 @@ EOF</code></pre>
             <h2>Binary Release (<code>lmstudio-tray-manager</code>)</h2>
             <p>The binary release contains a standalone tray monitor built with PyInstaller. It lets you run the tray without a local Python setup. The binary is included in the release archive and works with the same flags as the Python script.</p>
             <h3>Install and Run</h3>
-            <pre><code>tar -xzf LM-Studio-Tray-Manager-vX.Y.Z-binary.tar.gz
-cd LM-Studio-Tray-Manager-vX.Y.Z-binary
+            <pre><code># example (replace X.Y.Z with version)
+VERSION=vX.Y.Z
+
+# binary package
+</code></pre>
+<pre><code>tar -xzf lmstudio-tray-manager-${VERSION}-linux-x86_64-binary.tar.gz
+cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
 
 ./setup.sh
 ./lmstudio-tray-manager --auto-start-daemon</code></pre>
@@ -456,7 +461,6 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
             </div>
 
             <h3>setup.sh - Smart Setup with Context-Aware Output</h3>
-            <p><strong>New in v0.4.0:</strong> The setup script now displays context-specific next-steps based on installation type, and <strong>v0.5.0+</strong> adds a GTK3/GObject typelibs check before creating the Python environment:</p>
             <ul>
                 <li><strong>Binary Release:</strong> Shows <code>./lmstudio-tray-manager --auto-start-daemon</code>, <code>--gui</code>, <code>--debug</code>, etc.</li>
                 <li><strong>Python Package:</strong> Shows <code>./lmstudio_autostart.sh</code> with available options</li>

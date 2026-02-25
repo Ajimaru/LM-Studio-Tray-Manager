@@ -49,14 +49,16 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 
 **Download:**
 
-- `LM-Studio-Tray-Manager-vX.Y.Z-binary.tar.gz`
+- `lmstudio-tray-manager-vX.Y.Z-linux-x86_64-binary.tar.gz`
 
 **Extract and run:**
 
 ```bash
-tar -xzf LM-Studio-Tray-Manager-vX.Y.Z-binary.tar.gz
-cd LM-Studio-Tray-Manager-vX.Y.Z-binary
-
+# example (replace X.Y.Z with version)
+VERSION=vX.Y.Z
+tar -xzf lmstudio-tray-manager-${VERSION}-linux-x86_64-binary.tar.gz
+cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
+chmod +x setup.sh
 ./setup.sh
 ./lmstudio-tray-manager -a
 ```
@@ -80,14 +82,16 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
 
 **Download:**
 
-- `LM-Studio-Tray-Manager-vX.Y.Z.tar.gz`
+- `lmstudio-tray-manager-vX.Y.Z-linux-x86_64.tar.gz`
 
 **Extract and run:**
 
 ```bash
-tar -xzf LM-Studio-Tray-Manager-vX.Y.Z.tar.gz
-cd LM-Studio-Tray-Manager-vX.Y.Z
-
+# example (replace X.Y.Z with version)
+VERSION=vX.Y.Z
+tar -xzf lmstudio-tray-manager-${VERSION}-linux-x86_64.tar.gz
+cd lmstudio-tray-manager-${VERSION}-linux-x86_64
+chmod +x setup.sh lmstudio_autostart.sh
 ./setup.sh
 ./lmstudio_autostart.sh
 ```
@@ -115,6 +119,8 @@ This setup script:
 - **LM Studio Desktop App** (v0.4.3+): GUI frontend for model management and interaction
 - **Python 3.10** with PyGObject (for GTK3 system tray)
 - Linux system with GNOME/GTK3 support (Pop!_OS, Ubuntu, Fedora, etc.)
+
+> ⚠️ **Linux only** – this project is designed for Linux desktops. Windows and macOS are not supported yet; the tray integration and setup scripts rely on GTK3 and Linux package formats.
 
 ## Quick Reference
 

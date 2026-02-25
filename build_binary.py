@@ -16,7 +16,7 @@ import os
 import shlex
 import shutil
 import sys
-import subprocess  # nosec B404 - required for build tooling
+import subprocess  # nosec B404
 from pathlib import Path
 
 
@@ -36,9 +36,7 @@ def get_gdk_pixbuf_loaders():
         return None, None
 
     try:
-        # Get loaders directory from pkg-config
-        # Use resolved path from shutil.which to avoid PATH manipulation
-        # nosec B603 - uses resolved binary path, literals, and shell=False
+        # nosec B603
         result = subprocess.run(
             [pkg_config_path, "--variable=gdk_pixbuf_moduledir",
              "gdk-pixbuf-2.0"],
@@ -50,12 +48,9 @@ def get_gdk_pixbuf_loaders():
         )
         if result.returncode == 0:
             loaders_dir = result.stdout.strip()
-            # Validate path is absolute and exists
             if loaders_dir and os.path.isabs(loaders_dir) and \
                     os.path.isdir(loaders_dir):
                 print(f"✓ Found GdkPixbuf loaders: {loaders_dir}")
-
-                # Find loaders.cache
                 cache_file = os.path.join(
                     os.path.dirname(loaders_dir),
                     "loaders.cache"
@@ -99,7 +94,7 @@ def check_dependencies():
 
     print("Installing PyInstaller...")
     try:
-        # nosec B603 - req_file validated; uses sys.executable and literals
+        # nosec B603
         subprocess.run(  # nosec B603
             [sys.executable, "-m", "pip", "install", "-r",
              str(req_file_resolved)],
@@ -163,17 +158,14 @@ def get_data_files():
         data_files.append(entry)
         seen.add(entry)
 
-    # Include VERSION file
     version_path = base_dir / "VERSION"
     if version_path.exists():
         add_data_file(version_path, ".")
 
-    # Include AUTHORS file
     authors_path = base_dir / "AUTHORS"
     if authors_path.exists():
         add_data_file(authors_path, ".")
 
-    # Include assets directory if it exists
     assets_path = base_dir / "assets"
     if assets_path.exists():
         add_data_file(assets_path, "assets")
@@ -220,37 +212,30 @@ def build_binary():
     print("Building LM Studio Tray Manager Binary")
     print("="*60 + "\n")
 
-    # Check dependencies
     check_dependencies()
 
-    # Get GdkPixbuf loaders
     loaders_dir, cache_file = get_gdk_pixbuf_loaders()
 
-    # Build PyInstaller command
     spec_dir = Path(".build-cache/spec")
     spec_dir.mkdir(parents=True, exist_ok=True)
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--onefile",
         "--name=lmstudio-tray-manager",
-        "--windowed",  # No console window
+        "--windowed",
         "--clean",
         "--specpath", str(spec_dir),
         "--exclude-module=pkg_resources",
         "--exclude-module=setuptools",
         "--exclude-module=distutils",
-        "--noupx",
     ]
 
-    # Add hidden imports
     for imp in get_hidden_imports():
         cmd.extend(["--hidden-import", imp])
 
-    # Add data files
     for src, dest in get_data_files():
         cmd.extend(["--add-data", f"{src}{os.pathsep}{dest}"])
 
-    # Add GdkPixbuf loaders and cache
     if loaders_dir:
         seen_loaders = set()
         for so_file in glob.glob(os.path.join(loaders_dir, "*.so*")):
@@ -281,14 +266,12 @@ def build_binary():
     else:
         print("⚠ Building without GdkPixbuf loaders - icons may not work!\n")
 
-    # Add main script
     cmd.append("lmstudio_tray.py")
 
     print("Running PyInstaller with options:")
     print(shlex.join(cmd))
     print()
 
-    # Run PyInstaller with timeout
     try:
         validate_pyinstaller_cmd(cmd)
         result = subprocess.run(  # nosec B603
@@ -322,7 +305,6 @@ def build_binary():
     print("1. Test: ./dist/lmstudio-tray-manager --version")
     print("2. Optimize: strip dist/lmstudio-tray-manager")
     print(
-        "Note: UPX compression is disabled (causes binary corruption)."
     )
     return 0
 
