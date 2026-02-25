@@ -132,7 +132,7 @@ EOF
 **Important:** Replace `/full/path/to/your/lmstudio_autostart.sh` with the absolute path to your installed script:
 
 - If you installed to your home directory: run `pwd` in your LM-Studio-Tray-Manager directory to get the full path, then append `/lmstudio_autostart.sh`
-- To find the script location quickly: `which lmstudio_autostart.sh` or check your [SETUP.md](docs/SETUP.md) installation section for default locations
+- To find the script location quickly: `which lmstudio_autostart.sh` or check your [SETUP.md](SETUP.md) installation section for default locations
 
 Then enable autostart in your desktop environment settings.
 
