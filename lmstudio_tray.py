@@ -2162,7 +2162,7 @@ class TrayIcon:
         content.add(grid)
         dialog.show_all()
 
-        response = dialog.run()
+        response = getattr(dialog, "response", dialog.run())
         if response == gtk.ResponseType.OK:
             host = host_entry.get_text().strip()
             port = _normalize_api_port(port_entry.get_text())

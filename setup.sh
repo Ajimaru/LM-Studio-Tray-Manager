@@ -338,7 +338,7 @@ elif [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
             fi
         else
             log_output "ERROR" "User declined to make binary executable - cannot continue"
-            print_error "Binary exists but is not executable; cannot continue safely."
+            print_error "Binary exists but is not executable; cannot continue safely. Setup cancelled."
             print_info "Fix permissions and re-run: chmod +x ./lmstudio-tray-manager"
             exit 1
         fi
