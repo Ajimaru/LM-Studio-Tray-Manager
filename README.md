@@ -25,7 +25,7 @@ Automation scripts for LM Studio & llmster - to control and monitor the applicat
 
 <!-- markdownlint-disable MD033 -->
 
-<img src="assets/img/tray-menu.png" alt="Tray Menu" style="width:15%;" />
+<img src="assets/img/tray-menu.png" alt="Tray Menu" style="width:25%;" />
 
 <!-- markdownlint-enable MD033 -->
 
