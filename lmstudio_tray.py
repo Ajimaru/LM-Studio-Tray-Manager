@@ -407,7 +407,8 @@ def main():
         print(load_version_from_dir(_AppState.script_dir))
         sys.exit(0)
 
-    if gi is None:
+    # explicit identity check is intentional; we are testing for None
+    if gi is None:  # noqa: E711
         print(
             "Error: PyGObject (gi) is not installed.",
             file=sys.stderr,
@@ -834,6 +835,7 @@ def check_api_models():
             api_url,
             headers={"User-Agent": "lmstudio-tray-manager"},
         )
+        # B310 B108: url previously validated
         with urllib_request.urlopen(req, timeout=2) as response:
             payload = response.read()
             data = json.loads(payload.decode("utf-8"))
@@ -880,6 +882,12 @@ def _run_safe_command(command):
     if not os.path.isabs(exe):
         raise ValueError(f"Executable must be absolute path: {exe}")
 
+    # At this point `command` has been strictly validated above:
+    #   * it is a non-empty list of strings
+    #   * the first element is an absolute path to an executable
+    #   * callers are expected to construct it from hardcoded helpers
+    # These checks prevent command‑injection; using a list and shell=False
+    # avoids any shell evaluation.
     return subprocess.run(
         command,
         stdout=subprocess.PIPE,
@@ -1465,8 +1473,10 @@ class TrayIcon:
                         [
                             notify_cmd,
                             "Error",
-                            ("Failed to stop desktop app. "
-                             "Please stop it first."),
+                            (
+                                "Failed to stop desktop app. "
+                                "Please stop it first."
+                            ),
                         ]
                     )
                 self.build_menu()
@@ -1561,8 +1571,10 @@ class TrayIcon:
                         [
                             notify_cmd,
                             "LLMster",
-                            "Daemon stopped. You can now "
-                            "start the desktop app.",
+                            (
+                                "Daemon stopped. You can now start the "
+                                "desktop app."
+                            ),
                         ]
                     )
             else:
@@ -1724,6 +1736,10 @@ class TrayIcon:
                     )
                     raise ValueError(msg)
 
+                # app_path has been validated above against a list of
+                # trusted locations (user home bin, /opt, /usr/bin, etc.).
+                # This prevents command‑injection even though the value is
+                # not a constant string.
                 subprocess.Popen(  # nosec B603
                     [app_path],
                     start_new_session=True,
@@ -1766,9 +1782,11 @@ class TrayIcon:
                     [
                         notify_cmd,
                         "Error",
-                        "No LM Studio desktop app found.\n"
-                        "Please install from "
-                        "https://lmstudio.ai/download",
+                        (
+                            "No LM Studio desktop app found.\n"
+                            "Please install from "
+                            "https://lmstudio.ai/download"
+                        ),
                     ]
                 )
 
@@ -1878,6 +1896,7 @@ class TrayIcon:
                             headers={"User-Agent":
                                      "lmstudio-tray-manager"},
                         )
+                        # B310 B108: url previously validated
                         with urllib_request.urlopen(
                             req, timeout=2
                         ) as response:
@@ -1920,6 +1939,7 @@ class TrayIcon:
                             headers={"User-Agent":
                                      "lmstudio-tray-manager"},
                         )
+                        # B310 B108: url previously validated
                         with urllib_request.urlopen(
                             req, timeout=2
                         ) as response:

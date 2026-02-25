@@ -31,12 +31,15 @@ def get_gdk_pixbuf_loaders():
             error occurs.
     """
     pkg_config_path = shutil.which("pkg-config")
-    if not pkg_config_path:
+    # shutil.which searches the user's PATH; ensure the returned value is an
+    # absolute, executable file path before invoking it to avoid accidentally
+    # executing arbitrary commands that might be injected via PATH.
+    if not pkg_config_path or not os.path.isabs(pkg_config_path) or \
+       not os.access(pkg_config_path, os.X_OK):
         print("⚠ pkg-config not found")
         return None, None
 
     try:
-        # nosec B603
         result = subprocess.run(
             [pkg_config_path, "--variable=gdk_pixbuf_moduledir",
              "gdk-pixbuf-2.0"],

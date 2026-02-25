@@ -2162,7 +2162,7 @@ def test_show_about_dialog_includes_copyright(tray_module, monkeypatch):
     assert "2025-2026" in dialog.copyright  # nosec B101
 
 
-def test_show_about_dialog_sets_logo(tray_module, monkeypatch):
+def test_show_about_dialog_sets_logo(tray_module, monkeypatch, tmp_path):
     """Load the SVG logo when GdkPixbuf is available."""
     tray = _make_tray_instance(tray_module)
     gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
@@ -2174,10 +2174,12 @@ def test_show_about_dialog_sets_logo(tray_module, monkeypatch):
         "new_from_file_at_scale",
         lambda *_a, **_k: fake_logo,
     )
+    # use secure temporary file
+    logo_file = tmp_path / "logo.svg"
     monkeypatch.setattr(
         tray_module,
         "get_asset_path",
-        lambda *_a, **_k: "/tmp/logo.svg",
+        lambda *_a, **_k: str(logo_file),
     )
 
     tray.show_about_dialog(None)
@@ -2185,7 +2187,7 @@ def test_show_about_dialog_sets_logo(tray_module, monkeypatch):
     assert dialog.logo is fake_logo  # nosec B101
 
 
-def test_show_about_dialog_logo_error(tray_module, monkeypatch):
+def test_show_about_dialog_logo_error(tray_module, monkeypatch, tmp_path):
     """Ignore logo loading errors and still show dialog."""
     tray = _make_tray_instance(tray_module)
     gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
@@ -2199,10 +2201,11 @@ def test_show_about_dialog_logo_error(tray_module, monkeypatch):
         "new_from_file_at_scale",
         _raise_error,
     )
+    logo_file = tmp_path / "logo.svg"
     monkeypatch.setattr(
         tray_module,
         "get_asset_path",
-        lambda *_a, **_k: "/tmp/logo.svg",
+        lambda *_a, **_k: str(logo_file),
     )
 
     tray.show_about_dialog(None)
@@ -2211,7 +2214,7 @@ def test_show_about_dialog_logo_error(tray_module, monkeypatch):
     assert dialog.destroyed is True  # nosec B101
 
 
-def test_show_about_dialog_png_fallback(tray_module, monkeypatch):
+def test_show_about_dialog_png_fallback(tray_module, monkeypatch, tmp_path):
     """Fallback to PNG when SVG is unavailable."""
     tray = _make_tray_instance(tray_module)
     gdk_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
@@ -2227,7 +2230,8 @@ def test_show_about_dialog_png_fallback(tray_module, monkeypatch):
     def _asset_path(*_args):
         if _args[-1] == "lm-studio-tray-manager.svg":
             return None
-        return "/tmp/logo.png"
+        # fallback to a file in the pytest tmp_path fixture
+        return str(tmp_path / "logo.png")
 
     monkeypatch.setattr(tray_module, "get_asset_path", _asset_path)
     tray.show_about_dialog(None)
@@ -2238,6 +2242,7 @@ def test_show_about_dialog_png_fallback(tray_module, monkeypatch):
 def test_show_about_dialog_frozen_binary_prefers_png(
     tray_module,
     monkeypatch,
+    tmp_path,
 ):
     """Prefer PNG over SVG in frozen PyInstaller binary."""
     tray = _make_tray_instance(tray_module)
@@ -2258,15 +2263,19 @@ def test_show_about_dialog_frozen_binary_prefers_png(
         track_load_attempts,
     )
 
+    # create a fake _MEIPASS directory inside our temporary path
+    meipass_dir = tmp_path / "_MEIPASS" / "assets" / "img"
+    meipass_dir.mkdir(parents=True)
+
     def _asset_path(*args):
         ext = args[-1].split(".")[-1]
-        return f"/tmp/_MEIPASS/assets/img/logo.{ext}"
+        return str(meipass_dir / f"logo.{ext}")
 
     monkeypatch.setattr(tray_module, "get_asset_path", _asset_path)
     monkeypatch.setattr(
         tray_module.sys,
         "_MEIPASS",
-        "/tmp/_MEIPASS",
+        str(tmp_path / "_MEIPASS"),
         raising=False,
     )
 
@@ -3732,14 +3741,16 @@ def test_parse_args_script_dir_normalized(tmp_path, tray_module):
         args = tray_module.parse_args()
         _call_member(tray_module, "_AppState").apply_cli_args(args)
         assert (
-            _call_member(tray_module, "_AppState").script_dir
+            _call_member(tray_module, "_AppState").script_dir  # nosec B101
             == os.path.abspath(rel)
         )
-        assert os.path.isabs(_call_member(tray_module, "_AppState").script_dir)
+        assert os.path.isabs(_call_member(tray_module, "_AppState").script_dir)  # nosec B101
         sys.argv = ["prog", "mymodel", abs_dir]
         args2 = tray_module.parse_args()
         _call_member(tray_module, "_AppState").apply_cli_args(args2)
-        assert _call_member(tray_module, "_AppState").script_dir == abs_dir
+        assert (
+            _call_member(tray_module, "_AppState").script_dir == abs_dir
+        )  # nosec B101
     finally:
         sys.argv = old_argv
 
