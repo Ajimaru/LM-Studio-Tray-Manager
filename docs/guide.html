@@ -456,7 +456,7 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
             </div>
 
             <h3>setup.sh - Smart Setup with Context-Aware Output</h3>
-            <p><strong>New in v0.4.0:</strong> The setup script now displays context-specific next-steps based on installation type:</p>
+            <p><strong>New in v0.4.0:</strong> The setup script now displays context-specific next-steps based on installation type, and <strong>v0.5.0+</strong> adds a GTK3/GObject typelibs check before creating the Python environment:</p>
             <ul>
                 <li><strong>Binary Release:</strong> Shows <code>./lmstudio-tray-manager --auto-start-daemon</code>, <code>--gui</code>, <code>--debug</code>, etc.</li>
                 <li><strong>Python Package:</strong> Shows <code>./lmstudio_autostart.sh</code> with available options</li>
@@ -465,7 +465,8 @@ cd LM-Studio-Tray-Manager-vX.Y.Z-binary
                 graph TD
                     A["<b>setup.sh</b><br/>START"] --> B["Check LM Studio Daemon"]
                     B --> C["Check Desktop App"]
-                    C --> D["Check Python 3.10"]
+                    C --> X["Check GTK3/GObject typelibs"]
+                    X --> D["Check Python 3.10"]
                     D --> E{"Binary release<br/>detected?"}
                     E -->|Yes| F["✓ Binary Found"]
                     F --> G["Show Binary Commands"]
