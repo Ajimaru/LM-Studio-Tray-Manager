@@ -156,6 +156,7 @@ Example output for Python package releases (Steps 4 and 5 are skipped for binary
 [CHECK] LM Studio daemon (lms): found
 [CHECK] LM Studio desktop app: not found
 [DRY-RUN] Would open LM Studio download page for desktop app guidance
+[CHECK] GTK3/GObject typelibs: missing (would install gir1.2-gtk-3.0)
 [CHECK] Python 3.10: found
 [DRY-RUN] Would recreate virtual environment in: ./venv
 [DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
