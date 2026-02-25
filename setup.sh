@@ -357,14 +357,14 @@ check_gtk_typelibs() {
     # try importing via system Python; this covers most cases and avoids hard
     # coding paths. if python3 is missing, fall back to file existence tests.
     if command -v python3 >/dev/null 2>&1; then
-        python3 - <<'PYCODE' >/dev/null 2>&1 <<'END'
+        python3 - <<'PYCODE' >/dev/null 2>&1
 import gi
 try:
     gi.require_version("Gtk", "3.0")
     from gi.repository import Gtk
 except Exception:
     raise
-END
+PYCODE
         return $?
     fi
 
@@ -420,8 +420,8 @@ fi
 # 5. Check Python 3.10 (only for Python package releases)
 # ============================================================================
 if [ "$BINARY_RELEASE" = false ]; then
-    echo -e "\n${BLUE}Step 4: Checking Python 3.10${NC}"
-    log_output "INFO" "Step 4: Checking for Python 3.10"
+    echo -e "\n${BLUE}Step 5: Checking Python 3.10${NC}"
+    log_output "INFO" "Step 5: Checking for Python 3.10"
 
     if command -v python3.10 >/dev/null 2>&1; then
         print_step "Python 3.10 found"
@@ -467,8 +467,8 @@ fi
 # 5. Create Python Virtual Environment (only for Python package)
 # ============================================================================
 if [ "$BINARY_RELEASE" = false ]; then
-    echo -e "\n${BLUE}Step 5: Creating Python Virtual Environment${NC}"
-    log_output "INFO" "Step 5: Creating Python virtual environment"
+    echo -e "\n${BLUE}Step 6: Creating Python Virtual Environment${NC}"
+    log_output "INFO" "Step 6: Creating Python virtual environment"
 
     if [ "$DRY_RUN" = "1" ]; then
         if [ -d "$VENV_DIR" ]; then
