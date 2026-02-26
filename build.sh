@@ -79,6 +79,20 @@ else
     fi
 fi
 
+# If the existing venv points to a python interpreter that no longer
+# exists (e.g. the system upgraded from 3.10 to 3.12), the
+# ``venv/bin/python`` symlink will be broken and attempts to run it
+# fail.  Detect that situation now and recreate the environment from
+# scratch using the current $PYTHON_BIN.
+if [ -d "$VENV_DIR" ] && [ ! -x "$VENV_DIR/bin/python" ]; then
+    echo -e "${YELLOW}Detected broken venv (missing python); recreating...${NC}"
+    rm -rf "$VENV_DIR"
+    if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
+        echo -e "${RED}Error: Failed to recreate virtual environment${NC}"
+        exit 1
+    fi
+fi
+
 # Verify activation script exists
 if [ ! -f "$VENV_DIR/bin/activate" ]; then
     echo -e "${RED}Error: Virtual environment activation script not found at $VENV_DIR/bin/activate${NC}"
