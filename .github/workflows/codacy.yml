@@ -56,5 +56,11 @@ jobs:
           # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
 
-      # Note: SARIF upload is intentionally disabled to avoid duplicate
-      # GitHub Code Scanning alerts with native Bandit/CodeQL workflows.
+      # Upload SARIF to GitHub Code Scanning so Codacy findings appear in
+      # Security -> Code scanning alerts. Limit uploads to branch runs on
+      # `main` and `dev` to avoid duplicate noise on topic branches.
+      - name: Upload Codacy SARIF
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: results.sarif
