@@ -15,20 +15,23 @@ name: Codacy Security Scan
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   schedule:
     - cron: '22 15 * * 2'
+  workflow_dispatch:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   codacy-security-scan:
     permissions:
       contents: read # for actions/checkout to fetch code
+      security-events: write # required by upload-sarif step
     name: Codacy Security Scan
     runs-on: ubuntu-latest
     steps:
@@ -48,9 +51,20 @@ jobs:
           format: sarif
           # Adjust severity of non-security issues
           gh-code-scanning-compat: true
+          # skip test files; those are not part of production code and often
+          # trigger false positives
+          args: --exclude-pattern "tests/**"
           # Force 0 exit code to allow SARIF file generation
           # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
 
-      # Note: SARIF upload is intentionally disabled to avoid duplicate
-      # GitHub Code Scanning alerts with native Bandit/CodeQL workflows.
+      # Upload SARIF to GitHub Code Scanning so Codacy findings appear in
+      # Security -> Code scanning alerts. Limit uploads to branch runs on
+      # `main` and `dev` to avoid duplicate noise on topic branches.
+      - name: Upload Codacy SARIF
+        # upload SARIF only on direct pushes or manual dispatch (not on PRs/forks)
+        # the event filter prevents permission errors when a forked PR triggers
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
