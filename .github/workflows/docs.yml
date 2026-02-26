@@ -6,18 +6,20 @@ permissions:
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - '**/*.md'
       - 'docs/**'
       - '.markdownlint*'
       - '.markdownlint-cli2*'
   pull_request:
+    branches: [main, dev]
     paths:
       - '**/*.md'
       - 'docs/**'
       - '.markdownlint*'
       - '.markdownlint-cli2*'
+  workflow_dispatch:
 
 jobs:
   docs-quality:

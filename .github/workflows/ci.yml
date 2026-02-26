@@ -5,8 +5,11 @@ permissions:
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
+    branches: [main, dev]
+  # allow manual invocation from Actions tab for testing
+  workflow_dispatch:
 
 jobs:
   validate:

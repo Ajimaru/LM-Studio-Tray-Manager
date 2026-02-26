@@ -15,12 +15,13 @@ name: Codacy Security Scan
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   schedule:
     - cron: '22 15 * * 2'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -48,6 +49,9 @@ jobs:
           format: sarif
           # Adjust severity of non-security issues
           gh-code-scanning-compat: true
+          # skip test files; those are not part of production code and often
+          # trigger false positives
+          args: --exclude-pattern "tests/**"
           # Force 0 exit code to allow SARIF file generation
           # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
