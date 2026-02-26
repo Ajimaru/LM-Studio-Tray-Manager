@@ -61,8 +61,8 @@ jobs:
       # Security -> Code scanning alerts. Limit uploads to branch runs on
       # `main` and `dev` to avoid duplicate noise on topic branches.
       - name: Upload Codacy SARIF
-        # only upload SARIF on branch pushes to avoid permission issues on PRs
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
-        uses: github/codeql-action/upload-sarif@v3
+        # upload SARIF only on direct pushes or manual dispatch (not on PRs/forks)
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
