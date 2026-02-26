@@ -1,5 +1,5 @@
-# Release Build Container (mimics GitHub Actions ubuntu-22.04)
-FROM ubuntu:22.04
+# Release Build Container (mimics GitHub Actions ubuntu-24.04)
+FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -53,8 +53,8 @@ RUN bash -c ' \
     set -euo pipefail; \
     TAG=$(cat VERSION); \
     echo "Build version: ${TAG}"; \
-    PKG_NAME_SRC="LM-Studio-Tray-Manager-${TAG}"; \
-    PKG_NAME_BIN="LM-Studio-Tray-Manager-${TAG}-binary"; \
+    PKG_NAME_SRC="lmstudio-tray-manager-${TAG}-linux-x86_64"; \
+    PKG_NAME_BIN="${PKG_NAME_SRC}-binary"; \
     STAGE_DIR_SRC="release/${PKG_NAME_SRC}"; \
     STAGE_DIR_BIN="release/${PKG_NAME_BIN}"; \
     \
