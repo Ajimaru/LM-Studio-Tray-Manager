@@ -1,3 +1,4 @@
+# Security workflow runs CodeQL analysis and gitleaks secrets detection
 name: Security
 
 on:
@@ -14,17 +15,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # fetch repository to runner
       - name: Checkout
         uses: actions/checkout@v6
 
+      # prepare CodeQL with Python support
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: python
 
+      # automatically build project so CodeQL can analyze
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
 
+      # perform the static analysis
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
@@ -32,11 +37,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # clone full history, required by gitleaks
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
+      # scan repository for leaked secrets or credentials
       - name: Run gitleaks
         uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc
         env:

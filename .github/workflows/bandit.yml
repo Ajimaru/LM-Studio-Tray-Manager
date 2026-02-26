@@ -29,7 +29,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
+      # checkout repository so Bandit can scan the source files
       - uses: actions/checkout@v6
+      # run the Bandit security linter action with configured options
       - name: Bandit Scan
         uses: shundor/python-bandit-scan@ab1d87dfccc5a0ffab88be3aaac6ffe35c10d6cd
         with: # optional arguments

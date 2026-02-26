@@ -1,3 +1,4 @@
+# Docs workflow ensures markdown quality and valid links
 name: Docs
 
 permissions:
@@ -23,9 +24,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # pull repository code for linting
       - name: Checkout
         uses: actions/checkout@v6
 
+      # run markdown linter against README and docs directory
       - name: Markdown lint
         uses: DavidAnson/markdownlint-cli2-action@eb5ca3ab411449c66620fe7f1b3c9e10547144b0 # v18
         with:
@@ -33,6 +36,21 @@ jobs:
             README.md
             docs/**/*.md
 
+      # node is required for htmlhint, which we'll use to lint .html files
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install HTMLHint
+        run: npm install -g htmlhint
+
+      - name: HTML lint
+        # adjust glob as needed; lint the generated docs HTML files
+        run: |
+          htmlhint --config .htmlhintrc 'docs/**/*.html' '*.html'
+
+      # make sure expected generated files exist
       - name: Verify docs entry files
         run: |
           test -f docs/index.html
@@ -41,7 +59,9 @@ jobs:
           test -f docs/README.md
           test -f docs/SETUP.md
           test -f docs/USE.md
+          test -f docs/BUILD.md
 
+      # check all links in docs/ and README for validity
       - name: Link check
         uses: lycheeverse/lychee-action@7cd0af4c74a61395d455af97419279d86aafaede # v2.0.2
         with:
@@ -52,6 +72,7 @@ jobs:
             docs/README.md
             docs/SETUP.md
             docs/USE.md
+            docs/BUILD.md
             docs/index.html
             docs/guide.html
             docs/python_docstrings.html
