@@ -16,6 +16,7 @@ a display server or actual system dependencies during test execution.
 
 import importlib.util
 import json
+import logging
 import os
 import signal
 import subprocess  # nosec B404
@@ -1404,6 +1405,17 @@ def test_get_llmster_cmd_from_directory_scan(tray_module, monkeypatch):
     assert tray_module.get_llmster_cmd().endswith("/b/llmster")  # nosec B101
 
 
+def test_get_llmster_cmd_debug_logs(tray_module, monkeypatch, caplog):
+    """Debug mode emits helpful information about llmster lookup."""
+    monkeypatch.setattr(tray_module.shutil, "which", lambda _x: None)
+    # pretend no install directory exists
+    monkeypatch.setattr(tray_module.os.path, "isdir", lambda _p: False)
+    caplog.set_level(logging.DEBUG)
+    result = tray_module.get_llmster_cmd()
+    assert result is None
+    assert "No ~/.lmstudio/llmster directory present" in caplog.text
+
+
 def test_is_llmster_running_true_first_check(tray_module, monkeypatch):
     """Report running when first pgrep call succeeds."""
     calls = []
@@ -2670,6 +2682,38 @@ def test_get_desktop_app_status_variants(tray_module, monkeypatch, tmp_path):
         lambda _p: ["LM-Studio.AppImage"],
     )
     assert tray.get_desktop_app_status() == "stopped"  # nosec B101
+
+
+def test_get_desktop_app_status_debug_logs(tray_module, monkeypatch, caplog, tmp_path):
+    """When debug logging enabled the lookup emits helpful messages."""
+    tray = _make_tray_instance(tray_module)
+    caplog.set_level(logging.DEBUG)
+    # scenario 1: dpkg installation detected
+    monkeypatch.setattr(tray_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda args: _completed(returncode=0, stdout="lm-studio"),
+    )
+    assert tray.get_desktop_app_status() == "stopped"
+    assert "Detected lm-studio installation via dpkg" in caplog.text
+
+    caplog.clear()
+    # scenario 2: find an AppImage
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: None)
+    apps_dir = tmp_path / "Apps2"
+    apps_dir.mkdir()
+    # set script_dir so it is one of the search paths
+    tray_module.sync_app_state_for_tests(script_dir_val=str(apps_dir))
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "isdir",
+        lambda p: str(apps_dir) == p,
+    )
+    monkeypatch.setattr(tray_module.os, "listdir", lambda _p: ["LM-Studio.AppImage"])
+    assert tray.get_desktop_app_status() == "stopped"
+    assert "Detected AppImage at" in caplog.text
 
 
 def test_force_stop_llmster(tray_module, monkeypatch):

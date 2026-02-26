@@ -770,13 +770,21 @@ def get_lms_cmd():
 
 
 def get_llmster_cmd():
-    """Return llmster executable path from PATH or LM Studio install dir."""
+    """Return llmster executable path from PATH or LM Studio install dir.
+
+    When running in debug mode this helper logs its findings so users can
+    troubleshoot missing or mis-located binaries.  The debug messages only
+    appear when the global logging level is DEBUG (e.g. invoked with
+    ``--debug``).
+    """
     llmster_cmd = shutil.which("llmster")
     if llmster_cmd:
+        logging.debug("Found llmster on PATH: %s", llmster_cmd)
         return llmster_cmd
 
     llmster_root = os.path.expanduser("~/.lmstudio/llmster")
     if not os.path.isdir(llmster_root):
+        logging.debug("No ~/.lmstudio/llmster directory present")
         return None
 
     candidates = []
@@ -786,11 +794,15 @@ def get_llmster_cmd():
             if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
                 candidates.append(candidate)
     except (OSError, PermissionError):
+        logging.debug("Failed to scan %s for llmster: %s", llmster_root, sys.exc_info()[1])
         return None
 
     if not candidates:
+        logging.debug("No executable llmster binaries found under %s", llmster_root)
         return None
-    return sorted(candidates)[-1]
+    chosen = sorted(candidates)[-1]
+    logging.debug("Resolved llmster candidate: %s", chosen)
+    return chosen
 
 
 def get_pkill_cmd():
@@ -1236,9 +1248,10 @@ class TrayIcon:
             try:
                 result = _run_safe_command([dpkg_cmd, "-l"])
                 if "lm-studio" in result.stdout:
+                    logging.debug("Detected lm-studio installation via dpkg")
                     return "stopped"
-            except (OSError, subprocess.SubprocessError):
-                pass
+            except (OSError, subprocess.SubprocessError) as exc:
+                logging.debug("dpkg query failed: %s", exc)
 
         search_paths = [
             _AppState.script_dir,
@@ -1254,10 +1267,13 @@ class TrayIcon:
             try:
                 for entry in os.listdir(search_path):
                     if entry.endswith(".AppImage"):
+                        app_path = os.path.join(search_path, entry)
+                        logging.debug("Detected AppImage at %s", app_path)
                         return "stopped"
-            except (OSError, PermissionError):
-                pass
+            except (OSError, PermissionError) as exc:
+                logging.debug("Error scanning %s for AppImage: %s", search_path, exc)
 
+        logging.debug("No desktop app installation found")
         return "not_found"
 
     def get_status_indicator(self, status):
