@@ -49,6 +49,11 @@ except ImportError:
 
 DEFAULT_APP_VERSION = "dev"
 
+# state used to avoid logging identical debug messages repeatedly
+_last_desktop_detection: str | None = None
+_seen_desktop_call = False
+_seen_dpkg_missing = False
+
 
 def load_version_from_dir(base_dir):
     """Load app version from the VERSION file.
@@ -455,6 +460,9 @@ def main():
         filemode='a',
         force=True,
     )
+    root = logging.getLogger()
+    for handler in root.handlers:
+        handler.setFormatter(HomeMaskFormatter("%(asctime)s - %(levelname)s - %(message)s"))
 
     if _AppState.DEBUG_MODE:
         logging.captureWarnings(True)
@@ -481,6 +489,24 @@ def main():
     if gtk is None:
         raise RuntimeError("GTK module is not initialized")
     gtk.main()
+
+
+class HomeMaskFormatter(logging.Formatter):
+    """Formatter that replaces the user's home directory with ``~``.
+
+    Any occurrence of ``os.path.expanduser('~')`` in the formatted message is
+    replaced, preventing absolute user paths from being written to log files.
+    The replacement is performed after the standard formatting, which means
+    that callers may continue to use ``logging.debug('path %s', somepath)`` as
+    usual.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:  # pragma: no cover - simple
+        s = super().format(record)
+        home = os.path.expanduser("~")
+        if home and home != "/":
+            s = s.replace(home, "~")
+        return s
 
 
 def get_asset_path(*path_components):
@@ -769,40 +795,76 @@ def get_lms_cmd():
     return shutil.which("lms")
 
 
+last_llmster_candidate: str | None = None
+_seen_llmster_call = False
+
 def get_llmster_cmd():
     """Return llmster executable path from PATH or LM Studio install dir.
 
     When running in debug mode this helper logs its findings so users can
-    troubleshoot missing or mis-located binaries.  The debug messages only
-    appear when the global logging level is DEBUG (e.g. invoked with
-    ``--debug``).
+    troubleshoot missing or mis-located binaries.  To avoid filling the log
+    with identical messages the function only emits a debug statement on the
+    first invocation or when the resolved candidate changes.
     """
+    global _last_llmster_candidate, _seen_llmster_call
+
     llmster_cmd = shutil.which("llmster")
     if llmster_cmd:
-        logging.debug("Found llmster on PATH: %s", llmster_cmd)
-        return llmster_cmd
+        candidate = llmster_cmd
+    else:
+        llmster_root = os.path.expanduser("~/.lmstudio/llmster")
+        if not os.path.isdir(llmster_root):
+            candidate = None
+        else:
+            candidates = []
+            try:
+                for entry in os.listdir(llmster_root):
+                    candidate_path = os.path.join(llmster_root, entry, "llmster")
+                    if os.path.isfile(candidate_path) and os.access(candidate_path, os.X_OK):
+                        candidates.append(candidate_path)
+            except (OSError, PermissionError):
+                candidate = None
+            else:
+                candidate = sorted(candidates)[-1] if candidates else None
 
-    llmster_root = os.path.expanduser("~/.lmstudio/llmster")
-    if not os.path.isdir(llmster_root):
-        logging.debug("No ~/.lmstudio/llmster directory present")
-        return None
+    log_needed = False
+    if not _seen_llmster_call:
+        log_needed = True
+    elif candidate != _last_llmster_candidate:
+        log_needed = True
 
-    candidates = []
-    try:
-        for entry in os.listdir(llmster_root):
-            candidate = os.path.join(llmster_root, entry, "llmster")
-            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-                candidates.append(candidate)
-    except (OSError, PermissionError):
-        logging.debug("Failed to scan %s for llmster: %s", llmster_root, sys.exc_info()[1])
-        return None
+    if log_needed:
+        if candidate:
+            logging.debug("Found llmster on PATH: %s" if shutil.which("llmster") else "Resolved llmster candidate: %s", candidate)
+        else:
+            if not os.path.isdir(os.path.expanduser("~/.lmstudio/llmster")):
+                logging.debug("No ~/.lmstudio/llmster directory present")
+            else:
+                logging.debug("No executable llmster binaries found under %s", os.path.expanduser("~/.lmstudio/llmster"))
+    _last_llmster_candidate = candidate
+    _seen_llmster_call = True
+    return candidate
 
-    if not candidates:
-        logging.debug("No executable llmster binaries found under %s", llmster_root)
-        return None
-    chosen = sorted(candidates)[-1]
-    logging.debug("Resolved llmster candidate: %s", chosen)
-    return chosen
+
+def _has_loaded_model(output: str) -> bool:
+    """Return True if ``lms ps`` output indicates a loaded model.
+
+    Some releases of the CLI print *all* available models even when none
+    are actually loaded.  Other releases explicitly say "No models are
+    currently loaded.".  We treat such outputs as *not* containing a
+    loaded model; a debug log entry is emitted so the behavior is
+    traceable.
+    """
+    if not output or not output.strip():
+        return False
+    text = output.lower()
+    if "no models" in text:
+        logging.debug("lms ps output explicitly reports no models")
+        return False
+    if "available" in text and "loaded" not in text:
+        logging.debug("lms ps output contains only available models, ignoring")
+        return False
+    return True
 
 
 def get_pkill_cmd():
@@ -1243,38 +1305,90 @@ class TrayIcon:
         except (OSError, subprocess.SubprocessError):
             pass
 
+        global _last_desktop_detection, _seen_desktop_call
+        detection = None
+
         dpkg_cmd = get_dpkg_cmd()
+        global _seen_dpkg_missing
         if dpkg_cmd and os.path.isabs(dpkg_cmd):
             try:
                 result = _run_safe_command([dpkg_cmd, "-l"])
                 if "lm-studio" in result.stdout:
-                    logging.debug("Detected lm-studio installation via dpkg")
-                    return "stopped"
+                    if shutil.which("lm-studio"):
+                        detection = "dpkg"
+                        status = "stopped"
+                        _seen_dpkg_missing = False
+                    else:
+                        if not _seen_dpkg_missing:
+                            logging.debug(
+                                "dpkg reports lm-studio but executable not in PATH"
+                            )
+                            _seen_dpkg_missing = True
+                        status = None
+                else:
+                    status = None
+                    _seen_dpkg_missing = False
             except (OSError, subprocess.SubprocessError) as exc:
                 logging.debug("dpkg query failed: %s", exc)
+                status = None
+                _seen_dpkg_missing = False
+        else:
+            status = None
+            _seen_dpkg_missing = False
 
-        search_paths = [
-            _AppState.script_dir,
-            os.path.expanduser("~/Apps"),
-            os.path.expanduser("~/LM_Studio"),
-            os.path.expanduser("~/Applications"),
-            os.path.expanduser("~/.local/bin"),
-            "/opt/lm-studio",
-        ]
-        for search_path in search_paths:
-            if not os.path.isdir(search_path):
-                continue
-            try:
-                for entry in os.listdir(search_path):
-                    if entry.endswith(".AppImage"):
-                        app_path = os.path.join(search_path, entry)
-                        logging.debug("Detected AppImage at %s", app_path)
-                        return "stopped"
-            except (OSError, PermissionError) as exc:
-                logging.debug("Error scanning %s for AppImage: %s", search_path, exc)
+        if status is None:
+            search_paths = [
+                _AppState.script_dir,
+                os.path.expanduser("~/Apps"),
+                os.path.expanduser("~/LM_Studio"),
+                os.path.expanduser("~/Applications"),
+                os.path.expanduser("~/.local/bin"),
+                "/opt/lm-studio",
+            ]
+            for search_path in search_paths:
+                if not os.path.isdir(search_path):
+                    continue
+                try:
+                    # prefer AppImage files that contain "lm-studio" in the name
+                    candidates = [
+                        f for f in os.listdir(search_path)
+                        if f.lower().endswith(".appimage")
+                    ]
+                    # filter for lm-studio substring
+                    lm_candidates = [
+                        f for f in candidates
+                        if "lm-studio" in f.lower() or "lm_studio" in f.lower()
+                    ]
+                    picked = None
+                    if lm_candidates:
+                        picked = sorted(lm_candidates)[0]
+                    elif candidates:
+                        picked = sorted(candidates)[0]
+                    if picked:
+                        app_path = os.path.join(search_path, picked)
+                        detection = f"appimage:{app_path}"
+                        status = "stopped"
+                        break
+                    if status is not None:
+                        break
+                except (OSError, PermissionError) as exc:
+                    logging.debug("Error scanning %s for AppImage: %s", search_path, exc)
+        if status is None:
+            detection = "none"
+            status = "not_found"
 
-        logging.debug("No desktop app installation found")
-        return "not_found"
+        # log only once or on change
+        if not _seen_desktop_call or detection != _last_desktop_detection:
+            if detection == "dpkg":
+                logging.debug("Detected lm-studio installation via dpkg")
+            elif detection and detection.startswith("appimage:"):
+                logging.debug("Detected AppImage at %s", detection.split(":", 1)[1])
+            else:
+                logging.debug("No desktop app installation found")
+            _last_desktop_detection = detection
+            _seen_desktop_call = True
+
+        return status
 
     def get_status_indicator(self, status):
         """Convert status string to emoji indicator.
@@ -1677,9 +1791,20 @@ class TrayIcon:
             try:
                 result = _run_safe_command([dpkg_cmd, "-l"])
                 if "lm-studio" in result.stdout:
-                    app_path = "lm-studio"
-                    app_found = True
-                    logging.info("Found LM Studio .deb package")
+                    # dpkg reports a package, but the actual executable may be
+                    # missing (uninstalled manually, broken PATH, etc).  verify
+                    # we can execute it before trusting the package.
+                    resolved = shutil.which("lm-studio")
+                    if resolved and os.path.isabs(resolved):
+                        app_path = "lm-studio"
+                        app_found = True
+                        logging.info("Found LM Studio .deb package")
+                    else:
+                        logging.warning(
+                            "dpkg lists lm-studio but executable missing from PATH, "
+                            "searching for AppImage instead"
+                        )
+                # else: no package listed, fall through to AppImage search
             except (OSError, subprocess.SubprocessError) as e:
                 logging.warning("Error checking for .deb package: %s", e)
 
@@ -1696,14 +1821,26 @@ class TrayIcon:
                 if not os.path.isdir(search_path):
                     continue
                 try:
-                    for entry in os.listdir(search_path):
-                        if entry.endswith(".AppImage"):
-                            app_path = os.path.join(search_path, entry)
-                            app_found = True
-                            logging.info("Found AppImage: %s", app_path)
-                            break
-                    if app_found:
-                        break
+                    candidates = [
+                        f for f in os.listdir(search_path)
+                        if f.lower().endswith(".appimage")
+                    ]
+                    if not candidates:
+                        continue
+                    lm_candidates = [
+                        f for f in candidates
+                        if "lm-studio" in f.lower()
+                        or "lm_studio" in f.lower()
+                    ]
+                    picked = None
+                    if lm_candidates:
+                        picked = sorted(lm_candidates)[0]
+                    else:
+                        picked = sorted(candidates)[0]
+                    app_path = os.path.join(search_path, picked)
+                    app_found = True
+                    logging.info("Found AppImage: %s", app_path)
+                    break
                 except (OSError, PermissionError) as e:
                     logging.warning("Error searching %s: %s", search_path, e)
 
@@ -1894,6 +2031,12 @@ class TrayIcon:
         Formats a friendly message on success or error, and displays it in
         an informational dialog. Errors are caught and shown to the user
         instead of raising.
+
+        To avoid misleading the user, the CLI output is inspected for a
+        *loaded* model.  Some versions of `lms ps` simply list all
+        **available** models even when none are active, which would make the
+        tray think a model is loaded.  The helper ``_has_loaded_model``
+        implements a simple heuristic to ignore such outputs.
         """
         _ = _widget
         text = "No models loaded or error."
@@ -1901,8 +2044,11 @@ class TrayIcon:
             lms_cmd = get_lms_cmd()
             if lms_cmd:
                 result = _run_safe_command([lms_cmd, "ps"])
-                if result.returncode == 0 and result.stdout.strip():
-                    text = result.stdout.strip()
+                if result.returncode == 0:
+                    if _has_loaded_model(result.stdout):
+                        text = result.stdout.strip()
+                    else:
+                        text = "No models loaded or error."
                 else:
                     try:
                         api_url = get_api_models_url()
@@ -2363,6 +2509,10 @@ class TrayIcon:
     def check_model(self):
         """Check LM Studio runtime/model status and update tray icon.
 
+        The ``_has_loaded_model`` helper is used to interpret the output of
+        ``lms ps``.  This keeps the icon from flipping to OK when the CLI
+        merely reports a catalogue of available models.
+
         Updates the tray icon using this schema:
         - FAIL: neither daemon nor desktop app is installed
         - WARN: neither daemon nor desktop app is running
@@ -2379,6 +2529,7 @@ class TrayIcon:
         try:
             lms_cmd = get_lms_cmd()
             current_status = None
+            reason = ""
             daemon_status = self.get_daemon_status()
             app_status = self.get_desktop_app_status()
 
@@ -2391,12 +2542,14 @@ class TrayIcon:
 
             if both_missing:
                 current_status = "FAIL"
+                reason = "daemon and desktop app not installed"
                 self.indicator.set_icon_full(
                     ICON_FAIL,
                     "Daemon and desktop app not installed"
                 )
             elif not any_running:
                 current_status = "WARN"
+                reason = "daemon and desktop app stopped"
                 self.indicator.set_icon_full(
                     ICON_WARN,
                     "Daemon and desktop app stopped"
@@ -2404,27 +2557,40 @@ class TrayIcon:
             else:
                 if any_running and lms_cmd:
                     result = _run_safe_command([lms_cmd, "ps"])
-                    if result.returncode == 0 and result.stdout.strip():
-                        current_status = "OK"
-                        self.indicator.set_icon_full(ICON_OK, "Model loaded")
+                    if result.returncode == 0:
+                        if _has_loaded_model(result.stdout):
+                            current_status = "OK"
+                            reason = "lms ps indicates model loaded"
+                            self.indicator.set_icon_full(ICON_OK, "Model loaded")
+                        else:
+                            current_status = "INFO"
+                            reason = "lms ps indicates no model loaded"
+                            self.indicator.set_icon_full(
+                                ICON_INFO,
+                                "No model loaded"
+                            )
                     else:
                         if check_api_models():
                             current_status = "OK"
+                            reason = "API reported models loaded"
                             self.indicator.set_icon_full(
                                 ICON_OK,
                                 "Model loaded"
                             )
                         else:
                             current_status = "INFO"
+                            reason = "API reported no models"
                             self.indicator.set_icon_full(
                                 ICON_INFO,
                                 "No model loaded"
                             )
                 elif any_running and check_api_models():
                     current_status = "OK"
+                    reason = "API reported models loaded"
                     self.indicator.set_icon_full(ICON_OK, "Model loaded")
                 else:
                     current_status = "INFO"
+                    reason = "none running, no model"
                     self.indicator.set_icon_full(
                         ICON_INFO,
                         "No model loaded"
@@ -2434,6 +2600,12 @@ class TrayIcon:
                 self.last_status != current_status
                 and self.last_status is not None
             ):
+                logging.debug(
+                    "Status change reason: %s -> %s (%s)",
+                    self.last_status,
+                    current_status,
+                    reason,
+                )
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
                     if current_status == "OK":
