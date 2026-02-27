@@ -17,8 +17,9 @@ altgraph==0.17.5 \
 
 # pyinstaller-hooks-contrib 2025.2 (source: pyinstaller_hooks_contrib-2025.2-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
-pyinstaller-hooks-contrib==2025.2 \
-    --hash=sha256:0b2bc7697075de5eb071ff13ef4a156d3beae6c19c7cbdcd70f37978d2013e30
+pyinstaller-hooks-contrib==2026.1 \
+    --hash=sha256:66ad4888ba67de6f3cfd7ef554f9dd1a4389e2eb19f84d7129a5a6818e3f2180 \
+    --hash=sha256:a5f0891a1e81e92406ab917d9e76adfd7a2b68415ee2e35c950a7b3910bc361b
 
 # setuptools 82.0.0 (source: setuptools-82.0.0-py3-none-any.whl)
 # Required by PyInstaller (>=42.0.0)
