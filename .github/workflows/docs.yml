@@ -40,7 +40,7 @@ jobs:
 
       # node is required for htmlhint, which we'll use to lint .html files
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: '18'
 
