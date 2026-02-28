@@ -412,7 +412,6 @@ def main():
         print(load_version_from_dir(_AppState.script_dir))
         sys.exit(0)
 
-    # explicit identity check is intentional; we are testing for None
     if gi is None:  # noqa: E711
         print(
             "Error: PyGObject (gi) is not installed.",
@@ -421,14 +420,33 @@ def main():
         sys.exit(1)
 
     gi.require_version("Gtk", "3.0")
-    gi.require_version("AyatanaAppIndicator3", "0.1")
+    app_namespace = None
+    for ns in ("AyatanaAppIndicator3", "AppIndicator3"):
+        try:
+            gi.require_version(ns, "0.1")
+        except ValueError:
+            continue
+        else:
+            app_namespace = ns
+            break
+
+    if app_namespace is None:
+        print(
+            "Error: could not find a suitable AppIndicator3 namespace "
+            "(tried AyatanaAppIndicator3 and AppIndicator3).\n"
+            "Please install the gir1.2-ayatanaappindicator3-0.1 package "
+            "or the equivalent for your distribution.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     gtk_module = importlib.import_module("gi.repository.Gtk")
     glib_module = importlib.import_module("gi.repository.GLib")
     gdk_pixbuf_module = importlib.import_module(
         "gi.repository.GdkPixbuf"
     )
     app_indicator_module = importlib.import_module(
-        "gi.repository.AyatanaAppIndicator3"
+        f"gi.repository.{app_namespace}"
     )
     _AppState.set_gtk_modules(
         gtk_module,
@@ -437,11 +455,7 @@ def main():
         gdk_pixbuf_module,
     )
     logs_dir = os.path.join(_AppState.script_dir, ".logs")
-
-    # === Create logs directory if not exists ===
     os.makedirs(logs_dir, exist_ok=True)
-
-    # === Set up logging ===
     log_level = (
         logging.DEBUG if _AppState.DEBUG_MODE else logging.INFO
     )
@@ -976,12 +990,6 @@ def _run_safe_command(command):
     if not os.path.isabs(exe):
         raise ValueError(f"Executable must be absolute path: {exe}")
 
-    # At this point `command` has been strictly validated above:
-    #   * it is a non-empty list of strings
-    #   * the first element is an absolute path to an executable
-    #   * callers are expected to construct it from hardcoded helpers
-    # These checks prevent command‑injection; using a list and shell=False
-    # avoids any shell evaluation.
     return subprocess.run(
         command,
         stdout=subprocess.PIPE,
@@ -1061,8 +1069,6 @@ def get_desktop_app_pids():
         return []
 
     return pids
-
-# === Terminate other instances of this script ===
 
 
 def kill_existing_instances():
@@ -1829,9 +1835,6 @@ class TrayIcon:
             try:
                 result = _run_safe_command([dpkg_cmd, "-l"])
                 if "lm-studio" in result.stdout:
-                    # dpkg reports a package, but the actual executable may be
-                    # missing (uninstalled manually, broken PATH, etc).  verify
-                    # we can execute it before trusting the package.
                     resolved = shutil.which("lm-studio")
                     if resolved and os.path.isabs(resolved):
                         app_path = "lm-studio"
@@ -1842,7 +1845,6 @@ class TrayIcon:
                             "dpkg lists lm-studio but executable missing "
                             "from PATH, searching for AppImage instead"
                         )
-                # else: no package listed, fall through to AppImage search
             except (OSError, subprocess.SubprocessError) as e:
                 logging.warning("Error checking for .deb package: %s", e)
 
@@ -1927,10 +1929,6 @@ class TrayIcon:
                     )
                     raise ValueError(msg)
 
-                # app_path has been validated above against a list of
-                # trusted locations (user home bin, /opt, /usr/bin, etc.).
-                # This prevents command‑injection even though the value is
-                # not a constant string.
                 subprocess.Popen(  # nosec B603
                     [app_path],
                     start_new_session=True,

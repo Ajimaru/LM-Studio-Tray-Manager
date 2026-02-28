@@ -269,7 +269,8 @@ hiddenimports=[
 The binary still relies on system GTK/gi packages:
 
 - `gir1.2-gtk-3.0`
-- `gir1.2-ayatanaappindicator3-0.1`
+- `gir1.2-ayatanaappindicator3-0.1` (provides GTK3 AppIndicator3
+  namespace; some platforms may instead offer only `AppIndicator3`)
 
 Optional (silences a warning):
 

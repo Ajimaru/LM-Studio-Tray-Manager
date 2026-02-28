@@ -825,6 +825,128 @@ def test_version_flag_exits(tmp_path, monkeypatch):
         sys.argv = old_argv
 
 
+def test_namespace_fallback_to_appindicator3(monkeypatch):
+    """If Ayatana namespace is missing, we fall back to ``AppIndicator3``.
+
+    The module should still import successfully and the selected namespace
+    should be recorded in :class:`_AppState`.
+    """
+    gi_mod = ModuleType("gi")
+
+    def require_version(name, version):
+        if name == "AyatanaAppIndicator3":
+            raise ValueError("Namespace not available")
+        return None
+
+    monkeypatch.setattr(
+        gi_mod,
+        "require_version",
+        require_version,
+        raising=False,
+    )
+    gtk_mod = DummyGtkModule("gi.repository.Gtk")
+    glib_mod = DummyGLibModule("gi.repository.GLib")
+    gdkpixbuf_mod = DummyGdkPixbufModule("gi.repository.GdkPixbuf")
+    app_mod = DummyAppIndicatorModule("gi.repository.AppIndicator3")
+
+    monkeypatch.setitem(sys.modules, "gi", gi_mod)
+    monkeypatch.setitem(
+        sys.modules,
+        "gi.repository",
+        ModuleType("gi.repository"),
+    )
+    monkeypatch.setitem(sys.modules, "gi.repository.Gtk", gtk_mod)
+    monkeypatch.setitem(sys.modules, "gi.repository.GLib", glib_mod)
+    monkeypatch.setitem(sys.modules, "gi.repository.GdkPixbuf", gdkpixbuf_mod)
+    monkeypatch.setitem(
+        sys.modules,
+        "gi.repository.AppIndicator3",
+        app_mod,
+    )
+
+    original_import = importlib.import_module
+
+    def fake_import(name):
+        if name == "gi.repository.Gtk":
+            return gtk_mod
+        if name == "gi.repository.GLib":
+            return glib_mod
+        if name == "gi.repository.GdkPixbuf":
+            return gdkpixbuf_mod
+        if name == "gi.repository.AppIndicator3":
+            return app_mod
+        return original_import(name)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import)
+
+    module_name = "lmstudio_tray_fallback"
+    sys.modules.pop(module_name, None)
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        str(Path(__file__).resolve().parents[1] / "lmstudio_tray.py"),
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+
+    monkeypatch.setattr(module, "TrayIcon", lambda *_args, **_kwargs: None)
+    old_argv = sys.argv[:]
+    try:
+        sys.argv = [sys.argv[0]]
+        module.main()
+    finally:
+        sys.argv = old_argv
+
+    assert module._AppState.AppIndicator3 is app_mod  # nosec B101
+
+
+def test_namespace_missing_exits(monkeypatch, capsys):
+    """Fail with a clear error when no AppIndicator namespace exists."""
+    gi_mod = ModuleType("gi")
+
+    def require_version(name, version):
+        if name in ("AyatanaAppIndicator3", "AppIndicator3"):
+            raise ValueError("Namespace not available")
+        return None
+
+    monkeypatch.setattr(
+        gi_mod,
+        "require_version",
+        require_version,
+        raising=False,
+    )
+    monkeypatch.setitem(sys.modules, "gi", gi_mod)
+    monkeypatch.setitem(
+        sys.modules,
+        "gi.repository",
+        ModuleType("gi.repository"),
+    )
+
+    module_name = "lmstudio_tray_no_ns"
+    sys.modules.pop(module_name, None)
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        str(Path(__file__).resolve().parents[1] / "lmstudio_tray.py"),
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "TrayIcon", lambda *_a, **_k: None)
+    with pytest.raises(SystemExit) as exc:
+        old_argv = sys.argv[:]
+        try:
+            sys.argv = [sys.argv[0]]
+            module.main()
+        finally:
+            sys.argv = old_argv
+    assert exc.value.code == 1
+    err = capsys.readouterr().err
+    assert "AppIndicator3" in err
+
+
 def test_parse_version_handles_prefix(tray_module):
     """Parse versions with a leading v prefix."""
     assert tray_module.parse_version("v1.2.3") == (1, 2, 3)  # nosec B101

@@ -554,7 +554,13 @@ Debug mode shows:
    ./venv/bin/python3 -c "import gi; gi.require_version('Gtk', '3.0'); from gi.repository import Gtk; print('GTK3 OK')"
    ```
 
-3. Install missing GTK packages:
+3. Install missing GTK packages.  The tray uses
+   the AppIndicator3 API which is provided by the
+   `gir1.2-ayatanaappindicator3-0.1` package on Debian/Ubuntu-based
+   systems; some distributions expose the API simply as
+   `AppIndicator3`.  The code will now automatically fall back to the
+   alternate namespace if necessary, but you still need the GIR
+   typelib installed.
 
    ```bash
    sudo apt install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1

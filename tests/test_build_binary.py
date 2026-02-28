@@ -160,6 +160,16 @@ def test_check_dependencies_installs(
     assert calls[0][:3] == [sys.executable, "-m", "pip"]
 
 
+def test_get_hidden_imports_contains_both_indicators(build_binary_module):
+    """
+    Hidden imports list should include both AyatanaAppIndicator3 and
+    AppIndicator3.
+    """
+    hidden = build_binary_module.get_hidden_imports()
+    assert "gi.repository.AyatanaAppIndicator3" in hidden
+    assert "gi.repository.AppIndicator3" in hidden
+
+
 def test_get_data_files(build_binary_module):
     """Include VERSION, AUTHORS, and assets when present."""
     data_files = build_binary_module.get_data_files()

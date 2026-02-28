@@ -131,6 +131,7 @@ def get_hidden_imports():
         "gi.repository.Pango",
         "gi.repository.PangoCairo",
         "gi.repository.AyatanaAppIndicator3",
+        "gi.repository.AppIndicator3",
         "gi.repository.cairo",
         "cairo",
     ]
