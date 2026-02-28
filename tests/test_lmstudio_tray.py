@@ -747,6 +747,9 @@ def _make_tray_instance(module):
     tray.latest_update_version = None
     tray.update_status = "Unknown"
     tray.last_update_error = None
+    tray._seen_desktop_call = False
+    tray._last_desktop_detection = None
+    tray._seen_dpkg_missing = False
     tray.build_menu = lambda: None
     return tray
 
@@ -1912,7 +1915,7 @@ def test_start_desktop_app_deb_path_appimage(
     app_dir.mkdir()
     popen_calls = []
 
-    def mock_popen(_unused_a, _unused_k):
+    def mock_popen(*_args, **_kwargs):
         popen_calls.append(True)
         return SimpleNamespace(pid=12345)
 
@@ -1931,8 +1934,12 @@ def test_start_desktop_app_deb_path_appimage(
     monkeypatch.setattr(
         tray_module.GLib,
         "timeout_add_seconds",
-        lambda _unused_a, **_unused_k: True,
+        lambda *args, **_kwargs: True,
     )
+
+    dummy_app = app_dir / "LM-Studio.AppImage"
+    dummy_app.write_text("", encoding="utf-8")
+    dummy_app.chmod(0o755)
 
     tray.start_desktop_app(None)
     assert popen_calls  # nosec B101
@@ -3043,7 +3050,7 @@ def test_logging_handlers_are_replaced(tray_module, tmp_path):
 
 
 def test_logging_paths_are_masked(
-    tray_module, _tmp_path, _monkeypatch, capsys
+    tray_module, tmp_path, monkeypatch, capsys
 ):
     """Simulate logging through the module and ensure home is masked."""
     fmt = tray_module.HomeMaskFormatter("%(message)s")
@@ -3103,7 +3110,7 @@ def test_dpkg_reports_but_no_executable_fallback_appimage(
 
 
 def test_get_desktop_app_status_debug_no_repeat(
-    tray_module, monkeypatch, caplog, _tmp_path
+    tray_module, monkeypatch, caplog, tmp_path
 ):
     """
     Calling get_desktop_app_status twice with the same environment

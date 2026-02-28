@@ -111,6 +111,51 @@ source "$VENV_DIR/bin/activate"
 # Use explicit path to venv python
 VENV_PYTHON="$VENV_DIR/bin/python"
 
+# ---------------------------------------------------------------------------
+# Ensure C compiler exists (required by PyInstaller bootloader build)
+# ---------------------------------------------------------------------------
+
+check_compiler() {
+    for c in gcc clang; do
+        if command -v "$c" &> /dev/null; then
+            if "$c" --version >/dev/null 2>&1; then
+                return 0
+            fi
+        fi
+    done
+    return 1
+}
+
+if ! check_compiler; then
+    echo -e "${YELLOW}No C compiler detected. PyInstaller needs a C compiler to
+build its bootloader.${NC}"
+    read -p "Install build-essential/clang packages now? [y/n]: " -r response
+    case "$response" in
+        [yY][eE][sS]|[yY])
+            # attempt to install via apt if available
+            if command -v apt-get &> /dev/null || command -v apt &> /dev/null; then
+                echo -e "${GREEN}Installing build tools via apt...${NC}"
+                sudo apt update && sudo apt install -y build-essential
+            else
+                echo -e "${YELLOW}Unable to install automatically; please install a
+C compiler (e.g. gcc or clang, plus make) manually and re-run the script.${NC}"
+                echo
+                echo -e "${RED}Exiting because compiler is still missing.${NC}"
+                exit 1
+            fi
+            ;;
+        *)
+            echo -e "${RED}Compiler is required to build the binary. Exiting.${NC}"
+            exit 1
+            ;;
+    esac
+    # re-check after attempt
+    if ! command -v gcc &> /dev/null && ! command -v clang &> /dev/null; then
+        echo -e "${RED}Compiler still not found; cannot continue.${NC}"
+        exit 1
+    fi
+fi
+
 # Ensure PyInstaller is available in the venv
 if ! "$VENV_PYTHON" -m PyInstaller --version &> /dev/null; then
     echo -e "${YELLOW}Installing PyInstaller in venv...${NC}"

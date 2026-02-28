@@ -82,22 +82,37 @@ pyinstaller lmstudio-tray-manager.spec
 
 ### Build Dependencies
 
+A C toolchain (gcc or clang) is required because the PyInstaller
+bootloader gets compiled during installation.  On Debian/Ubuntu this is
+provided by the `build-essential` package; Fedora ships `@development-tools`.
+
 ```bash
 # Ubuntu/Debian
-sudo apt install python3.10 python3.10-venv python3-pip binutils
+sudo apt install python3.10 python3.10-venv python3-pip binutils build-essential
 
 # Fedora
-sudo dnf install python3-pip binutils
+sudo dnf install python3-pip binutils @development-tools
 
 # Arch Linux
-sudo pacman -S python-pip binutils
+sudo pacman -S python-pip binutils base-devel
 ```
+
+The `build.sh` helper script now checks for a working compiler; if none is
+found it will prompt you and (optionally) attempt to install the necessary
+packages before continuing.
 
 ### Python Packages
 
 ```bash
 pip install -r requirements-build.txt
 ```
+
+> **Note:** the repository also contains a companion
+> [`requirements.txt`](../requirements.txt) file. That copy omits the
+> ``--hash=`` pins and line continuations so that dependency scanners
+> (Depfu, Snyk, etc.) can read it without errors. The actual build
+> process continues to rely on ``requirements-build.txt`` for
+> integrity‑checked installs.
 
 ## Build Methods
 
@@ -208,6 +223,16 @@ pyinstaller lmstudio-tray-manager.spec
 ```
 
 ### Full Test
+
+The project uses `pytest` with the [pytest-cov](https://pypi.org/project/pytest-cov/)
+plugin to generate coverage reports.  On Debian/Ubuntu you can install the
+required packages with:
+
+```bash
+sudo apt install python3-pytest python3-pytest-cov
+# or, if you prefer pip:
+# pip install pytest pytest-cov
+```
 
 ```bash
 # Run all tests with coverage

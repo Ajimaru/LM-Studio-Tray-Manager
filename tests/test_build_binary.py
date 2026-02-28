@@ -5,6 +5,7 @@ import importlib.util
 import os
 import sys
 from pathlib import Path
+import subprocess
 import pytest
 
 
@@ -55,6 +56,14 @@ def test_get_gdk_pixbuf_loaders_found(
     build_binary_module, monkeypatch, tmp_path
 ):
     """Return loaders dir and cache when found."""
+    fake_pkg = tmp_path / "pkg-config"
+    fake_pkg.write_text("#!/bin/sh\necho dummy\n", encoding="utf-8")
+    fake_pkg.chmod(0o755)
+    monkeypatch.setattr(
+        build_binary_module.shutil,
+        "which",
+        lambda _name: str(fake_pkg),
+    )
     loaders_dir = str(tmp_path / "gdk-pixbuf" / "loaders")
     cache_file = str(tmp_path / "gdk-pixbuf" / "loaders.cache")
 
@@ -95,13 +104,16 @@ def test_get_gdk_pixbuf_loaders_found(
 
 
 def test_get_gdk_pixbuf_loaders_missing(
-    build_binary_module, monkeypatch
+    build_binary_module, monkeypatch, tmp_path
 ):
     """Return None when loaders cannot be located."""
+    fake_pkg = tmp_path / "pkg-config"
+    fake_pkg.write_text("#!/bin/sh\necho dummy\n", encoding="utf-8")
+    fake_pkg.chmod(0o755)
     monkeypatch.setattr(
         build_binary_module.shutil,
         "which",
-        lambda _name: "/usr/bin/pkg-config",
+        lambda _name: str(fake_pkg),
     )
     monkeypatch.setattr(
         build_binary_module.subprocess,
@@ -384,6 +396,14 @@ def test_get_gdk_pixbuf_loaders_cache_missing(
     build_binary_module, monkeypatch, tmp_path
 ):
     """Return loaders dir when found but cache is missing."""
+    fake_pkg = tmp_path / "pkg-config"
+    fake_pkg.write_text("#!/bin/sh\necho dummy\n", encoding="utf-8")
+    fake_pkg.chmod(0o755)
+    monkeypatch.setattr(
+        build_binary_module.shutil,
+        "which",
+        lambda _name: str(fake_pkg),
+    )
     loaders_dir = str(tmp_path / "gdk-pixbuf" / "loaders")
 
     def fake_run(*_args, **_kwargs):
@@ -794,3 +814,37 @@ def test_build_binary_symlink_chain_deduplication(
         assert build_binary_module.os.path.isfile(real_path), (
             f"{real_path} should be a file"
         )
+
+
+def test_build_script_compiler_prompt(tmp_path):
+    """Ensure build.sh prompts and exits when compiler is missing.
+
+    The script should detect missing `gcc`/`clang` and ask the user if they
+    want the build tools installed.  Declining causes an immediate exit with
+    an explanation message.  We simulate this condition by shadowing the
+    commands with dummy executables that always fail.
+    """
+    fakebin = tmp_path / "fakebin"
+    fakebin.mkdir()
+    for name in ("gcc", "clang"):
+        stub = fakebin / name
+        stub.write_text("#!/bin/sh\nexit 1\n")
+        stub.chmod(0o755)
+
+    env = os.environ.copy()
+    env["PATH"] = str(fakebin) + os.pathsep + env.get("PATH", "")
+
+    script_path = Path(__file__).resolve().parents[1] / "build.sh"
+    proc = subprocess.run(
+        [str(script_path)],
+        cwd=str(script_path.parent),
+        env=env,
+        input="n\n",
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 1
+    assert "No C compiler detected" in proc.stdout
+    assert "Compiler is required to build the binary" in proc.stdout
