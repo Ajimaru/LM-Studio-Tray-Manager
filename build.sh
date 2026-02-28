@@ -126,6 +126,10 @@ check_compiler() {
     return 1
 }
 
+check_zlib() {
+    printf 'int main(void){return 0;}' | gcc -x c - -lz -o /dev/null 2>/dev/null
+}
+
 if ! check_compiler; then
     echo -e "${YELLOW}No C compiler detected. PyInstaller needs a C compiler to
 build its bootloader.${NC}"
@@ -152,6 +156,37 @@ C compiler (e.g. gcc or clang, plus make) manually and re-run the script.${NC}"
     # re-check after attempt
     if ! command -v gcc &> /dev/null && ! command -v clang &> /dev/null; then
         echo -e "${RED}Compiler still not found; cannot continue.${NC}"
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Ensure zlib development library is available (required for bootloader)
+# ---------------------------------------------------------------------------
+if ! check_zlib; then
+    echo -e "${YELLOW}zlib development headers/libraries not detected.\n"\
+         "PyInstaller's bootloader links against zlib, so you must install\n"\
+         "the zlib-dev package (zlib1g-dev on Debian/Ubuntu).${NC}"
+    read -p "Install zlib development package now? [y/n]: " -r response
+    case "$response" in
+        [yY][eE][sS]|[yY])
+            if command -v apt-get &> /dev/null || command -v apt &> /dev/null; then
+                echo -e "${GREEN}Installing zlib development package via apt...${NC}"
+                sudo apt update && sudo apt install -y zlib1g-dev
+            else
+                echo -e "${YELLOW}Cannot install automatically; please install zlib1g-dev\n"\
+                     "(or equivalent) manually and re-run the script.${NC}"
+                echo -e "${RED}Exiting because zlib is still missing.${NC}"
+                exit 1
+            fi
+            ;;
+        *)
+            echo -e "${RED}zlib development library is required. Exiting.${NC}"
+            exit 1
+            ;;
+    esac
+    if ! check_zlib; then
+        echo -e "${RED}zlib still not available; cannot continue.${NC}"
         exit 1
     fi
 fi

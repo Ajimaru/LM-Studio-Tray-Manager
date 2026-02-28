@@ -848,3 +848,45 @@ def test_build_script_compiler_prompt(tmp_path):
     assert proc.returncode == 1
     assert "No C compiler detected" in proc.stdout
     assert "Compiler is required to build the binary" in proc.stdout
+
+
+def test_build_script_zlib_prompt(tmp_path):
+    """Script prompts for zlib dev package when linking fails.
+
+    We simulate a working compiler that rejects linking against zlib.  The
+    script should detect the problem, ask whether to install the development
+    package, and exit if the user declines.
+    """
+    fakebin = tmp_path / "fakebin"
+    fakebin.mkdir()
+
+    stub = fakebin / "gcc"
+    cat = """#!/bin/sh
+if echo "$@" | grep -q -- '-lz'; then
+    exit 1
+fi
+if [ "$1" = "--version" ]; then
+    echo "gcc (fake) 1.0"; exit 0
+fi
+exec /usr/bin/gcc "$@"
+"""
+    stub.write_text(cat, encoding="utf-8")
+    stub.chmod(0o755)
+
+    env = os.environ.copy()
+    env["PATH"] = str(fakebin) + os.pathsep + env.get("PATH", "")
+
+    script_path = Path(__file__).resolve().parents[1] / "build.sh"
+    proc = subprocess.run(
+        [str(script_path)],
+        cwd=str(script_path.parent),
+        env=env,
+        input="n\n",
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 1
+    assert "zlib development headers" in proc.stdout
+    assert "zlib development library is required" in proc.stdout

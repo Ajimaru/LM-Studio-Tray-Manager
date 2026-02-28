@@ -83,18 +83,22 @@ pyinstaller lmstudio-tray-manager.spec
 ### Build Dependencies
 
 A C toolchain (gcc or clang) is required because the PyInstaller
-bootloader gets compiled during installation.  On Debian/Ubuntu this is
-provided by the `build-essential` package; Fedora ships `@development-tools`.
+bootloader gets compiled during installation.  The bootloader also links
+against **zlib**; you must have the zlib development headers/libraries
+installed (`zlib1g-dev` on Debian/Ubuntu, `zlib-devel` on Fedora).
+On Debian/Ubuntu the required build packages are provided by
+`build-essential` plus `zlib1g-dev`; Fedora ships `@development-tools` and
+`zlib-devel`.
 
 ```bash
 # Ubuntu/Debian
-sudo apt install python3.10 python3.10-venv python3-pip binutils build-essential
+sudo apt install python3.10 python3.10-venv python3-pip binutils build-essential zlib1g-dev
 
 # Fedora
-sudo dnf install python3-pip binutils @development-tools
+sudo dnf install python3-pip binutils @development-tools zlib-devel
 
 # Arch Linux
-sudo pacman -S python-pip binutils base-devel
+sudo pacman -S python-pip binutils base-devel zlib
 ```
 
 The `build.sh` helper script now checks for a working compiler; if none is

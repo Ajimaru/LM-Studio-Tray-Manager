@@ -187,7 +187,7 @@
                 <li><code>setup.sh</code> - One-time setup script to create Python virtual environment (see <a href="../README.md" target="_blank" rel="noopener">README.md</a>)</li>
                 <li><code>lmstudio_autostart.sh</code> - Bash script for automated daemon startup and model loading</li>
                 <li><code>lmstudio_tray.py</code> - Python script for system tray monitoring</li>
-                <li><code>build.sh</code> - Build script for a standalone tray binary (PyInstaller); now checks for a C compiler and offers to install build tools if needed</li>
+                <li><code>build.sh</code> - Build script for a standalone tray binary (PyInstaller); now checks for a C compiler and zlib development library, offering to install missing build tools automatically</li>
             </ul>
             <p>The <code>lmstudio_autostart.sh</code> script ensures the LM Studio daemon is running, waits for the API, optionally loads a model, and starts the tray monitor. When <code>dist/lmstudio-tray-manager</code> exists, the autostart script prefers the binary and forwards flags. The <code>lmstudio_tray.py</code> script provides a system tray icon for real-time monitoring and quick actions.</p>
             <p><strong>All log files are written to the <code>.logs/</code> directory</strong> for easy access and cleanup.</p>
@@ -436,7 +436,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     User["👤 User"]
                     Setup["<b>setup.sh</b><br/>Setup & Environment Checks<br/>(Shows context-specific commands)"]
                     Autostart["<b>lmstudio_autostart.sh</b><br/>Daemon Orchestration"]
-                    Build["<b>build.sh</b><br/>Builds standalone binary<br/>(requires C compiler)"]
+                    Build["<b>build.sh</b><br/>Builds standalone binary<br/>(requires C compiler + zlib dev)"]
                     TrayBin["<b>lmstudio-tray-manager</b><br/>Standalone tray binary"]
                     Tray["<b>lmstudio_tray.py</b><br/>GTK3 System Tray Monitor"]
                     Daemon["LM Studio Daemon<br/>(llmster)"]
