@@ -15,3 +15,16 @@ def _monkeypatch(monkeypatch):
     returns the real ``monkeypatch`` fixture so both names work.
     """
     return monkeypatch
+
+
+@pytest.fixture
+def _tmp_path(tmp_path):
+    """Alias for pytest's ``tmp_path``.
+
+    A handful of legacy tests expect a fixture called ``_tmp_path``; this
+    alias keeps them happy without forcing every test to be rewritten.
+
+    Returns:
+        pathlib.Path: the temporary directory provided by pytest.
+    """
+    return tmp_path

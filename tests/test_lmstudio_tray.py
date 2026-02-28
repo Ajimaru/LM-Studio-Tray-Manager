@@ -747,9 +747,9 @@ def _make_tray_instance(module):
     tray.latest_update_version = None
     tray.update_status = "Unknown"
     tray.last_update_error = None
-    tray._seen_desktop_call = False
-    tray._last_desktop_detection = None
-    tray._seen_dpkg_missing = False
+    _call_member(tray, "__setattr__", "_seen_desktop_call", False)
+    _call_member(tray, "__setattr__", "_last_desktop_detection", None)
+    _call_member(tray, "__setattr__", "_seen_dpkg_missing", False)
     tray.build_menu = lambda: None
     return tray
 
@@ -825,15 +825,19 @@ def test_version_flag_exits(tmp_path, monkeypatch):
         sys.argv = old_argv
 
 
-def test_namespace_fallback_to_appindicator3(monkeypatch):
+def test_namespace_fallback_to_appindicator3(monkeypatch, tmp_path):
     """If Ayatana namespace is missing, we fall back to ``AppIndicator3``.
 
     The module should still import successfully and the selected namespace
     should be recorded in :class:`_AppState`.
+
+    A temporary directory is supplied for ``script_dir`` so that logging
+    and other filesystem operations do not attempt to write under
+    ``/usr/bin`` during the test.
     """
     gi_mod = ModuleType("gi")
 
-    def require_version(name, version):
+    def require_version(name, _version):
         if name == "AyatanaAppIndicator3":
             raise ValueError("Namespace not available")
         return None
@@ -890,22 +894,24 @@ def test_namespace_fallback_to_appindicator3(monkeypatch):
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
 
+    module.sync_app_state_for_tests(script_dir_val=str(tmp_path))
+
     monkeypatch.setattr(module, "TrayIcon", lambda *_args, **_kwargs: None)
     old_argv = sys.argv[:]
     try:
-        sys.argv = [sys.argv[0]]
+        sys.argv = [sys.argv[0], "dummy-model", str(tmp_path)]
         module.main()
     finally:
         sys.argv = old_argv
 
-    assert module._AppState.AppIndicator3 is app_mod  # nosec B101
+    assert getattr(module, "_AppState") .AppIndicator3 is app_mod  # nosec B101
 
 
 def test_namespace_missing_exits(monkeypatch, capsys):
     """Fail with a clear error when no AppIndicator namespace exists."""
     gi_mod = ModuleType("gi")
 
-    def require_version(name, version):
+    def require_version(name, _version):
         if name in ("AyatanaAppIndicator3", "AppIndicator3"):
             raise ValueError("Namespace not available")
         return None
@@ -3172,7 +3178,7 @@ def test_logging_handlers_are_replaced(tray_module, tmp_path):
 
 
 def test_logging_paths_are_masked(
-    tray_module, tmp_path, monkeypatch, capsys
+    tray_module, _tmp_path, _monkeypatch, capsys
 ):
     """Simulate logging through the module and ensure home is masked."""
     fmt = tray_module.HomeMaskFormatter("%(message)s")
@@ -3232,7 +3238,7 @@ def test_dpkg_reports_but_no_executable_fallback_appimage(
 
 
 def test_get_desktop_app_status_debug_no_repeat(
-    tray_module, monkeypatch, caplog, tmp_path
+    tray_module, monkeypatch, caplog, _tmp_path
 ):
     """
     Calling get_desktop_app_status twice with the same environment
