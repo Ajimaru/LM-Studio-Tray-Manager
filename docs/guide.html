@@ -204,8 +204,9 @@
                 <li>✓ Detect binary vs. Python release</li>
                 <li>✓ Verify GTK3/GObject typelibs and install if missing</li>
                 <li>✓ Create Python venv (if needed)</li>
-                <li>✓ Install Python 3.10 (if needed)</li>
+                <li>✓ Install Python ≥3.10 (if needed)</li>
                 <li>✓ Log all operations to <code>.logs/setup.log</code></li>
+                <li>✓ Home directory paths are masked in logs for privacy</li>
             </ul>
             <p>After setup, run:</p>
             <pre><code># Binary release
@@ -270,6 +271,7 @@
                 <li><code>.logs/lmstudio_autostart.log</code> - Daemon startup log</li>
                 <li><code>.logs/lmstudio_tray.log</code> - Tray monitor log</li>
             </ul>
+            <p><em>Note: setup.log replaces `$HOME` with `~` to avoid exposing your home directory.</em></p>
 
             <h3>View Logs</h3>
             <pre><code>tail -f .logs/lmstudio_tray.log
@@ -470,15 +472,15 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     A["<b>setup.sh</b><br/>START"] --> B["Check LM Studio Daemon"]
                     B --> C["Check Desktop App"]
                     C --> X["Check GTK3/GObject typelibs"]
-                    X --> D["Check Python 3.10"]
+                    X --> D["Check Python ≥3.10"]
                     D --> E{"Binary release<br/>detected?"}
                     E -->|Yes| F["✓ Binary Found"]
                     F --> G["Show Binary Commands"]
-                    G --> G1["📦 Using pre-built binary release<br/>./lmstudio-tray-manager --auto-start-daemon<br/>./lmstudio-tray-manager --gui<br/>./lmstudio-tray-manager --debug<br/>etc."]
+                    G --> G1["Using pre-built binary release<br/>./lmstudio-tray-manager --auto-start-daemon<br/>./lmstudio-tray-manager --gui<br/>./lmstudio-tray-manager --debug<br/>etc."]
                     G1 --> H["<b>END (Success)</b><br/>No venv needed"]
                     E -->|No| I["Python Release Detected"]
-                    I --> J{"Python 3.10<br/>installed?"}
-                    J -->|No| K["Install Python 3.10<br/>via apt"]
+                    I --> J{"Python ≥3.10<br/>installed?"}
+                    J -->|No| K["Install Python ≥3.10<br/>via apt"]
                     J -->|Yes| L["Create venv<br/>(./venv)"]
                     K --> L
                     L --> M["Enable system-site-packages<br/>for GTK3/PyGObject"]

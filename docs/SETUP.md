@@ -68,7 +68,7 @@ The setup script automatically detects your installation type and configures acc
      `gir1.2-ayatanaappindicator3-0.1` (in dry‑run the action is shown)
    - If the user declines, setup aborts with an explanatory error
 
-5. **Python 3.10** - Required for PyGObject/GTK3 compatibility (packages only)
+5. **Python 3.10 or later** - Required for PyGObject/GTK3 compatibility (packages only)
    - **Only checked for Python package releases** (step 3 must detect no binary)
    - Installs automatically if missing (via `apt`)
    - Binary releases skip this step entirely
@@ -110,7 +110,7 @@ The setup script automatically detects your installation type:
 - ✓ Checks for LM Studio daemon
 - ✓ Checks for LM Studio desktop app
 - ✓ Checks for GTK3/GObject typelibs (installs if missing)
-- ✓ Checks for Python 3.10 (installs if missing)
+- ✓ Checks for Python ≥3.10 (installs if missing)
 - ✓ Sets up GTK3 and PyGObject support
 
 **Next steps:**
@@ -138,7 +138,7 @@ The setup will:
 - ✓ Check for LM Studio desktop app
 - ✓ Detect if binary or Python package
 - ✓ Create venv (Python packages only)
-- ✓ Install Python 3.10 if needed (Python packages only)
+- ✓ Install Python ≥3.10 if needed (Python packages only)
 - ✓ Check for GTK3/GObject typelibs (installs if missing)
 
 ## Dry-run Mode
@@ -162,7 +162,7 @@ Example output for Python package releases (Steps 4 and 5 are skipped for binary
 [CHECK] LM Studio desktop app: not found
 [DRY-RUN] Would open LM Studio download page for desktop app guidance
 [CHECK] GTK3/GObject typelibs: missing (would install gir1.2-gtk-3.0)
-[CHECK] Python 3.10: found
+[CHECK] Python ≥3.10: found
 [DRY-RUN] Would recreate virtual environment in: ./venv
 [DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
 [DONE] Dry-run completed successfully (0 changes applied)
@@ -213,13 +213,13 @@ Enter path to AppImage file (or directory containing it): /home/user/Downloads/L
 
 ```
 
-### If Python 3.10 is Missing
+### If Python 3.10 or later is Missing
 
 ```bash
-⚠ Python 3.10 not found
-  Python 3.10 is required for PyGObject/GTK3 compatibility.
-  
-  Would you like to install Python 3.10? [y/n]:
+⚠ Python 3.10 or later not found
+  Python 3.10 or later is required for PyGObject/GTK3 compatibility.
+
+  Would you like to install Python 3.10 (if available in your repos)? [y/n]:
 
 ```
 
@@ -284,6 +284,8 @@ export LM_AUTOSTART_SELECT_TIMEOUT=60
 ## Log File Format
 
 All log files include a standardized header at the start that shows when the script was run:
+
+> **Privacy note:** `$HOME` paths are replaced with `~` in setup.log and other log files to avoid exposing your home directory.
 
 ### setup.log
 
@@ -384,7 +386,7 @@ The tray monitor requires outbound HTTPS access to GitHub for update checks. If 
 
 If you see `ImportError: cannot import name '_gi'`:
 
-1. Verify Python 3.10 is being used:
+1. Verify Python ≥3.10 is being used:
 
    ```bash
    ./venv/bin/python3 --version

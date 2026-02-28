@@ -35,15 +35,11 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" || exit 1; pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
 LOGS_DIR="$SCRIPT_DIR/.logs"
 LOGFILE="$LOGS_DIR/setup.log"
-
-# Create .logs directory if it doesn't exist
 mkdir -p "$LOGS_DIR"
-
-# Create/clear logfile with timestamp
 cat > "$LOGFILE" << EOF
 ================================================================================
 LM Studio Setup Log
@@ -51,17 +47,16 @@ Started: $(date '+%Y-%m-%d %H:%M:%S')
 ================================================================================
 EOF
 
-# Function to log messages to file and display them
 log_output() {
     local level="$1"
     shift
     local message="$*"
-
-    # Format for log file
+    if [ -n "$HOME" ]; then
+        # shellcheck disable=SC2001
+        message="$(echo "$message" | sed "s|$HOME|~|g")"
+    fi
     local log_entry
     log_entry="[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message"
-
-    # Write to log file
     echo "$log_entry" >> "$LOGFILE"
 }
 
@@ -72,29 +67,32 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Utility functions
 print_header() {
     local header="═══════════════════════════════════════"
-    echo -e "${BLUE}$header${NC}"
-    echo -e "${BLUE}$1${NC}"
-    echo -e "${BLUE}$header${NC}"
-
-    # Log without colors
+    printf '%b
+' "${BLUE}${header}${NC}"
+    printf '%b
+' "${BLUE}$1${NC}"
+    printf '%b
+' "${BLUE}${header}${NC}"
     log_output "INFO" "--- $1 ---"
 }
 
 print_step() {
-    echo -e "${GREEN}✓${NC} $1"
+    printf '%b %s
+' "${GREEN}✓${NC}" "$1"
     log_output "OK" "$1"
 }
 
 print_error() {
-    echo -e "${RED}✗${NC} $1"
+    printf '%b %s
+' "${RED}✗${NC}" "$1"
     log_output "ERROR" "$1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    printf '%b %s
+' "${YELLOW}⚠${NC}" "$1"
     log_output "WARN" "$1"
 }
 
@@ -107,7 +105,7 @@ ask_yes_no() {
     local prompt="$1"
     local response
     while true; do
-        read -p "$(echo -e "${YELLOW}""$prompt""${NC}" [y/n]: )" -r response
+        read -rp "$(printf '%b' "${YELLOW}%s${NC} [y/n]: " "$prompt")" response
         case "$response" in
             [yY][eE][sS]|[yY])
                 return 0
@@ -116,13 +114,13 @@ ask_yes_no() {
                 return 1
                 ;;
             *)
-                echo "Please answer y or n"
+                printf '%b
+' "Please answer y or n"
                 ;;
         esac
     done
 }
 
-# Check OS
 if [[ "$OSTYPE" != "linux"* ]]; then
     print_error "This script only works on Linux"
     exit 1
@@ -150,8 +148,6 @@ if command -v lms >/dev/null 2>&1 || [ -x "$HOME/.lmstudio/bin/lms" ]; then
     LMS_CLI=$(command -v lms 2>/dev/null || echo "$HOME/.lmstudio/bin/lms")
     echo "   Location: $LMS_CLI"
     log_output "INFO" "LM Studio daemon found at: $LMS_CLI"
-
-    # Log version if available
     if lms_version=$("$LMS_CLI" --version 2>&1); then
         log_output "INFO" "LM Studio daemon version: $lms_version"
     fi
@@ -200,7 +196,6 @@ log_output "INFO" "Step 2: Checking for LM Studio desktop app"
 FOUND_DEB=false
 APP_INSTALLED=false
 
-# Check for .deb package
 if dpkg -l | grep -q lm-studio; then
     print_step "LM Studio desktop app found (deb package)"
     log_output "INFO" "LM Studio desktop app installed via deb package"
@@ -208,7 +203,6 @@ if dpkg -l | grep -q lm-studio; then
     FOUND_DEB=true
 fi
 
-# Check for App Image in common locations (including current script directory)
 log_output "DEBUG" "Searching for AppImage in common locations"
 for appimage_path in "$SCRIPT_DIR" "$HOME/LM_Studio" "$HOME/Applications" "$HOME/.local/bin" "$HOME/Apps" "/opt/lm-studio"; do
     if [ -d "$appimage_path" ]; then
@@ -354,26 +348,29 @@ fi
 # ============================================================================
 
 check_gtk_typelibs() {
-    # try importing via system Python; this covers most cases and avoids hard
-    # coding paths. if python3 is missing, fall back to file existence tests.
     if command -v python3 >/dev/null 2>&1; then
         python3 - <<'PYCODE' >/dev/null 2>&1
 import gi
 try:
     gi.require_version("Gtk", "3.0")
+    # indicator namespace may be either AyatanaAppIndicator3 or AppIndicator3
+    try:
+        gi.require_version("AyatanaAppIndicator3", "0.1")
+    except ValueError:
+        gi.require_version("AppIndicator3", "0.1")
     from gi.repository import Gtk
 except Exception:
     raise
 PYCODE
         return $?
     fi
-
-    # fallback: check for typelib files directly
-    for lib in "/usr/lib/girepository-1.0/Gtk-3.0.typelib" "/usr/lib/girepository-1.0/AyatanaAppIndicator3-0.1.typelib"; do
-        if [ ! -f "$lib" ]; then
-            return 1
-        fi
-    done
+    if [ ! -f "/usr/lib/girepository-1.0/Gtk-3.0.typelib" ]; then
+        return 1
+    fi
+    if [ ! -f "/usr/lib/girepository-1.0/AyatanaAppIndicator3-0.1.typelib" ] && \
+       [ ! -f "/usr/lib/girepository-1.0/AppIndicator3-0.1.typelib" ]; then
+        return 1
+    fi
     return 0
 }
 
@@ -388,17 +385,19 @@ else
     print_warning "GTK3/GObject typelibs not found"
     log_output "WARN" "GTK3/GObject typelibs missing"
     echo ""
-    print_info "The application requires GTK3/GObject typelibs (gir1.2-gtk-3.0, ayatana indicator, etc.)."
+    print_info "The application requires GTK3/GObject typelibs (gir1.2-gtk-3.0) and"
+    print_info "an AppIndicator3 typelib (gir1.2-ayatanaappindicator3-0.1 or the"
+    print_info "equivalent package for your distribution)."
     if [ "$DRY_RUN" = "1" ]; then
         print_info "[DRY-RUN] Would install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1"
         log_output "INFO" "DRY-RUN: GTK typelibs installation skipped"
     else
-        if ask_yes_no "Install required GTK3 packages now?"; then
+        if ask_yes_no "Install required GTK3 and AppIndicator packages now?"; then
             log_output "INFO" "User chose to install GTK3 typelibs"
             echo "Updating package manager..."
             log_output "INFO" "Running apt update"
             sudo apt update
-            echo "Installing GTK3 typelibs..."
+            echo "Installing GTK3 and AppIndicator typelibs..."
             log_output "INFO" "Installing packages: gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1"
             if sudo apt install -y gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1; then
                 print_step "GTK3 typelibs installed successfully"
@@ -423,23 +422,31 @@ if [ "$BINARY_RELEASE" = false ]; then
     echo -e "\n${BLUE}Step 5: Checking Python 3.10${NC}"
     log_output "INFO" "Step 5: Checking for Python 3.10"
 
-    if command -v python3.10 >/dev/null 2>&1; then
-        print_step "Python 3.10 found"
-        PYTHON_VERSION=$(python3.10 --version)
+    PYTHON_PATH=""
+    if command -v python3 >/dev/null 2>&1; then
+        if python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)'; then
+            PYTHON_PATH=$(command -v python3)
+        fi
+    fi
+    if [ -z "$PYTHON_PATH" ] && command -v python3.10 >/dev/null 2>&1; then
+        PYTHON_PATH=$(command -v python3.10)
+    fi
+
+    if [ -n "$PYTHON_PATH" ]; then
+        print_step "Python $(basename "$PYTHON_PATH") ≥ 3.10 available"
+        PYTHON_VERSION=$($PYTHON_PATH --version 2>&1)
         echo "   $PYTHON_VERSION"
-        log_output "INFO" "Python 3.10 found: $PYTHON_VERSION"
-        python_path=$(command -v python3.10)
-        log_output "INFO" "Python 3.10 location: $python_path"
+        log_output "INFO" "Python found: $PYTHON_VERSION ($PYTHON_PATH)"
     else
-        print_warning "Python 3.10 not found"
-        log_output "WARN" "Python 3.10 not found in PATH"
+        print_warning "No suitable Python ≥ 3.10 found"
+        log_output "WARN" "Python ≥3.10 not found in PATH"
         echo ""
-        echo "Python 3.10 is required for PyGObject/GTK3 compatibility."
+        echo "Python 3.10 or later is required for PyGObject/GTK3 compatibility."
         if [ "$DRY_RUN" = "1" ]; then
             print_info "[DRY-RUN] Would install Python 3.10 via apt: python3.10 python3.10-venv python3.10-dev"
             log_output "INFO" "DRY-RUN: Would install Python 3.10 packages"
         else
-            if ask_yes_no "Would you like to install Python 3.10?"; then
+            if ask_yes_no "Would you like to install Python 3.10 (if available in your repos)?"; then
                 log_output "INFO" "User accepted Python 3.10 installation"
                 echo "Updating package manager..."
                 log_output "INFO" "Running apt update"
@@ -449,8 +456,12 @@ if [ "$BINARY_RELEASE" = false ]; then
                 if sudo apt install -y python3.10 python3.10-venv python3.10-dev; then
                     print_step "Python 3.10 installed successfully"
                     log_output "INFO" "Python 3.10 packages installed successfully"
+                    PYTHON_PATH=$(command -v python3.10 || true)
                 else
-                    print_error "Failed to install Python 3.10"
+                    print_error "Failed to install Python 3.10 via apt."
+                    print_error "It may not be available in your current repositories."
+                    print_info "Consider adding the deadsnakes PPA or installing a" \
+                        "newer Python manually, then re-run setup."
                     log_output "ERROR" "apt install failed for Python 3.10 packages"
                     exit 1
                 fi
@@ -475,7 +486,7 @@ if [ "$BINARY_RELEASE" = false ]; then
             print_info "[DRY-RUN] Would remove existing venv: $VENV_DIR"
             log_output "INFO" "DRY-RUN: Would remove existing venv at $VENV_DIR"
         fi
-        print_info "[DRY-RUN] Would create venv: python3.10 -m venv --system-site-packages $VENV_DIR"
+        print_info "[DRY-RUN] Would create venv: ${PYTHON_PATH:-python3.10} -m venv --system-site-packages $VENV_DIR"
         print_info "[DRY-RUN] Would upgrade pip/setuptools in venv"
         log_output "INFO" "DRY-RUN: Would create venv and upgrade pip/setuptools"
         print_step "Dry-run: venv step simulated"
@@ -484,7 +495,6 @@ if [ "$BINARY_RELEASE" = false ]; then
             print_warning "Removing existing venv..."
             log_output "WARN" "Existing venv found at $VENV_DIR - removing"
 
-            # Safety check: refuse to remove dangerous paths
             case "$VENV_DIR" in
                 ""|"/"|"."|".." )
                     print_error "Refusing to remove unsafe venv path: '$VENV_DIR'"
@@ -493,7 +503,6 @@ if [ "$BINARY_RELEASE" = false ]; then
                     ;;
             esac
 
-            # Ensure venv dir is under the script directory
             VENV_ABS="$(cd "$SCRIPT_DIR" && cd "$VENV_DIR" 2>/dev/null && pwd -P)"
             SCRIPT_ABS="$(cd "$SCRIPT_DIR" && pwd -P)"
             log_output "DEBUG" "Venv absolute path: $VENV_ABS"
@@ -518,7 +527,7 @@ if [ "$BINARY_RELEASE" = false ]; then
 
         echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
         log_output "INFO" "Creating Python venv at $VENV_DIR with system-site-packages"
-        if python3.10 -m venv --system-site-packages "$VENV_DIR"; then
+        if ${PYTHON_PATH:-python3.10} -m venv --system-site-packages "$VENV_DIR"; then
             print_step "Virtual environment created"
             log_output "INFO" "Virtual environment created successfully at $VENV_DIR"
         else
@@ -527,7 +536,6 @@ if [ "$BINARY_RELEASE" = false ]; then
             exit 1
         fi
 
-        # Upgrade pip and setuptools
         print_info "Upgrading pip and setuptools..."
         log_output "INFO" "Upgrading pip and setuptools in venv"
         if "$VENV_DIR/bin/python3" -m pip install --upgrade pip setuptools >/dev/null 2>&1; then
