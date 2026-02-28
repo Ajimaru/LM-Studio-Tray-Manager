@@ -312,9 +312,10 @@ class DummyGtkModule(ModuleType):
 
     class Dialog:
         """Dummy dialog for configuration UI."""
-        def __init__(self, title="", flags=None):
+        def __init__(self, title="", flags=None, modal=None, **_kwargs):
             self.title = title
             self.flags = flags
+            self.modal = modal
             self._content = DummyGtkModule.Grid()
             self._response = DummyGtkModule.ResponseType.CANCEL
 
@@ -1845,7 +1846,6 @@ def test_start_desktop_app_appimage_found_and_started(
         return _completed(returncode=0)
 
     monkeypatch.setattr(tray_module.subprocess, "run", fake_run)
-    popen_calls = []
 
 
 def test_start_desktop_app_prefers_lmstudio_appimage(
@@ -1874,6 +1874,7 @@ def test_start_desktop_app_prefers_lmstudio_appimage(
         return _completed(returncode=0)
 
     monkeypatch.setattr(tray_module.subprocess, "run", fake_run)
+
     popen_calls = []
 
     def mock_popen(args, **_k):
@@ -1902,8 +1903,10 @@ def test_start_desktop_app_prefers_lmstudio_appimage(
     assert not any("Other" in p for p in popen_calls)
 
 
-def test_start_desktop_app_deb_path(tray_module, monkeypatch, tmp_path):
-
+def test_start_desktop_app_deb_path_appimage(
+    tmp_path, tray_module, monkeypatch
+):
+    """Test launching desktop app via AppImage in deb path scenario."""
     tray = _make_tray_instance(tray_module)
     app_dir = tmp_path / "Apps"
     app_dir.mkdir()
@@ -2733,7 +2736,11 @@ def test_get_desktop_app_status_variants(tray_module, monkeypatch, tmp_path):
         lambda *_a, **_k: _completed(returncode=0, stdout="lm-studio"),
     )
     # ensure which finds the executable when dpkg reports it
-    monkeypatch.setattr(tray_module.shutil, "which", lambda x: "/usr/bin/lm-studio")
+    monkeypatch.setattr(
+        tray_module.shutil,
+        "which",
+        lambda x: "/usr/bin/lm-studio",
+    )
     assert tray.get_desktop_app_status() == "stopped"  # nosec B101
 
     app_dir = tmp_path / "Apps"
@@ -2758,7 +2765,9 @@ def test_get_desktop_app_status_variants(tray_module, monkeypatch, tmp_path):
     assert tray.get_desktop_app_status() == "stopped"  # nosec B101
 
 
-def test_get_desktop_app_status_debug_logs(tray_module, monkeypatch, caplog, tmp_path):
+def test_get_desktop_app_status_debug_logs(
+    tray_module, monkeypatch, caplog, tmp_path
+):
     """When debug logging enabled the lookup emits helpful messages."""
     tray = _make_tray_instance(tray_module)
     caplog.set_level(logging.DEBUG)
@@ -2770,7 +2779,11 @@ def test_get_desktop_app_status_debug_logs(tray_module, monkeypatch, caplog, tmp
         lambda args: _completed(returncode=0, stdout="lm-studio"),
     )
     # make sure the executable is present
-    monkeypatch.setattr(tray_module.shutil, "which", lambda x: "/usr/bin/lm-studio")
+    monkeypatch.setattr(
+        tray_module.shutil,
+        "which",
+        lambda x: "/usr/bin/lm-studio",
+    )
     assert tray.get_desktop_app_status() == "stopped"
     assert "Detected lm-studio installation via dpkg" in caplog.text
 
@@ -2784,34 +2797,56 @@ def test_get_desktop_app_status_debug_logs(tray_module, monkeypatch, caplog, tmp
         "isdir",
         lambda p: str(apps_dir) == p,
     )
-    monkeypatch.setattr(tray_module.os, "listdir", lambda _p: ["LM-Studio.AppImage"])
+    monkeypatch.setattr(
+        tray_module.os,
+        "listdir",
+        lambda _unused_p: ["LM-Studio.AppImage"],
+    )
     assert tray.get_desktop_app_status() == "stopped"
     assert "Detected AppImage at" in caplog.text
 
 
-def test_show_status_dialog_ignores_available_only(tray_module, monkeypatch, caplog):
+def test_show_status_dialog_ignores_available_only(
+    tray_module,
+    monkeypatch,
+    caplog,
+):
     """Ensure show_status_dialog treats `lms ps` output listing only
     available models as no models loaded.
     """
     tray = _make_tray_instance(tray_module)
     caplog.set_level(logging.DEBUG)
-    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray_module,
+        "get_lms_cmd",
+        lambda: "/usr/bin/lms",
+    )
     monkeypatch.setattr(
         tray_module,
         "_run_safe_command",
-        lambda *_a, **_k: _completed(returncode=0, stdout="foo available\nbar available"),
+        lambda *_unused_a, **_unused_k: _completed(
+            returncode=0,
+            stdout="foo available\nbar available",
+        ),
     )
+
     class DummyResp:
+        """Dummy response for urlopen context manager."""
+
         def __enter__(self):
             return self
-        def __exit__(self, exc_type, exc_val, exc_tb):
+
+        def __exit__(self, _exc_type, _exc_val, _exc_tb):
             return False
+
         def read(self):
+            """Return empty models list."""
             return b'{"data": []}'
+
     monkeypatch.setattr(
         tray_module.urllib_request,
         "urlopen",
-        lambda *args, **kwargs: DummyResp(),
+        lambda *unused_args, **unused_kwargs: DummyResp(),
     )
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -2822,7 +2857,10 @@ def test_show_status_dialog_ignores_available_only(tray_module, monkeypatch, cap
     monkeypatch.setattr(
         tray_module,
         "_run_safe_command",
-        lambda *_a, **_k: _completed(returncode=0, stdout="No models are currently loaded."),
+        lambda *_unused_a, **_unused_k: _completed(
+            returncode=0,
+            stdout="No models are currently loaded.",
+        ),
     )
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -2836,13 +2874,28 @@ def test_check_model_ignores_available_only(tray_module, monkeypatch):
     """
     tray = _make_tray_instance(tray_module)
     tray_module.sync_app_state_for_tests()
-    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
-    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
-    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        tray,
+        "get_daemon_status",
+        lambda: "running",
+    )
+    monkeypatch.setattr(
+        tray,
+        "get_desktop_app_status",
+        lambda: "stopped",
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_lms_cmd",
+        lambda: "/usr/bin/lms",
+    )
     monkeypatch.setattr(
         tray_module,
         "_run_safe_command",
-        lambda *_a, **_k: _completed(returncode=0, stdout="foo available\nbar available"),
+        lambda *_unused_a, **_unused_k: _completed(
+            returncode=0,
+            stdout="foo available\nbar available",
+        ),
     )
     monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
     tray.last_status = "INFO"
@@ -2853,7 +2906,10 @@ def test_check_model_ignores_available_only(tray_module, monkeypatch):
     monkeypatch.setattr(
         tray_module,
         "_run_safe_command",
-        lambda *_a, **_k: _completed(returncode=0, stdout="No models are currently loaded."),
+        lambda *_unused_a, **_unused_k: _completed(
+            returncode=0,
+            stdout="No models are currently loaded.",
+        ),
     )
     monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
     tray.last_status = "INFO"
@@ -2862,24 +2918,53 @@ def test_check_model_ignores_available_only(tray_module, monkeypatch):
     assert "Model loaded" not in tray.indicator.icon_calls[-1][1]
 
 
-def test_check_model_cli_no_models_with_api_true_transition(tray_module, monkeypatch):
+def test_check_model_cli_no_models_with_api_true_transition(
+    tray_module,
+    monkeypatch,
+):
     """Transition from OK to INFO when CLI says no models but API true."""
     tray = _make_tray_instance(tray_module)
     tray_module.sync_app_state_for_tests()
-    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
-    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
-    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "running")
+    monkeypatch.setattr(
+        tray_module,
+        "get_lms_cmd",
+        lambda: "/usr/bin/lms",
+    )
+    monkeypatch.setattr(
+        tray,
+        "get_daemon_status",
+        lambda: "running",
+    )
+    monkeypatch.setattr(
+        tray,
+        "get_desktop_app_status",
+        lambda: "running",
+    )
     monkeypatch.setattr(
         tray_module,
         "_run_safe_command",
-        lambda *_a, **_k: _completed(returncode=0, stdout="No models are currently loaded."),
+        lambda *_unused_a, **_unused_k: _completed(
+            returncode=0,
+            stdout="No models are currently loaded.",
+        ),
     )
     monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
 
     tray.last_status = "OK"
     notifications = []
-    monkeypatch.setattr(tray_module, "get_notify_send_cmd", lambda: "/n")
-    monkeypatch.setattr(tray, "_run_validated_command", lambda cmd: notifications.append(cmd) or _completed(returncode=0))
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/n",
+    )
+    monkeypatch.setattr(
+        tray,
+        "_run_validated_command",
+        lambda cmd: (
+            notifications.append(cmd)
+            or _completed(returncode=0)
+        ),
+    )
 
     tray.check_model()
     assert tray.indicator.icon_calls[-1][0] == tray_module.ICON_INFO
@@ -2888,11 +2973,25 @@ def test_check_model_cli_no_models_with_api_true_transition(tray_module, monkeyp
     assert not any("model loaded" in cmd[2].lower() for cmd in notifications)
 
 
-def test_multiple_appimages_prefers_lmstudio(tray_module, monkeypatch, tmp_path):
-    """If several AppImages are present the one with LM-Studio in its name is picked."""
-    tray = _make_tray_instance(tray_module)
-    monkeypatch.setattr(tray_module, "get_desktop_app_pids", lambda: [])
-    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: None)
+def test_multiple_appimages_prefers_lmstudio(
+    tray_module,
+    monkeypatch,
+    tmp_path,
+):
+    """
+    If several AppImages are present the one with LM-Studio in its name
+    is picked.
+    """
+    monkeypatch.setattr(
+        tray_module,
+        "get_desktop_app_pids",
+        lambda: [],
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_dpkg_cmd",
+        lambda: None,
+    )
     apps_dir = tmp_path / "Apps3"
     apps_dir.mkdir()
     (apps_dir / "Other.AppImage").write_text("x")
@@ -2918,7 +3017,10 @@ def test_home_mask_formatter_masks_home_dir(tray_module):
 
 
 def test_logging_handlers_are_replaced(tray_module, tmp_path):
-    """After calling basicConfig the module loop replaces formatter with masking one."""
+    """
+    After calling basicConfig the module loop replaces formatter
+    with masking one.
+    """
     log_file = str(tmp_path / "log.txt")
     logging.basicConfig(
         filename=log_file,
@@ -2930,7 +3032,9 @@ def test_logging_handlers_are_replaced(tray_module, tmp_path):
     root = logging.getLogger()
     for handler in root.handlers:
         handler.setFormatter(
-            tray_module.HomeMaskFormatter("%(asctime)s - %(levelname)s - %(message)s")
+            tray_module.HomeMaskFormatter(
+                "%(asctime)s - %(levelname)s - %(message)s"
+            )
         )
     assert all(
         isinstance(h.formatter, tray_module.HomeMaskFormatter)
@@ -2938,7 +3042,9 @@ def test_logging_handlers_are_replaced(tray_module, tmp_path):
     )
 
 
-def test_logging_paths_are_masked(tray_module, tmp_path, monkeypatch, capsys):
+def test_logging_paths_are_masked(
+    tray_module, _tmp_path, _monkeypatch, capsys
+):
     """Simulate logging through the module and ensure home is masked."""
     fmt = tray_module.HomeMaskFormatter("%(message)s")
     handler = logging.StreamHandler()
@@ -2959,7 +3065,10 @@ def test_logging_paths_are_masked(tray_module, tmp_path, monkeypatch, capsys):
 def test_dpkg_reports_but_no_executable_fallback_appimage(
     tray_module, monkeypatch, caplog, tmp_path
 ):
-    """When dpkg shows package but binary missing, AppImage search still runs."""
+    """
+    When dpkg shows package but binary missing, AppImage search
+    still runs.
+    """
     tray = _make_tray_instance(tray_module)
     caplog.set_level(logging.DEBUG)
     monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg")
@@ -2978,31 +3087,48 @@ def test_dpkg_reports_but_no_executable_fallback_appimage(
         "isdir",
         lambda p: str(apps_dir) == p,
     )
-    monkeypatch.setattr(tray_module.os, "listdir", lambda _p: ["LM-Studio.AppImage"])
+    monkeypatch.setattr(
+        tray_module.os,
+        "listdir",
+        lambda _unused: ["LM-Studio.AppImage"],
+    )
 
     status = tray.get_desktop_app_status()
     assert status == "stopped"
-    assert "dpkg reports lm-studio but executable not in PATH" in caplog.text
+    assert (
+        "dpkg reports lm-studio but executable not in PATH"
+        in caplog.text
+    )
     assert "Detected AppImage at" in caplog.text
 
 
-def test_get_desktop_app_status_debug_no_repeat(tray_module, monkeypatch, caplog, tmp_path):
-    """Calling get_desktop_app_status twice with the same environment only logs once."""
+def test_get_desktop_app_status_debug_no_repeat(
+    tray_module, monkeypatch, caplog, _tmp_path
+):
+    """
+    Calling get_desktop_app_status twice with the same environment
+    only logs once.
+    """
     tray = _make_tray_instance(tray_module)
     caplog.set_level(logging.DEBUG)
-    monkeypatch.setattr(tray_module, "get_desktop_app_pids", lambda: [])
-    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg")
+    monkeypatch.setattr(
+        tray_module, "get_desktop_app_pids", lambda: []
+    )
+    monkeypatch.setattr(
+        tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg"
+    )
     monkeypatch.setattr(
         tray_module,
         "_run_safe_command",
-        lambda args: _completed(returncode=0, stdout="lm-studio"),
+        lambda _unused: _completed(returncode=0, stdout="lm-studio"),
     )
-    # provide executable so status is stopped rather than not_found
-    monkeypatch.setattr(tray_module.shutil, "which", lambda x: "/usr/bin/lm-studio")
-    # first invocation logs
+    monkeypatch.setattr(
+        tray_module.shutil,
+        "which",
+        lambda _unused: "/usr/bin/lm-studio",
+    )
     _ = tray.get_desktop_app_status()
     caplog.clear()
-    # second invocation should not produce further debug output
     _ = tray.get_desktop_app_status()
     assert caplog.text == ""
 
@@ -3334,7 +3460,11 @@ def test_check_model_timeout_and_exception_paths(tray_module, monkeypatch):
     assert tray.check_model() is True  # nosec B101
 
 
-def test_check_model_transition_notifications(tray_module, monkeypatch, caplog):
+def test_check_model_transition_notifications(
+    tray_module,
+    monkeypatch,
+    caplog,
+):
     """Notify on INFO->WARN, WARN->FAIL, and OK->INFO transitions.
 
     In debug mode we should also log a reason string explaining the
@@ -4090,7 +4220,9 @@ def test_parse_args_script_dir_normalized(tmp_path, tray_module):
             _call_member(tray_module, "_AppState").script_dir  # nosec B101
             == os.path.abspath(rel)
         )
-        assert os.path.isabs(_call_member(tray_module, "_AppState").script_dir)  # nosec B101
+        assert os.path.isabs(
+            _call_member(tray_module, "_AppState").script_dir
+        )  # nosec B101
         sys.argv = ["prog", "mymodel", abs_dir]
         args2 = tray_module.parse_args()
         _call_member(tray_module, "_AppState").apply_cli_args(args2)
