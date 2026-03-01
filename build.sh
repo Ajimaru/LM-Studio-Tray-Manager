@@ -130,7 +130,14 @@ check_compiler() {
 }
 
 check_zlib() {
-    printf 'int main(void){return 0;}' | gcc -x c - -lz -o /dev/null 2>/dev/null
+    for c in gcc clang; do
+        if command -v "$c" &> /dev/null; then
+            printf 'int main(void){return 0;}' \
+                | "$c" -x c - -lz -o /dev/null 2>/dev/null \
+                && return 0
+        fi
+    done
+    return 1
 }
 
 if ! check_compiler; then
