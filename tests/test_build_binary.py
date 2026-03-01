@@ -871,18 +871,19 @@ def test_build_script_zlib_prompt(tmp_path):
     fakebin = tmp_path / "fakebin"
     fakebin.mkdir()
 
-    stub = fakebin / "gcc"
-    cat = """#!/bin/sh
+    for name in ("gcc", "clang"):
+        stub = fakebin / name
+        cat = f"""#!/bin/sh
 if echo "$@" | grep -q -- '-lz'; then
     exit 1
 fi
 if [ "$1" = "--version" ]; then
-    echo "gcc (fake) 1.0"; exit 0
+    echo "{name} (fake) 1.0"; exit 0
 fi
-exec /usr/bin/gcc "$@"
+exec /usr/bin/{name} "$@"
 """
-    stub.write_text(cat, encoding="utf-8")
-    stub.chmod(0o755)
+        stub.write_text(cat, encoding="utf-8")
+        stub.chmod(0o755)
 
     env = os.environ.copy()
     env["PATH"] = str(fakebin) + os.pathsep + env.get("PATH", "")
