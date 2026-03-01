@@ -52,8 +52,7 @@ log_output() {
     shift
     local message="$*"
     if [ -n "$HOME" ]; then
-        # shellcheck disable=SC2001
-        message="$(echo "$message" | sed "s|$HOME|~|g")"
+        message="${message//$HOME/~}"
     fi
     local log_entry
     log_entry="[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message"
