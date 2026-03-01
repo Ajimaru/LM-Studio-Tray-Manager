@@ -1,8 +1,8 @@
 """
 Test to ensure that the top-level requirements.txt file does not contain
 pip hash specifiers ('--hash') or line continuation backslashes ('\\'),
-as it is intended for scanners and should remain simple and unpinned.
-"""
+as it is intended for scanners and should remain hash-free and
+scanner-friendly.
 from pathlib import Path
 
 
