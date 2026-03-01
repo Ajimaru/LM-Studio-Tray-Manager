@@ -2315,9 +2315,6 @@ class TrayIcon:
 
         def _models_text_from_api():
             """Return loaded-model text from API or default error text."""
-            if not check_api_models():
-                return "No models loaded or error."
-
             try:
                 api_url = get_api_models_url()
                 _validate_url_scheme(api_url)
@@ -2329,8 +2326,7 @@ class TrayIcon:
                 # to allow only http/https.
                 # URL construction uses only configured API_HOST and
                 # API_PORT from _AppState.
-                # nosec B310
-                with urllib_request.urlopen(
+                with urllib_request.urlopen(  # nosec B310
                     req, timeout=2
                 ) as response:
                     payload = response.read()
