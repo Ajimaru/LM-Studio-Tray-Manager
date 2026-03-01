@@ -58,14 +58,9 @@ jobs:
           # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
 
-      # Upload SARIF to GitHub Code Scanning so Codacy findings appear in
-      # Security -> Code scanning alerts. Limit uploads to branch runs on
-      # `main` and `dev` to avoid duplicate noise on topic branches.
-      - name: Upload Codacy SARIF
-        # upload SARIF only on direct pushes or manual dispatch (not on PRs/forks)
-        # the event filter prevents permission errors when a forked PR triggers
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: results.sarif
-          category: codacy
+      # Note: Codacy results are available at codacy.com.
+      # GitHub Code Scanning uses dedicated workflows:
+      # - codeql.yml: CodeQL static analysis
+      # - bandit.yml: Python security scanning
+      # Skipping SARIF upload to avoid multi-run conflicts with GitHub CodeQL
+      # (see: https://github.blog/changelog/2025-07-21-code-scanning-will-stop-combining-multiple-sarif-runs-uploaded-in-the-same-sarif-file/)
