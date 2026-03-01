@@ -49,11 +49,6 @@ except ImportError:
 
 DEFAULT_APP_VERSION = "dev"
 
-_last_desktop_detection: str | None = None
-_seen_desktop_call = False
-_seen_dpkg_missing = False
-
-
 def load_version_from_dir(base_dir):
     """Load app version from the VERSION file.
 
