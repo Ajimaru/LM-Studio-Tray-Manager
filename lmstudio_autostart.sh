@@ -323,9 +323,88 @@ fi
 LMS_CLI="$HOME/.lmstudio/bin/lms"
 
 export LMSTUDIO_DISABLE_AUTO_LAUNCH=true
+RUNTIME_ENV_SANITIZE_LOGGED=0
 
 # === Command helpers ===
 have() { command -v "$1" >/dev/null 2>&1; }
+
+sanitize_ld_library_path() {
+    local original="${LD_LIBRARY_PATH:-}"
+    if [ -z "$original" ]; then
+        printf '%s\n' ""
+        return 0
+    fi
+
+    local cleaned
+    cleaned="$(printf '%s' "$original" | awk -v RS=: -v ORS=: '$0 !~ /^\/snap\// {print}' | sed 's/:$//')"
+    printf '%s\n' "$cleaned"
+}
+
+run_with_clean_runtime_env() {
+    local cleaned_ld
+    cleaned_ld="$(sanitize_ld_library_path)"
+    local original_ld="${LD_LIBRARY_PATH:-}"
+    local had_snap_ld=0
+    local -a sanitized_vars=()
+
+    if [ -n "$original_ld" ] && printf '%s' "$original_ld" | grep -q '/snap/'; then
+        had_snap_ld=1
+        sanitized_vars+=("LD_LIBRARY_PATH(filtered:/snap/*)")
+    elif [ -n "$original_ld" ] && [ -z "$cleaned_ld" ]; then
+        sanitized_vars+=("LD_LIBRARY_PATH")
+    fi
+
+    [ -n "${LD_PRELOAD:-}" ] && sanitized_vars+=("LD_PRELOAD")
+    [ -n "${PYTHONHOME:-}" ] && sanitized_vars+=("PYTHONHOME")
+    [ -n "${PYTHONPATH:-}" ] && sanitized_vars+=("PYTHONPATH")
+    [ -n "${GTK_PATH:-}" ] && sanitized_vars+=("GTK_PATH")
+    [ -n "${GSETTINGS_SCHEMA_DIR:-}" ] && sanitized_vars+=("GSETTINGS_SCHEMA_DIR")
+    [ -n "${GIO_MODULE_DIR:-}" ] && sanitized_vars+=("GIO_MODULE_DIR")
+    [ -n "${GTK_EXE_PREFIX:-}" ] && sanitized_vars+=("GTK_EXE_PREFIX")
+    [ -n "${GTK_DATA_PREFIX:-}" ] && sanitized_vars+=("GTK_DATA_PREFIX")
+    [ -n "${GDK_PIXBUF_MODULE_FILE:-}" ] && sanitized_vars+=("GDK_PIXBUF_MODULE_FILE")
+
+    if [ "$RUNTIME_ENV_SANITIZE_LOGGED" = "0" ]; then
+        if [ "$had_snap_ld" = "1" ] || [ -n "${GTK_PATH:-}" ] || \
+           [ -n "${GSETTINGS_SCHEMA_DIR:-}" ] || [ -n "${GIO_MODULE_DIR:-}" ] || \
+           [ -n "${GDK_PIXBUF_MODULE_FILE:-}" ] || [ -n "${PYTHONHOME:-}" ] || \
+           [ -n "${PYTHONPATH:-}" ] || [ -n "${LD_PRELOAD:-}" ]; then
+            echo "$(date '+%Y-%m-%d %H:%M:%S') ℹ️ Sanitizing runtime environment for tray launch (Snap/GTK/Python loader vars)."
+            if [ "$DEBUG_FLAG" = "1" ] && [ ${#sanitized_vars[@]} -gt 0 ]; then
+                echo "$(date '+%Y-%m-%d %H:%M:%S') 🐛 Debug: sanitized vars: ${sanitized_vars[*]}"
+            fi
+            RUNTIME_ENV_SANITIZE_LOGGED=1
+        fi
+    fi
+
+    if [ -n "$cleaned_ld" ]; then
+        env \
+            -u LD_PRELOAD \
+            -u PYTHONHOME \
+            -u PYTHONPATH \
+            -u GTK_PATH \
+            -u GSETTINGS_SCHEMA_DIR \
+            -u GIO_MODULE_DIR \
+            -u GTK_EXE_PREFIX \
+            -u GTK_DATA_PREFIX \
+            -u GDK_PIXBUF_MODULE_FILE \
+            LD_LIBRARY_PATH="$cleaned_ld" \
+            "$@"
+    else
+        env \
+            -u LD_LIBRARY_PATH \
+            -u LD_PRELOAD \
+            -u PYTHONHOME \
+            -u PYTHONPATH \
+            -u GTK_PATH \
+            -u GSETTINGS_SCHEMA_DIR \
+            -u GIO_MODULE_DIR \
+            -u GTK_EXE_PREFIX \
+            -u GTK_DATA_PREFIX \
+            -u GDK_PIXBUF_MODULE_FILE \
+            "$@"
+    fi
+}
 
 get_llmster_cmd() {
     if have llmster; then
@@ -693,20 +772,20 @@ fi
 if [ -n "$TRAY_BIN" ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🧩 Tray launch mode: binary"
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🧩 Starting Tray-Monitor (binary): $TRAY_BIN"
-    "$TRAY_BIN" "${TRAY_ARGS[@]}" &
+    run_with_clean_runtime_env "$TRAY_BIN" "${TRAY_ARGS[@]}" &
 else
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Tray launch mode: python"
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starting Tray-Monitor: \
 $SCRIPT_DIR/lmstudio_tray.py with model '$TRAY_MODEL'"
     # Priority: venv > python3.10 > python3 (PyGObject compatibility)
     if [ -x "$VENV_DIR/bin/python3" ]; then
-        "$VENV_DIR/bin/python3" "$SCRIPT_DIR/lmstudio_tray.py" \
+        run_with_clean_runtime_env "$VENV_DIR/bin/python3" "$SCRIPT_DIR/lmstudio_tray.py" \
             "${TRAY_ARGS[@]}" &
     elif have python3.10; then
-        python3.10 "$SCRIPT_DIR/lmstudio_tray.py" \
+        run_with_clean_runtime_env python3.10 "$SCRIPT_DIR/lmstudio_tray.py" \
             "${TRAY_ARGS[@]}" &
     elif have python3; then
-        python3 "$SCRIPT_DIR/lmstudio_tray.py" \
+        run_with_clean_runtime_env python3 "$SCRIPT_DIR/lmstudio_tray.py" \
             "${TRAY_ARGS[@]}" &
     else
         echo "$(date '+%Y-%m-%d %H:%M:%S') ⚠️ Tray not started - no Python interpreter found."
