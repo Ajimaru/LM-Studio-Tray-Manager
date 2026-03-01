@@ -68,30 +68,24 @@ NC='\033[0m' # No Color
 
 print_header() {
     local header="═══════════════════════════════════════"
-    printf '%b
-' "${BLUE}${header}${NC}"
-    printf '%b
-' "${BLUE}$1${NC}"
-    printf '%b
-' "${BLUE}${header}${NC}"
+    printf '%b\n' "${BLUE}${header}${NC}"
+    printf '%b\n' "${BLUE}$1${NC}"
+    printf '%b\n' "${BLUE}${header}${NC}"
     log_output "INFO" "--- $1 ---"
 }
 
 print_step() {
-    printf '%b %s
-' "${GREEN}✓${NC}" "$1"
+    printf '%b %s\n' "${GREEN}✓${NC}" "$1"
     log_output "OK" "$1"
 }
 
 print_error() {
-    printf '%b %s
-' "${RED}✗${NC}" "$1"
+    printf '%b %s\n' "${RED}✗${NC}" "$1"
     log_output "ERROR" "$1"
 }
 
 print_warning() {
-    printf '%b %s
-' "${YELLOW}⚠${NC}" "$1"
+    printf '%b %s\n' "${YELLOW}⚠${NC}" "$1"
     log_output "WARN" "$1"
 }
 
