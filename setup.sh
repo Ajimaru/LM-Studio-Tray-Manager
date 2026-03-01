@@ -134,44 +134,42 @@ install_gtk3_typelibs() {
     esac
 }
 
-# Install Python 3.10 using the detected package manager.
+# Install Python 3 (with venv support) using the detected package manager.
 # Prints manual instructions and returns 1 if no supported manager found.
-install_python310() {
+install_python3() {
     local pkg_mgr
     pkg_mgr="$(detect_pkg_manager)"
     log_output "INFO" "Detected package manager: $pkg_mgr"
     case "$pkg_mgr" in
         apt)
             sudo apt-get update
-            sudo apt-get install -y python3.10 python3.10-venv python3.10-dev
+            sudo apt-get install -y python3 python3-venv python3-dev
             ;;
         dnf)
-            sudo dnf install -y python3.10 python3.10-devel
+            sudo dnf install -y python3 python3-devel
             ;;
         pacman)
-            sudo pacman -Sy --noconfirm python310
+            sudo pacman -Sy --noconfirm python python-pip
             ;;
         zypper)
-            sudo zypper install -y python310 python310-devel
+            sudo zypper install -y python3 python3-devel
             ;;
         apk)
-            sudo apk add --no-cache python3 python3-dev
+            sudo apk add --no-cache python3 python3-dev py3-pip
             ;;
         *)
             print_error "No supported package manager found."
-            print_info "Install Python 3.10 manually:"
+            print_info "Install Python 3 manually:"
             print_info \
-"  Debian/Ubuntu: sudo apt-get install python3.10 python3.10-venv"
+"  Debian/Ubuntu: sudo apt-get install python3 python3-venv python3-dev"
             print_info \
-"                   python3.10-dev"
+"  Fedora/RHEL:   sudo dnf install python3 python3-devel"
             print_info \
-"  Fedora/RHEL:   sudo dnf install python3.10 python3.10-devel"
+"  Arch Linux:    sudo pacman -S python python-pip"
             print_info \
-"  Arch Linux:    sudo pacman -S python310"
+"  openSUSE:      sudo zypper install python3 python3-devel"
             print_info \
-"  openSUSE:      sudo zypper install python310 python310-devel"
-            print_info \
-"  Alpine:        sudo apk add python3 python3-dev"
+"  Alpine:        sudo apk add python3 python3-dev py3-pip"
             return 1
             ;;
     esac
@@ -532,43 +530,55 @@ else
 fi
 
 # ============================================================================
-# 5. Check Python 3.10 (only for Python package releases)
+# 5. Check Python 3 (only for Python package releases)
 # ============================================================================
 if [ "$BINARY_RELEASE" = false ]; then
-    echo -e "\n${BLUE}Step 5: Checking Python 3.10${NC}"
-    log_output "INFO" "Step 5: Checking for Python 3.10"
+    echo -e "\n${BLUE}Step 5: Checking Python 3${NC}"
+    log_output "INFO" "Step 5: Checking for Python 3"
 
+    # Prefer python3.10 when available (best PyGObject compatibility),
+    # but accept any python3 — mirroring build.sh behaviour.
     if command -v python3.10 >/dev/null 2>&1; then
-        print_step "Python 3.10 found"
-        PYTHON_VERSION=$(python3.10 --version)
-        echo "   $PYTHON_VERSION"
-        log_output "INFO" "Python 3.10 found: $PYTHON_VERSION"
-        python_path=$(command -v python3.10)
-        log_output "INFO" "Python 3.10 location: $python_path"
+        PYTHON_BIN="python3.10"
+    elif command -v python3 >/dev/null 2>&1; then
+        PYTHON_BIN="python3"
     else
-        print_warning "Python 3.10 not found"
-        log_output "WARN" "Python 3.10 not found in PATH"
+        PYTHON_BIN=""
+    fi
+
+    if [ -n "$PYTHON_BIN" ]; then
+        print_step "Python 3 found: $PYTHON_BIN"
+        PYTHON_VERSION=$("$PYTHON_BIN" --version)
+        echo "   $PYTHON_VERSION"
+        log_output "INFO" "Python found: $PYTHON_BIN ($PYTHON_VERSION)"
+        python_path=$(command -v "$PYTHON_BIN")
+        log_output "INFO" "Python location: $python_path"
+    else
+        print_warning "Python 3 not found"
+        log_output "WARN" "No Python 3 interpreter found in PATH"
         echo ""
-        echo "Python 3.10 is required for PyGObject/GTK3 compatibility."
+        echo "Python 3 is required."
         if [ "$DRY_RUN" = "1" ]; then
             print_info \
-"[DRY-RUN] Would install Python 3.10 via $(detect_pkg_manager)"
-            log_output "INFO" "DRY-RUN: Would install Python 3.10 packages"
+"[DRY-RUN] Would install Python 3 via $(detect_pkg_manager)"
+            log_output "INFO" "DRY-RUN: Would install Python 3 packages"
+            PYTHON_BIN="python3"
         else
-            if ask_yes_no "Would you like to install Python 3.10?"; then
-                log_output "INFO" "User accepted Python 3.10 installation"
-                if install_python310; then
-                    print_step "Python 3.10 installed successfully"
-                    log_output "INFO" "Python 3.10 packages installed successfully"
+            if ask_yes_no "Would you like to install Python 3?"; then
+                log_output "INFO" "User accepted Python 3 installation"
+                if install_python3; then
+                    print_step "Python 3 installed successfully"
+                    log_output "INFO" "Python 3 packages installed successfully"
+                    PYTHON_BIN="python3"
                 else
-                    print_error "Failed to install Python 3.10"
-                    log_output "ERROR" "Python 3.10 installation failed"
+                    print_error "Failed to install Python 3"
+                    log_output "ERROR" "Python 3 installation failed"
                     exit 1
                 fi
             else
                 log_output "ERROR" \
-"User declined Python 3.10 installation - setup cancelled"
-                print_error "Python 3.10 is required. Setup cancelled."
+"User declined Python 3 installation - setup cancelled"
+                print_error "Python 3 is required. Setup cancelled."
                 exit 1
             fi
         fi
@@ -587,7 +597,7 @@ if [ "$BINARY_RELEASE" = false ]; then
             print_info "[DRY-RUN] Would remove existing venv: $VENV_DIR"
             log_output "INFO" "DRY-RUN: Would remove existing venv at $VENV_DIR"
         fi
-        print_info "[DRY-RUN] Would create venv: python3.10 -m venv --system-site-packages $VENV_DIR"
+        print_info "[DRY-RUN] Would create venv: $PYTHON_BIN -m venv --system-site-packages $VENV_DIR"
         print_info "[DRY-RUN] Would upgrade pip/setuptools in venv"
         log_output "INFO" "DRY-RUN: Would create venv and upgrade pip/setuptools"
         print_step "Dry-run: venv step simulated"
@@ -630,7 +640,7 @@ if [ "$BINARY_RELEASE" = false ]; then
 
         echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
         log_output "INFO" "Creating Python venv at $VENV_DIR with system-site-packages"
-        if python3.10 -m venv --system-site-packages "$VENV_DIR"; then
+        if "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
             print_step "Virtual environment created"
             log_output "INFO" "Virtual environment created successfully at $VENV_DIR"
         else

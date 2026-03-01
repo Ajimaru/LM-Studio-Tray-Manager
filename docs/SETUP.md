@@ -20,7 +20,7 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
   - [Setup Script Outputs](#setup-script-outputs)
     - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
     - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
-    - [If Python 3.10 is Missing](#if-python-310-is-missing)
+    - [If Python 3 is Missing](#if-python-3-is-missing)
   - [What's Inside the venv?](#whats-inside-the-venv)
   - [File Structure After Setup](#file-structure-after-setup)
     - [For Binary Release](#for-binary-release)
@@ -36,12 +36,7 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
     - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
     - [PyGObject Import Errors](#pygobject-import-errors)
     - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
-  - [Why Python 3.10?](#why-python-310)
-  - [Python 3.12+ Support](#python-312-support)
-    - [Option 1: Install Build Tools (not recommended)](#option-1-install-build-tools-not-recommended)
-    - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
-    - [Option 3: Use Docker (alternative)](#option-3-use-docker-alternative)
-    - [Current Solution: Python 3.10 venv](#current-solution-python-310-venv)
+  - [Python Version Notes](#python-version-notes)
   - [Next Steps](#next-steps)
 
 ## What setup.sh Does
@@ -72,8 +67,10 @@ The setup script automatically detects your installation type and configures acc
      manual instructions are printed for all supported distros.
    - If the user declines, setup aborts with an explanatory error
 
-5. **Python 3.10** - Required for PyGObject/GTK3 compatibility (packages only)
+5. **Python 3** - Required for PyGObject/GTK3 compatibility (packages only)
    - **Only checked for Python package releases** (step 3 must detect no binary)
+   - Prefers `python3.10` when available (best PyGObject compatibility),
+     but accepts any `python3` interpreter
    - Installs automatically if missing via the detected package manager
    - When no supported manager is found, manual instructions are shown
    - Binary releases skip this step entirely
@@ -115,7 +112,7 @@ The setup script automatically detects your installation type:
 - ✓ Checks for LM Studio daemon
 - ✓ Checks for LM Studio desktop app
 - ✓ Checks for GTK3/GObject typelibs (installs if missing)
-- ✓ Checks for Python 3.10 (installs if missing)
+- ✓ Checks for Python 3 (prefers 3.10, accepts any python3)
 - ✓ Sets up GTK3 and PyGObject support
 
 **Next steps:**
@@ -143,7 +140,7 @@ The setup will:
 - ✓ Check for LM Studio desktop app
 - ✓ Detect if binary or Python package
 - ✓ Create venv (Python packages only)
-- ✓ Install Python 3.10 if needed (Python packages only)
+- ✓ Install Python 3 if needed (Python packages only)
 - ✓ Check for GTK3/GObject typelibs (installs if missing)
 
 ## Dry-run Mode
@@ -167,7 +164,7 @@ Example output for Python package releases (Steps 4 and 5 are skipped for binary
 [CHECK] LM Studio desktop app: not found
 [DRY-RUN] Would open LM Studio download page for desktop app guidance
 [CHECK] GTK3/GObject typelibs: missing (would install gir1.2-gtk-3.0)
-[CHECK] Python 3.10: found
+[CHECK] Python 3: found (python3.10)
 [DRY-RUN] Would recreate virtual environment in: ./venv
 [DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
 [DONE] Dry-run completed successfully (0 changes applied)
@@ -224,23 +221,24 @@ Enter path to AppImage file (or directory containing it): /home/user/Downloads/L
 
 ```
 
-### If Python 3.10 is Missing
+### If Python 3 is Missing
 
 ```bash
-⚠ Python 3.10 not found
-  Python 3.10 is required for PyGObject/GTK3 compatibility.
-  
-  Would you like to install Python 3.10? [y/n]:
+⚠ Python 3 not found
+  Python 3 is required.
+
+  Would you like to install Python 3? [y/n]:
 
 ```
 
-Selecting `y` installs Python 3.10 via the detected package manager
+Selecting `y` installs Python 3 via the detected package manager
 (requires sudo password). If no supported manager is found, manual
 installation instructions are displayed.
 
 ## What's Inside the venv?
 
-- **Python 3.10** (optimized for PyGObject binary compatibility)
+- **Python 3** (prefers 3.10 when available for best PyGObject compatibility,
+  but accepts any Python 3 interpreter)
 - **System site-packages** enabled (includes GTK3 introspection data)
 - **Isolated environment** (pip packages don't conflict with system Python)
 - **Full PyGObject + GTK3 support** for system tray functionality
@@ -397,7 +395,7 @@ The tray monitor requires outbound HTTPS access to GitHub for update checks. If 
 
 If you see `ImportError: cannot import name '_gi'`:
 
-1. Verify Python 3.10 is being used:
+1. Verify which Python is being used:
 
    ```bash
    ./venv/bin/python3 --version
@@ -434,67 +432,24 @@ If the tray monitor is running but icon not visible:
 
    ```
 
-## Why Python 3.10?
+## Python Version Notes
 
-PyGObject (Python GTK3 bindings) has a complex setup:
+The setup script prefers `python3.10` when it is available because PyGObject
+(Python GTK3 bindings) has a complex setup:
 
 - **PyGObject binaries** (`.so` files) are pre-compiled for Python 3.10 in
   Debian/Ubuntu and many other distributions
-- System Python 3.12 doesn't have pre-compiled PyGObject binaries (as of early 2026)
-- Recompiling from source requires C compiler, GObject headers, and pkg-config
-- Python 3.10 is still actively maintained (until Oct 2026) and secure
+- System Python 3.12 may not have pre-compiled PyGObject binaries on all
+  distros (as of early 2026), requiring compilation from source
+- Recompiling from source requires a C compiler, GObject headers, and pkg-config
 - venv with `--system-site-packages` gives us the best of both worlds:
   - Isolated Python environment
   - Access to pre-compiled system PyGObject + GTK3
   - No compilation needed, fast setup
 
-## Python 3.12+ Support
-
-To support Python 3.12 natively would require one of these approaches:
-
-### Option 1: Install Build Tools (not recommended)
-
-```bash
-sudo apt install libgirepository-1.0-dev pkg-config build-essential
-pip install PyGObject  # This would compile from source
-```
-
-- ❌ Slow (compilation takes 2-5 minutes)
-- ❌ More dependencies (compiler, headers)
-- ❌ Harder to maintain
-
-### Option 2: Wait for Debian/Ubuntu Packages
-
-```bash
-# Would work when these are available (Python 3.12 LTS support)
-sudo apt install python3.12-gi gir1.2-gtk-3.0
-```
-
-- ❌ Not yet available in most distributions
-- ⏳ Will take time for distribution support
-
-### Option 3: Use Docker (alternative)
-
-```dockerfile
-FROM python:3.12
-RUN apt install -y libgirepository-1.0-dev python3-gi
-```
-
-- ❌ Adds container complexity
-- ⏳ More setup overhead
-
-### Current Solution: Python 3.10 venv
-
-```bash
-./setup.sh  # 5 seconds, uses pre-compiled binaries
-```
-
-- ✅ Pre-compiled binaries
-- ✅ Instant setup
-- ✅ No extra dependencies
-- ✅ Clean isolation
-
-We recommend staying with **Python 3.10** for the foreseeable future.
+However, **any Python 3 interpreter** is accepted; `python3.10` is simply
+preferred. If your distro ships a newer Python that includes PyGObject
+packages, it will work as-is.
 
 ## Next Steps
 
