@@ -939,7 +939,7 @@ def test_namespace_fallback_to_appindicator3(monkeypatch, tmp_path):
     finally:
         sys.argv = old_argv
 
-    assert getattr(module, "_AppState") .AppIndicator3 is app_mod  # nosec B101
+    assert getattr(module, "_AppState").AppIndicator3 is app_mod  # nosec B101
 
 
 def test_namespace_missing_exits(monkeypatch, capsys):
