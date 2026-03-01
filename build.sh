@@ -78,9 +78,11 @@ echo -e "${GREEN}✓${NC} Python found: \"$("$PYTHON_BIN" --version)\""
 # ---------------------------------------------------------------------------
 
 check_compiler() {
+    C_COMPILER=""
     for c in gcc clang; do
         if command -v "$c" &> /dev/null; then
             if "$c" --version >/dev/null 2>&1; then
+                C_COMPILER="$c"
                 return 0
             fi
         fi
@@ -89,6 +91,13 @@ check_compiler() {
 }
 
 check_zlib() {
+    if [ -n "${C_COMPILER:-}" ] && command -v "$C_COMPILER" &> /dev/null; then
+        printf 'int main(void){return 0;}' \
+            | "$C_COMPILER" -x c - -lz -o /dev/null 2>/dev/null \
+            && return 0
+        return 1
+    fi
+
     for c in gcc clang; do
         if command -v "$c" &> /dev/null; then
             printf 'int main(void){return 0;}' \
@@ -125,6 +134,11 @@ C compiler (e.g. gcc or clang, plus make) manually and re-run the script.${NC}"
     # re-check after attempt
     if ! command -v gcc &> /dev/null && ! command -v clang &> /dev/null; then
         echo -e "${RED}Compiler still not found; cannot continue.${NC}"
+        exit 1
+    fi
+
+    if ! check_compiler; then
+        echo -e "${RED}Compiler still not usable; cannot continue.${NC}"
         exit 1
     fi
 fi
