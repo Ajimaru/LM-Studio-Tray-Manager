@@ -2210,6 +2210,20 @@ def test_start_desktop_app_deb_path_appimage(
         return SimpleNamespace(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+    monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: "/usr/bin/dpkg")
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda *_a, **_k: _completed(returncode=1, stdout=""),
+    )
 
     monkeypatch.setattr(
         tray_module.os.path,
@@ -4729,8 +4743,8 @@ def test_show_status_dialog_api_fallback_lms_fail(
 
     api_response = {
         "data": [
-            {"id": "mistralai/mistral-7b"},
-            {"id": "openai/gpt-3"},
+            {"id": "mistralai/mistral-7b", "loaded": True},
+            {"id": "openai/gpt-3", "loaded": True},
         ]
     }
 
@@ -4785,7 +4799,9 @@ def test_show_status_dialog_api_fallback_no_lms(
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
 
-    api_response = {"data": [{"id": "meta/llama2"}]}
+    api_response = {
+        "data": [{"id": "meta/llama2", "loaded": True}]
+    }
 
     def mock_urlopen_json(*_a, **_k):
         response = DummyContextManager()
