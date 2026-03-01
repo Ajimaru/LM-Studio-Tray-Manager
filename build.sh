@@ -53,12 +53,15 @@ get_file_size() {
     echo 0
 }
 
-# Choose Python (prefer 3.10 if available)
-if command -v python3.10 &> /dev/null; then
-    PYTHON_BIN="python3.10"
-elif command -v python3 &> /dev/null; then
-    PYTHON_BIN="python3"
-else
+# Choose Python (prefer 3.12+ if available, else any compatible version)
+for candidate in python3.12 python3.13 python3.11 python3; do
+    if command -v "$candidate" &> /dev/null; then
+        PYTHON_BIN="$candidate"
+        break
+    fi
+done
+
+if [ -z "${PYTHON_BIN:-}" ]; then
     echo -e "${RED}Error: python3 not found${NC}"
     exit 1
 fi

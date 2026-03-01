@@ -59,7 +59,7 @@ chmod +x build.sh
 This will:
 
 1. Check dependencies
-2. Create a Python 3.10 venv (if missing) with system site-packages
+2. Create a Python venv (if missing) with system site-packages
 3. Clean previous builds
 4. Run PyInstaller
 5. Strip debug symbols
@@ -92,7 +92,7 @@ On Debian/Ubuntu the required build packages are provided by
 
 ```bash
 # Ubuntu/Debian
-sudo apt install python3.10 python3.10-venv python3-pip binutils build-essential zlib1g-dev
+sudo apt install python3.12 python3.12-venv python3-pip binutils build-essential zlib1g-dev
 
 # Fedora
 sudo dnf install python3-pip binutils @development-tools zlib-devel

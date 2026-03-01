@@ -8,10 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bc \
     build-essential \
     pkg-config \
-    python3.10 \
-    python3.10-venv \
-    python3.10-dev \
-    python3.10-distutils \
+    python3.12 \
+    python3.12-venv \
+    python3.12-dev \
+    libpython3.12-dev \
     python3-pip \
     python3-gi \
     gobject-introspection \
@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && mkdir -p /home/builder \
     && chown -R builder:builder /home/builder
 
-ENV PYTHON=/usr/bin/python3.10
+ENV PYTHON=/usr/bin/python3.12
 
 WORKDIR /workspace
 RUN chown builder:builder /workspace
