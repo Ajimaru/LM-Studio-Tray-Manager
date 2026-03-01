@@ -31,6 +31,8 @@ This guide covers how to use the LM Studio Tray Manager application after setup.
       - [Option 2: Via LM Studio GUI](#option-2-via-lm-studio-gui)
       - [Option 3: Via Daemon Configuration File](#option-3-via-daemon-configuration-file)
   - [Monitoring and Logs](#monitoring-and-logs)
+    - [Common Errors \& Troubleshooting](#common-errors--troubleshooting)
+      - [GSettings Schema Crash](#gsettings-schema-crash)
     - [View Logs in Real-Time](#view-logs-in-real-time)
     - [Understanding Log Files](#understanding-log-files)
     - [Debug Mode](#debug-mode)
@@ -234,8 +236,16 @@ When you click "Start Desktop App":
 4. **On Launch**:
    - Stops daemon first (if running)
    - Launches GUI application
+   - Automatically appends `--no-sandbox` when an AppImage is detected; this
+     avoids the common SUID sandbox error for Chromium-based AppImages
+     (see issue #62).
+   - Recognises AppImage processes so the tray icon updates from red after
+     the GUI starts
    - Shows desktop notification on success or error
    - Logs all actions to `.logs/lmstudio_tray.log`
+   - All of the above logic is executed in a background thread; the tray
+     menu remains responsive and clicks are not blocked while the desktop
+     app is launching.
 
 ### How "Start LM Studio Daemon" Works
 
@@ -249,7 +259,8 @@ When you click "Start LM Studio Daemon":
 
 2. **Conflict handling**:
    - Stops desktop app first (if running)
-   - Then starts the daemon
+   - Then starts the daemon   - The daemon start sequence runs in a background thread so the
+     tray menu remains usable while the service spins up.
 
 3. **Verification**:
    - Confirms daemon started successfully
@@ -330,6 +341,25 @@ Example configuration snippet (add the `"default_model"` key to your existing co
 **Note**: After setting a default model with any method, the next time the daemon starts (via `lmstudio_autostart.sh` or `lms daemon up`), it will automatically load your configured model.
 
 ## Monitoring and Logs
+
+### Common Errors & Troubleshooting
+
+#### GSettings Schema Crash
+
+If you run the binary and immediately see a GLib-GIO-ERROR about a missing
+`antialiasing` key, the underlying GTK library failed to locate the
+GSettings schemas.  The tray manager attempts to set
+`GSETTINGS_SCHEMA_DIR` automatically, but in some minimal chroot or
+AppImage environments that directory may not be mounted.  The quick fixes
+are:
+
+```bash
+sudo apt install gsettings-desktop-schemas
+GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas ./lmstudio-tray-manager
+```
+
+This error is only relevant for the standalone binary; the Python package
+version inherits whatever environment your shell already provides.
 
 ### View Logs in Real-Time
 
@@ -417,6 +447,20 @@ Debug mode shows:
 - Model loading information
 - System tray icon changes
 - Error stack traces
+- **Environment sanitization details** - Lists specific variables cleaned
+  before tray launch (e.g., `GTK_PATH`, `GSETTINGS_SCHEMA_DIR`,
+  `LD_LIBRARY_PATH`)
+
+**Example debug output:**
+
+```bash
+2026-03-01 14:30:15 ℹ️  Sanitizing runtime environment for tray launch (Snap/GTK/Python loader vars).
+2026-03-01 14:30:15 🐛 Debug: sanitized vars: GTK_PATH GSETTINGS_SCHEMA_DIR LD_LIBRARY_PATH(filtered:/snap/*)
+```
+
+The sanitization prevents crashes when launching from Snap-packaged
+applications (like VSCode) that inject incompatible library paths. See
+[SETUP.md](SETUP.md#runtime-environment-sanitization) for details.
 
 ## Troubleshooting
 
@@ -554,7 +598,13 @@ Debug mode shows:
    ./venv/bin/python3 -c "import gi; gi.require_version('Gtk', '3.0'); from gi.repository import Gtk; print('GTK3 OK')"
    ```
 
-3. Install missing GTK packages:
+3. Install missing GTK packages.  The tray uses
+   the AppIndicator3 API which is provided by the
+   `gir1.2-ayatanaappindicator3-0.1` package on Debian/Ubuntu-based
+   systems; some distributions expose the API simply as
+   `AppIndicator3`.  The code will now automatically fall back to the
+   alternate namespace if necessary, but you still need the GIR
+   typelib installed.
 
    ```bash
    sudo apt install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1
