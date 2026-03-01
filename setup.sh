@@ -72,6 +72,111 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Detect the available system package manager
+detect_pkg_manager() {
+    if command -v apt-get >/dev/null 2>&1; then
+        echo "apt"
+    elif command -v dnf >/dev/null 2>&1; then
+        echo "dnf"
+    elif command -v pacman >/dev/null 2>&1; then
+        echo "pacman"
+    elif command -v zypper >/dev/null 2>&1; then
+        echo "zypper"
+    elif command -v apk >/dev/null 2>&1; then
+        echo "apk"
+    else
+        echo "unknown"
+    fi
+}
+
+# Install GTK3/GObject typelibs using the detected package manager.
+# Prints manual instructions and returns 1 if no supported manager found.
+install_gtk3_typelibs() {
+    local pkg_mgr
+    pkg_mgr="$(detect_pkg_manager)"
+    log_output "INFO" "Detected package manager: $pkg_mgr"
+    case "$pkg_mgr" in
+        apt)
+            sudo apt-get update
+            sudo apt-get install -y \
+                gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1
+            ;;
+        dnf)
+            sudo dnf install -y gtk3 libappindicator-gtk3
+            ;;
+        pacman)
+            sudo pacman -Sy --noconfirm gtk3 libayatana-appindicator
+            ;;
+        zypper)
+            sudo zypper install -y \
+                typelib-1_0-Gtk-3_0 libayatana-appindicator3-0_1
+            ;;
+        apk)
+            sudo apk add --no-cache gtk+3.0 gobject-introspection
+            ;;
+        *)
+            print_error "No supported package manager found."
+            print_info "Install GTK3/GObject typelibs manually:"
+            print_info \
+"  Debian/Ubuntu: sudo apt-get install gir1.2-gtk-3.0"
+            print_info \
+"                   gir1.2-ayatanaappindicator3-0.1"
+            print_info \
+"  Fedora/RHEL:   sudo dnf install gtk3 libappindicator-gtk3"
+            print_info \
+"  Arch Linux:    sudo pacman -S gtk3 libayatana-appindicator"
+            print_info \
+"  openSUSE:      sudo zypper install typelib-1_0-Gtk-3_0"
+            print_info \
+"  Alpine:        sudo apk add gtk+3.0 gobject-introspection"
+            return 1
+            ;;
+    esac
+}
+
+# Install Python 3.10 using the detected package manager.
+# Prints manual instructions and returns 1 if no supported manager found.
+install_python310() {
+    local pkg_mgr
+    pkg_mgr="$(detect_pkg_manager)"
+    log_output "INFO" "Detected package manager: $pkg_mgr"
+    case "$pkg_mgr" in
+        apt)
+            sudo apt-get update
+            sudo apt-get install -y python3.10 python3.10-venv python3.10-dev
+            ;;
+        dnf)
+            sudo dnf install -y python3.10 python3.10-devel
+            ;;
+        pacman)
+            sudo pacman -Sy --noconfirm python310
+            ;;
+        zypper)
+            sudo zypper install -y python310 python310-devel
+            ;;
+        apk)
+            sudo apk add --no-cache python3 python3-dev
+            ;;
+        *)
+            print_error "No supported package manager found."
+            print_info "Install Python 3.10 manually:"
+            print_info \
+"  Debian/Ubuntu: sudo apt-get install python3.10 python3.10-venv"
+            print_info \
+"                   python3.10-dev"
+            print_info \
+"  Fedora/RHEL:   sudo dnf install python3.10 python3.10-devel"
+            print_info \
+"  Arch Linux:    sudo pacman -S python310"
+            print_info \
+"  openSUSE:      sudo zypper install python310 python310-devel"
+            print_info \
+"  Alpine:        sudo apk add python3 python3-dev"
+            return 1
+            ;;
+    esac
+}
+
 # Utility functions
 print_header() {
     local header="═══════════════════════════════════════"
@@ -197,15 +302,25 @@ fi
 echo -e "\n${BLUE}Step 2: Checking LM Studio Desktop App${NC}"
 log_output "INFO" "Step 2: Checking for LM Studio desktop app"
 
-FOUND_DEB=false
+FOUND_PKG=false
 APP_INSTALLED=false
 
-# Check for .deb package
-if dpkg -l | grep -q lm-studio; then
+# Check for a natively-installed LM Studio package (any distro)
+if command -v dpkg >/dev/null 2>&1 && dpkg -l | grep -q lm-studio 2>/dev/null; then
     print_step "LM Studio desktop app found (deb package)"
     log_output "INFO" "LM Studio desktop app installed via deb package"
     APP_INSTALLED=true
-    FOUND_DEB=true
+    FOUND_PKG=true
+elif command -v rpm >/dev/null 2>&1 && rpm -q lm-studio >/dev/null 2>&1; then
+    print_step "LM Studio desktop app found (rpm package)"
+    log_output "INFO" "LM Studio desktop app installed via rpm package"
+    APP_INSTALLED=true
+    FOUND_PKG=true
+elif command -v pacman >/dev/null 2>&1 && pacman -Qi lm-studio >/dev/null 2>&1; then
+    print_step "LM Studio desktop app found (pacman package)"
+    log_output "INFO" "LM Studio desktop app installed via pacman"
+    APP_INSTALLED=true
+    FOUND_PKG=true
 fi
 
 # Check for App Image in common locations (including current script directory)
@@ -226,11 +341,12 @@ done
 
 if [ "$APP_INSTALLED" = false ]; then
     print_warning "LM Studio desktop app not found"
-    log_output "WARN" "LM Studio desktop app not found (checked deb package and AppImage locations)"
+    log_output "WARN" \
+"LM Studio desktop app not found (checked native packages and AppImage locations)"
     echo ""
     print_info "The desktop app is required for the --gui option."
     print_info "Choose installation method:"
-    print_info "  1) Install .deb package (recommended for Ubuntu/Debian)"
+    print_info "  1) Download installer/package from lmstudio.ai"
     print_info "  2) Use AppImage (manual download)"
     print_info "  3) Skip (can be installed later)"
     echo ""
@@ -246,7 +362,7 @@ if [ "$APP_INSTALLED" = false ]; then
 
     case "$app_choice" in
         1)
-            log_output "INFO" "User chose deb package installation"
+            log_output "INFO" "User chose to download LM Studio installer"
             echo "Opening LM Studio download page..."
             if [ "$DRY_RUN" = "1" ]; then
                 print_info "[DRY-RUN] Would open https://lmstudio.ai/download"
@@ -260,8 +376,9 @@ if [ "$APP_INSTALLED" = false ]; then
                 log_output "INFO" "No browser launcher found, displaying URL"
                 echo "Please visit: https://lmstudio.ai/download"
             fi
-            print_warning "Please download and install the .deb package, then run this script again"
-            log_output "WARN" "Setup paused - waiting for deb package installation"
+            print_warning \
+"Download and install LM Studio for your distro, then run this script again"
+            log_output "WARN" "Setup paused - waiting for LM Studio installation"
             ;;
         2)
             log_output "INFO" "User chose AppImage installation"
@@ -295,9 +412,9 @@ if [ "$APP_INSTALLED" = false ]; then
 fi
 
 if [ "$APP_INSTALLED" = true ]; then
-    if [ "$FOUND_DEB" = true ]; then
-        echo "   Desktop app: deb package"
-        log_output "INFO" "Desktop app installation method: deb package"
+    if [ "$FOUND_PKG" = true ]; then
+        echo "   Desktop app: native package"
+        log_output "INFO" "Desktop app installation method: native package"
     elif [ -n "$APPIMAGE_PATH" ]; then
         echo "   Desktop app: AppImage at $APPIMAGE_PATH"
         log_output "INFO" "Desktop app installation method: AppImage at $APPIMAGE_PATH"
@@ -388,28 +505,26 @@ else
     print_warning "GTK3/GObject typelibs not found"
     log_output "WARN" "GTK3/GObject typelibs missing"
     echo ""
-    print_info "The application requires GTK3/GObject typelibs (gir1.2-gtk-3.0, ayatana indicator, etc.)."
+    print_info \
+"The application requires GTK3/GObject typelibs (e.g. gir1.2-gtk-3.0)."
     if [ "$DRY_RUN" = "1" ]; then
-        print_info "[DRY-RUN] Would install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1"
+        print_info \
+"[DRY-RUN] Would install GTK3 typelibs via $(detect_pkg_manager)"
         log_output "INFO" "DRY-RUN: GTK typelibs installation skipped"
     else
         if ask_yes_no "Install required GTK3 packages now?"; then
             log_output "INFO" "User chose to install GTK3 typelibs"
-            echo "Updating package manager..."
-            log_output "INFO" "Running apt update"
-            sudo apt update
-            echo "Installing GTK3 typelibs..."
-            log_output "INFO" "Installing packages: gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1"
-            if sudo apt install -y gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1; then
+            if install_gtk3_typelibs; then
                 print_step "GTK3 typelibs installed successfully"
                 log_output "INFO" "GTK3 typelibs installed successfully"
             else
                 print_error "Failed to install GTK3 typelibs"
-                log_output "ERROR" "apt install failed for GTK3 typelibs"
+                log_output "ERROR" "GTK3 typelibs installation failed"
                 exit 1
             fi
         else
-            log_output "ERROR" "User declined GTK3 typelibs installation - setup cancelled"
+            log_output "ERROR" \
+"User declined GTK3 typelibs installation - setup cancelled"
             print_error "GTK3/GObject libraries are required. Setup cancelled."
             exit 1
         fi
@@ -436,26 +551,23 @@ if [ "$BINARY_RELEASE" = false ]; then
         echo ""
         echo "Python 3.10 is required for PyGObject/GTK3 compatibility."
         if [ "$DRY_RUN" = "1" ]; then
-            print_info "[DRY-RUN] Would install Python 3.10 via apt: python3.10 python3.10-venv python3.10-dev"
+            print_info \
+"[DRY-RUN] Would install Python 3.10 via $(detect_pkg_manager)"
             log_output "INFO" "DRY-RUN: Would install Python 3.10 packages"
         else
             if ask_yes_no "Would you like to install Python 3.10?"; then
                 log_output "INFO" "User accepted Python 3.10 installation"
-                echo "Updating package manager..."
-                log_output "INFO" "Running apt update"
-                sudo apt update
-                echo "Installing Python 3.10..."
-                log_output "INFO" "Installing packages: python3.10 python3.10-venv python3.10-dev"
-                if sudo apt install -y python3.10 python3.10-venv python3.10-dev; then
+                if install_python310; then
                     print_step "Python 3.10 installed successfully"
                     log_output "INFO" "Python 3.10 packages installed successfully"
                 else
                     print_error "Failed to install Python 3.10"
-                    log_output "ERROR" "apt install failed for Python 3.10 packages"
+                    log_output "ERROR" "Python 3.10 installation failed"
                     exit 1
                 fi
             else
-                log_output "ERROR" "User declined Python 3.10 installation - setup cancelled"
+                log_output "ERROR" \
+"User declined Python 3.10 installation - setup cancelled"
                 print_error "Python 3.10 is required. Setup cancelled."
                 exit 1
             fi

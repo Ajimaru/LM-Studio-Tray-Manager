@@ -12,6 +12,71 @@ mkdir -p "$LOGS_DIR"
 # === Log file in .logs directory ===
 LOGFILE="$LOGS_DIR/lmstudio_autostart.log"
 
+# === Detect the available system package manager ===
+detect_pkg_manager() {
+    if command -v apt-get >/dev/null 2>&1; then
+        echo "apt"
+    elif command -v dnf >/dev/null 2>&1; then
+        echo "dnf"
+    elif command -v pacman >/dev/null 2>&1; then
+        echo "pacman"
+    elif command -v zypper >/dev/null 2>&1; then
+        echo "zypper"
+    elif command -v apk >/dev/null 2>&1; then
+        echo "apk"
+    else
+        echo "unknown"
+    fi
+}
+
+# Return the install command for a logical package on the detected distro.
+# Usage: pkg_install_cmd <logical_name>
+# Outputs a ready-to-run "sudo <pkg_mgr> install <pkg>" string, or an empty
+# string when the package manager is unknown.
+pkg_install_cmd() {
+    local name="$1"
+    local mgr
+    mgr="$(detect_pkg_manager)"
+    case "$mgr" in
+        apt)
+            case "$name" in
+                curl)         echo "sudo apt-get install -y curl" ;;
+                notify-send)  echo "sudo apt-get install -y libnotify-bin" ;;
+                python3)      echo "sudo apt-get install -y python3" ;;
+            esac
+            ;;
+        dnf)
+            case "$name" in
+                curl)         echo "sudo dnf install -y curl" ;;
+                notify-send)  echo "sudo dnf install -y libnotify" ;;
+                python3)      echo "sudo dnf install -y python3" ;;
+            esac
+            ;;
+        pacman)
+            case "$name" in
+                curl)         echo "sudo pacman -Sy --noconfirm curl" ;;
+                notify-send)  echo "sudo pacman -Sy --noconfirm libnotify" ;;
+                python3)      echo "sudo pacman -Sy --noconfirm python" ;;
+            esac
+            ;;
+        zypper)
+            case "$name" in
+                curl)         echo "sudo zypper install -y curl" ;;
+                notify-send)  echo "sudo zypper install -y libnotify-tools" ;;
+                python3)      echo "sudo zypper install -y python3" ;;
+            esac
+            ;;
+        apk)
+            case "$name" in
+                curl)         echo "sudo apk add --no-cache curl" ;;
+                notify-send)  echo "sudo apk add --no-cache libnotify" ;;
+                python3)      echo "sudo apk add --no-cache python3" ;;
+            esac
+            ;;
+    esac
+    # unknown pkg manager – return empty string
+}
+
 # === Basic dependency checks ===
 check_dependencies() {
     local missing=()
@@ -19,39 +84,56 @@ check_dependencies() {
 
     if ! command -v curl >/dev/null 2>&1; then
         missing+=("curl")
-        to_install+=("sudo apt install curl")
+        local cmd; cmd="$(pkg_install_cmd curl)"
+        [ -n "$cmd" ] && to_install+=("$cmd")
     fi
     if ! command -v notify-send >/dev/null 2>&1; then
         missing+=("notify-send (libnotify)")
-        to_install+=("sudo apt install libnotify-bin")
+        local cmd; cmd="$(pkg_install_cmd notify-send)"
+        [ -n "$cmd" ] && to_install+=("$cmd")
     fi
     if ! command -v python3 >/dev/null 2>&1; then
         missing+=("python3")
-        to_install+=("sudo apt install python3")
+        local cmd; cmd="$(pkg_install_cmd python3)"
+        [ -n "$cmd" ] && to_install+=("$cmd")
     fi
     if ! command -v llmster >/dev/null 2>&1 \
-        && ! find "$HOME/.lmstudio/llmster" -maxdepth 3 -type f -name "llmster" -perm -111 2>/dev/null | grep -q .; then
+        && ! find "$HOME/.lmstudio/llmster" -maxdepth 3 \
+            -type f -name "llmster" -perm -111 2>/dev/null | grep -q .; then
         missing+=("llmster (headless daemon)")
     fi
 
     if [ ${#missing[@]} -gt 0 ]; then
         echo "The following dependencies are missing: ${missing[*]}"
         if [ ${#to_install[@]} -gt 0 ]; then
-            echo "Do you want to install the apt-based dependencies now? (Y/n) [Y]"
-            read -r answer
-            answer=${answer:-Y}
-            if [[ "$answer" =~ ^[yYnN] ]]; then
+            local mgr
+            mgr="$(detect_pkg_manager)"
+            if [ "$mgr" = "unknown" ]; then
+                echo \
+"No supported package manager found. Install missing packages manually:"
                 for cmd in "${to_install[@]}"; do
-                    echo "Running: $cmd"
-                    eval "$cmd"
+                    echo "  $cmd"
                 done
             else
-                echo "Dependencies are required. Exiting."
-                exit 1
+                echo \
+"Install missing dependencies now? (Y/n) [Y]"
+                read -r answer
+                answer=${answer:-Y}
+                if [[ "$answer" =~ ^[yY] ]]; then
+                    for cmd in "${to_install[@]}"; do
+                        echo "Running: $cmd"
+                        eval "$cmd"
+                    done
+                else
+                    echo "Dependencies are required. Exiting."
+                    exit 1
+                fi
             fi
         fi
         if ! command -v llmster >/dev/null 2>&1 \
-            && ! find "$HOME/.lmstudio/llmster" -maxdepth 3 -type f -name "llmster" -perm -111 2>/dev/null | grep -q .; then
+            && ! find "$HOME/.lmstudio/llmster" -maxdepth 3 \
+                -type f -name "llmster" -perm -111 2>/dev/null \
+                | grep -q .; then
             echo "llmster (headless daemon) is missing." >&2
             echo "Install llmster and run this script again." >&2
             exit 1

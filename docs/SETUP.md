@@ -1,6 +1,9 @@
 # Setup Guide
 
-> ⚠️ **Linux‑only application.** The tray manager relies on GTK3 and Debian/ AppImage installation patterns; Windows and macOS are not supported yet, by either the binary or Python packages.
+> ⚠️ **Linux‑only application.** The tray manager relies on GTK3; Windows
+> and macOS are not supported yet. AppImage support is universal across Linux
+> distributions. Package‑manager automation is available for **apt, dnf,
+> pacman, zypper, and apk**; other distros receive manual‑install guidance.
 
 The `setup.sh` script automates the complete setup process for LM Studio Tray Manager.
 
@@ -50,7 +53,7 @@ The setup script automatically detects your installation type and configures acc
    - If not found: Opens download page and asks to install
 
 2. **LM Studio Desktop App** - GUI for model management
-   - Intelligently detects .deb package installation
+   - Detects natively-installed packages (deb/rpm/pacman)
    - Searches for AppImage in: script directory, $HOME/Apps, $HOME/LM_Studio, $HOME/Applications, $HOME/.local/bin, /opt/lm-studio
    - Auto-detects both standard and versioned AppImage formats (e.g., LM-Studio-0.4.3-*.AppImage)
    - Allows manual AppImage path input
@@ -64,13 +67,15 @@ The setup script automatically detects your installation type and configures acc
 4. **GTK3/GObject typelibs** - Needed by both binary and Python package releases
    - Checked on every run, regardless of installation type
    - Uses a simple Python import test or file lookup
-   - If missing, prompts to install `gir1.2-gtk-3.0` and
-     `gir1.2-ayatanaappindicator3-0.1` (in dry‑run the action is shown)
+   - If missing, prompts to install via the detected package manager
+     (apt, dnf, pacman, zypper, or apk). When no manager is found,
+     manual instructions are printed for all supported distros.
    - If the user declines, setup aborts with an explanatory error
 
 5. **Python 3.10** - Required for PyGObject/GTK3 compatibility (packages only)
    - **Only checked for Python package releases** (step 3 must detect no binary)
-   - Installs automatically if missing (via `apt`)
+   - Installs automatically if missing via the detected package manager
+   - When no supported manager is found, manual instructions are shown
    - Binary releases skip this step entirely
 
 6. **Python Virtual Environment** - Isolated Python environment (Python releases only)
@@ -189,19 +194,25 @@ Selecting `y` opens the download page. You'll need to install it manually from <
 ```bash
 ⚠ LM Studio desktop app not found
   The desktop app is required for the --gui option.
-  
+
   Choose installation method:
-    1) Install .deb package (recommended for Ubuntu/Debian)
+    1) Download installer/package from lmstudio.ai
     2) Use AppImage (manual download)
     3) Skip (can be installed later)
 
 ```
 
-**Option 1**: Download .deb from <https://lmstudio.ai/download> and install:
+**Option 1**: Download from <https://lmstudio.ai/download> and install using
+your distro's package manager, for example:
 
 ```bash
-# example (replace with actual file name)
+# Debian/Ubuntu
 sudo apt install ./LM-Studio-0.4.4-1-x64.deb
+# Fedora/RHEL
+sudo dnf install ./LM-Studio-0.4.4-1-x64.rpm
+# Arch – use the AppImage or an AUR helper
+# All distros – AppImage (no install required)
+chmod +x LM-Studio-0.4.4-1-x64.AppImage && ./LM-Studio-0.4.4-1-x64.AppImage
 
 ```
 
@@ -223,7 +234,9 @@ Enter path to AppImage file (or directory containing it): /home/user/Downloads/L
 
 ```
 
-Selecting `y` installs Python 3.10 via `apt` (requires sudo password).
+Selecting `y` installs Python 3.10 via the detected package manager
+(requires sudo password). If no supported manager is found, manual
+installation instructions are displayed.
 
 ## What's Inside the venv?
 
@@ -425,7 +438,8 @@ If the tray monitor is running but icon not visible:
 
 PyGObject (Python GTK3 bindings) has a complex setup:
 
-- **PyGObject binaries** (`.so` files) are pre-compiled for Python 3.10 in Debian/Ubuntu
+- **PyGObject binaries** (`.so` files) are pre-compiled for Python 3.10 in
+  Debian/Ubuntu and many other distributions
 - System Python 3.12 doesn't have pre-compiled PyGObject binaries (as of early 2026)
 - Recompiling from source requires C compiler, GObject headers, and pkg-config
 - Python 3.10 is still actively maintained (until Oct 2026) and secure

@@ -99,8 +99,8 @@ chmod +x setup.sh lmstudio_autostart.sh
 This setup script:
 
 - ✓ Checks for LM Studio daemon (llmster)
-- ✓ Checks for LM Studio desktop app - intelligently detects .deb or AppImage
-- ✓ Checks for Python 3.10 - installs via apt if missing
+- ✓ Checks for LM Studio desktop app - detects native packages or AppImage
+- ✓ Checks for Python 3.10 - installs via the detected package manager if missing
 - ✓ Creates Python 3.10 virtual environment with PyGObject/GTK3 support
 
 **Verify:**
@@ -120,7 +120,10 @@ This setup script:
 - **Python 3.10** with PyGObject (for GTK3 system tray)
 - Linux system with GNOME/GTK3 support (Pop!_OS, Ubuntu, Fedora, etc.)
 
-> ⚠️ **Linux only** – this project is designed for Linux desktops. Windows and macOS are not supported yet; the tray integration and setup scripts rely on GTK3 and Linux package formats.
+> ⚠️ **Linux only** – this project is designed for Linux desktops. Windows
+> and macOS are not supported yet; the tray integration relies on GTK3.
+> Package‑manager automation supports **apt, dnf, pacman, zypper, and apk**.
+> Other distros receive manual installation guidance.
 
 ## Quick Reference
 
