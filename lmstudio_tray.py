@@ -1006,8 +1006,10 @@ def check_api_models():
             api_url,
             headers={"User-Agent": "lmstudio-tray-manager"},
         )
-        # B310 B108: url previously validated
-        with urllib_request.urlopen(req, timeout=2) as response:
+        # Safe: URL scheme validated by _validate_url_scheme() to only
+        # allow http/https. URL construction uses only configured API_HOST
+        # and API_PORT from _AppState.
+        with urllib_request.urlopen(req, timeout=2) as response:  # nosec B310
             payload = response.read()
             data = json.loads(payload.decode("utf-8"))
             if not isinstance(data, dict):
@@ -2302,8 +2304,14 @@ class TrayIcon:
                     api_url,
                     headers={"User-Agent": "lmstudio-tray-manager"},
                 )
-                # B310 B108: url previously validated
-                with urllib_request.urlopen(req, timeout=2) as response:
+                # Safe: URL scheme validated by _validate_url_scheme()
+                # to allow only http/https.
+                # URL construction uses only configured API_HOST and
+                # API_PORT from _AppState.
+                # nosec B310
+                with urllib_request.urlopen(
+                    req, timeout=2
+                ) as response:
                     payload = response.read()
                     data = json.loads(payload.decode("utf-8"))
 

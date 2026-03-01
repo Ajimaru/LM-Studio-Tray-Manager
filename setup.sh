@@ -484,7 +484,7 @@ from gi.repository import Gtk  # noqa: F401
 PYCODE
                 then
                     PYTHON_PATH=$(command -v python3)
-                    PYTHON_VERSION=$($PYTHON_PATH --version 2>&1)
+                    PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
                     print_step "Compatible Python interpreter installed"
                     echo "   $PYTHON_VERSION"
                     echo "   Path: $PYTHON_PATH"
