@@ -3359,31 +3359,6 @@ def test_check_model_cli_no_models_with_api_true_transition(
     assert not any("model loaded" in cmd[2].lower() for cmd in notifications)
 
 
-def test_multiple_appimages_prefers_lmstudio(
-    tray_module,
-    monkeypatch,
-    tmp_path,
-):
-    """
-    If several AppImages are present the one with LM-Studio in its name
-    is picked.
-    """
-    monkeypatch.setattr(
-        tray_module,
-        "get_desktop_app_pids",
-        lambda: [],
-    )
-    monkeypatch.setattr(
-        tray_module,
-        "get_dpkg_cmd",
-        lambda: None,
-    )
-    apps_dir = tmp_path / "Apps3"
-    apps_dir.mkdir()
-    (apps_dir / "Other.AppImage").write_text("x")
-    (apps_dir / "LM-Studio-0.4.AppImage").write_text("x")
-
-
 def test_home_mask_formatter_masks_home_dir(tray_module):
     """Formatter should replace user's home path with '~'."""
     fmt = tray_module.HomeMaskFormatter("%(message)s")
