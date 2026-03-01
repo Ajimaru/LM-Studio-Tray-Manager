@@ -1,13 +1,12 @@
 # Build-time dependencies for creating the standalone binary.
-# All dependencies are pinned to exact versions with SHA256 hashes
-# to mitigate supply-chain risks and ensure reproducible builds.
 #
-# To update: download new versions, verify integrity, and update hashes:
-#   pip download --no-deps <package>==<version>
-#   sha256sum <downloaded-file>
+# This top-level file is intentionally hash-free so vulnerability scanners
+# (for example Snyk) can parse it reliably. Versions remain pinned exactly.
+#
+# Hash-locked variants are maintained separately in requirements-build.txt.
 
-# PyInstaller 6.13.0 (source: pyinstaller-6.13.0.tar.gz)
-pyinstaller==6.13.0
+# PyInstaller 6.19.0 (source: pyinstaller-6.19.0.tar.gz)
+pyinstaller==6.19.0
 
 # altgraph 0.17.5 (source: altgraph-0.17.5-py2.py3-none-any.whl)
 # Transitive dependency used by PyInstaller
