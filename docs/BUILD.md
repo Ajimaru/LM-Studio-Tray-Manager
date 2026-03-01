@@ -328,6 +328,10 @@ For smaller binaries or different requirements, consider:
 - Includes all dependencies
 - Larger size (~80-100 MB)
 - Better compatibility
+- **Note:** Chromium-based AppImages often fail to start due to an
+  incorrectly configured SUID sandbox helper.  The tray manager now
+  automatically launches AppImages with `--no-sandbox` to work around this
+  issue; otherwise you may need to run the AppImage manually with that flag.
 
 ### Rust Rewrite
 

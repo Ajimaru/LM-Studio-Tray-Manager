@@ -266,6 +266,12 @@
         <section id="logging-troubleshooting">
             <h2>Logging & Troubleshooting</h2>
             <p>All logs are written to the <code>.logs/</code> directory:</p>
+            <p><strong>GLib schema error:</strong> if the binary aborts with a
+            "Settings schema... does not contain a key named 'antialiasing'"
+            message, install
+            <code>gsettings-desktop-schemas</code> or launch with
+            <code>GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas</code>. The
+            tray attempts to set this variable automatically on startup.</p>
             <ul>
                 <li><code>.logs/setup.log</code> - Setup script log</li>
                 <li><code>.logs/lmstudio_autostart.log</code> - Daemon startup log</li>
@@ -360,6 +366,7 @@ EOF</code></pre>
                         <li>🟢 App is currently running</li>
                         <li>🟡 App is installed but not running (will start on click)</li>
                         <li>🔴 App not found (.deb or AppImage) - disabled</li>
+                        <li><em>AppImage launches automatically include <code>--no-sandbox</code> to avoid SUID sandbox errors.</em></li>
                     </ul>
                 </li>
                 <li><strong>🟢/🟡/🔴 Start LM Studio Daemon:</strong> Ensure daemon is running

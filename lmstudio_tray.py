@@ -49,7 +49,6 @@ except ImportError:
 
 DEFAULT_APP_VERSION = "dev"
 
-# state used to avoid logging identical debug messages repeatedly
 _last_desktop_detection: str | None = None
 _seen_desktop_call = False
 _seen_dpkg_missing = False
@@ -300,7 +299,7 @@ UPDATE_CHECK_INTERVAL = 60 * 60 * 24
 ICON_OK = "emblem-default"         # ✅ Model loaded
 ICON_FAIL = "emblem-unreadable"    # ❌ Daemon and app not installed
 ICON_WARN = "dialog-warning"       # ⚠️ Daemon and app stopped
-ICON_INFO = "help-info"            # ℹ️ Runtime active, no model
+ICON_INFO = "dialog-information"   # ℹ️ Runtime active, no model
 APP_NAME = "LM Studio Tray Monitor"
 APP_MAINTAINER = "Ajimaru"
 APP_REPOSITORY = "https://github.com/Ajimaru/LM-Studio-Tray-Manager"
@@ -309,6 +308,24 @@ LATEST_RELEASE_API_URL = (
     "https://api.github.com/repos/Ajimaru/LM-Studio-Tray-Manager"
     "/releases/latest"
 )
+
+
+def _ensure_gsettings_schema():
+    """Set GSETTINGS_SCHEMA_DIR if not already set and schemas exist.
+
+    This prevents GSettings crashes when running PyInstaller binaries
+    on systems where GTK tries to load missing schema keys.
+
+    Returns:
+        None.
+    """
+    if "GSETTINGS_SCHEMA_DIR" in os.environ:
+        return
+
+    schema_dir = "/usr/share/glib-2.0/schemas"
+    if os.path.isdir(schema_dir):
+        os.environ["GSETTINGS_SCHEMA_DIR"] = schema_dir
+        logging.debug("Set GSETTINGS_SCHEMA_DIR to %s", schema_dir)
 
 
 def _copy_to_clipboard(url: str) -> None:
@@ -419,6 +436,7 @@ def main():
         )
         sys.exit(1)
 
+    _ensure_gsettings_schema()
     gi.require_version("Gtk", "3.0")
     app_namespace = None
     for ns in ("AyatanaAppIndicator3", "AppIndicator3"):
@@ -815,7 +833,6 @@ def get_lms_cmd():
     return shutil.which("lms")
 
 
-# Module-level state for get_llmster_cmd to avoid function attribute access
 _get_llmster_cmd_state = {"last_candidate": None, "seen_call": False}
 
 
@@ -901,6 +918,52 @@ def _has_loaded_model(output: str) -> bool:
     return True
 
 
+def _api_loaded_model_names(models):
+    """Return model names that are explicitly marked as loaded.
+
+    LM Studio API responses may include *available* models that are not
+    currently loaded. To avoid false positives, we only treat a model as
+    loaded when there is explicit evidence in the model object.
+
+    Args:
+        models: Parsed ``data`` list from the API response.
+
+    Returns:
+        list[str]: Names/ids for models explicitly marked as loaded.
+    """
+    if not isinstance(models, list):
+        return []
+
+    loaded_names = []
+    active_states = {"loaded", "active", "running"}
+
+    for model in models:
+        if not isinstance(model, dict):
+            continue
+
+        loaded_flag = model.get("loaded")
+        active_flag = model.get("active")
+        in_use_flag = model.get("in_use")
+        state_val = str(model.get("state", "")).strip().lower()
+        status_val = str(model.get("status", "")).strip().lower()
+
+        is_loaded = (
+            loaded_flag is True
+            or active_flag is True
+            or in_use_flag is True
+            or state_val in active_states
+            or status_val in active_states
+        )
+
+        if not is_loaded:
+            continue
+
+        model_name = model.get("id") or model.get("name") or "Unknown"
+        loaded_names.append(str(model_name))
+
+    return loaded_names
+
+
 def get_pkill_cmd():
     """Return the absolute pkill path from PATH if available."""
     return shutil.which("pkill")
@@ -950,9 +1013,8 @@ def check_api_models():
             if not isinstance(data, dict):
                 return False
             models = data.get("data", [])
-            if not isinstance(models, list):
-                return False
-            return len(models) > 0
+            loaded_models = _api_loaded_model_names(models)
+            return len(loaded_models) > 0
     except (
         urllib_error.HTTPError,
         urllib_error.URLError,
@@ -997,31 +1059,57 @@ def _run_safe_command(command):
         text=True,
         check=False,
         shell=False,  # nosec B603 B607
+        timeout=10,
     )
 
 
 def is_llmster_running():
     """Return True when a llmster process is currently running."""
     pgrep_cmd = get_pgrep_cmd()
-    if not pgrep_cmd or not os.path.isabs(pgrep_cmd):
+    if pgrep_cmd and os.path.isabs(pgrep_cmd):
+        try:
+            result = _run_safe_command([pgrep_cmd, "-x", "llmster"])
+            if result.returncode == 0:
+                return True
+        except (
+            FileNotFoundError,
+            ValueError,
+            OSError,
+            subprocess.SubprocessError,
+        ):
+            pass
+
+        try:
+            result = _run_safe_command([pgrep_cmd, "-f", "llmster"])
+            if result.returncode == 0:
+                return True
+        except (
+            FileNotFoundError,
+            ValueError,
+            OSError,
+            subprocess.SubprocessError,
+        ):
+            pass
+
+    ps_cmd = get_ps_cmd()
+    if not ps_cmd or not os.path.isabs(ps_cmd):
         return False
 
     try:
-        result = _run_safe_command([pgrep_cmd, "-x", "llmster"])
+        result = _run_safe_command([ps_cmd, "-eo", "pid=,args="])
         if result.returncode == 0:
-            return True
-    except (FileNotFoundError, ValueError):
-        return False
-    except (OSError, subprocess.SubprocessError):
+            for line in result.stdout.splitlines():
+                if "llmster" in line and "grep" not in line:
+                    return True
+    except (
+        FileNotFoundError,
+        ValueError,
+        OSError,
+        subprocess.SubprocessError,
+    ):
         pass
 
-    try:
-        result = _run_safe_command([pgrep_cmd, "-f", "llmster"])
-        return result.returncode == 0
-    except (FileNotFoundError, ValueError):
-        return False
-    except (OSError, subprocess.SubprocessError):
-        return False
+    return False
 
 
 def get_desktop_app_pids():
@@ -1065,6 +1153,19 @@ def get_desktop_app_pids():
                 or cmd_args == "lm-studio"
             ):
                 pids.append(int(pid_text))
+                continue
+
+            if ".appimage" in cmd_args.lower():
+                if (
+                    "lm-studio" in cmd_args.lower()
+                    or "lm_studio" in cmd_args.lower()
+                ):
+                    pids.append(int(pid_text))
+                    continue
+
+            if "/lm-studio" in cmd_args and ".mount_" in cmd_args:
+                pids.append(int(pid_text))
+                continue
     except (OSError, subprocess.SubprocessError, ValueError):
         return []
 
@@ -1116,6 +1217,7 @@ class TrayIcon:
         )
         self.indicator.set_title("LM Studio Monitor")
         self.action_lock_until = 0.0
+        self.lms_ps_resume_at = 0.0
         self.last_update_version = None
         self.update_status = "Unknown"
         self.latest_update_version = None
@@ -1138,15 +1240,27 @@ class TrayIcon:
         glib.idle_add(self._maybe_start_gui)
 
     def _maybe_auto_start_daemon(self):
-        """Start llmster daemon on launch when enabled."""
+        """Start llmster daemon on launch when enabled.
+
+        Always restarts the daemon (stop + start) to ensure Passkey
+        authentication is fresh and valid. This prevents "Invalid passkey"
+        errors when `lms` CLI connects to an old daemon with stale
+        authentication state.
+        """
         if not _AppState.AUTO_START_DAEMON:
             return False
 
-        if self.get_daemon_status() == "running":
-            logging.info("Auto-start skipped: daemon already running")
-            return False
+        logging.info(
+            "Auto-starting daemon (flag --auto-start-daemon) "
+            "with fresh passkey"
+        )
 
-        logging.info("Auto-starting daemon (flag --auto-start-daemon)")
+        try:
+            self._stop_daemon_with_notification()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            logging.error("Error stopping llmster daemon: %s", e)
+
+        self.action_lock_until = 0.0
         self.start_daemon(None)
         return False
 
@@ -1172,6 +1286,25 @@ class TrayIcon:
             return False
 
         self.action_lock_until = now + seconds
+        return True
+
+    def _can_use_lms_ps(self, daemon_running, app_running):
+        """Return True when running ``lms ps`` is currently safe/useful."""
+        if daemon_running:
+            return True
+        if not app_running:
+            return False
+
+        now = time.monotonic()
+        resume_at = getattr(self, "lms_ps_resume_at", 0.0)
+        if now < resume_at:
+            remaining = max(0.0, resume_at - now)
+            logging.debug(
+                "Skipping lms ps during desktop launch grace window "
+                "(%.1fs remaining)",
+                remaining,
+            )
+            return False
         return True
 
     def _schedule_menu_refresh(self, delay_seconds=2):
@@ -1291,6 +1424,7 @@ class TrayIcon:
         self.menu.append(quit_item)
 
         self.menu.show_all()
+        self.indicator.set_menu(self.menu)
 
     def get_daemon_status(self):
         """Check if llmster headless daemon is running.
@@ -1415,7 +1549,6 @@ class TrayIcon:
                 "not_found"
             )
 
-        # log only once or on change
         if (
             not self._seen_desktop_call
             or detection != self._last_desktop_detection
@@ -1497,8 +1630,12 @@ class TrayIcon:
                 )
                 continue
 
-            result = self._run_validated_command(command)
-            if stop_when(result):
+            try:
+                result = self._run_validated_command(command)
+                if stop_when(result):
+                    break
+            except subprocess.TimeoutExpired:
+                logging.warning("Command timed out: %s", " ".join(command))
                 break
         return result
 
@@ -1557,22 +1694,54 @@ class TrayIcon:
         return attempts
 
     def _force_stop_llmster(self):
-        """Force-stop llmster and wait briefly for process exit."""
+        """Force-stop llmster with SIGTERM then SIGKILL escalation."""
         pkill_cmd = get_pkill_cmd()
         if not pkill_cmd:
             logging.warning("pkill not found; cannot force-stop llmster")
             return
 
-        self._run_validated_command([pkill_cmd, "-x", "llmster"])
-        self._run_validated_command([pkill_cmd, "-f", "llmster"])
+        try:
+            self._run_validated_command([pkill_cmd, "-x", "llmster"])
+        except subprocess.TimeoutExpired:
+            pass
 
-        for _ in range(8):
+        try:
+            self._run_validated_command([pkill_cmd, "-f", "llmster"])
+        except subprocess.TimeoutExpired:
+            pass
+
+        for _ in range(12):
             if not is_llmster_running():
-                break
+                return
             time.sleep(0.25)
+
+        if is_llmster_running():
+            logging.warning(
+                "SIGTERM did not stop llmster; sending SIGKILL"
+            )
+            try:
+                self._run_validated_command(
+                    [pkill_cmd, "-9", "-x", "llmster"]
+                )
+            except subprocess.TimeoutExpired:
+                pass
+            try:
+                self._run_validated_command(
+                    [pkill_cmd, "-9", "-f", "llmster"]
+                )
+            except subprocess.TimeoutExpired:
+                pass
+
+            for _ in range(8):
+                if not is_llmster_running():
+                    break
+                time.sleep(0.25)
 
     def _stop_llmster_best_effort(self):
         """Stop llmster with graceful attempts and force-stop fallback.
+
+        Always calls force-stop to handle race conditions where pgrep
+        reports the process gone but it hasn't fully released its port/socket.
 
         Returns:
             tuple[bool, CompletedProcess | None]: Tuple containing:
@@ -1585,10 +1754,68 @@ class TrayIcon:
             lambda _result: not is_llmster_running(),
         )
 
-        if is_llmster_running():
-            self._force_stop_llmster()
+        self._force_stop_llmster()
 
         return (not is_llmster_running(), result)
+
+    def _stop_daemon_with_notification(self):
+        """Stop daemon and show notification on success/failure.
+
+        Single source of truth for daemon-stop logic with user notifications.
+        Used by both stop_daemon() menu action and start_desktop_app() to
+        ensure consistent daemon-stopping behavior.
+
+        Returns:
+            tuple[bool, CompletedProcess | None]: (stopped, result)
+                from _stop_llmster_best_effort().
+        """
+        if not self._build_daemon_attempts("stop"):
+            logging.error("llmster not found")
+            notify_cmd = get_notify_send_cmd()
+            if notify_cmd:
+                self._run_validated_command(
+                    [
+                        notify_cmd,
+                        "Error",
+                        "llmster/lms not found. Nothing to stop.",
+                    ]
+                )
+            return (False, None)
+
+        stopped, result = self._stop_llmster_best_effort()
+
+        if stopped:
+            logging.info("llmster daemon stopped")
+            notify_cmd = get_notify_send_cmd()
+            if notify_cmd:
+                self._run_validated_command(
+                    [
+                        notify_cmd,
+                        "LLMster",
+                        (
+                            "Daemon stopped. You can now start the "
+                            "desktop app."
+                        ),
+                    ]
+                )
+        else:
+            err = "llmster process is still running"
+            if result is not None:
+                detail = result.stderr.strip() or result.stdout.strip()
+                if detail:
+                    err = f"{err}: {detail}"
+            logging.error("Failed to stop llmster daemon: %s", err)
+            notify_cmd = get_notify_send_cmd()
+            if notify_cmd:
+                self._run_validated_command(
+                    [
+                        notify_cmd,
+                        "Error",
+                        "Daemon stop failed: " + str(err)
+                    ]
+                )
+
+        return (stopped, result)
 
     def _stop_desktop_app_processes(self):
         """Stop LM Studio desktop processes using TERM, then KILL.
@@ -1714,7 +1941,8 @@ class TrayIcon:
     def stop_daemon(self, _widget):
         """Stop the headless daemon.
 
-        Tries graceful stop variants first and falls back to force-stop.
+        Uses _stop_daemon_with_notification() for consistent stop logic
+        with user notifications.
 
         Args:
             _widget: Widget that triggered the action (unused).
@@ -1722,52 +1950,8 @@ class TrayIcon:
         if not self.begin_action_cooldown("stop_daemon"):
             return
 
-        if not self._build_daemon_attempts("stop"):
-            logging.error("llmster not found")
-            notify_cmd = get_notify_send_cmd()
-            if notify_cmd:
-                self._run_validated_command(
-                    [
-                        notify_cmd,
-                        "Error",
-                        "llmster/lms not found. Nothing to stop.",
-                    ]
-                )
-            return
         try:
-            stopped, result = self._stop_llmster_best_effort()
-
-            if stopped:
-                logging.info("llmster daemon stopped")
-                notify_cmd = get_notify_send_cmd()
-                if notify_cmd:
-                    self._run_validated_command(
-                        [
-                            notify_cmd,
-                            "LLMster",
-                            (
-                                "Daemon stopped. You can now start the "
-                                "desktop app."
-                            ),
-                        ]
-                    )
-            else:
-                err = "llmster process is still running"
-                if result is not None:
-                    detail = result.stderr.strip() or result.stdout.strip()
-                    if detail:
-                        err = f"{err}: {detail}"
-                logging.error("Failed to stop llmster daemon: %s", err)
-                notify_cmd = get_notify_send_cmd()
-                if notify_cmd:
-                    self._run_validated_command(
-                        [
-                            notify_cmd,
-                            "Error",
-                            "Daemon stop failed: " + str(err)
-                        ]
-                    )
-
+            self._stop_daemon_with_notification()
             self.build_menu()
             self._schedule_menu_refresh()
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
@@ -1782,8 +1966,8 @@ class TrayIcon:
     def start_desktop_app(self, _widget):
         """Start the LM Studio desktop app.
 
-        Stops the daemon first if needed, locates the app (.deb or AppImage),
-        and launches it with user notification.
+        Stops the daemon first using _stop_daemon_with_notification(),
+        locates the app (.deb or AppImage), and launches it.
 
         Args:
             _widget: Widget that triggered the action (unused).
@@ -1805,27 +1989,50 @@ class TrayIcon:
                 )
             return
 
-        if is_llmster_running():
-            stopped, _result = self._stop_llmster_best_effort()
+        daemon_was_running = is_llmster_running()
+        stopped, _result = self._stop_daemon_with_notification()
 
-            if not stopped:
-                logging.error(
-                    "Cannot start desktop app: llmster still running"
-                )
-                notify_cmd = get_notify_send_cmd()
-                if notify_cmd:
-                    self._run_validated_command(
-                        [
-                            notify_cmd,
-                            "Error",
-                            "Failed to stop daemon. Please stop it first.",
-                        ]
-                    )
-                self.build_menu()
-                return
+        if daemon_was_running and (not stopped or is_llmster_running()):
+            logging.warning(
+                "Daemon still running after stop attempts; "
+                "trying force-stop before GUI launch"
+            )
+            self._force_stop_llmster()
+            stopped = not is_llmster_running()
 
-            logging.info("llmster daemon stopped before GUI launch")
+        if not stopped:
+            logging.error(
+                "Cannot start desktop app: llmster still running"
+            )
             self.build_menu()
+            return
+
+        if daemon_was_running:
+            logging.info("llmster daemon stopped before GUI launch")
+            time.sleep(2.0)
+            logging.debug("Waited 2.0s for daemon port/socket cleanup")
+
+        if is_llmster_running():
+            logging.error(
+                "Cannot start desktop app: daemon still running "
+                "after stop verification"
+            )
+            notify_cmd = get_notify_send_cmd()
+            if notify_cmd:
+                self._run_validated_command(
+                    [
+                        notify_cmd,
+                        "Error",
+                        (
+                            "Daemon could not be stopped. "
+                            "Please stop it manually."
+                        ),
+                    ]
+                )
+            self.build_menu()
+            return
+
+        self.build_menu()
 
         app_found = False
         app_path = None
@@ -1929,14 +2136,20 @@ class TrayIcon:
                     )
                     raise ValueError(msg)
 
+                cmd = [app_path]
+                if app_path.lower().endswith(".appimage"):
+                    cmd.append("--no-sandbox")
+
                 subprocess.Popen(  # nosec B603
-                    [app_path],
+                    cmd,
                     start_new_session=True,
                     close_fds=True,
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
+
+                self.lms_ps_resume_at = time.monotonic() + 12.0
 
                 logging.info(
                     "Started LM Studio desktop app: %s",
@@ -1990,25 +2203,24 @@ class TrayIcon:
         if not self.begin_action_cooldown("stop_desktop_app"):
             return
 
-        pkill_cmd = get_pkill_cmd()
-        if not pkill_cmd:
-            logging.warning("pkill not found; cannot stop desktop app")
+        desktop_pids = get_desktop_app_pids()
+        if not desktop_pids:
+            logging.info("No LM Studio desktop app process found to stop")
             notify_cmd = get_notify_send_cmd()
             if notify_cmd:
                 self._run_validated_command(
                     [
                         notify_cmd,
-                        "Error",
-                        "pkill not found. Cannot stop desktop app.",
+                        "LM Studio",
+                        "No running desktop app found",
                     ]
                 )
             return
 
         try:
-            result = self._run_validated_command(
-                [pkill_cmd, "-f", "/opt/LM Studio/lm-studio"]
-            )
-            if result.returncode == 0:
+            stopped = self._stop_desktop_app_processes()
+
+            if stopped:
                 logging.info("LM Studio desktop app stopped")
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
@@ -2020,16 +2232,17 @@ class TrayIcon:
                         ]
                     )
             else:
-                logging.info("No LM Studio desktop app process found to stop")
+                logging.warning("Failed to stop desktop app processes")
                 notify_cmd = get_notify_send_cmd()
                 if notify_cmd:
                     self._run_validated_command(
                         [
                             notify_cmd,
                             "LM Studio",
-                            "No running desktop app found",
+                            "Desktop app may still be running",
                         ]
                     )
+
             self.build_menu()
             self._schedule_menu_refresh()
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
@@ -2076,9 +2289,55 @@ class TrayIcon:
         """
         _ = _widget
         text = "No models loaded or error."
+
+        def _models_text_from_api():
+            """Return loaded-model text from API or default error text."""
+            if not check_api_models():
+                return "No models loaded or error."
+
+            try:
+                api_url = get_api_models_url()
+                _validate_url_scheme(api_url)
+                req = urllib_request.Request(
+                    api_url,
+                    headers={"User-Agent": "lmstudio-tray-manager"},
+                )
+                # B310 B108: url previously validated
+                with urllib_request.urlopen(req, timeout=2) as response:
+                    payload = response.read()
+                    data = json.loads(payload.decode("utf-8"))
+
+                if isinstance(data, dict):
+                    models = data.get("data", [])
+                    loaded_models = _api_loaded_model_names(models)
+                    if len(loaded_models) > 0:
+                        model_names = "\n".join(loaded_models)
+                        return (
+                            "Models loaded via desktop app:\n"
+                            f"{model_names}"
+                        )
+            except (
+                urllib_error.HTTPError,
+                urllib_error.URLError,
+                OSError,
+                ValueError,
+                UnicodeDecodeError,
+                json.JSONDecodeError,
+            ):
+                return "No models loaded or error."
+
+            return "No models loaded or error."
+
         try:
             lms_cmd = get_lms_cmd()
-            if lms_cmd:
+            daemon_running = self.get_daemon_status() == "running"
+            app_running = self.get_desktop_app_status() == "running"
+            can_use_lms_ps = self._can_use_lms_ps(
+                daemon_running,
+                app_running,
+            )
+
+            if lms_cmd and can_use_lms_ps:
                 result = _run_safe_command([lms_cmd, "ps"])
                 if result.returncode == 0:
                     if _has_loaded_model(result.stdout):
@@ -2086,86 +2345,9 @@ class TrayIcon:
                     else:
                         text = "No models loaded or error."
                 else:
-                    try:
-                        api_url = get_api_models_url()
-                        _validate_url_scheme(api_url)
-                        req = urllib_request.Request(
-                            api_url,
-                            headers={"User-Agent":
-                                     "lmstudio-tray-manager"},
-                        )
-                        # B310 B108: url previously validated
-                        with urllib_request.urlopen(
-                            req, timeout=2
-                        ) as response:
-                            payload = response.read()
-                            data = json.loads(
-                                payload.decode("utf-8")
-                            )
-                            if isinstance(data, dict):
-                                models = data.get("data", [])
-                                if (isinstance(models, list) and
-                                        len(models) > 0):
-                                    model_names = "\n".join(
-                                        [m.get("id", "Unknown")
-                                         for m in models]
-                                    )
-                                    text = (
-                                        "Models loaded via desktop app:\n"
-                                        f"{model_names}"
-                                    )
-                                else:
-                                    text = (
-                                        "No models loaded or error."
-                                    )
-                    except (
-                        urllib_error.HTTPError,
-                        urllib_error.URLError,
-                        OSError,
-                        ValueError,
-                        UnicodeDecodeError,
-                        json.JSONDecodeError,
-                    ):
-                        text = "No models loaded or error."
+                    text = _models_text_from_api()
             else:
-                if check_api_models():
-                    try:
-                        api_url = get_api_models_url()
-                        _validate_url_scheme(api_url)
-                        req = urllib_request.Request(
-                            api_url,
-                            headers={"User-Agent":
-                                     "lmstudio-tray-manager"},
-                        )
-                        # B310 B108: url previously validated
-                        with urllib_request.urlopen(
-                            req, timeout=2
-                        ) as response:
-                            payload = response.read()
-                            data = json.loads(payload.decode("utf-8"))
-                            if isinstance(data, dict):
-                                models = data.get("data", [])
-                                if (isinstance(models, list) and
-                                        len(models) > 0):
-                                    model_names = "\n".join(
-                                        [m.get("id", "Unknown")
-                                         for m in models]
-                                    )
-                                    text = (
-                                        "Models loaded via desktop app:\n"
-                                        f"{model_names}"
-                                    )
-                                else:
-                                    text = "No models loaded or error."
-                    except (
-                        urllib_error.HTTPError,
-                        urllib_error.URLError,
-                        OSError,
-                        ValueError,
-                        UnicodeDecodeError,
-                        json.JSONDecodeError,
-                    ):
-                        text = "No models loaded or error."
+                text = _models_text_from_api()
         except (
             OSError,
             RuntimeError,
@@ -2427,7 +2609,6 @@ class TrayIcon:
         """
         status = self.update_status or "Unknown"
         if status == "Update available" and self.latest_update_version:
-            # only show the version number, not the URL
             status = f"Update available: {self.latest_update_version}"
         return f"{_AppState.APP_VERSION} ({status})"
 
@@ -2589,44 +2770,113 @@ class TrayIcon:
                     "Daemon and desktop app stopped"
                 )
             else:
-                if any_running and lms_cmd:
-                    result = _run_safe_command([lms_cmd, "ps"])
-                    if result.returncode == 0:
-                        if _has_loaded_model(result.stdout):
-                            current_status = "OK"
-                            reason = "lms ps indicates model loaded"
-                            self.indicator.set_icon_full(
-                                ICON_OK, "Model loaded"
-                            )
+                if daemon_running and lms_cmd:
+                    can_use_lms_ps = self._can_use_lms_ps(
+                        daemon_running,
+                        app_running,
+                    )
+                    if can_use_lms_ps:
+                        result = _run_safe_command([lms_cmd, "ps"])
+                        if result.returncode == 0:
+                            if _has_loaded_model(result.stdout):
+                                current_status = "OK"
+                                reason = "lms ps indicates model loaded"
+                                self.indicator.set_icon_full(
+                                    ICON_OK, "Model loaded"
+                                )
+                            else:
+                                current_status = "INFO"
+                                reason = "lms ps indicates no model loaded"
+                                self.indicator.set_icon_full(
+                                    ICON_INFO,
+                                    "No model loaded"
+                                )
                         else:
-                            current_status = "INFO"
-                            reason = "lms ps indicates no model loaded"
-                            self.indicator.set_icon_full(
-                                ICON_INFO,
-                                "No model loaded"
-                            )
+                            if check_api_models():
+                                current_status = "OK"
+                                reason = "API reported models loaded"
+                                self.indicator.set_icon_full(
+                                    ICON_OK,
+                                    "Model loaded"
+                                )
+                            else:
+                                current_status = "INFO"
+                                reason = "API reported no models"
+                                self.indicator.set_icon_full(
+                                    ICON_INFO,
+                                    "No model loaded"
+                                )
+                    elif any_running and check_api_models():
+                        current_status = "OK"
+                        reason = "API reported models loaded"
+                        self.indicator.set_icon_full(
+                            ICON_OK,
+                            "Model loaded",
+                        )
                     else:
-                        if check_api_models():
+                        current_status = "INFO"
+                        reason = "running, no model via API"
+                        self.indicator.set_icon_full(
+                            ICON_INFO,
+                            "No model loaded",
+                        )
+                elif app_running and lms_cmd:
+                    can_use_lms_ps = self._can_use_lms_ps(
+                        daemon_running,
+                        app_running,
+                    )
+                    if can_use_lms_ps:
+                        result = _run_safe_command([lms_cmd, "ps"])
+                        if result.returncode == 0:
+                            if _has_loaded_model(result.stdout):
+                                current_status = "OK"
+                                reason = "lms ps indicates model loaded"
+                                self.indicator.set_icon_full(
+                                    ICON_OK,
+                                    "Model loaded",
+                                )
+                            else:
+                                current_status = "INFO"
+                                reason = "lms ps indicates no model loaded"
+                                self.indicator.set_icon_full(
+                                    ICON_INFO,
+                                    "No model loaded",
+                                )
+                        elif check_api_models():
                             current_status = "OK"
                             reason = "API reported models loaded"
                             self.indicator.set_icon_full(
                                 ICON_OK,
-                                "Model loaded"
+                                "Model loaded",
                             )
                         else:
                             current_status = "INFO"
                             reason = "API reported no models"
                             self.indicator.set_icon_full(
                                 ICON_INFO,
-                                "No model loaded"
+                                "No model loaded",
                             )
+                    elif any_running and check_api_models():
+                        current_status = "OK"
+                        reason = "API reported models loaded"
+                        self.indicator.set_icon_full(
+                            ICON_OK,
+                            "Model loaded",
+                        )
+                    else:
+                        current_status = "INFO"
+                        reason = "running, no model via API"
+                        self.indicator.set_icon_full(
+                            ICON_INFO,
+                            "No model loaded",
+                        )
                 elif any_running and check_api_models():
                     current_status = "OK"
                     reason = "API reported models loaded"
                     self.indicator.set_icon_full(ICON_OK, "Model loaded")
                 else:
                     current_status = "INFO"
-                    reason = "none running, no model"
+                    reason = "running, no model via API"
                     self.indicator.set_icon_full(
                         ICON_INFO,
                         "No model loaded"

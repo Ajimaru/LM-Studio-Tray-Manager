@@ -17,7 +17,7 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
   - [Setup Script Outputs](#setup-script-outputs)
     - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
     - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
-    - [If Python 3.10 is Missing](#if-python-310-is-missing)
+    - [If Python 3.10 or later is Missing](#if-python-310-or-later-is-missing)
   - [What's Inside the venv?](#whats-inside-the-venv)
   - [File Structure After Setup](#file-structure-after-setup)
     - [For Binary Release](#for-binary-release)
@@ -32,6 +32,7 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
     - [Checking Logs](#checking-logs)
     - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
     - [PyGObject Import Errors](#pygobject-import-errors)
+    - [GSettings Schema Error](#gsettings-schema-error)
     - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
   - [Why Python 3.10?](#why-python-310)
   - [Python 3.12+ Support](#python-312-support)
@@ -393,6 +394,33 @@ If you see `ImportError: cannot import name '_gi'`:
    ```
 
 2. See [USE.md](USE.md) for log viewing instructions.
+
+### GSettings Schema Error
+
+If the tray binary aborts with a message like:
+
+```bash
+GLib-GIO-ERROR **: Settings schema 'org.gnome.settings-daemon.plugins.xsettings' does not contain a key named 'antialiasing'
+```
+
+this means GLib could not find the system GSettings schemas during GTK
+initialization.  It is unrelated to the tray code and is triggered by the
+bundle environment of the standalone binary.
+
+**Workaround:**
+
+- Ensure the `gsettings-desktop-schemas` package is installed on your system
+  (Debian/Ubuntu: `sudo apt install gsettings-desktop-schemas`).
+- Run the binary with the schema path set explicitly:
+
+```bash
+GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas \
+  ./lmstudio-tray-manager
+```
+
+The tray monitor now sets `GSETTINGS_SCHEMA_DIR` automatically at startup
+when the directory exists, so this problem should no longer occur.  You can
+still use one of the above workarounds if your environment is unusual.
 
 ### System Tray Icon Not Appearing
 
