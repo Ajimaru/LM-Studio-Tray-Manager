@@ -2315,9 +2315,6 @@ class TrayIcon:
 
         def _models_text_from_api():
             """Return loaded-model text from API or default error text."""
-            if not check_api_models():
-                return "No models loaded or error."
-
             try:
                 api_url = get_api_models_url()
                 _validate_url_scheme(api_url)
