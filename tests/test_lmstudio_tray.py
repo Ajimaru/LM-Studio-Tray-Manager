@@ -47,8 +47,10 @@ def sync_threads(monkeypatch):
                 invocation. Defaults to ().
             kwargs: A dictionary of keyword arguments for
                 the target invocation. Defaults to None.
+            **_ignored: Extra keyword arguments (e.g. daemon,
+                name) accepted for compatibility and ignored.
         """
-        def __init__(self, target, args=(), kwargs=None):
+        def __init__(self, target, args=(), kwargs=None, **_ignored):
             self.target = target
             self.args = args
             self.kwargs = kwargs or {}
