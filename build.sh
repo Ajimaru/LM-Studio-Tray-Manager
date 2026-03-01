@@ -8,9 +8,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # === Logging configuration ===
-LOGS_DIR="$SCRIPT_DIR/.logs"
-mkdir -p "$LOGS_DIR"
-LOGFILE="$LOGS_DIR/build.log"
+# Allow LOGFILE env override (e.g. for tests that must not write to the repo)
+if [ -z "${LOGFILE:-}" ]; then
+    LOGS_DIR="$SCRIPT_DIR/.logs"
+    mkdir -p "$LOGS_DIR"
+    LOGFILE="$LOGS_DIR/build.log"
+else
+    mkdir -p "$(dirname "$LOGFILE")"
+fi
 
 # Initialize log file with header
 {
@@ -67,52 +72,6 @@ if [ -z "${PYTHON_BIN:-}" ]; then
 fi
 
 echo -e "${GREEN}✓${NC} Python found: \"$("$PYTHON_BIN" --version)\""
-
-# Create venv if missing (with system site-packages for gi)
-if [ -d ".venv" ]; then
-    VENV_DIR=".venv"
-elif [ -d "venv" ]; then
-    VENV_DIR="venv"
-else
-    VENV_DIR="venv"
-    echo -e "${YELLOW}Creating virtual environment...${NC}"
-    if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
-        echo -e "${RED}Error: Failed to create virtual environment${NC}"
-        exit 1
-    fi
-fi
-
-# If the existing venv points to a python interpreter that no longer
-# exists (e.g. the system upgraded from 3.10 to 3.12), the
-# ``venv/bin/python`` symlink will be broken and attempts to run it
-# fail.  Detect that situation now and recreate the environment from
-# scratch using the current $PYTHON_BIN.
-if [ -d "$VENV_DIR" ] && [ ! -x "$VENV_DIR/bin/python" ]; then
-    echo -e "${YELLOW}Detected broken venv (missing python); recreating...${NC}"
-    rm -rf "$VENV_DIR"
-    if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
-        echo -e "${RED}Error: Failed to recreate virtual environment${NC}"
-        exit 1
-    fi
-fi
-
-# Verify activation script exists
-if [ ! -f "$VENV_DIR/bin/activate" ]; then
-    echo -e "${RED}Error: Virtual environment activation script not found at $VENV_DIR/bin/activate${NC}"
-    echo -e "${YELLOW}Trying to create virtual environment...${NC}"
-    if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR" \
-        || [ ! -f "$VENV_DIR/bin/activate" ]; then
-        echo -e "${RED}Error: Could not create or activate virtual environment${NC}"
-        exit 1
-    fi
-fi
-
-echo -e "${GREEN}✓${NC} Activating virtual environment..."
-# shellcheck source=/dev/null
-source "$VENV_DIR/bin/activate"
-
-# Use explicit path to venv python
-VENV_PYTHON="$VENV_DIR/bin/python"
 
 # ---------------------------------------------------------------------------
 # Ensure C compiler exists (required by PyInstaller bootloader build)
@@ -193,6 +152,52 @@ if ! check_zlib; then
         exit 1
     fi
 fi
+
+# Create venv if missing (with system site-packages for gi)
+if [ -d ".venv" ]; then
+    VENV_DIR=".venv"
+elif [ -d "venv" ]; then
+    VENV_DIR="venv"
+else
+    VENV_DIR="venv"
+    echo -e "${YELLOW}Creating virtual environment...${NC}"
+    if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
+        echo -e "${RED}Error: Failed to create virtual environment${NC}"
+        exit 1
+    fi
+fi
+
+# If the existing venv points to a python interpreter that no longer
+# exists (e.g. the system upgraded from 3.10 to 3.12), the
+# ``venv/bin/python`` symlink will be broken and attempts to run it
+# fail.  Detect that situation now and recreate the environment from
+# scratch using the current $PYTHON_BIN.
+if [ -d "$VENV_DIR" ] && [ ! -x "$VENV_DIR/bin/python" ]; then
+    echo -e "${YELLOW}Detected broken venv (missing python); recreating...${NC}"
+    rm -rf "$VENV_DIR"
+    if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
+        echo -e "${RED}Error: Failed to recreate virtual environment${NC}"
+        exit 1
+    fi
+fi
+
+# Verify activation script exists
+if [ ! -f "$VENV_DIR/bin/activate" ]; then
+    echo -e "${RED}Error: Virtual environment activation script not found at $VENV_DIR/bin/activate${NC}"
+    echo -e "${YELLOW}Trying to create virtual environment...${NC}"
+    if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR" \
+        || [ ! -f "$VENV_DIR/bin/activate" ]; then
+        echo -e "${RED}Error: Could not create or activate virtual environment${NC}"
+        exit 1
+    fi
+fi
+
+echo -e "${GREEN}✓${NC} Activating virtual environment..."
+# shellcheck source=/dev/null
+source "$VENV_DIR/bin/activate"
+
+# Use explicit path to venv python
+VENV_PYTHON="$VENV_DIR/bin/python"
 
 # Ensure PyInstaller is available in the venv
 if ! "$VENV_PYTHON" -m PyInstaller --version &> /dev/null; then

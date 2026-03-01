@@ -843,6 +843,7 @@ def test_build_script_compiler_prompt(tmp_path):
 
     env = os.environ.copy()
     env["PATH"] = str(fakebin) + os.pathsep + env.get("PATH", "")
+    env["LOGFILE"] = str(tmp_path / "build.log")
 
     script_path = Path(__file__).resolve().parents[1] / "build.sh"
     proc = subprocess.run(
@@ -885,6 +886,7 @@ exec /usr/bin/gcc "$@"
 
     env = os.environ.copy()
     env["PATH"] = str(fakebin) + os.pathsep + env.get("PATH", "")
+    env["LOGFILE"] = str(tmp_path / "build.log")
 
     script_path = Path(__file__).resolve().parents[1] / "build.sh"
     proc = subprocess.run(
