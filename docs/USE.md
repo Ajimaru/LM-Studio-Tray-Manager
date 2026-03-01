@@ -259,7 +259,8 @@ When you click "Start LM Studio Daemon":
 
 2. **Conflict handling**:
    - Stops desktop app first (if running)
-   - Then starts the daemon   - The daemon start sequence runs in a background thread so the
+   - Then starts the daemon
+   - The daemon start sequence runs in a background thread so the
      tray menu remains usable while the service spins up.
 
 3. **Verification**:
