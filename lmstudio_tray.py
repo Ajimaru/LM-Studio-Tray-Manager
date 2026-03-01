@@ -874,12 +874,11 @@ def get_llmster_cmd():
 
     if log_needed:
         if candidate:
-            logging.debug(
-                "Found llmster on PATH: %s"
-                if shutil.which("llmster")
-                else "Resolved llmster candidate: %s",
-                candidate
-            )
+            if llmster_cmd:
+                msg = "Found llmster on PATH: %s"
+            else:
+                msg = "Resolved llmster candidate: %s"
+            logging.debug(msg, candidate)
         else:
             if not os.path.isdir(os.path.expanduser("~/.lmstudio/llmster")):
                 logging.debug("No ~/.lmstudio/llmster directory present")
