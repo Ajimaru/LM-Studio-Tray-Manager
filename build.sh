@@ -8,9 +8,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # === Logging configuration ===
-LOGS_DIR="$SCRIPT_DIR/.logs"
-mkdir -p "$LOGS_DIR"
-LOGFILE="$LOGS_DIR/build.log"
+# Allow LOGFILE env override (e.g. for tests that must not write to the repo)
+if [ -z "${LOGFILE:-}" ]; then
+    LOGS_DIR="$SCRIPT_DIR/.logs"
+    mkdir -p "$LOGS_DIR"
+    LOGFILE="$LOGS_DIR/build.log"
+else
+    mkdir -p "$(dirname "$LOGFILE")"
+fi
 
 # Initialize log file with header
 {
@@ -53,17 +58,121 @@ get_file_size() {
     echo 0
 }
 
-# Choose Python (prefer 3.10 if available)
-if command -v python3.10 &> /dev/null; then
-    PYTHON_BIN="python3.10"
-elif command -v python3 &> /dev/null; then
-    PYTHON_BIN="python3"
-else
+# Choose Python (prefer 3.12+ if available, else any compatible version)
+for candidate in python3.12 python3.13 python3.11 python3; do
+    if command -v "$candidate" &> /dev/null; then
+        PYTHON_BIN="$candidate"
+        break
+    fi
+done
+
+if [ -z "${PYTHON_BIN:-}" ]; then
     echo -e "${RED}Error: python3 not found${NC}"
     exit 1
 fi
 
 echo -e "${GREEN}✓${NC} Python found: \"$("$PYTHON_BIN" --version)\""
+
+# ---------------------------------------------------------------------------
+# Ensure C compiler exists (required by PyInstaller bootloader build)
+# ---------------------------------------------------------------------------
+
+check_compiler() {
+    C_COMPILER=""
+    for c in gcc clang; do
+        if command -v "$c" &> /dev/null; then
+            if "$c" --version >/dev/null 2>&1; then
+                C_COMPILER="$c"
+                return 0
+            fi
+        fi
+    done
+    return 1
+}
+
+check_zlib() {
+    if [ -n "${C_COMPILER:-}" ] && command -v "$C_COMPILER" &> /dev/null; then
+        printf 'int main(void){return 0;}' \
+            | "$C_COMPILER" -x c - -lz -o /dev/null 2>/dev/null \
+            && return 0
+        return 1
+    fi
+
+    for c in gcc clang; do
+        if command -v "$c" &> /dev/null; then
+            printf 'int main(void){return 0;}' \
+                | "$c" -x c - -lz -o /dev/null 2>/dev/null \
+                && return 0
+        fi
+    done
+    return 1
+}
+
+if ! check_compiler; then
+    echo -e "${YELLOW}No C compiler detected. PyInstaller needs a C compiler to
+build its bootloader.${NC}"
+    read -p "Install build-essential/clang packages now? [y/n]: " -r response
+    case "$response" in
+        [yY][eE][sS]|[yY])
+            # attempt to install via apt if available
+            if command -v apt-get &> /dev/null || command -v apt &> /dev/null; then
+                echo -e "${GREEN}Installing build tools via apt...${NC}"
+                sudo apt update && sudo apt install -y build-essential
+            else
+                echo -e "${YELLOW}Unable to install automatically; please install a
+C compiler (e.g. gcc or clang, plus make) manually and re-run the script.${NC}"
+                echo
+                echo -e "${RED}Exiting because compiler is still missing.${NC}"
+                exit 1
+            fi
+            ;;
+        *)
+            echo -e "${RED}Compiler is required to build the binary. Exiting.${NC}"
+            exit 1
+            ;;
+    esac
+    # re-check after attempt
+    if ! command -v gcc &> /dev/null && ! command -v clang &> /dev/null; then
+        echo -e "${RED}Compiler still not found; cannot continue.${NC}"
+        exit 1
+    fi
+
+    if ! check_compiler; then
+        echo -e "${RED}Compiler still not usable; cannot continue.${NC}"
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Ensure zlib development library is available (required for bootloader)
+# ---------------------------------------------------------------------------
+if ! check_zlib; then
+    echo -e "${YELLOW}zlib development headers/libraries not detected.\n"\
+         "PyInstaller's bootloader links against zlib, so you must install\n"\
+         "the zlib-dev package (zlib1g-dev on Debian/Ubuntu).${NC}"
+    read -p "Install zlib development package now? [y/n]: " -r response
+    case "$response" in
+        [yY][eE][sS]|[yY])
+            if command -v apt-get &> /dev/null || command -v apt &> /dev/null; then
+                echo -e "${GREEN}Installing zlib development package via apt...${NC}"
+                sudo apt update && sudo apt install -y zlib1g-dev
+            else
+                echo -e "${YELLOW}Cannot install automatically; please install zlib1g-dev\n"\
+                     "(or equivalent) manually and re-run the script.${NC}"
+                echo -e "${RED}Exiting because zlib is still missing.${NC}"
+                exit 1
+            fi
+            ;;
+        *)
+            echo -e "${RED}zlib development library is required. Exiting.${NC}"
+            exit 1
+            ;;
+    esac
+    if ! check_zlib; then
+        echo -e "${RED}zlib still not available; cannot continue.${NC}"
+        exit 1
+    fi
+fi
 
 # Create venv if missing (with system site-packages for gi)
 if [ -d ".venv" ]; then
@@ -75,6 +184,20 @@ else
     echo -e "${YELLOW}Creating virtual environment...${NC}"
     if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
         echo -e "${RED}Error: Failed to create virtual environment${NC}"
+        exit 1
+    fi
+fi
+
+# If the existing venv points to a python interpreter that no longer
+# exists (e.g. the system upgraded from 3.10 to 3.12), the
+# ``venv/bin/python`` symlink will be broken and attempts to run it
+# fail.  Detect that situation now and recreate the environment from
+# scratch using the current $PYTHON_BIN.
+if [ -d "$VENV_DIR" ] && [ ! -x "$VENV_DIR/bin/python" ]; then
+    echo -e "${YELLOW}Detected broken venv (missing python); recreating...${NC}"
+    rm -rf "$VENV_DIR"
+    if ! "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
+        echo -e "${RED}Error: Failed to recreate virtual environment${NC}"
         exit 1
     fi
 fi

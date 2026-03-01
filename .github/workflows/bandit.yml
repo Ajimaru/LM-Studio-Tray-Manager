@@ -21,6 +21,11 @@ on:
     - cron: '23 21 * * 0'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   bandit:
     permissions:
@@ -47,8 +52,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # SARIF upload intentionally disabled here to avoid duplicating
-      # alerts in GitHub Code Scanning. Codacy is configured to upload
-      # SARIF on `main` and `dev` so Bandit results remain available
-      # as artifacts but are not uploaded twice.
+      - name: Upload Bandit SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: results.sarif
 
