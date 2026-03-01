@@ -447,6 +447,20 @@ Debug mode shows:
 - Model loading information
 - System tray icon changes
 - Error stack traces
+- **Environment sanitization details** - Lists specific variables cleaned
+  before tray launch (e.g., `GTK_PATH`, `GSETTINGS_SCHEMA_DIR`,
+  `LD_LIBRARY_PATH`)
+
+**Example debug output:**
+
+```bash
+2026-03-01 14:30:15 ℹ️  Sanitizing runtime environment for tray launch (Snap/GTK/Python loader vars).
+2026-03-01 14:30:15 🐛 Debug: sanitized vars: GTK_PATH GSETTINGS_SCHEMA_DIR LD_LIBRARY_PATH(filtered:/snap/*)
+```
+
+The sanitization prevents crashes when launching from Snap-packaged
+applications (like VSCode) that inject incompatible library paths. See
+[SETUP.md](SETUP.md#runtime-environment-sanitization) for details.
 
 ## Troubleshooting
 
