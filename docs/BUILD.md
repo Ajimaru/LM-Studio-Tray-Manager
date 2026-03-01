@@ -82,22 +82,41 @@ pyinstaller lmstudio-tray-manager.spec
 
 ### Build Dependencies
 
+A C toolchain (gcc or clang) is required because the PyInstaller
+bootloader gets compiled during installation.  The bootloader also links
+against **zlib**; you must have the zlib development headers/libraries
+installed (`zlib1g-dev` on Debian/Ubuntu, `zlib-devel` on Fedora).
+On Debian/Ubuntu the required build packages are provided by
+`build-essential` plus `zlib1g-dev`; Fedora ships `@development-tools` and
+`zlib-devel`.
+
 ```bash
 # Ubuntu/Debian
-sudo apt install python3.10 python3.10-venv python3-pip binutils
+sudo apt install python3.10 python3.10-venv python3-pip binutils build-essential zlib1g-dev
 
 # Fedora
-sudo dnf install python3-pip binutils
+sudo dnf install python3-pip binutils @development-tools zlib-devel
 
 # Arch Linux
-sudo pacman -S python-pip binutils
+sudo pacman -S python-pip binutils base-devel zlib
 ```
+
+The `build.sh` helper script now checks for a working compiler; if none is
+found it will prompt you and (optionally) attempt to install the necessary
+packages before continuing.
 
 ### Python Packages
 
 ```bash
 pip install -r requirements-build.txt
 ```
+
+> **Note:** the repository also contains a companion
+> [`requirements.txt`](../requirements.txt) file. That copy omits the
+> ``--hash=`` pins and line continuations so that dependency scanners
+> (Depfu, Snyk, etc.) can read it without errors. The actual build
+> process continues to rely on ``requirements-build.txt`` for
+> integrity‑checked installs.
 
 ## Build Methods
 
@@ -209,6 +228,16 @@ pyinstaller lmstudio-tray-manager.spec
 
 ### Full Test
 
+The project uses `pytest` with the [pytest-cov](https://pypi.org/project/pytest-cov/)
+plugin to generate coverage reports.  On Debian/Ubuntu you can install the
+required packages with:
+
+```bash
+sudo apt install python3-pytest python3-pytest-cov
+# or, if you prefer pip:
+# pip install pytest pytest-cov
+```
+
 ```bash
 # Run all tests with coverage
 pytest tests/ --cov=lmstudio_tray --cov=build_binary --cov-report=term-missing
@@ -240,7 +269,8 @@ hiddenimports=[
 The binary still relies on system GTK/gi packages:
 
 - `gir1.2-gtk-3.0`
-- `gir1.2-ayatanaappindicator3-0.1`
+- `gir1.2-ayatanaappindicator3-0.1` (provides GTK3 AppIndicator3
+  namespace; some platforms may instead offer only `AppIndicator3`)
 
 Optional (silences a warning):
 
@@ -298,6 +328,10 @@ For smaller binaries or different requirements, consider:
 - Includes all dependencies
 - Larger size (~80-100 MB)
 - Better compatibility
+- **Note:** Chromium-based AppImages often fail to start due to an
+  incorrectly configured SUID sandbox helper.  The tray manager now
+  automatically launches AppImages with `--no-sandbox` to work around this
+  issue; otherwise you may need to run the AppImage manually with that flag.
 
 ### Rust Rewrite
 

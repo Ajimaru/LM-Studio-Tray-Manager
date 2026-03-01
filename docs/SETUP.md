@@ -17,7 +17,7 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
   - [Setup Script Outputs](#setup-script-outputs)
     - [If LM Studio Daemon is Missing](#if-lm-studio-daemon-is-missing)
     - [If LM Studio Desktop App is Missing](#if-lm-studio-desktop-app-is-missing)
-    - [If Python 3.10 is Missing](#if-python-310-is-missing)
+    - [If No Compatible Python Is Found](#if-no-compatible-python-is-found)
   - [What's Inside the venv?](#whats-inside-the-venv)
   - [File Structure After Setup](#file-structure-after-setup)
     - [For Binary Release](#for-binary-release)
@@ -32,13 +32,11 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
     - [Checking Logs](#checking-logs)
     - [Network Prerequisites for Updates](#network-prerequisites-for-updates)
     - [PyGObject Import Errors](#pygobject-import-errors)
+    - [GSettings Schema Error](#gsettings-schema-error)
     - [System Tray Icon Not Appearing](#system-tray-icon-not-appearing)
-  - [Why Python 3.10?](#why-python-310)
-  - [Python 3.12+ Support](#python-312-support)
-    - [Option 1: Install Build Tools (not recommended)](#option-1-install-build-tools-not-recommended)
-    - [Option 2: Wait for Debian/Ubuntu Packages](#option-2-wait-for-debianubuntu-packages)
-    - [Option 3: Use Docker (alternative)](#option-3-use-docker-alternative)
-    - [Current Solution: Python 3.10 venv](#current-solution-python-310-venv)
+    - [Runtime Environment Sanitization](#runtime-environment-sanitization)
+  - [Python Compatibility Model](#python-compatibility-model)
+  - [Compatibility Notes](#compatibility-notes)
   - [Next Steps](#next-steps)
 
 ## What setup.sh Does
@@ -68,10 +66,11 @@ The setup script automatically detects your installation type and configures acc
      `gir1.2-ayatanaappindicator3-0.1` (in dry‑run the action is shown)
    - If the user declines, setup aborts with an explanatory error
 
-5. **Python 3.10** - Required for PyGObject/GTK3 compatibility (packages only)
-   - **Only checked for Python package releases** (step 3 must detect no binary)
-   - Installs automatically if missing (via `apt`)
-   - Binary releases skip this step entirely
+5. **Python + PyGObject compatibility** (packages only)  
+  Only checked for Python package releases (step 3 must detect no binary).  
+  The script detects a local Python interpreter where `import gi` works.  
+  If none is found, it offers to install `python3`, `python3-venv`, and
+  `python3-gi`. Binary releases skip this step entirely.
 
 6. **Python Virtual Environment** - Isolated Python environment (Python releases only)
    - Creates venv with system site-packages
@@ -110,7 +109,7 @@ The setup script automatically detects your installation type:
 - ✓ Checks for LM Studio daemon
 - ✓ Checks for LM Studio desktop app
 - ✓ Checks for GTK3/GObject typelibs (installs if missing)
-- ✓ Checks for Python 3.10 (installs if missing)
+- ✓ Checks for Python + PyGObject compatibility (installs if needed)
 - ✓ Sets up GTK3 and PyGObject support
 
 **Next steps:**
@@ -138,7 +137,7 @@ The setup will:
 - ✓ Check for LM Studio desktop app
 - ✓ Detect if binary or Python package
 - ✓ Create venv (Python packages only)
-- ✓ Install Python 3.10 if needed (Python packages only)
+- ✓ Install compatible Python/PyGObject packages if needed (Python packages only)
 - ✓ Check for GTK3/GObject typelibs (installs if missing)
 
 ## Dry-run Mode
@@ -162,9 +161,9 @@ Example output for Python package releases (Steps 4 and 5 are skipped for binary
 [CHECK] LM Studio desktop app: not found
 [DRY-RUN] Would open LM Studio download page for desktop app guidance
 [CHECK] GTK3/GObject typelibs: missing (would install gir1.2-gtk-3.0)
-[CHECK] Python 3.10: found
+[CHECK] Compatible Python + PyGObject: found
 [DRY-RUN] Would recreate virtual environment in: ./venv
-[DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
+[DRY-RUN] Would run: /usr/bin/python3 -m pip install --upgrade pip
 [DONE] Dry-run completed successfully (0 changes applied)
 ```
 
@@ -213,21 +212,20 @@ Enter path to AppImage file (or directory containing it): /home/user/Downloads/L
 
 ```
 
-### If Python 3.10 is Missing
+### If No Compatible Python Is Found
 
 ```bash
-⚠ Python 3.10 not found
-  Python 3.10 is required for PyGObject/GTK3 compatibility.
-  
-  Would you like to install Python 3.10? [y/n]:
+⚠ No compatible Python interpreter with working gi found
+  The setup needs a Python interpreter where 'import gi' works.
+  Would you like to install python3, python3-venv and python3-gi now? [y/n]:
 
 ```
 
-Selecting `y` installs Python 3.10 via `apt` (requires sudo password).
+Selecting `y` installs `python3`, `python3-venv`, and `python3-gi` via `apt`.
 
 ## What's Inside the venv?
 
-- **Python 3.10** (optimized for PyGObject binary compatibility)
+- **Compatible Python interpreter** (detected automatically)
 - **System site-packages** enabled (includes GTK3 introspection data)
 - **Isolated environment** (pip packages don't conflict with system Python)
 - **Full PyGObject + GTK3 support** for system tray functionality
@@ -284,6 +282,8 @@ export LM_AUTOSTART_SELECT_TIMEOUT=60
 ## Log File Format
 
 All log files include a standardized header at the start that shows when the script was run:
+
+> **Privacy note:** `$HOME` paths are replaced with `~` in setup.log and other log files to avoid exposing your home directory.
 
 ### setup.log
 
@@ -384,13 +384,40 @@ The tray monitor requires outbound HTTPS access to GitHub for update checks. If 
 
 If you see `ImportError: cannot import name '_gi'`:
 
-1. Verify Python 3.10 is being used:
+1. Verify the venv Python can import `gi`:
 
    ```bash
    ./venv/bin/python3 --version
    ```
 
 2. See [USE.md](USE.md) for log viewing instructions.
+
+### GSettings Schema Error
+
+If the tray binary aborts with a message like:
+
+```bash
+GLib-GIO-ERROR **: Settings schema 'org.gnome.settings-daemon.plugins.xsettings' does not contain a key named 'antialiasing'
+```
+
+this means GLib could not find the system GSettings schemas during GTK
+initialization.  It is unrelated to the tray code and is triggered by the
+bundle environment of the standalone binary.
+
+**Workaround:**
+
+- Ensure the `gsettings-desktop-schemas` package is installed on your system
+  (Debian/Ubuntu: `sudo apt install gsettings-desktop-schemas`).
+- Run the binary with the schema path set explicitly:
+
+```bash
+GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas \
+  ./lmstudio-tray-manager
+```
+
+The tray monitor now sets `GSETTINGS_SCHEMA_DIR` automatically at startup
+when the directory exists, so this problem should no longer occur.  You can
+still use one of the above workarounds if your environment is unusual.
 
 ### System Tray Icon Not Appearing
 
@@ -421,66 +448,66 @@ If the tray monitor is running but icon not visible:
 
    ```
 
-## Why Python 3.10?
+### Runtime Environment Sanitization
 
-PyGObject (Python GTK3 bindings) has a complex setup:
+The tray launcher (`lmstudio_autostart.sh`) automatically sanitizes the
+runtime environment before starting the tray monitor. This prevents conflicts
+with Snap-packaged applications (like VSCode) that inject incompatible GTK/
+GLib paths.
 
-- **PyGObject binaries** (`.so` files) are pre-compiled for Python 3.10 in Debian/Ubuntu
-- System Python 3.12 doesn't have pre-compiled PyGObject binaries (as of early 2026)
-- Recompiling from source requires C compiler, GObject headers, and pkg-config
-- Python 3.10 is still actively maintained (until Oct 2026) and secure
-- venv with `--system-site-packages` gives us the best of both worlds:
-  - Isolated Python environment
-  - Access to pre-compiled system PyGObject + GTK3
-  - No compilation needed, fast setup
+**What gets sanitized:**
 
-## Python 3.12+ Support
+When launching from a Snap environment (e.g., VSCode terminal), the script
+removes or filters these variables:
 
-To support Python 3.12 natively would require one of these approaches:
+- `LD_LIBRARY_PATH` - Filters `/snap/` paths that could load mismatched GLIBC
+- `GTK_PATH`, `GSETTINGS_SCHEMA_DIR` - Removes Snap GTK schema paths
+- `GIO_MODULE_DIR` - Removes Snap GIO loader paths
+- `LD_PRELOAD`, `PYTHONHOME`, `PYTHONPATH` - Unsets to prevent loader conflicts
 
-### Option 1: Install Build Tools (not recommended)
+**Normal operation:**
 
-```bash
-sudo apt install libgirepository-1.0-dev pkg-config build-essential
-pip install PyGObject  # This would compile from source
-```
-
-- ❌ Slow (compilation takes 2-5 minutes)
-- ❌ More dependencies (compiler, headers)
-- ❌ Harder to maintain
-
-### Option 2: Wait for Debian/Ubuntu Packages
+You'll see this message in `.logs/lmstudio_autostart.log`:
 
 ```bash
-# Would work when these are available (Python 3.12 LTS support)
-sudo apt install python3.12-gi gir1.2-gtk-3.0
+2026-03-01 14:30:15 ℹ️  Sanitizing runtime environment for tray launch (Snap/GTK/Python loader vars).
 ```
 
-- ❌ Not yet available in most distributions
-- ⏳ Will take time for distribution support
-
-### Option 3: Use Docker (alternative)
-
-```dockerfile
-FROM python:3.12
-RUN apt install -y libgirepository-1.0-dev python3-gi
-```
-
-- ❌ Adds container complexity
-- ⏳ More setup overhead
-
-### Current Solution: Python 3.10 venv
+**Debug mode:** Run with `--debug` or `DEBUG=1` to see which specific
+variables were sanitized:
 
 ```bash
-./setup.sh  # 5 seconds, uses pre-compiled binaries
+./lmstudio_autostart.sh --debug
+# Shows: "Debug: sanitized vars: GTK_PATH GSETTINGS_SCHEMA_DIR LD_LIBRARY_PATH(filtered:/snap/*)"
 ```
 
-- ✅ Pre-compiled binaries
-- ✅ Instant setup
-- ✅ No extra dependencies
-- ✅ Clean isolation
+This sanitization is **automatic** and prevents crashes like:
 
-We recommend staying with **Python 3.10** for the foreseeable future.
+```bash
+undefined symbol: __libc_pthread_init, version GLIBC_PRIVATE
+```
+
+If you experience issues, check `.logs/lmstudio_autostart.log` for the
+sanitization message. No action needed—the script handles this automatically.
+
+## Python Compatibility Model
+
+`setup.sh` no longer locks to a specific Python version.
+
+It selects any installed interpreter that satisfies both:
+
+- `python -m venv` works
+- `import gi` + GTK3 import works (`gi.require_version("Gtk", "3.0")`)
+
+This keeps setup portable across distributions where PyGObject ABI support
+can differ by Python version.
+
+## Compatibility Notes
+
+- On some systems, `python3-gi` may only support the distro-default Python ABI.
+- If one interpreter fails `import gi`, setup checks other installed Python versions.
+- The created venv uses the first compatible interpreter found.
+- Binary releases are unaffected and skip Python environment creation entirely.
 
 ## Next Steps
 
