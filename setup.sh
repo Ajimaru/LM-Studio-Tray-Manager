@@ -446,7 +446,7 @@ PYCODE
     done
 
     if [ -n "$PYTHON_PATH" ]; then
-        PYTHON_VERSION=$($PYTHON_PATH --version 2>&1)
+        PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
         print_step "Compatible Python interpreter found"
         echo "   $PYTHON_VERSION"
         echo "   Path: $PYTHON_PATH"
@@ -559,7 +559,7 @@ if [ "$BINARY_RELEASE" = false ]; then
 
         echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
         log_output "INFO" "Creating Python venv at $VENV_DIR with system-site-packages"
-        if ${PYTHON_PATH:-python3} -m venv --system-site-packages "$VENV_DIR"; then
+        if "${PYTHON_PATH:-python3}" -m venv --system-site-packages "$VENV_DIR"; then
             print_step "Virtual environment created"
             log_output "INFO" "Virtual environment created successfully at $VENV_DIR"
         else
