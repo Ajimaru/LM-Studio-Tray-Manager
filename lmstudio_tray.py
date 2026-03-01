@@ -33,6 +33,7 @@ import time
 import signal
 import logging
 import shutil
+import threading
 import importlib
 import json
 import webbrowser
@@ -1963,14 +1964,35 @@ class TrayIcon:
     def start_desktop_app(self, _widget):
         """Start the LM Studio desktop app.
 
-        Stops the daemon first using _stop_daemon_with_notification(),
-        locates the app (.deb or AppImage), and launches it.
+        All blocking logic runs in a background thread so the tray
+        menu remains responsive while the desktop app is launching.
 
         Args:
             _widget: Widget that triggered the action (unused).
         """
         if not self.begin_action_cooldown("start_desktop_app"):
             return
+
+        app_thread = threading.Thread(
+            target=self._start_desktop_app_body,
+            daemon=True,
+            name="start-desktop-app",
+        )
+        app_thread.start()
+
+    def _start_desktop_app_body(self):
+        """Background thread body for start_desktop_app.
+
+        Stops the daemon first using _stop_daemon_with_notification(),
+        locates the app (.deb or AppImage), and launches it.
+        All GTK menu updates are posted back to the main loop via
+        GLib.idle_add() so this method is safe to call from any thread.
+        """
+        glib = _AppState.GLib
+
+        def _rebuild_menu():
+            if glib is not None:
+                glib.idle_add(self.build_menu)
 
         lms_cmd = get_lms_cmd()
         if not lms_cmd:
@@ -2001,7 +2023,7 @@ class TrayIcon:
             logging.error(
                 "Cannot start desktop app: llmster still running"
             )
-            self.build_menu()
+            _rebuild_menu()
             return
 
         if daemon_was_running:
@@ -2026,10 +2048,10 @@ class TrayIcon:
                         ),
                     ]
                 )
-            self.build_menu()
+            _rebuild_menu()
             return
 
-        self.build_menu()
+        _rebuild_menu()
 
         app_found = False
         app_path = None
@@ -2086,7 +2108,9 @@ class TrayIcon:
                     logging.info("Found AppImage: %s", app_path)
                     break
                 except (OSError, PermissionError) as e:
-                    logging.warning("Error searching %s: %s", search_path, e)
+                    logging.warning(
+                        "Error searching %s: %s", search_path, e
+                    )
 
         if app_found and app_path:
             try:
@@ -2103,7 +2127,9 @@ class TrayIcon:
                 if not os.path.isfile(app_path):
                     raise ValueError(f"App path does not exist: {app_path}")
                 if not os.access(app_path, os.X_OK):
-                    raise ValueError(f"App path is not executable: {app_path}")
+                    raise ValueError(
+                        f"App path is not executable: {app_path}"
+                    )
                 if not isinstance(app_path, str):
                     raise ValueError("App path must be a string")
 
@@ -2161,7 +2187,7 @@ class TrayIcon:
                             "LM Studio GUI is starting...",
                         ]
                     )
-                self.build_menu()
+                _rebuild_menu()
                 self._schedule_menu_refresh()
             except (OSError, subprocess.SubprocessError, ValueError) as e:
                 logging.error("Failed to start desktop app: %s", e)
