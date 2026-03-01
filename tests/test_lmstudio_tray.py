@@ -2087,6 +2087,7 @@ def test_start_desktop_app_force_stops_daemon_before_launch(
         "_run_validated_command",
         lambda _cmd: _completed(returncode=0),
     )
+    monkeypatch.setattr(tray_module.time, "sleep", lambda _t: None)
 
     tray.start_desktop_app(None)
 
