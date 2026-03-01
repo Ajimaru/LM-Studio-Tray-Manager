@@ -2325,8 +2325,7 @@ class TrayIcon:
                 # to allow only http/https.
                 # URL construction uses only configured API_HOST and
                 # API_PORT from _AppState.
-                # nosec B310
-                with urllib_request.urlopen(
+                with urllib_request.urlopen(  # nosec B310
                     req, timeout=2
                 ) as response:
                     payload = response.read()

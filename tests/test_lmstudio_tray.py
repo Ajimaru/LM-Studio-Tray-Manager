@@ -3812,7 +3812,13 @@ def test_show_status_dialog_error_path(tray_module, monkeypatch):
     """Render status dialog with API fallback message when lms is missing."""
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        lambda *_a, **_k: (_ for _ in ()).throw(
+            tray_module.urllib_error.URLError("connection refused")
+        ),
+    )
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
     assert "No models loaded" in dialog.secondary  # nosec B101
@@ -4763,7 +4769,6 @@ def test_show_status_dialog_api_fallback_lms_fail(
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_json
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
 
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -4812,7 +4817,6 @@ def test_show_status_dialog_api_fallback_no_lms(
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_json
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
 
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -4867,7 +4871,6 @@ def test_show_status_dialog_api_invalid_json(
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_bad
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
 
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -4915,7 +4918,6 @@ def test_show_status_dialog_api_non_dict_response(
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_list
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
 
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
