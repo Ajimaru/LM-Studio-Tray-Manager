@@ -13,7 +13,7 @@ on:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       # check out repository code
@@ -83,7 +83,7 @@ jobs:
           python -m lmstudio_tray --help
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         run-coverage: [true]
