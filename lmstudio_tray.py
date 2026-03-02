@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """LM Studio Tray Icon Monitor.
 
-A GTK3-based system tray application that monitors the status of the LM Studio
+A system tray application that monitors the status of the LM Studio
 daemon and desktop app. It displays visual indicators and notifications when
 status changes, and supports starting/stopping daemon and desktop app as well
 as viewing status information through a context menu.
+
+On Linux the tray uses GTK3 + AppIndicator3.
+On macOS the tray uses the ``rumps`` library (PyObjC-based).
 
 Usage:
     lmstudio_tray.py [model] [script_dir] [options]
@@ -48,6 +51,14 @@ try:
     import gi
 except ImportError:
     gi = None
+
+try:
+    import rumps as _rumps_lib
+except ImportError:
+    _rumps_lib = None
+
+IS_MACOS = sys.platform == "darwin"
+_RumpsBase = _rumps_lib.App if _rumps_lib is not None else object
 
 DEFAULT_APP_VERSION = "dev"
 
@@ -425,9 +436,9 @@ def main():
     """Initialize module globals from CLI args and run the tray application.
 
     Parses command-line arguments (from sys.argv) via parse_args(), loads
-    GTK dependencies, configures logging, and starts the GTK main loop.
-    Exits immediately when the --version flag is provided, without loading
-    GTK.
+    tray dependencies (GTK on Linux, rumps on macOS), configures logging,
+    and starts the tray main loop.
+    Exits immediately when the --version flag is provided.
 
     Raises:
         SystemExit: When --version flag is provided (via sys.exit(0)).
@@ -455,6 +466,10 @@ def main():
     if args.version:
         print(load_version_from_dir(_AppState.script_dir))
         sys.exit(0)
+
+    if IS_MACOS:
+        _run_macos(args)
+        return
 
     if gi is None:  # noqa: E711
         print(
@@ -575,6 +590,65 @@ def main():
     if gtk is None:
         raise RuntimeError("GTK module is not initialized")
     gtk.main()
+
+
+def _run_macos(_args):
+    """Set up logging and launch the macOS rumps tray.
+
+    Args:
+        _args: Parsed CLI args (unused; state already applied to _AppState).
+    """
+    if _rumps_lib is None:
+        print(
+            "Error: rumps is not installed. Install with:\n"
+            "    pip install rumps",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    logs_dir = _get_writable_logs_dir(_AppState.script_dir)
+    log_level = (
+        logging.DEBUG if _AppState.DEBUG_MODE else logging.INFO
+    )
+    log_file = os.path.join(logs_dir, "lmstudio_tray.log")
+
+    with open(log_file, 'w', encoding='utf-8') as f:
+        f.write("=" * 80 + "\n")
+        f.write("LM Studio Tray Monitor Log\n")
+        f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write("=" * 80 + "\n")
+
+    logging.basicConfig(
+        filename=log_file,
+        level=log_level,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        filemode='a',
+        force=True,
+    )
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers:
+        handler.setFormatter(
+            HomeMaskFormatter(
+                "%(asctime)s - %(levelname)s - %(message)s"
+            )
+        )
+
+    if _AppState.DEBUG_MODE:
+        logging.captureWarnings(True)
+        warnings_logger = logging.getLogger('py.warnings')
+        warnings_logger.setLevel(logging.DEBUG)
+        logging.debug(
+            "Debug mode enabled - capturing warnings to log file"
+        )
+
+    _AppState.APP_VERSION = get_app_version()
+    globals()["APP_VERSION"] = _AppState.APP_VERSION
+    logging.info("App version: %s", _AppState.APP_VERSION)
+
+    kill_existing_instances()
+    logging.info("Tray script started (macOS / rumps)")
+
+    MacOSTrayIcon().run()
 
 
 class HomeMaskFormatter(logging.Formatter):
@@ -1232,26 +1306,36 @@ def get_desktop_app_pids():
             ):
                 continue
 
-            if (
-                "/opt/LM Studio/lm-studio" in cmd_args
-                or cmd_args.startswith("/usr/bin/lm-studio")
-                or cmd_args.startswith("lm-studio ")
-                or cmd_args == "lm-studio"
-            ):
-                pids.append(int(pid_text))
-                continue
-
-            if ".appimage" in cmd_args.lower():
+            # macOS: LM Studio.app process
+            if IS_MACOS:
                 if (
-                    "lm-studio" in cmd_args.lower()
-                    or "lm_studio" in cmd_args.lower()
+                    "LM Studio.app/Contents/MacOS" in cmd_args
+                    or cmd_args.endswith("/LM Studio")
+                    or cmd_args == "LM Studio"
+                ):
+                    pids.append(int(pid_text))
+                    continue
+            else:
+                if (
+                    "/opt/LM Studio/lm-studio" in cmd_args
+                    or cmd_args.startswith("/usr/bin/lm-studio")
+                    or cmd_args.startswith("lm-studio ")
+                    or cmd_args == "lm-studio"
                 ):
                     pids.append(int(pid_text))
                     continue
 
-            if "/lm-studio" in cmd_args and ".mount_" in cmd_args:
-                pids.append(int(pid_text))
-                continue
+                if ".appimage" in cmd_args.lower():
+                    if (
+                        "lm-studio" in cmd_args.lower()
+                        or "lm_studio" in cmd_args.lower()
+                    ):
+                        pids.append(int(pid_text))
+                        continue
+
+                if "/lm-studio" in cmd_args and ".mount_" in cmd_args:
+                    pids.append(int(pid_text))
+                    continue
     except (OSError, subprocess.SubprocessError, ValueError):
         return []
 
@@ -3063,6 +3147,925 @@ class TrayIcon:
             logging.error("Error in status check: %s", e)
             self.build_menu()
         return True
+
+
+class MacOSTrayIcon(_RumpsBase):
+    """macOS menu-bar tray using the ``rumps`` library.
+
+    Provides the same runtime monitoring and daemon/desktop-app control
+    as :class:`TrayIcon` but is implemented on top of PyObjC/rumps rather
+    than GTK3/AppIndicator.  Menu items are rebuilt on every status change
+    so that the correct start/stop actions are always shown.
+    """
+
+    # macOS .app locations checked for LM Studio
+    _APP_LOCATIONS = [
+        "/Applications/LM Studio.app",
+        os.path.expanduser("~/Applications/LM Studio.app"),
+    ]
+
+    def __init__(self):
+        """Initialize the macOS tray icon and start monitoring timers."""
+        if _rumps_lib is None:
+            raise RuntimeError(
+                "rumps is not installed; cannot create MacOSTrayIcon"
+            )
+        super().__init__("LM Studio", quit_button=None)
+        self.last_status = None
+        self.action_lock_until = 0.0
+        self.lms_ps_resume_at = 0.0
+        self._seen_desktop_call = False
+        self._last_desktop_detection = None
+        self.last_update_version = None
+        self.update_status = "Unknown"
+        self.latest_update_version = None
+        self.last_update_error = None
+        self.title = "⚠️"
+        self.build_menu()
+
+        # Periodic status check
+        self._status_timer = _rumps_lib.Timer(
+            self._check_model_tick, INTERVAL
+        )
+        self._status_timer.start()
+
+        # Periodic update check
+        self._update_timer = _rumps_lib.Timer(
+            self._update_check_tick, UPDATE_CHECK_INTERVAL
+        )
+        self._update_timer.start()
+
+        # One-shot initial update check after 5 s
+        self._initial_timer = _rumps_lib.Timer(
+            self._initial_update_check_once, 5
+        )
+        self._initial_timer.start()
+
+        if _AppState.AUTO_START_DAEMON:
+            threading.Thread(
+                target=self._maybe_auto_start_daemon,
+                daemon=True,
+                name="macos-auto-start",
+            ).start()
+        if _AppState.GUI_MODE:
+            threading.Thread(
+                target=self._maybe_start_gui,
+                daemon=True,
+                name="macos-auto-gui",
+            ).start()
+
+    # ------------------------------------------------------------------
+    # Status helpers
+    # ------------------------------------------------------------------
+
+    def get_daemon_status(self):
+        """Check if llmster headless daemon is running.
+
+        Returns:
+            str: ``"running"``, ``"stopped"``, or ``"not_found"``.
+        """
+        try:
+            llmster_cmd = get_llmster_cmd()
+            if not llmster_cmd:
+                return "not_found"
+            if is_llmster_running():
+                return "running"
+            return "stopped"
+        except (
+            OSError,
+            subprocess.SubprocessError,
+            subprocess.TimeoutExpired,
+        ):
+            return "not_found"
+
+    def get_desktop_app_status(self):
+        """Check if LM Studio desktop app is running or installed (macOS).
+
+        Returns:
+            str: ``"running"``, ``"stopped"``, or ``"not_found"``.
+        """
+        try:
+            if get_desktop_app_pids():
+                return "running"
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+        for loc in self._APP_LOCATIONS:
+            if os.path.isdir(loc):
+                detection = f"app:{loc}"
+                if (
+                    not self._seen_desktop_call
+                    or detection != self._last_desktop_detection
+                ):
+                    logging.debug(
+                        "Detected LM Studio.app at %s", loc
+                    )
+                    self._last_desktop_detection = detection
+                    self._seen_desktop_call = True
+                return "stopped"
+
+        detection = "none"
+        if (
+            not self._seen_desktop_call
+            or detection != self._last_desktop_detection
+        ):
+            logging.debug("No LM Studio desktop app found")
+            self._last_desktop_detection = detection
+            self._seen_desktop_call = True
+        return "not_found"
+
+    def get_status_indicator(self, status):
+        """Return an emoji indicator for a status string.
+
+        Args:
+            status (str): One of ``"running"``, ``"stopped"``,
+                ``"not_found"``.
+
+        Returns:
+            str: Emoji representing the status.
+        """
+        if status == "running":
+            return "🟢"
+        if status == "stopped":
+            return "🟡"
+        return "🔴"
+
+    # ------------------------------------------------------------------
+    # Notification
+    # ------------------------------------------------------------------
+
+    def _notify(self, title, message):
+        """Send a macOS notification via rumps.
+
+        Args:
+            title (str): Notification title.
+            message (str): Notification body text.
+        """
+        try:
+            _rumps_lib.notification(
+                title=title,
+                subtitle="",
+                message=message,
+                sound=False,
+            )
+        except Exception as exc:  # pragma: no cover
+            logging.debug("Notification failed: %s", exc)
+
+    # ------------------------------------------------------------------
+    # Menu building
+    # ------------------------------------------------------------------
+
+    def build_menu(self):
+        """Rebuild the macOS menu-bar menu with current status."""
+        daemon_status = self.get_daemon_status()
+        app_status = self.get_desktop_app_status()
+        d_ind = self.get_status_indicator(daemon_status)
+        a_ind = self.get_status_indicator(app_status)
+
+        items = []
+
+        # --- Daemon control ---
+        if daemon_status == "running":
+            items.append(
+                _rumps_lib.MenuItem(f"{d_ind} Daemon (Running)")
+            )
+            items.append(
+                _rumps_lib.MenuItem(
+                    "  \u2192 Stop Daemon",
+                    callback=self.stop_daemon,
+                )
+            )
+        elif daemon_status == "stopped":
+            items.append(
+                _rumps_lib.MenuItem(
+                    f"{d_ind} Start Daemon (Headless)",
+                    callback=self.start_daemon,
+                )
+            )
+        else:
+            items.append(
+                _rumps_lib.MenuItem(
+                    f"{d_ind} Daemon (Not Installed)"
+                )
+            )
+
+        # --- Desktop app control ---
+        if app_status == "running":
+            items.append(
+                _rumps_lib.MenuItem(f"{a_ind} Desktop App (Running)")
+            )
+            items.append(
+                _rumps_lib.MenuItem(
+                    "  \u2192 Stop Desktop App",
+                    callback=self.stop_desktop_app,
+                )
+            )
+        elif app_status == "stopped":
+            items.append(
+                _rumps_lib.MenuItem(
+                    f"{a_ind} Start Desktop App",
+                    callback=self.start_desktop_app,
+                )
+            )
+        else:
+            items.append(
+                _rumps_lib.MenuItem(
+                    f"{a_ind} Desktop App (Not Installed)"
+                )
+            )
+
+        items.append(None)  # separator
+
+        items.append(
+            _rumps_lib.MenuItem(
+                "Show Status",
+                callback=self.show_status_dialog,
+            )
+        )
+
+        options = _rumps_lib.MenuItem("Options")
+        options.add(
+            _rumps_lib.MenuItem(
+                "Check for Updates",
+                callback=self.manual_check_updates,
+            )
+        )
+        options.add(
+            _rumps_lib.MenuItem(
+                "About",
+                callback=self.show_about_dialog,
+            )
+        )
+        items.append(options)
+
+        items.append(None)  # separator
+
+        items.append(
+            _rumps_lib.MenuItem(
+                "Quit Tray",
+                callback=self.quit_app,
+            )
+        )
+
+        self.menu.clear()
+        self.menu.update(items)
+
+    # ------------------------------------------------------------------
+    # Timer callbacks
+    # ------------------------------------------------------------------
+
+    def _check_model_tick(self, _sender):
+        """Periodic timer callback that runs check_model."""
+        self.check_model()
+
+    def _update_check_tick(self, _sender):
+        """Periodic timer callback that runs check_updates."""
+        self.check_updates()
+
+    def _initial_update_check_once(self, sender):
+        """One-shot timer: run update check then stop the timer."""
+        self.check_updates()
+        sender.stop()
+
+    def _schedule_menu_refresh(self, delay_seconds=2):
+        """Schedule a delayed menu rebuild using a background thread.
+
+        Args:
+            delay_seconds (int): Seconds to wait before rebuilding.
+        """
+        def _refresh():
+            self.build_menu()
+
+        t = threading.Timer(delay_seconds, _refresh)
+        t.daemon = True
+        t.start()
+
+    # ------------------------------------------------------------------
+    # Action cooldown
+    # ------------------------------------------------------------------
+
+    def begin_action_cooldown(self, action_name, seconds=2.0):
+        """Prevent rapid double-triggering of tray actions.
+
+        Args:
+            action_name (str): Name used for logging.
+            seconds (float): Cooldown duration in seconds.
+
+        Returns:
+            bool: ``True`` when the action may proceed.
+        """
+        now = time.monotonic()
+        if now < self.action_lock_until:
+            remaining = self.action_lock_until - now
+            logging.info(
+                "Action blocked by cooldown: %s (%.1fs remaining)",
+                action_name,
+                remaining,
+            )
+            return False
+        self.action_lock_until = now + seconds
+        return True
+
+    # ------------------------------------------------------------------
+    # Status / model check
+    # ------------------------------------------------------------------
+
+    def check_model(self):
+        """Check LM Studio status and update the menu-bar title emoji.
+
+        Updates the menu-bar title according to the FAIL/WARN/INFO/OK
+        schema used by the Linux backend and sends macOS notifications
+        on status transitions.
+
+        Returns:
+            bool: Always ``True`` (keeps timer active).
+        """
+        try:
+            lms_cmd = get_lms_cmd()
+            current_status = None
+            reason = ""
+            daemon_status = self.get_daemon_status()
+            app_status = self.get_desktop_app_status()
+
+            daemon_running = daemon_status == "running"
+            app_running = app_status == "running"
+            any_running = daemon_running or app_running
+            both_missing = (
+                daemon_status == "not_found"
+                and app_status == "not_found"
+            )
+
+            if both_missing:
+                current_status = "FAIL"
+                reason = "daemon and desktop app not installed"
+                self.title = "❌"
+            elif not any_running:
+                current_status = "WARN"
+                reason = "daemon and desktop app stopped"
+                self.title = "⚠️"
+            else:
+                now = time.monotonic()
+                can_use_lms_ps = (
+                    daemon_running
+                    or now >= self.lms_ps_resume_at
+                )
+                if lms_cmd and can_use_lms_ps:
+                    result = _run_safe_command([lms_cmd, "ps"])
+                    if result.returncode == 0:
+                        if _has_loaded_model(result.stdout):
+                            current_status = "OK"
+                            reason = "lms ps indicates model loaded"
+                            self.title = "✅"
+                        else:
+                            current_status = "INFO"
+                            reason = "lms ps indicates no model"
+                            self.title = "ℹ️"
+                    elif check_api_models():
+                        current_status = "OK"
+                        reason = "API reported models loaded"
+                        self.title = "✅"
+                    else:
+                        current_status = "INFO"
+                        reason = "API reported no models"
+                        self.title = "ℹ️"
+                elif any_running and check_api_models():
+                    current_status = "OK"
+                    reason = "API reported models loaded"
+                    self.title = "✅"
+                else:
+                    current_status = "INFO"
+                    reason = "running, no model via API"
+                    self.title = "ℹ️"
+
+            if (
+                self.last_status != current_status
+                and self.last_status is not None
+            ):
+                logging.debug(
+                    "Status change: %s -> %s (%s)",
+                    self.last_status,
+                    current_status,
+                    reason,
+                )
+                if current_status == "OK":
+                    self._notify("LM Studio", "✅ A model is loaded")
+                elif current_status == "INFO":
+                    self._notify(
+                        "LM Studio",
+                        "ℹ️ Runtime active, no model loaded",
+                    )
+                elif current_status == "WARN":
+                    self._notify(
+                        "LM Studio",
+                        "⚠️ Neither daemon nor desktop app is running",
+                    )
+                elif current_status == "FAIL":
+                    self._notify(
+                        "LM Studio",
+                        "❌ Daemon and desktop app are not installed",
+                    )
+                logging.info(
+                    "Status change: %s -> %s",
+                    self.last_status,
+                    current_status,
+                )
+                self.build_menu()
+
+            self.last_status = current_status
+            self.build_menu()
+
+        except subprocess.TimeoutExpired:
+            logging.debug("Timeout in status check (keeping status)")
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            self.title = "❌"
+            logging.error("Error in status check: %s", e)
+            self.build_menu()
+        return True
+
+    # ------------------------------------------------------------------
+    # Daemon control helpers
+    # ------------------------------------------------------------------
+
+    def _build_daemon_attempts(self, action):
+        """Return ordered CLI command lists for daemon start or stop.
+
+        Args:
+            action (str): ``"start"`` or ``"stop"``.
+
+        Returns:
+            list[list[str]]: Ordered list of commands to try.
+        """
+        lms_cmd = get_lms_cmd()
+        llmster_cmd = get_llmster_cmd()
+        attempts = []
+        if action == "start":
+            if lms_cmd:
+                attempts.extend([
+                    [lms_cmd, "daemon", "up"],
+                    [lms_cmd, "daemon", "start"],
+                    [lms_cmd, "up"],
+                    [lms_cmd, "start"],
+                ])
+            if llmster_cmd:
+                attempts.extend([
+                    [llmster_cmd, "daemon", "up"],
+                    [llmster_cmd, "daemon", "start"],
+                    [llmster_cmd, "up"],
+                    [llmster_cmd, "start"],
+                ])
+        elif action == "stop":
+            if lms_cmd:
+                attempts.extend([
+                    [lms_cmd, "daemon", "down"],
+                    [lms_cmd, "daemon", "stop"],
+                    [lms_cmd, "down"],
+                    [lms_cmd, "stop"],
+                ])
+            if llmster_cmd:
+                attempts.extend([
+                    [llmster_cmd, "daemon", "down"],
+                    [llmster_cmd, "daemon", "stop"],
+                    [llmster_cmd, "down"],
+                    [llmster_cmd, "stop"],
+                ])
+        return attempts
+
+    def _force_stop_llmster(self):
+        """Force-kill llmster with SIGTERM then SIGKILL escalation."""
+        pkill_cmd = get_pkill_cmd()
+        if not pkill_cmd or not os.path.isabs(pkill_cmd):
+            logging.warning("pkill not found; cannot force-stop llmster")
+            return
+        for flag in ("-x", "-f"):
+            try:
+                _run_safe_command([pkill_cmd, flag, "llmster"])
+            except (OSError, subprocess.SubprocessError):
+                pass
+        for _ in range(12):
+            if not is_llmster_running():
+                return
+            time.sleep(0.25)
+        if is_llmster_running():
+            logging.warning(
+                "SIGTERM did not stop llmster; sending SIGKILL"
+            )
+            for flag in ("-x", "-f"):
+                try:
+                    _run_safe_command(
+                        [pkill_cmd, "-9", flag, "llmster"]
+                    )
+                except (OSError, subprocess.SubprocessError):
+                    pass
+            for _ in range(8):
+                if not is_llmster_running():
+                    break
+                time.sleep(0.25)
+
+    def _stop_daemon_with_notification(self):
+        """Stop daemon and send a macOS notification on result.
+
+        Returns:
+            tuple[bool, object]: ``(stopped, last_result)``
+        """
+        stop_attempts = self._build_daemon_attempts("stop")
+        if not stop_attempts:
+            logging.error("llmster not found")
+            self._notify(
+                "Error",
+                "llmster/lms not found. Nothing to stop.",
+            )
+            return (False, None)
+
+        result = None
+        for attempt in stop_attempts:
+            try:
+                result = _run_safe_command(attempt)
+                if not is_llmster_running():
+                    break
+            except (OSError, subprocess.SubprocessError):
+                pass
+
+        self._force_stop_llmster()
+        stopped = not is_llmster_running()
+
+        if stopped:
+            logging.info("llmster daemon stopped")
+            self._notify(
+                "LLMster",
+                "Daemon stopped. You can now start the desktop app.",
+            )
+        else:
+            err = "llmster process is still running"
+            if result is not None:
+                detail = (
+                    result.stderr.strip() or result.stdout.strip()
+                )
+                if detail:
+                    err = f"{err}: {detail}"
+            logging.error("Failed to stop daemon: %s", err)
+            self._notify("Error", "Daemon stop failed: " + str(err))
+
+        return (stopped, result)
+
+    def _stop_desktop_app_processes(self):
+        """Stop LM Studio desktop processes via SIGTERM then SIGKILL.
+
+        Returns:
+            bool: ``True`` when the desktop app is no longer running.
+        """
+        pids = get_desktop_app_pids()
+        for pid in pids:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except (OSError, ProcessLookupError, PermissionError):
+                pass
+        for _ in range(8):
+            if self.get_desktop_app_status() != "running":
+                break
+            time.sleep(0.25)
+        if self.get_desktop_app_status() == "running":
+            for pid in get_desktop_app_pids():
+                try:
+                    sigkill = getattr(signal, "SIGKILL", 9)
+                    os.kill(pid, sigkill)
+                except (OSError, ProcessLookupError, PermissionError):
+                    pass
+            for _ in range(8):
+                if self.get_desktop_app_status() != "running":
+                    break
+                time.sleep(0.25)
+        return self.get_desktop_app_status() != "running"
+
+    # ------------------------------------------------------------------
+    # Daemon start / stop
+    # ------------------------------------------------------------------
+
+    def start_daemon(self, _sender):
+        """Start the llmster headless daemon (menu-bar callback).
+
+        Args:
+            _sender: rumps sender object (unused).
+        """
+        if not self.begin_action_cooldown("start_daemon"):
+            return
+        threading.Thread(
+            target=self._start_daemon_body,
+            daemon=True,
+            name="macos-start-daemon",
+        ).start()
+
+    def _start_daemon_body(self):
+        """Background thread body for :meth:`start_daemon`."""
+        if self.get_desktop_app_status() == "running":
+            if not self._stop_desktop_app_processes():
+                self._notify(
+                    "Error",
+                    "Failed to stop desktop app. Please stop it first.",
+                )
+                return
+        start_attempts = self._build_daemon_attempts("start")
+        if not start_attempts:
+            self._notify(
+                "Error",
+                "llmster/lms not found. Please install LM Studio CLI.",
+            )
+            return
+        for attempt in start_attempts:
+            try:
+                _run_safe_command(attempt)
+                for _ in range(10):
+                    if is_llmster_running():
+                        break
+                    time.sleep(0.5)
+                if is_llmster_running():
+                    self._notify("LLMster", "llmster daemon is running")
+                    self.build_menu()
+                    self._schedule_menu_refresh()
+                    return
+            except (OSError, subprocess.SubprocessError) as e:
+                logging.error("Daemon start attempt failed: %s", e)
+        self._notify("Error", "Daemon start failed")
+        self.build_menu()
+
+    def stop_daemon(self, _sender):
+        """Stop the llmster headless daemon (menu-bar callback).
+
+        Args:
+            _sender: rumps sender object (unused).
+        """
+        if not self.begin_action_cooldown("stop_daemon"):
+            return
+        threading.Thread(
+            target=self._stop_daemon_body,
+            daemon=True,
+            name="macos-stop-daemon",
+        ).start()
+
+    def _stop_daemon_body(self):
+        """Background thread body for :meth:`stop_daemon`."""
+        try:
+            self._stop_daemon_with_notification()
+            self.build_menu()
+            self._schedule_menu_refresh()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            logging.error("Error stopping daemon: %s", e)
+            self._notify("Error", str(e))
+            self.build_menu()
+
+    # ------------------------------------------------------------------
+    # Desktop app start / stop
+    # ------------------------------------------------------------------
+
+    def start_desktop_app(self, _sender):
+        """Start LM Studio desktop app (menu-bar callback).
+
+        Args:
+            _sender: rumps sender object (unused).
+        """
+        if not self.begin_action_cooldown("start_desktop_app"):
+            return
+        threading.Thread(
+            target=self._start_desktop_app_body,
+            daemon=True,
+            name="macos-start-app",
+        ).start()
+
+    def _start_desktop_app_body(self):
+        """Background thread body for :meth:`start_desktop_app` (macOS).
+
+        Stops the daemon first, then launches LM Studio via the system
+        ``open`` command.
+        """
+        if is_llmster_running():
+            self._stop_daemon_with_notification()
+
+        open_cmd = shutil.which("open")
+        if not open_cmd:
+            self._notify("Error", "'open' command not found")
+            return
+
+        for app_path in self._APP_LOCATIONS:
+            if not os.path.isdir(app_path):
+                continue
+            try:
+                subprocess.Popen(  # nosec B603
+                    [open_cmd, app_path],
+                    start_new_session=True,
+                    close_fds=True,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                self.lms_ps_resume_at = time.monotonic() + 12.0
+                logging.info("Started LM Studio: %s", app_path)
+                self._notify(
+                    "LM Studio", "LM Studio GUI is starting..."
+                )
+                self.build_menu()
+                self._schedule_menu_refresh()
+                return
+            except (OSError, subprocess.SubprocessError) as e:
+                logging.error("Failed to start desktop app: %s", e)
+                self._notify(
+                    "Error", "Failed to start app: " + str(e)
+                )
+                return
+
+        self._notify(
+            "Error",
+            "No LM Studio.app found in /Applications or "
+            "~/Applications.\nPlease install from "
+            "https://lmstudio.ai/download",
+        )
+        self.build_menu()
+
+    def stop_desktop_app(self, _sender):
+        """Stop LM Studio desktop app (menu-bar callback).
+
+        Args:
+            _sender: rumps sender object (unused).
+        """
+        if not self.begin_action_cooldown("stop_desktop_app"):
+            return
+        desktop_pids = get_desktop_app_pids()
+        if not desktop_pids:
+            self.build_menu()
+            return
+        for pid in desktop_pids:
+            try:
+                os.kill(pid, signal.SIGTERM)
+                logging.info(
+                    "Sent SIGTERM to desktop app PID %s", pid
+                )
+            except (OSError, ProcessLookupError, PermissionError) as e:
+                logging.warning("Error stopping PID %s: %s", pid, e)
+        self.build_menu()
+        self._schedule_menu_refresh()
+
+    # ------------------------------------------------------------------
+    # Dialogs
+    # ------------------------------------------------------------------
+
+    def show_status_dialog(self, _sender):
+        """Show a rumps alert with the current LM Studio CLI status.
+
+        Args:
+            _sender: rumps sender object (unused).
+        """
+        text = "No models loaded or error."
+        lms_cmd = get_lms_cmd()
+        if lms_cmd:
+            try:
+                result = _run_safe_command([lms_cmd, "ps"])
+                if result.returncode == 0 and result.stdout.strip():
+                    text = result.stdout.strip()
+                else:
+                    text = "No model loaded (lms ps returned no output)."
+            except (OSError, subprocess.SubprocessError) as e:
+                text = f"Error running lms ps: {e}"
+        _rumps_lib.alert(title="LM Studio Status", message=text)
+
+    def show_about_dialog(self, _sender):
+        """Show basic application information in a rumps alert.
+
+        Args:
+            _sender: rumps sender object (unused).
+        """
+        msg = (
+            f"LM Studio Tray Manager "
+            f"v{_AppState.APP_VERSION}\n"
+            f"Maintainer: {APP_MAINTAINER}\n"
+            f"{APP_REPOSITORY}"
+        )
+        _rumps_lib.alert(title=APP_NAME, message=msg)
+
+    # ------------------------------------------------------------------
+    # Update check
+    # ------------------------------------------------------------------
+
+    def check_updates(self):
+        """Check GitHub for a newer release and notify if found.
+
+        Returns:
+            bool: ``True`` when an update notification was sent.
+        """
+        if _AppState.APP_VERSION == DEFAULT_APP_VERSION:
+            self.update_status = "Dev build"
+            logging.debug("Update check skipped: dev build")
+            return False
+
+        latest, error = get_latest_release_version()
+        self.last_update_error = error
+        if not latest:
+            self.update_status = "Unknown"
+            logging.debug("Update check failed: %s", error)
+            return False
+
+        self.latest_update_version = latest
+        self.last_update_error = None
+
+        newer = is_newer_version(_AppState.APP_VERSION, latest)
+        current_parts = parse_version(_AppState.APP_VERSION)
+        latest_parts = parse_version(latest)
+        is_ahead = (
+            current_parts > latest_parts
+            if current_parts and latest_parts
+            else False
+        )
+
+        if newer:
+            self.update_status = "Update available"
+        elif is_ahead:
+            self.update_status = "Ahead of release"
+        else:
+            self.update_status = "Up to date"
+
+        logging.debug(
+            "Update check: %s (latest %s)",
+            self.update_status,
+            latest,
+        )
+
+        if not newer:
+            return False
+        if self.last_update_version == latest:
+            return False
+
+        self.last_update_version = latest
+        url = get_release_url(latest)
+        self._notify(
+            "Update Available",
+            f"New version available: {latest} "
+            f"(current {_AppState.APP_VERSION})\n{url}",
+        )
+        return True
+
+    def manual_check_updates(self, _sender):
+        """Run an on-demand update check and show result via alert.
+
+        Args:
+            _sender: rumps sender object (unused).
+        """
+        notified = self.check_updates()
+        if notified:
+            return
+        status = self.update_status or "Unknown"
+        latest = self.latest_update_version
+        error = self.last_update_error
+        if status == "Update available" and latest:
+            url = get_release_url(latest)
+            msg = (
+                f"New version available: {latest} "
+                f"(current {_AppState.APP_VERSION})\n{url}"
+            )
+        elif status == "Up to date":
+            msg = f"You are up to date ({_AppState.APP_VERSION})"
+        elif status == "Dev build":
+            msg = "Dev build: update checks disabled"
+        elif status == "Ahead of release":
+            msg = (
+                f"Ahead of release "
+                f"(current {_AppState.APP_VERSION}, latest {latest})"
+            )
+        else:
+            detail = f" ({error})" if error else ""
+            msg = "Unable to check for updates." + detail
+        _rumps_lib.alert(title="Update Check", message=msg)
+
+    # ------------------------------------------------------------------
+    # Auto-start helpers
+    # ------------------------------------------------------------------
+
+    def _maybe_auto_start_daemon(self):
+        """Start daemon at launch when --auto-start-daemon is set."""
+        logging.info(
+            "Auto-starting daemon (--auto-start-daemon) "
+            "with fresh passkey"
+        )
+        try:
+            self._stop_daemon_with_notification()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            logging.error("Error stopping llmster: %s", e)
+        self.action_lock_until = 0.0
+        self.start_daemon(None)
+
+    def _maybe_start_gui(self):
+        """Start the desktop app at launch when --gui is set."""
+        logging.info("Auto-starting GUI (--gui)")
+        self.start_desktop_app(None)
+
+    # ------------------------------------------------------------------
+    # Quit
+    # ------------------------------------------------------------------
+
+    def quit_app(self, _sender):
+        """Quit the tray application (menu-bar callback).
+
+        Args:
+            _sender: rumps sender object (unused).
+        """
+        logging.info("Tray icon terminated")
+        _rumps_lib.quit_application()
 
 
 if __name__ == "__main__":
