@@ -127,7 +127,6 @@ def check_dependencies():
 
     print("Installing PyInstaller...")
     try:
-        # nosec B603
         subprocess.run(  # nosec B603
             [sys.executable, "-m", "pip", "install", "-r",
              str(req_file_resolved)],

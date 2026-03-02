@@ -437,63 +437,92 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
         <section id="flow-diagrams">
             <h2>Flow Diagrams</h2>
 
-            <h3>System Architecture Overview</h3>
-            <p>This diagram shows how the different scripts and components interact:</p>
-            <p><strong>Smart Detection:</strong> When setup.sh runs, it automatically detects whether you have a binary or Python package release, and displays the appropriate next commands (e.g., <code>./lmstudio-tray-manager --auto-start-daemon</code> for binaries, or <code>./lmstudio_autostart.sh</code> for source packages).</p>
+            <h3>Installation Paths Overview</h3>
+            <p>Choose the installation method that best suits your needs:</p>
             <div class="mermaid">
                 graph TB
-                    User["👤 User"]
-                    Setup["<b>setup.sh</b><br/>Setup & Environment Checks<br/>(Shows context-specific commands)"]
-                    Autostart["<b>lmstudio_autostart.sh</b><br/>Daemon Orchestration"]
-                    Build["<b>build.sh</b><br/>Builds standalone binary<br/>(requires C compiler + zlib dev)"]
-                    TrayBin["<b>lmstudio-tray-manager</b><br/>Standalone tray binary"]
-                    Tray["<b>lmstudio_tray.py</b><br/>GTK3 System Tray Monitor"]
-                    Daemon["LM Studio Daemon<br/>(llmster)"]
-                    API["LM Studio API<br/>host:port (configurable)"]
-                    Models["Model Files"]
-
-                    User -->|"1. First run"| Setup
-                    Setup -->|"Prepares Python environment<br/>(if not binary)"| Autostart
-                    Setup -->|"Shows binary commands<br/>(if binary release)"| TrayBin
-                    User -->|"2. Regular use"| Autostart
-                    User -->|"2. Regular use<br/>(binary release)"| TrayBin
-                    Autostart -->|"Starts & manages"| Daemon
-                    Autostart -->|"Loads models"| Models
-                    Daemon -->|"Provides"| API
-                    Autostart -->|"Prefers when present"| TrayBin
-                    Autostart -->|"Fallback"| Tray
-                    Build -->|"Creates"| TrayBin
-                    Tray -->|"Monitors"| Daemon
-                    Tray -->|"Monitors"| API
-                    TrayBin -->|"Monitors"| Daemon
-                    TrayBin -->|"Monitors"| API
+                    User["👤 User<br/>Has release files"]
+                    AppImg["📦 AppImage<br/>(recommended)"]
+                    Bin["📦 Binary Release"]
+                    Src["📦 Source Package"]
+                    
+                    AppImg -->|"chmod +x"| Run1["Run directly<br/>./lmstudio-tray-manager-*.AppImage"]
+                    AppImg -->|"Optional: verify<br/>daemon & desktop app"| Setup["setup.sh"]
+                    
+                    Bin -->|"Make executable"| Run2["Run directly<br/>./lmstudio-tray-manager --auto-start-daemon"]
+                    Bin -->|"or: verify deps"| Setup
+                    
+                    Src -->|"Required: setup<br/>environment"| Setup
+                    
+                    Run1 -->|"Starts tray monitor"| Monitor["GTK3 System Tray<br/>Monitors daemon & API"]
+                    Run2 -->|"Starts tray monitor"| Monitor
+                    Setup -->|"Shows appropriate<br/>commands for your<br/>installation type"| Run1
+                    Setup -->|"or"| Run2
+                    Setup -->|"or configure venv"| Src
+                    
+                    User --> AppImg
+                    User --> Bin
+                    User --> Src
+                    
+                    Monitor -->|"Connects to"| Daemon["LM Studio Daemon<br/>(llmster)"]
+                    Daemon -->|"Manages"| Models["Model Files<br/>(configurable)"]
             </div>
 
-            <h3>setup.sh - Smart Setup with Context-Aware Output</h3>
-            <ul>
-                <li><strong>Binary Release:</strong> Shows <code>./lmstudio-tray-manager --auto-start-daemon</code>, <code>--gui</code>, <code>--debug</code>, etc.</li>
-                <li><strong>Python Package:</strong> Shows <code>./lmstudio_autostart.sh</code> with available options</li>
-            </ul>
+            <h3>System Architecture Overview</h3>
+            <p><strong>Key insight:</strong> AppImage is self-contained and runs directly. Binary releases also run directly. Only source packages require <code>setup.sh</code> to prepare the Python environment.</p>
+            <div class="mermaid">
+                graph TB
+                    AppImg["<b>AppImage Release</b><br/>(Self-contained)"]
+                    Bin["<b>Binary Release</b><br/>(PyInstaller bundle)"]
+                    Src["<b>Source Package</b><br/>(Python source)"]
+                    
+                    AppImg -->|"Direct execution<br/>chmod +x + run"| TrayBin["<b>lmstudio-tray-manager</b><br/>(AppImage runtime)"]
+                    
+                    Bin -->|"Direct execution<br/>chmod +x + run"| TrayBin2["<b>lmstudio-tray-manager</b><br/>(PyInstaller binary)"]
+                    
+                    Src -->|"setup.sh<br/>creates venv"| Autostart["<b>lmstudio_autostart.sh</b><br/>Daemon Orchestration"]
+                    Src -->|"or direct: activate venv<br/>+ python3"| Tray["<b>lmstudio_tray.py</b><br/>GTK3 System Tray"]
+                    
+                    TrayBin -->|"Monitors"| Daemon["LM Studio Daemon<br/>(llmster)"]
+                    TrayBin2 -->|"Monitors"| Daemon
+                    Autostart -->|"Orchestrates"| Daemon
+                    Tray -->|"Monitors"| Daemon
+                    
+                    Autostart -->|"Starts if needed"| TrayBin2
+                    Autostart -->|"Fallback"| Tray
+                    
+                    Daemon -->|"Provides"| API["LM Studio API<br/>host:port (configurable)"]
+                    Daemon -->|"Manages"| Models["Model Files"]
+                    
+                    TrayBin -->|"Monitors"| API
+                    TrayBin2 -->|"Monitors"| API
+                    Tray -->|"Monitors"| API
+            </div>
+
+            <h3>setup.sh - Optional Verification Script</h3>
+            <p><strong>Note:</strong> <code>setup.sh</code> is optional for AppImage and Binary releases. It automatically detects your installation type and helps verify dependencies.</p>
             <div class="mermaid">
                 graph TD
                     A["<b>setup.sh</b><br/>START"] --> B["Check LM Studio Daemon"]
                     B --> C["Check Desktop App"]
-                    C --> X["Check GTK3/GObject typelibs"]
+                    C --> E{"Installation type?"}
+                    E -->|AppImage found| F["✓ AppImage Detected"]
+                    F --> Skip1["Skip GTK3 check<br/>(bundled in AppImage)"]
+                    Skip1 --> H1["<b>END (Success)</b><br/>Ready to run:<br/>./lmstudio-tray-manager-*.AppImage"]
+                    E -->|Binary found| G["✓ Binary Found"]
+                    G --> Skip2["Skip Python venv<br/>Skip GTK3 check<br/>(bundled in binary)"]
+                    Skip2 --> H2["<b>END (Success)</b><br/>Ready to run:<br/>./lmstudio-tray-manager --auto-start-daemon"]
+                    E -->|Neither found| I["Python Source Release Detected"]
+                    I --> X["Check GTK3/GObject typelibs"]
                     X --> D["Check Python + gi compatibility"]
-                    D --> E{"Binary release<br/>detected?"}
-                    E -->|Yes| F["✓ Binary Found"]
-                    F --> G["Show Binary Commands"]
-                    G --> G1["Using pre-built binary release<br/>./lmstudio-tray-manager --auto-start-daemon<br/>./lmstudio-tray-manager --gui<br/>./lmstudio-tray-manager --debug<br/>etc."]
-                    G1 --> H["<b>END (Success)</b><br/>No venv needed"]
-                    E -->|No| I["Python Release Detected"]
-                    I --> J{"Compatible Python<br/>with gi found?"}
+                    D --> J{"Compatible Python<br/>with gi found?"}
                     J -->|No| K["Install python3 + python3-gi<br/>via apt"]
                     J -->|Yes| L["Create venv<br/>(./venv)"]
                     K --> L
                     L --> M["Enable system-site-packages<br/>for GTK3/PyGObject"]
                     M --> N["Upgrade pip & setuptools"]
                     N --> O["Show Python Commands"]
-                    O --> O1["1. Run the automation script:<br/>./lmstudio_autostart.sh<br/>2. Or use with specific options:<br/>./lmstudio_autostart.sh --model<br/>./lmstudio_autostart.sh --debug<br/>etc."]
+                    O --> O1["Ready to run:<br/>./lmstudio_autostart.sh"]
                     O1 --> P["<b>END (Success)</b><br/>Python environment ready"]
             </div>
 

@@ -56,6 +56,53 @@ jobs:
           fi
           cp -a "dist/lmstudio-tray-manager" ".build-cache/lmstudio-tray-manager"
 
+      - name: Build AppImage
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage"
+
+          # Download appimagetool (run without FUSE via APPIMAGE_EXTRACT_AND_RUN)
+          curl -fsSL -o /tmp/appimagetool \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /tmp/appimagetool
+
+          # Build AppDir structure
+          APPDIR="$(mktemp -d)/AppDir"
+          mkdir -p "$APPDIR"
+
+          # Copy the self-contained binary
+          cp -a ".build-cache/lmstudio-tray-manager" "$APPDIR/lmstudio-tray-manager"
+          chmod +x "$APPDIR/lmstudio-tray-manager"
+
+          # AppRun launcher (printf avoids heredoc column-1 YAML conflicts)
+          printf '%s\n' '#!/usr/bin/env bash' \
+            'APPDIR="$(dirname "$(readlink -f "$0")")"' \
+            'exec "$APPDIR/lmstudio-tray-manager" "$@"' \
+            > "$APPDIR/AppRun"
+          chmod +x "$APPDIR/AppRun"
+
+          # Desktop entry (required by AppImage spec)
+          printf '%s\n' '[Desktop Entry]' \
+            'Name=LM Studio Tray Manager' \
+            'Exec=lmstudio-tray-manager' \
+            'Icon=lmstudio-tray-manager' \
+            'Type=Application' \
+            'Categories=Utility;' \
+            > "$APPDIR/lmstudio-tray-manager.desktop"
+
+          # Icon (required by AppImage spec)
+          cp "assets/img/lm-studio-tray-manager.png" \
+            "$APPDIR/lmstudio-tray-manager.png"
+
+          # Build AppImage (no FUSE needed in CI)
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 \
+            /tmp/appimagetool "$APPDIR" ".build-cache/$APPIMAGE_NAME"
+
+          echo "AppImage built: $APPIMAGE_NAME"
+
       - name: Prepare release packages
         run: |
           set -euo pipefail
@@ -67,6 +114,7 @@ jobs:
           PKG_NAME_BIN="${PKG_NAME_SRC}-binary"
           STAGE_DIR_SRC="dist/${PKG_NAME_SRC}"
           STAGE_DIR_BIN="dist/${PKG_NAME_BIN}"
+          APPIMAGE_NAME="${PKG_NAME_SRC}.AppImage"
 
           rm -rf dist
           mkdir -p "$STAGE_DIR_SRC" "$STAGE_DIR_BIN"
@@ -88,10 +136,10 @@ jobs:
             fi
           done
 
-          if [[ -f "docs/SETUP.md" ]]; then
+          if [[ -d "docs" ]]; then
             mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"
-            cp -a "docs/SETUP.md" "$STAGE_DIR_SRC/docs/SETUP.md"
-            cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"
+            cp -a docs/* "$STAGE_DIR_SRC/docs/"
+            cp -a docs/* "$STAGE_DIR_BIN/docs/"
           fi
 
           # Copy assets to both packages
@@ -121,39 +169,12 @@ jobs:
           cp -a ".build-cache/lmstudio-tray-manager" \
             "$STAGE_DIR_BIN/lmstudio-tray-manager"
 
-      - name: Build AppImage
-        run: |
-          set -euo pipefail
-
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#v}"
-          ARCH="$(uname -m)"
-          APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-${ARCH}.AppImage"
-
-          # Download appimagetool for this architecture
-          curl -fsSL -o /tmp/appimagetool \
-            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${ARCH}.AppImage"
-          chmod +x /tmp/appimagetool
-
-          # Create AppDir structure
-          APPDIR="AppDir"
-          mkdir -p "${APPDIR}/usr/bin"
-          cp ".build-cache/lmstudio-tray-manager" "${APPDIR}/usr/bin/"
-
-          printf '#!/bin/bash\nSELF="$(readlink -f "${0}")"\nAPPDIR="$(dirname "${SELF}")"\nexec "${APPDIR}/usr/bin/lmstudio-tray-manager" "$@"\n' \
-            > "${APPDIR}/AppRun"
-          chmod +x "${APPDIR}/AppRun"
-
-          printf '[Desktop Entry]\nName=LM Studio Tray Manager\nExec=lmstudio-tray-manager\nIcon=lmstudio-tray-manager\nType=Application\nCategories=Utility;\n' \
-            > "${APPDIR}/lmstudio-tray-manager.desktop"
-
-          if [[ -f "assets/img/lmstudio-tray-manager.png" ]]; then
-            cp "assets/img/lmstudio-tray-manager.png" \
-              "${APPDIR}/lmstudio-tray-manager.png"
+          # Copy AppImage as a standalone release artifact
+          if [[ ! -f ".build-cache/$APPIMAGE_NAME" ]]; then
+            echo "Error: AppImage not found at .build-cache/$APPIMAGE_NAME"
+            exit 1
           fi
-
-          APPIMAGE_EXTRACT_AND_RUN=1 /tmp/appimagetool \
-            "${APPDIR}" "dist/${APPIMAGE_NAME}"
+          cp -a ".build-cache/$APPIMAGE_NAME" "dist/$APPIMAGE_NAME"
 
       - name: Create archives
         run: |
@@ -167,7 +188,6 @@ jobs:
 
           tar -czf "dist/${PKG_NAME_SRC}.tar.gz" -C dist "$PKG_NAME_SRC"
           tar -czf "dist/${PKG_NAME_BIN}.tar.gz" -C dist "$PKG_NAME_BIN"
-
 
       - name: Generate checksums
         run: |

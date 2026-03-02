@@ -20,11 +20,12 @@ Notes:
         --version, -v: Print version and exit (flag).
         --help: Show help message and exit (flag).
 
-    Logging is written to .logs/lmstudio_tray.log in the script directory.
+    Logging is written to .logs/ in the script directory, or if that
+    directory is read-only (e.g., AppImage), logs are written to
+    ~/.local/share/lmstudio-tray-manager/logs/.
     If the VERSION file is missing, a default version string is used.
 """
 
-# nosec B404
 import argparse
 import subprocess  # nosec B404
 import sys
@@ -49,6 +50,7 @@ except ImportError:
     gi = None
 
 DEFAULT_APP_VERSION = "dev"
+
 
 def load_version_from_dir(base_dir):
     """Load app version from the VERSION file.
@@ -80,11 +82,40 @@ def _get_default_script_dir():
     Returns:
         str: Absolute path to the script directory.
     """
-    return (
-        os.path.dirname(os.path.abspath(sys.argv[0]))
-        if sys.argv and sys.argv[0]
-        else os.getcwd()
-    )
+    if sys.argv and sys.argv[0]:
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+    else:
+        return os.getcwd()
+
+
+def _get_writable_logs_dir(base_script_dir):
+    """Get a writable directory for logs.
+
+    If base_script_dir is writable, returns base_script_dir/.logs.
+    Otherwise (e.g., in AppImage), returns a writable location
+    in the user's home directory.
+
+    Args:
+        base_script_dir (str): The script directory to check.
+
+    Returns:
+        str: Absolute path to a writable logs directory.
+    """
+    logs_dir = os.path.join(base_script_dir, ".logs")
+
+    try:
+        os.makedirs(logs_dir, exist_ok=True)
+        test_file = os.path.join(logs_dir, '.write_test_tmp')
+        with open(test_file, 'w', encoding='utf-8') as f:
+            f.write('test')
+        os.remove(test_file)
+        return logs_dir
+    except (OSError, IOError, PermissionError):
+        writable_logs = os.path.expanduser(
+            '~/.local/share/lmstudio-tray-manager/logs'
+        )
+        os.makedirs(writable_logs, exist_ok=True)
+        return writable_logs
 
 
 def parse_args():
@@ -468,8 +499,7 @@ def main():
         app_indicator_module,
         gdk_pixbuf_module,
     )
-    logs_dir = os.path.join(_AppState.script_dir, ".logs")
-    os.makedirs(logs_dir, exist_ok=True)
+    logs_dir = _get_writable_logs_dir(_AppState.script_dir)
     log_level = (
         logging.DEBUG if _AppState.DEBUG_MODE else logging.INFO
     )
@@ -602,21 +632,42 @@ def load_config():
     present in the config file.
     """
     config_path = _get_config_path()
+    logging.debug("Attempting to load config from %s", config_path)
     try:
         with open(config_path, "r", encoding="utf-8") as config_file:
             data = json.load(config_file)
-    except (OSError, ValueError, json.JSONDecodeError):
+    except FileNotFoundError:
+        logging.info(
+            "Config file not found at %s, using defaults",
+            config_path
+        )
+        return
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        logging.warning(
+            "Failed to load config from %s: %s",
+            config_path,
+            exc
+        )
         return
 
     host = data.get("api_host") if isinstance(data, dict) else None
+    port_raw = data.get("api_port") if isinstance(data, dict) else None
+
     if isinstance(host, str) and host.strip():
         _AppState.API_HOST = host.strip()
+        logging.debug("Loaded API host: %s", _AppState.API_HOST)
 
-    port = _normalize_api_port(
-        data.get("api_port") if isinstance(data, dict) else None
-    )
+    port = _normalize_api_port(port_raw)
     if port is not None:
         _AppState.API_PORT = port
+        logging.debug("Loaded API port: %s", _AppState.API_PORT)
+
+    if host or port:
+        logging.info(
+            "Config loaded successfully: http://%s:%s",
+            _AppState.API_HOST,
+            _AppState.API_PORT
+        )
 
 
 def save_config(api_host, api_port):
@@ -625,9 +676,20 @@ def save_config(api_host, api_port):
     port = _normalize_api_port(api_port)
 
     if not host or port is None:
+        logging.error(
+            "Invalid config values: host='%s', port='%s'",
+            host,
+            api_port
+        )
         raise ValueError("Invalid api_host/api_port")
 
     config_path = _get_config_path()
+    logging.debug(
+        "Saving config to %s: host=%s, port=%s",
+        config_path,
+        host,
+        port
+    )
     config_dir = os.path.dirname(config_path)
     os.makedirs(config_dir, exist_ok=True)
     payload = {
@@ -641,6 +703,12 @@ def save_config(api_host, api_port):
             config_file.flush()
             os.fsync(config_file.fileno())
         os.replace(tmp_path, config_path)
+        logging.info(
+            "Config saved successfully to %s: http://%s:%s",
+            config_path,
+            host,
+            port
+        )
     except OSError:
         logging.exception("Failed to write config: %s", config_path)
         try:
@@ -1001,9 +1069,6 @@ def check_api_models():
             api_url,
             headers={"User-Agent": "lmstudio-tray-manager"},
         )
-        # Safe: URL scheme validated by _validate_url_scheme() to only
-        # allow http/https. URL construction uses only configured API_HOST
-        # and API_PORT from _AppState.
         with urllib_request.urlopen(req, timeout=2) as response:  # nosec B310
             payload = response.read()
             data = json.loads(payload.decode("utf-8"))
@@ -1598,6 +1663,18 @@ class TrayIcon:
             ValueError: If command format is invalid or executable is not
                 absolute path.
         """
+        if (
+            isinstance(command, list)
+            and len(command) >= 3
+            and isinstance(command[0], str)
+            and os.path.basename(command[0]) == "notify-send"
+            and isinstance(command[2], str)
+        ):
+            icon_prefixes = ("✅", "ℹ️", "⚠️", "❌")
+            message = command[2].lstrip()
+            if not message.startswith(icon_prefixes):
+                command = list(command)
+                command[2] = f"ℹ️ {command[2]}"
         return _run_safe_command(command)
 
     def _run_daemon_attempts(self, attempts, stop_when):
@@ -2321,12 +2398,7 @@ class TrayIcon:
                     api_url,
                     headers={"User-Agent": "lmstudio-tray-manager"},
                 )
-                # Safe: URL scheme validated by _validate_url_scheme()
-                # to allow only http/https.
-                # URL construction uses only configured API_HOST and
-                # API_PORT from _AppState.
-                # nosec B310
-                with urllib_request.urlopen(
+                with urllib_request.urlopen(  # nosec B310
                     req, timeout=2
                 ) as response:
                     payload = response.read()
@@ -2585,7 +2657,7 @@ class TrayIcon:
         content.add(grid)
         dialog.show_all()
 
-        response = getattr(dialog, "response", dialog.run())
+        response = dialog.run()
         if response == gtk.ResponseType.OK:
             host = host_entry.get_text().strip()
             port = _normalize_api_port(port_entry.get_text())

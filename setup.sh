@@ -186,14 +186,24 @@ fi
 echo -e "\n${BLUE}Step 2: Checking LM Studio Desktop App${NC}"
 log_output "INFO" "Step 2: Checking for LM Studio desktop app"
 
-FOUND_DEB=false
+FOUND_PKG=false
 APP_INSTALLED=false
 
 if dpkg -l | grep -q lm-studio; then
     print_step "LM Studio desktop app found (deb package)"
     log_output "INFO" "LM Studio desktop app installed via deb package"
     APP_INSTALLED=true
-    FOUND_DEB=true
+    FOUND_PKG=true
+elif command -v rpm >/dev/null 2>&1 && rpm -q lm-studio >/dev/null 2>&1; then
+    print_step "LM Studio desktop app found (rpm package)"
+    log_output "INFO" "LM Studio desktop app installed via rpm package"
+    APP_INSTALLED=true
+    FOUND_PKG=true
+elif command -v pacman >/dev/null 2>&1 && pacman -Qi lm-studio >/dev/null 2>&1; then
+    print_step "LM Studio desktop app found (pacman package)"
+    log_output "INFO" "LM Studio desktop app installed via pacman"
+    APP_INSTALLED=true
+    FOUND_PKG=true
 fi
 
 log_output "DEBUG" "Searching for AppImage in common locations"
@@ -213,11 +223,12 @@ done
 
 if [ "$APP_INSTALLED" = false ]; then
     print_warning "LM Studio desktop app not found"
-    log_output "WARN" "LM Studio desktop app not found (checked deb package and AppImage locations)"
+    log_output "WARN" \
+"LM Studio desktop app not found (checked native packages and AppImage locations)"
     echo ""
     print_info "The desktop app is required for the --gui option."
     print_info "Choose installation method:"
-    print_info "  1) Install .deb package (recommended for Ubuntu/Debian)"
+    print_info "  1) Download installer/package from lmstudio.ai"
     print_info "  2) Use AppImage (manual download)"
     print_info "  3) Skip (can be installed later)"
     echo ""
@@ -233,7 +244,7 @@ if [ "$APP_INSTALLED" = false ]; then
 
     case "$app_choice" in
         1)
-            log_output "INFO" "User chose deb package installation"
+            log_output "INFO" "User chose to download LM Studio installer"
             echo "Opening LM Studio download page..."
             if [ "$DRY_RUN" = "1" ]; then
                 print_info "[DRY-RUN] Would open https://lmstudio.ai/download"
@@ -247,8 +258,9 @@ if [ "$APP_INSTALLED" = false ]; then
                 log_output "INFO" "No browser launcher found, displaying URL"
                 echo "Please visit: https://lmstudio.ai/download"
             fi
-            print_warning "Please download and install the .deb package, then run this script again"
-            log_output "WARN" "Setup paused - waiting for deb package installation"
+            print_warning \
+"Download and install LM Studio for your distro, then run this script again"
+            log_output "WARN" "Setup paused - waiting for LM Studio installation"
             ;;
         2)
             log_output "INFO" "User chose AppImage installation"
@@ -282,9 +294,9 @@ if [ "$APP_INSTALLED" = false ]; then
 fi
 
 if [ "$APP_INSTALLED" = true ]; then
-    if [ "$FOUND_DEB" = true ]; then
-        echo "   Desktop app: deb package"
-        log_output "INFO" "Desktop app installation method: deb package"
+    if [ "$FOUND_PKG" = true ]; then
+        echo "   Desktop app: native package"
+        log_output "INFO" "Desktop app installation method: native package"
     elif [ -n "$APPIMAGE_PATH" ]; then
         echo "   Desktop app: AppImage at $APPIMAGE_PATH"
         log_output "INFO" "Desktop app installation method: AppImage at $APPIMAGE_PATH"
@@ -298,7 +310,73 @@ echo -e "\n${BLUE}Step 3: Checking Installation Type${NC}"
 log_output "INFO" "Step 3: Detecting binary vs source installation"
 
 BINARY_RELEASE=false
-if [ -x "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
+APPIMAGE_RELEASE=false
+APPIMAGE_FILE=""
+
+# Check for tray manager AppImage first (self-contained, bundles GTK3)
+_appimg_count=0
+for _appimg_cand in "$SCRIPT_DIR"/lmstudio-tray-manager*.AppImage; do
+    if [ -f "$_appimg_cand" ]; then
+        _appimg_count=$((_appimg_count + 1))
+        if [ -z "$APPIMAGE_FILE" ]; then
+            APPIMAGE_FILE="$_appimg_cand"
+        fi
+    fi
+done
+if [ "$_appimg_count" -gt 1 ]; then
+    print_warning \
+        "Multiple AppImage files found; using: $(basename "$APPIMAGE_FILE")"
+    log_output "WARN" \
+        "Multiple AppImages found in script dir; using first: $APPIMAGE_FILE"
+fi
+
+if [ -n "$APPIMAGE_FILE" ]; then
+    if [ -x "$APPIMAGE_FILE" ]; then
+        print_step "AppImage release detected ($(basename "$APPIMAGE_FILE"))"
+        log_output "INFO" \
+            "AppImage release detected: $(basename "$APPIMAGE_FILE")"
+        print_info "Skipping Python virtual environment creation"
+        APPIMAGE_RELEASE=true
+        BINARY_RELEASE=true
+    else
+        print_warning \
+            "Found AppImage but it is not executable: $(basename "$APPIMAGE_FILE")"
+        log_output "WARN" \
+            "AppImage lacks execute permission: $APPIMAGE_FILE"
+        if [ "$DRY_RUN" = "1" ]; then
+            print_info \
+                "[DRY-RUN] Would make it executable: chmod +x $(basename "$APPIMAGE_FILE")"
+            print_info "[DRY-RUN] Would treat this as an AppImage release after chmod"
+            log_output "INFO" "DRY-RUN: Would chmod +x and treat as AppImage release"
+            APPIMAGE_RELEASE=true
+            BINARY_RELEASE=true
+        else
+            _appimg_name="$(basename "$APPIMAGE_FILE")"
+            if ask_yes_no \
+                "Make $_appimg_name executable (chmod +x) and continue as AppImage release?"; then
+                log_output "INFO" "User accepted to make AppImage executable"
+                if chmod +x "$APPIMAGE_FILE"; then
+                    print_step "AppImage made executable"
+                    log_output "INFO" \
+                        "Successfully made AppImage executable: $APPIMAGE_FILE"
+                    APPIMAGE_RELEASE=true
+                    BINARY_RELEASE=true
+                else
+                    print_error "Failed to chmod +x $_appimg_name"
+                    log_output "ERROR" "Failed to chmod +x $APPIMAGE_FILE"
+                    exit 1
+                fi
+            else
+                log_output "ERROR" \
+                    "User declined to make AppImage executable - cannot continue"
+                print_error \
+                    "AppImage exists but is not executable; cannot continue safely. Setup cancelled."
+                print_info "Fix permissions and re-run: chmod +x ./$_appimg_name"
+                exit 1
+            fi
+        fi
+    fi
+elif [ -x "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
     print_step "Binary release detected (lmstudio-tray-manager)"
     log_output "INFO" "Binary release detected: executable lmstudio-tray-manager found"
     print_info "Skipping Python virtual environment creation"
@@ -371,7 +449,11 @@ PYCODE
 echo -e "\n${BLUE}Step 4: Checking GTK3/GObject typelibs${NC}"
 log_output "INFO" "Step 4: Checking for GTK3/GObject typelibs"
 
-if check_gtk_typelibs; then
+if [ "$APPIMAGE_RELEASE" = true ]; then
+    print_step "Skipped (AppImage bundles its own GTK3 runtime)"
+    log_output "INFO" \
+        "Step 4: Skipped GTK3 check (AppImage release bundles its own GTK3)"
+elif check_gtk_typelibs; then
     print_step "GTK3/GObject typelibs already available"
     log_output "INFO" "GTK3/GObject typelibs detected"
 else
@@ -398,11 +480,12 @@ else
                 log_output "INFO" "GTK3 typelibs and python3-gi installed successfully"
             else
                 print_error "Failed to install GTK3 typelibs"
-                log_output "ERROR" "apt install failed for GTK3 typelibs"
+                log_output "ERROR" "GTK3 typelibs installation failed"
                 exit 1
             fi
         else
-            log_output "ERROR" "User declined GTK3 typelibs installation - setup cancelled"
+            log_output "ERROR" \
+"User declined GTK3 typelibs installation - setup cancelled"
             print_error "GTK3/GObject libraries are required. Setup cancelled."
             exit 1
         fi
@@ -607,7 +690,26 @@ echo -e "${GREEN}═════════════════════
 echo ""
 print_info "Next steps:"
 
-if [ "$BINARY_RELEASE" = true ]; then
+if [ "$APPIMAGE_RELEASE" = true ]; then
+    _appimg_basename="$(basename "$APPIMAGE_FILE")"
+    log_output "INFO" "AppImage release - showing AppImage usage instructions"
+    print_info "  🖼️  Using AppImage release"
+    print_info ""
+    print_info "  1. Auto-start with daemon (recommended):"
+    print_info "     ./$_appimg_basename --auto-start-daemon"
+    print_info ""
+    print_info "  2. Start GUI (stops daemon first):"
+    print_info "     ./$_appimg_basename --gui"
+    print_info ""
+    print_info "  3. Debug mode (verbose logging):"
+    print_info "     ./$_appimg_basename --debug"
+    print_info ""
+    print_info "  4. Monitor specific model:"
+    print_info "     ./$_appimg_basename qwen2.5:7b-instruct"
+    print_info ""
+    print_info "  5. View all options:"
+    print_info "     ./$_appimg_basename --help"
+elif [ "$BINARY_RELEASE" = true ]; then
     log_output "INFO" "Binary release detected - showing binary usage instructions"
     print_info "  📦 Using pre-built binary release"
     print_info ""

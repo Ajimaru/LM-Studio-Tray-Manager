@@ -1,16 +1,31 @@
 # Setup Guide
 
-> ⚠️ **Linux‑only application.** The tray manager relies on GTK3 and Debian/ AppImage installation patterns; Windows and macOS are not supported yet, by either the binary or Python packages.
+> ⚠️ **Linux‑only application.** The tray manager relies on GTK3; Windows
+> and macOS are not supported yet. AppImage support is universal across Linux
+> distributions. Package‑manager automation is available for **apt, dnf,
+> pacman, zypper, and apk**; other distros receive manual‑install guidance.
 
-The `setup.sh` script automates the complete setup process for LM Studio Tray Manager.
+## Quick Summary
+
+**If you have an AppImage release** (easiest option - recommended):
+
+```bash
+chmod +x lmstudio-tray-manager-*.AppImage
+./lmstudio-tray-manager-*.AppImage --auto-start-daemon
+# That's it! No setup.sh needed.
+```
+
+For other installation types (binary, Python source), `setup.sh` automates configuration and dependency checking.
 
 ## Table of Contents
 
 - [Setup Guide](#setup-guide)
+  - [Quick Summary](#quick-summary)
   - [Table of Contents](#table-of-contents)
   - [What setup.sh Does](#what-setupsh-does)
   - [Installation Types](#installation-types)
-    - [Binary Release (Recommended)](#binary-release-recommended)
+    - [AppImage Release (Simplest)](#appimage-release-simplest)
+    - [Binary Release](#binary-release)
     - [Python Package Release](#python-package-release)
   - [Quick Start](#quick-start)
   - [Dry-run Mode](#dry-run-mode)
@@ -20,6 +35,7 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
     - [If No Compatible Python Is Found](#if-no-compatible-python-is-found)
   - [What's Inside the venv?](#whats-inside-the-venv)
   - [File Structure After Setup](#file-structure-after-setup)
+    - [For AppImage Release](#for-appimage-release)
     - [For Binary Release](#for-binary-release)
     - [For Python Package](#for-python-package)
   - [Environment Variables](#environment-variables)
@@ -48,22 +64,26 @@ The setup script automatically detects your installation type and configures acc
    - If not found: Opens download page and asks to install
 
 2. **LM Studio Desktop App** - GUI for model management
-   - Intelligently detects .deb package installation
+   - Detects natively-installed packages (deb/rpm/pacman)
    - Searches for AppImage in: script directory, $HOME/Apps, $HOME/LM_Studio, $HOME/Applications, $HOME/.local/bin, /opt/lm-studio
    - Auto-detects both standard and versioned AppImage formats (e.g., LM-Studio-0.4.3-*.AppImage)
    - Allows manual AppImage path input
    - Optional (only needed for `--gui` option)
 
 3. **Installation Type Detection** - Automatically determines setup path
+   - **AppImage Release:** Detects `lmstudio-tray-manager*.AppImage` in script directory;
+     makes it executable if needed; skips GTK3 check (AppImage bundles its own runtime)
    - **Binary Release:** Detects `lmstudio-tray-manager` binary in script directory
-   - **Python Package:** No binary found - proceeds with Python setup
+   - **Python Package:** No binary or AppImage found - proceeds with Python setup
    - This detection is **non-intrusive**: just a file existence check
 
-4. **GTK3/GObject typelibs** - Needed by both binary and Python package releases
-   - Checked on every run, regardless of installation type
+4. **GTK3/GObject typelibs** - Needed by binary and Python package releases
+   - Skipped for AppImage releases (GTK3 is bundled inside the AppImage)
+   - Checked on every non-AppImage run, regardless of installation type
    - Uses a simple Python import test or file lookup
-   - If missing, prompts to install `gir1.2-gtk-3.0` and
-     `gir1.2-ayatanaappindicator3-0.1` (in dry‑run the action is shown)
+   - If missing, prompts to install via the detected package manager
+     (apt, dnf, pacman, zypper, or apk). When no manager is found,
+     manual instructions are printed for all supported distros.
    - If the user declines, setup aborts with an explanatory error
 
 5. **Python + PyGObject compatibility** (packages only)  
@@ -81,7 +101,41 @@ The setup script automatically detects your installation type and configures acc
 
 The setup script automatically detects your installation type:
 
-### Binary Release (Recommended)
+### AppImage Release (Simplest)
+
+**Detection:** Script finds a `lmstudio-tray-manager*.AppImage` file in the
+script directory
+
+**What happens:**
+
+- ✓ No Python venv needed (fully self-contained)
+- ✓ No GTK3 system packages required (bundled in AppImage)
+- ✓ Fast setup (only checks LM Studio daemon and desktop app)
+- ✓ Runs on any Linux distribution (kernel ≥ 4.4)
+
+**⚠️ setup.sh is optional for AppImage releases!**
+
+You can run the AppImage directly without `setup.sh`:
+
+```bash
+# Just make it executable and run
+chmod +x ./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage
+./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage --auto-start-daemon
+```
+
+**Or use setup.sh if you want to:**
+
+- Verify LM Studio daemon is installed
+- Detect and configure the LM Studio desktop app
+- Get a setup log file for troubleshooting
+
+```bash
+chmod +x setup.sh
+./setup.sh
+./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage --auto-start-daemon
+```
+
+### Binary Release
 
 **Detection:** Script finds `lmstudio-tray-manager` binary in the script directory
 
@@ -188,19 +242,25 @@ Selecting `y` opens the download page. You'll need to install it manually from <
 ```bash
 ⚠ LM Studio desktop app not found
   The desktop app is required for the --gui option.
-  
+
   Choose installation method:
-    1) Install .deb package (recommended for Ubuntu/Debian)
+    1) Download installer/package from lmstudio.ai
     2) Use AppImage (manual download)
     3) Skip (can be installed later)
 
 ```
 
-**Option 1**: Download .deb from <https://lmstudio.ai/download> and install:
+**Option 1**: Download from <https://lmstudio.ai/download> and install using
+your distro's package manager, for example:
 
 ```bash
-# example (replace with actual file name)
+# Debian/Ubuntu
 sudo apt install ./LM-Studio-0.4.4-1-x64.deb
+# Fedora/RHEL
+sudo dnf install ./LM-Studio-0.4.4-1-x64.rpm
+# Arch – use the AppImage or an AUR helper
+# All distros – AppImage (no install required)
+chmod +x LM-Studio-0.4.4-1-x64.AppImage && ./LM-Studio-0.4.4-1-x64.AppImage
 
 ```
 
@@ -231,6 +291,19 @@ Selecting `y` installs `python3`, `python3-venv`, and `python3-gi` via `apt`.
 - **Full PyGObject + GTK3 support** for system tray functionality
 
 ## File Structure After Setup
+
+### For AppImage Release
+
+After running `./setup.sh` (or `chmod +x` manually):
+
+```files
+.
+├── lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage  # Self-contained AppImage
+└── ~/.local/share/lmstudio-tray-manager/logs/         # 📝 Log files directory (AppImage-specific)
+    └── lmstudio_tray.log                              # Tray monitor log (created at runtime)
+```
+
+**Note:** No venv or GTK3 dependencies needed; the AppImage is fully self-contained. Logs are stored in your home directory due to AppImage's read-only filesystem.
 
 ### For Binary Release
 

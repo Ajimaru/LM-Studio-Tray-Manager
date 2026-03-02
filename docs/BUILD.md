@@ -1,6 +1,8 @@
 # Building Binary Distribution
 
-This document describes how to build a standalone binary of LM Studio Tray Manager using PyInstaller.
+This document describes how to build standalone releases of LM Studio Tray Manager.
+
+**For most users and distributions, the [AppImage release](#appimage-see-issue-62) is recommended.** It's self-contained with all dependencies included and requires no setup script. See [Alternative Approaches](#alternative-approaches) for other options.
 
 ## Table of Contents
 
@@ -324,14 +326,43 @@ For smaller binaries or different requirements, consider:
 
 ### AppImage (see [issue #62](https://github.com/Ajimaru/LM-Studio-Tray-Manager/issues/62))
 
-- Standard Linux app format
-- Includes all dependencies
-- Larger size (~80-100 MB)
-- Better compatibility
-- **Note:** Chromium-based AppImages often fail to start due to an
-  incorrectly configured SUID sandbox helper.  The tray manager now
-  automatically launches AppImages with `--no-sandbox` to work around this
-  issue; otherwise you may need to run the AppImage manually with that flag.
+**What is it?**
+
+- Standard Linux app format - truly portable across all distributions
+- Complete runtime environment bundled: Python, GTK3, all dependencies
+- Single executable file that's completely self-contained
+- Larger size (~26 MB) but truly universal compatibility
+
+**How is it different from Binary Release?**
+
+- **Binary Release:** Python + dependencies bundled, but requires system GTK3/GObject at runtime
+- **AppImage:** Everything bundled including GTK3 runtime - **zero external dependencies** (except LM Studio itself)
+
+**Key advantages:**
+
+- ✓ Works on any Linux distro without additional setup
+- ✓ No `setup.sh` needed - just `chmod +x` and run
+- ✓ Better for distribution to end users
+- ✓ Self-contained: LM Studio daemon is the *only* external requirement
+
+**Building:**
+
+```bash
+# Docker build (recommended)
+./build.sh  # Creates AppImage in release/ directory
+```
+
+**Using:**
+
+```bash
+chmod +x lmstudio-tray-manager-*.AppImage
+./lmstudio-tray-manager-*.AppImage --auto-start-daemon
+```
+
+**Note:** Chromium-based AppImages often fail to start due to an
+incorrectly configured SUID sandbox helper. The tray manager now
+automatically launches AppImages with `--no-sandbox` to work around this
+issue; otherwise you may need to run the AppImage manually with that flag.
 
 ### Rust Rewrite
 
