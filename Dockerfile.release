@@ -36,6 +36,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && mkdir -p /home/builder \
     && chown -R builder:builder /home/builder
 
+# Download appimagetool as root before switching to builder user
+RUN curl -fsSL -o /usr/local/bin/appimagetool \
+    https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+    && chmod +x /usr/local/bin/appimagetool
+
 ENV PYTHON=/usr/bin/python3.12
 
 WORKDIR /workspace
@@ -48,13 +53,44 @@ RUN chown -R builder:builder /workspace
 USER builder
 RUN ./build.sh
 
+# Build AppImage
+RUN bash -c ' \
+    set -euo pipefail; \
+    TAG=$(cat VERSION); \
+    VERSION="${TAG#v}"; \
+    APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage"; \
+    APPDIR="$(mktemp -d)/AppDir"; \
+    mkdir -p "$APPDIR"; \
+    cp -a "dist/lmstudio-tray-manager" "$APPDIR/lmstudio-tray-manager"; \
+    chmod +x "$APPDIR/lmstudio-tray-manager"; \
+    printf "%s\n" "#!/usr/bin/env bash" \
+        "APPDIR=\"\$(dirname \"\$(readlink -f \"\$0\")\")\""  \
+        "exec \"\$APPDIR/lmstudio-tray-manager\" \"\$@\"" \
+        > "$APPDIR/AppRun"; \
+    chmod +x "$APPDIR/AppRun"; \
+    printf "%s\n" "[Desktop Entry]" \
+        "Name=LM Studio Tray Manager" \
+        "Exec=lmstudio-tray-manager" \
+        "Icon=lmstudio-tray-manager" \
+        "Type=Application" \
+        "Categories=Utility;" \
+        > "$APPDIR/lmstudio-tray-manager.desktop"; \
+    cp "assets/img/lm-studio-tray-manager.png" \
+        "$APPDIR/lmstudio-tray-manager.png"; \
+    ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 \
+        /usr/local/bin/appimagetool "$APPDIR" "dist/$APPIMAGE_NAME"; \
+    echo "AppImage built: $APPIMAGE_NAME" \
+'
+
 # Prepare release packages
 RUN bash -c ' \
     set -euo pipefail; \
     TAG=$(cat VERSION); \
+    VERSION="${TAG#v}"; \
     echo "Build version: ${TAG}"; \
-    PKG_NAME_SRC="lmstudio-tray-manager-${TAG}-linux-x86_64"; \
+    PKG_NAME_SRC="lmstudio-tray-manager-${VERSION}-linux-x86_64"; \
     PKG_NAME_BIN="${PKG_NAME_SRC}-binary"; \
+    APPIMAGE_NAME="${PKG_NAME_SRC}.AppImage"; \
     STAGE_DIR_SRC="release/${PKG_NAME_SRC}"; \
     STAGE_DIR_BIN="release/${PKG_NAME_BIN}"; \
     \
@@ -109,8 +145,12 @@ RUN bash -c ' \
     tar -czf "release/${PKG_NAME_SRC}.tar.gz" -C release "$PKG_NAME_SRC"; \
     tar -czf "release/${PKG_NAME_BIN}.tar.gz" -C release "$PKG_NAME_BIN"; \
     \
-    cd release && sha256sum *.tar.gz > SHA256SUMS.txt; \
-    ls -lh *.tar.gz SHA256SUMS.txt \
+    if [[ -f "dist/$APPIMAGE_NAME" ]]; then \
+      cp -a "dist/$APPIMAGE_NAME" "release/$APPIMAGE_NAME"; \
+    fi; \
+    \
+    cd release && sha256sum *.tar.gz *.AppImage > SHA256SUMS.txt; \
+    ls -lh *.tar.gz *.AppImage SHA256SUMS.txt \
 '
 
 USER builder

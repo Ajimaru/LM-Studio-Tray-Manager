@@ -298,21 +298,91 @@ echo -e "\n${BLUE}Step 3: Checking Installation Type${NC}"
 log_output "INFO" "Step 3: Detecting binary vs source installation"
 
 BINARY_RELEASE=false
-if [ -x "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
+APPIMAGE_RELEASE=false
+APPIMAGE_FILE=""
+
+# Check for tray manager AppImage first (self-contained, bundles GTK3)
+_appimg_count=0
+for _appimg_cand in "$SCRIPT_DIR"/lmstudio-tray-manager*.AppImage; do
+    if [ -f "$_appimg_cand" ]; then
+        _appimg_count=$((_appimg_count + 1))
+        if [ -z "$APPIMAGE_FILE" ]; then
+            APPIMAGE_FILE="$_appimg_cand"
+        fi
+    fi
+done
+if [ "$_appimg_count" -gt 1 ]; then
+    print_warning \
+        "Multiple AppImage files found; using: $(basename "$APPIMAGE_FILE")"
+    log_output "WARN" \
+        "Multiple AppImages found in script dir; using first: $APPIMAGE_FILE"
+fi
+
+if [ -n "$APPIMAGE_FILE" ]; then
+    if [ -x "$APPIMAGE_FILE" ]; then
+        print_step "AppImage release detected ($(basename "$APPIMAGE_FILE"))"
+        log_output "INFO" \
+            "AppImage release detected: $(basename "$APPIMAGE_FILE")"
+        print_info "Skipping Python virtual environment creation"
+        APPIMAGE_RELEASE=true
+        BINARY_RELEASE=true
+    else
+        print_warning \
+            "Found AppImage but it is not executable: $(basename "$APPIMAGE_FILE")"
+        log_output "WARN" \
+            "AppImage lacks execute permission: $APPIMAGE_FILE"
+        if [ "$DRY_RUN" = "1" ]; then
+            print_info \
+                "[DRY-RUN] Would make it executable: chmod +x $(basename "$APPIMAGE_FILE")"
+            print_info "[DRY-RUN] Would treat this as an AppImage release after chmod"
+            log_output "INFO" "DRY-RUN: Would chmod +x and treat as AppImage release"
+            APPIMAGE_RELEASE=true
+            BINARY_RELEASE=true
+        else
+            _appimg_name="$(basename "$APPIMAGE_FILE")"
+            if ask_yes_no \
+                "Make $_appimg_name executable (chmod +x) and continue as AppImage release?"; then
+                log_output "INFO" "User accepted to make AppImage executable"
+                if chmod +x "$APPIMAGE_FILE"; then
+                    print_step "AppImage made executable"
+                    log_output "INFO" \
+                        "Successfully made AppImage executable: $APPIMAGE_FILE"
+                    APPIMAGE_RELEASE=true
+                    BINARY_RELEASE=true
+                else
+                    print_error "Failed to chmod +x $_appimg_name"
+                    log_output "ERROR" "Failed to chmod +x $APPIMAGE_FILE"
+                    exit 1
+                fi
+            else
+                log_output "ERROR" \
+                    "User declined to make AppImage executable - cannot continue"
+                print_error \
+                    "AppImage exists but is not executable; cannot continue safely. Setup cancelled."
+                print_info "Fix permissions and re-run: chmod +x ./$_appimg_name"
+                exit 1
+            fi
+        fi
+    fi
+elif [ -x "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
     print_step "Binary release detected (lmstudio-tray-manager)"
-    log_output "INFO" "Binary release detected: executable lmstudio-tray-manager found"
+    log_output "INFO" \
+        "Binary release detected: executable lmstudio-tray-manager found"
     print_info "Skipping Python virtual environment creation"
     BINARY_RELEASE=true
 elif [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
     print_warning "Found lmstudio-tray-manager but it is not executable"
-    log_output "WARN" "Binary file exists but lacks execute permission: $SCRIPT_DIR/lmstudio-tray-manager"
+    log_output "WARN" \
+        "Binary file exists but lacks execute permission: $SCRIPT_DIR/lmstudio-tray-manager"
     if [ "$DRY_RUN" = "1" ]; then
-        print_info "[DRY-RUN] Would make it executable: chmod +x $SCRIPT_DIR/lmstudio-tray-manager"
+        print_info \
+            "[DRY-RUN] Would make it executable: chmod +x $SCRIPT_DIR/lmstudio-tray-manager"
         print_info "[DRY-RUN] Would treat this as a binary release after chmod"
         log_output "INFO" "DRY-RUN: Would chmod +x and treat as binary release"
         BINARY_RELEASE=true
     else
-        if ask_yes_no "Make lmstudio-tray-manager executable (chmod +x) and continue as binary release?"; then
+        if ask_yes_no \
+            "Make lmstudio-tray-manager executable (chmod +x) and continue as binary release?"; then
             log_output "INFO" "User accepted to make binary executable"
             if chmod +x "$SCRIPT_DIR/lmstudio-tray-manager"; then
                 print_step "Binary made executable"
@@ -324,15 +394,18 @@ elif [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
                 exit 1
             fi
         else
-            log_output "ERROR" "User declined to make binary executable - cannot continue"
-            print_error "Binary exists but is not executable; cannot continue safely. Setup cancelled."
+            log_output "ERROR" \
+                "User declined to make binary executable - cannot continue"
+            print_error \
+                "Binary exists but is not executable; cannot continue safely. Setup cancelled."
             print_info "Fix permissions and re-run: chmod +x ./lmstudio-tray-manager"
             exit 1
         fi
     fi
 else
     print_info "Python package release detected"
-    log_output "INFO" "Python package (source) release detected - no binary executable found"
+    log_output "INFO" \
+        "Python package (source) release detected - no binary executable found"
     print_info "Python virtual environment will be created"
 fi
 
@@ -371,7 +444,11 @@ PYCODE
 echo -e "\n${BLUE}Step 4: Checking GTK3/GObject typelibs${NC}"
 log_output "INFO" "Step 4: Checking for GTK3/GObject typelibs"
 
-if check_gtk_typelibs; then
+if [ "$APPIMAGE_RELEASE" = true ]; then
+    print_step "Skipped (AppImage bundles its own GTK3 runtime)"
+    log_output "INFO" \
+        "Step 4: Skipped GTK3 check (AppImage release bundles its own GTK3)"
+elif check_gtk_typelibs; then
     print_step "GTK3/GObject typelibs already available"
     log_output "INFO" "GTK3/GObject typelibs detected"
 else
@@ -607,7 +684,26 @@ echo -e "${GREEN}═════════════════════
 echo ""
 print_info "Next steps:"
 
-if [ "$BINARY_RELEASE" = true ]; then
+if [ "$APPIMAGE_RELEASE" = true ]; then
+    _appimg_basename="$(basename "$APPIMAGE_FILE")"
+    log_output "INFO" "AppImage release - showing AppImage usage instructions"
+    print_info "  🖼️  Using AppImage release"
+    print_info ""
+    print_info "  1. Auto-start with daemon (recommended):"
+    print_info "     ./$_appimg_basename --auto-start-daemon"
+    print_info ""
+    print_info "  2. Start GUI (stops daemon first):"
+    print_info "     ./$_appimg_basename --gui"
+    print_info ""
+    print_info "  3. Debug mode (verbose logging):"
+    print_info "     ./$_appimg_basename --debug"
+    print_info ""
+    print_info "  4. Monitor specific model:"
+    print_info "     ./$_appimg_basename qwen2.5:7b-instruct"
+    print_info ""
+    print_info "  5. View all options:"
+    print_info "     ./$_appimg_basename --help"
+elif [ "$BINARY_RELEASE" = true ]; then
     log_output "INFO" "Binary release detected - showing binary usage instructions"
     print_info "  📦 Using pre-built binary release"
     print_info ""

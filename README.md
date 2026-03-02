@@ -41,6 +41,46 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 
 **2.** Choose your installation path:
 
+#### Path 0 (Simplest): AppImage
+
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Show AppImage install steps</summary>
+
+**Download:**
+
+- `lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage`
+
+**Make executable and run:**
+
+```bash
+# example (replace X.Y.Z with version)
+VERSION=X.Y.Z
+chmod +x lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage
+./lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage --auto-start-daemon
+```
+
+Or use `setup.sh` to make the AppImage executable automatically:
+
+```bash
+chmod +x setup.sh
+./setup.sh
+./lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage --auto-start-daemon
+```
+
+**Note:** The AppImage is fully self-contained — no Python, GTK3, or system
+dependencies are required. It runs on any Linux distribution with a kernel
+≥ 4.4.
+
+**Verify:**
+
+- `lms ps`
+- tray icon appears
+- `tail -f .logs/lmstudio_tray.log`
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
 #### Path 1 (Recommended): Binary release
 
 <!-- markdownlint-disable MD033 -->
