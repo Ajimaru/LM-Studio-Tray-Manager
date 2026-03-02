@@ -36,9 +36,9 @@ jobs:
           sudo apt-get install -y \
             bc \
             pkg-config \
-            python3.10 \
-            python3.10-venv \
-            python3.10-dev \
+            python3.12 \
+            python3.12-venv \
+            python3.12-dev \
             python3-gi \
             gobject-introspection \
             gir1.2-gtk-3.0 \

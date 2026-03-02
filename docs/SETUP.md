@@ -69,7 +69,7 @@ The setup script automatically detects your installation type and configures acc
 
 5. **Python 3** - Required for PyGObject/GTK3 compatibility (packages only)
    - **Only checked for Python package releases** (step 3 must detect no binary)
-   - Uses the system `python3` interpreter (or `python3.10` if that is what
+   - Uses the system `python3` interpreter (or `python3.12` if that is what
      the system provides)
    - Installs automatically if missing via the detected package manager
    - When no supported manager is found, manual instructions are shown
@@ -164,9 +164,9 @@ Example output for Python package releases (Steps 4 and 5 are skipped for binary
 [CHECK] LM Studio desktop app: not found
 [DRY-RUN] Would open LM Studio download page for desktop app guidance
 [CHECK] GTK3/GObject typelibs: missing (would install gir1.2-gtk-3.0)
-[CHECK] Python 3: found (python3.10)
+[CHECK] Python 3: found (python3.12)
 [DRY-RUN] Would recreate virtual environment in: ./venv
-[DRY-RUN] Would run: python3.10 -m pip install --upgrade pip
+[DRY-RUN] Would run: python3.12 -m pip install --upgrade pip
 [DONE] Dry-run completed successfully (0 changes applied)
 ```
 
@@ -433,7 +433,7 @@ If the tray monitor is running but icon not visible:
 
 ## Python Version Notes
 
-The setup script uses `python3.10` when it is available (mirroring `build.sh`),
+The setup script uses `python3.12` when it is available (mirroring `build.sh`),
 otherwise it falls back to any `python3` found in `PATH`. All Python 3 versions
 have good PyGObject compatibility; the venv is created with
 `--system-site-packages` so GTK3 introspection data installed at the system

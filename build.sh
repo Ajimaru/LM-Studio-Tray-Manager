@@ -53,9 +53,9 @@ get_file_size() {
     echo 0
 }
 
-# Choose Python (prefer 3.10 if available)
-if command -v python3.10 &> /dev/null; then
-    PYTHON_BIN="python3.10"
+# Choose Python (prefer 3.12 if available)
+if command -v python3.12 &> /dev/null; then
+    PYTHON_BIN="python3.12"
 elif command -v python3 &> /dev/null; then
     PYTHON_BIN="python3"
 else

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
 """LM Studio Tray Icon Monitor.
 
 A GTK3-based system tray application that monitors the status of the LM Studio

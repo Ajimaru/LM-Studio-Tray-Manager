@@ -536,10 +536,10 @@ if [ "$BINARY_RELEASE" = false ]; then
     echo -e "\n${BLUE}Step 5: Checking Python 3${NC}"
     log_output "INFO" "Step 5: Checking for Python 3"
 
-    # Use python3.10 if available, otherwise fall back to python3,
+    # Use python3.12 if available, otherwise fall back to python3,
     # mirroring build.sh behaviour.
-    if command -v python3.10 >/dev/null 2>&1; then
-        PYTHON_BIN="python3.10"
+    if command -v python3.12 >/dev/null 2>&1; then
+        PYTHON_BIN="python3.12"
     elif command -v python3 >/dev/null 2>&1; then
         PYTHON_BIN="python3"
     else

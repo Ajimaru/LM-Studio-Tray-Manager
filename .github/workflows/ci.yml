@@ -15,12 +15,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
-
-      - name: Python syntax check
+          python-version: '3.12'
         run: python -m py_compile lmstudio_tray.py
 
       - name: Bash syntax check
@@ -46,10 +44,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |

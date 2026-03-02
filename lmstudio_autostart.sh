@@ -780,12 +780,12 @@ else
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Tray launch mode: python"
     echo "$(date '+%Y-%m-%d %H:%M:%S') 🐍 Starting Tray-Monitor: \
 $SCRIPT_DIR/lmstudio_tray.py with model '$TRAY_MODEL'"
-    # Priority: venv > python3.10 > python3
+    # Priority: venv > python3.12 > python3
     if [ -x "$VENV_DIR/bin/python3" ]; then
         "$VENV_DIR/bin/python3" "$SCRIPT_DIR/lmstudio_tray.py" \
             "${TRAY_ARGS[@]}" &
-    elif have python3.10; then
-        python3.10 "$SCRIPT_DIR/lmstudio_tray.py" \
+    elif have python3.12; then
+        python3.12 "$SCRIPT_DIR/lmstudio_tray.py" \
             "${TRAY_ARGS[@]}" &
     elif have python3; then
         python3 "$SCRIPT_DIR/lmstudio_tray.py" \
