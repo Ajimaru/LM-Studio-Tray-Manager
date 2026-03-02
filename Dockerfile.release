@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-gi \
     gobject-introspection \
     gir1.2-gtk-3.0 \
+    gir1.2-appindicator3-0.1 \
     gir1.2-ayatanaappindicator3-0.1 \
     libgirepository1.0-dev \
     libglib2.0-dev \
