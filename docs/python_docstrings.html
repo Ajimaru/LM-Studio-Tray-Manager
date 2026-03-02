@@ -216,7 +216,7 @@
             <p><strong>Note:</strong> the accompanying <code>setup.sh</code> script now
             verifies GTK3/GObject typelibs and may prompt the user to install
             <code>gir1.2-gtk-3.0</code> and related packages before proceeding.</p>
-            <p><strong>Last updated:</strong> 2026-02-25</p>
+            <p><strong>Last updated:</strong> 2026-03-02</p>
         </div>
 
         <section id="functions">
@@ -1054,6 +1054,120 @@ Returns:
     scheduled callbacks).</div>
             </div>
 
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_get_writable_logs_dir</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_get_writable_logs_dir(base_script_dir)</div>
+                <div class="item-doc">Get a writable directory for logs.
+
+If base_script_dir is writable, returns base_script_dir/.logs.
+Otherwise (e.g., in AppImage), returns a writable location
+in the user&#x27;s home directory.
+
+Args:
+    base_script_dir (str): The script directory to check.
+
+Returns:
+    str: Absolute path to a writable logs directory.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_ensure_gsettings_schema</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_ensure_gsettings_schema()</div>
+                <div class="item-doc">Set GSETTINGS_SCHEMA_DIR if not already set and schemas exist.
+
+This prevents GSettings crashes when running PyInstaller binaries
+on systems where GTK tries to load missing schema keys.
+
+Returns:
+    None.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_copy_to_clipboard</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_copy_to_clipboard(url)</div>
+                <div class="item-doc">Open *url* in the default web browser.
+
+Historically this helper copied the link to the clipboard; the
+behaviour was updated to perform an indirect open instead. It remains
+easily monkey-patchable for unit tests.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_activate_link</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_activate_link(url)</div>
+                <div class="item-doc">Open a link from GTK dialogs and report success.
+
+Args:
+    url (str): URL from the activate-link signal.
+
+Returns:
+    bool: True when the URL open was attempted successfully.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">get_release_url</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">get_release_url(tag)</div>
+                <div class="item-doc">Return a GitHub URL for a release.
+
+Args:
+    tag (str, optional): A release tag name (e.g. &quot;v1.2.3&quot;). If
+        provided the URL will point directly to that tag. If omitted
+        the generic ``/releases/latest`` URL is returned, which
+        GitHub redirects to the newest release.
+
+Returns:
+    str: Absolute URL to the desired release page.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_has_loaded_model</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_has_loaded_model(output)</div>
+                <div class="item-doc">Return True if ``lms ps`` output indicates a loaded model.
+
+Some releases of the CLI print *all* available models even when none
+are actually loaded. Other releases explicitly say &quot;No models are
+currently loaded.&quot;. We treat such outputs as *not* containing a
+loaded model; a debug log entry is emitted so the behavior is
+traceable.</div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <span class="item-name">_api_loaded_model_names</span>
+                    <span class="item-type">function</span>
+                </div>
+                <div class="item-signature">_api_loaded_model_names(models)</div>
+                <div class="item-doc">Return model names that are explicitly marked as loaded.
+
+LM Studio API responses may include *available* models that are not
+currently loaded. To avoid false positives, we only treat a model as
+loaded when there is explicit evidence in the model object.
+
+Args:
+    models: Parsed ``data`` list from the API response.
+
+Returns:
+    list[str]: Names/ids for models explicitly marked as loaded.</div>
+            </div>
+
         </section>
 
         <section id="classes">
@@ -1116,6 +1230,11 @@ Returns:
                 <div class="method-item">
                     <strong>begin_action_cooldown()</strong><br/>
                     <div class="item-doc">Prevent rapid double-triggering of tray actions.</div>
+                </div>
+
+                <div class="method-item">
+                    <strong>_can_use_lms_ps()</strong><br/>
+                    <div class="item-doc">Return True when running ``lms ps`` is currently safe/useful.</div>
                 </div>
 
                 <div class="method-item">
@@ -1229,6 +1348,19 @@ Returns:
                 </div>
 
                 <div class="method-item">
+                    <strong>_stop_daemon_with_notification()</strong><br/>
+                    <div class="item-doc">Stop daemon and show notification on success/failure.
+
+Single source of truth for daemon-stop logic with user notifications.
+Used by both stop_daemon() menu action and start_desktop_app() to
+ensure consistent daemon-stopping behavior.
+
+Returns:
+    tuple[bool, CompletedProcess | None]: (stopped, result)
+        from _stop_llmster_best_effort().</div>
+                </div>
+
+                <div class="method-item">
                     <strong>_stop_desktop_app_processes()</strong><br/>
                     <div class="item-doc">Stop LM Studio desktop processes using TERM, then KILL.
 
@@ -1266,6 +1398,16 @@ and launches it with user notification.
 
 Args:
     _widget: Widget that triggered the action (unused).</div>
+                </div>
+
+                <div class="method-item">
+                    <strong>_start_desktop_app_body()</strong><br/>
+                    <div class="item-doc">Background thread body for start_desktop_app.
+
+Stops the daemon first using _stop_daemon_with_notification(),
+locates the app (.deb or AppImage), and launches it.
+All GTK menu updates are posted back to the main loop via
+GLib.idle_add() so this method is safe to call from any thread.</div>
                 </div>
 
                 <div class="method-item">
@@ -1424,6 +1566,11 @@ Returns:
                 </div>
 
                 <div class="method-item">
+                    <strong>_can_use_lms_ps()</strong><br/>
+                    <div class="item-doc">Return True when running ``lms ps`` is currently safe/useful.</div>
+                </div>
+
+                <div class="method-item">
                     <strong>_schedule_menu_refresh()</strong><br/>
                     <div class="item-doc">Schedule a delayed menu refresh when GLib is available.
 
@@ -1534,6 +1681,19 @@ Returns:
                 </div>
 
                 <div class="method-item">
+                    <strong>_stop_daemon_with_notification()</strong><br/>
+                    <div class="item-doc">Stop daemon and show notification on success/failure.
+
+Single source of truth for daemon-stop logic with user notifications.
+Used by both stop_daemon() menu action and start_desktop_app() to
+ensure consistent daemon-stopping behavior.
+
+Returns:
+    tuple[bool, CompletedProcess | None]: (stopped, result)
+        from _stop_llmster_best_effort().</div>
+                </div>
+
+                <div class="method-item">
                     <strong>_stop_desktop_app_processes()</strong><br/>
                     <div class="item-doc">Stop LM Studio desktop processes using TERM, then KILL.
 
@@ -1571,6 +1731,16 @@ and launches it with user notification.
 
 Args:
     _widget: Widget that triggered the action (unused).</div>
+                </div>
+
+                <div class="method-item">
+                    <strong>_start_desktop_app_body()</strong><br/>
+                    <div class="item-doc">Background thread body for start_desktop_app.
+
+Stops the daemon first using _stop_daemon_with_notification(),
+locates the app (.deb or AppImage), and launches it.
+All GTK menu updates are posted back to the main loop via
+GLib.idle_add() so this method is safe to call from any thread.</div>
                 </div>
 
                 <div class="method-item">

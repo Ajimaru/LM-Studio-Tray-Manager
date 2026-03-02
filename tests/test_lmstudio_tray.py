@@ -2984,7 +2984,7 @@ def test_show_config_dialog_cancel(tray_module, monkeypatch):
 
     def _dialog_factory(*_args_unused, **_kwargs):
         dialog = original_dialog(**_kwargs)
-        dialog.response = tray_module.Gtk.ResponseType.CANCEL
+        setattr(dialog, "_response", tray_module.Gtk.ResponseType.CANCEL)
         return dialog
 
     monkeypatch.setattr(tray_module.Gtk, "Dialog", _dialog_factory)
@@ -3015,7 +3015,7 @@ def test_show_config_dialog_save(tray_module, monkeypatch, tmp_path):
 
     def _dialog_factory(**_kwargs):
         dialog = original_dialog(**_kwargs)
-        dialog.response = tray_module.Gtk.ResponseType.OK
+        setattr(dialog, "_response", tray_module.Gtk.ResponseType.OK)
         return dialog
 
     monkeypatch.setattr(tray_module.Gtk, "Dialog", _dialog_factory)
@@ -5176,7 +5176,7 @@ def test_show_config_dialog_save_error_shows_error_dialog(
 
     def _dialog_factory(**_kwargs):
         dialog = original_dialog(**_kwargs)
-        dialog.response = tray_module.Gtk.ResponseType.OK
+        setattr(dialog, "_response", tray_module.Gtk.ResponseType.OK)
         return dialog
 
     def _raise_save(_host, _port):
@@ -5210,9 +5210,12 @@ def test_show_config_dialog_invalid_input_warns(tray_module, monkeypatch):
 
     original_dialog = tray_module.Gtk.Dialog
 
+    def _set_response(dialog, response):
+        _call_member(dialog, "__setattr__", "_response", response)
+
     def _dialog_factory(**_kwargs):
         dialog = original_dialog(**_kwargs)
-        dialog.response = tray_module.Gtk.ResponseType.OK
+        _set_response(dialog, tray_module.Gtk.ResponseType.OK)
         return dialog
 
     called = {"save": False}

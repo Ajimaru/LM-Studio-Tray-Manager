@@ -41,7 +41,7 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 
 **2.** Choose your installation path:
 
-#### Path 0 (Simplest): AppImage
+#### Path 0 (Recommended): AppImage
 
 <!-- markdownlint-disable MD033 -->
 <details>
@@ -51,37 +51,41 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 
 - `lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage`
 
-**Make executable and run:**
+**Make executable and run directly:**
 
 ```bash
 # example (replace X.Y.Z with version)
 VERSION=X.Y.Z
 chmod +x lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage
+
+# Run normally
+./lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage
+
+# Or with auto-start daemon
 ./lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage --auto-start-daemon
+./lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage -a
 ```
 
-Or use `setup.sh` to make the AppImage executable automatically:
+**Available options:** `-h` (help), `-v` (version), `-d` (debug), `-g` (GUI mode), `-a` (auto-start daemon)
+
+**Optional:** If you want to verify LM Studio daemon installation and check for the desktop app, you can use `setup.sh`:
 
 ```bash
 chmod +x setup.sh
 ./setup.sh
-./lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage --auto-start-daemon
+./lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage -a
 ```
-
-**Note:** The AppImage is fully self-contained — no Python, GTK3, or system
-dependencies are required. It runs on any Linux distribution with a kernel
-≥ 4.4.
 
 **Verify:**
 
-- `lms ps`
-- tray icon appears
-- `tail -f .logs/lmstudio_tray.log`
+- `lms ps` (check LM Studio daemon)
+- tray icon appears in system tray
+- AppImage logs: `tail -f ~/.local/share/lmstudio-tray-manager/logs/lmstudio_tray.log`
 
 </details>
 <!-- markdownlint-enable MD033 -->
 
-#### Path 1 (Recommended): Binary release
+#### Path 1 : Binary release
 
 <!-- markdownlint-disable MD033 -->
 <details>
@@ -114,7 +118,7 @@ chmod +x setup.sh
 </details>
 <!-- markdownlint-enable MD033 -->
 
-#### Path 2 (Python package)
+#### Path 2 : Python package
 
 <!-- markdownlint-disable MD033 -->
 <details>
@@ -217,6 +221,13 @@ This setup script:
 ./lmstudio-tray-manager -d -a   # debug + auto-start daemon
 ./lmstudio-tray-manager -dg     # debug + gui
 ./lmstudio-tray-manager -dga    # debug + gui + auto-start-daemon; note: -a is ignored when -g is active
+
+# With model name (positional argument)
+./lmstudio-tray-manager "my-model-name"
+./lmstudio-tray-manager -a "llama-model"
+
+# With model and custom log directory (positional arguments)
+./lmstudio-tray-manager "my-model" "/path/to/logs"
 
 # Check daemon status
 lms ps

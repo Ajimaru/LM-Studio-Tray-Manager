@@ -7,14 +7,18 @@ This guide covers how to use the LM Studio Tray Manager application after setup.
 - [Using LM Studio Tray Manager](#using-lm-studio-tray-manager)
   - [Table of Contents](#table-of-contents)
   - [Quick Start](#quick-start)
+    - [AppImage Release (Recommended for most users)](#appimage-release-recommended-for-most-users)
     - [Binary Release](#binary-release)
     - [Python Package Release](#python-package-release)
   - [Running the Application](#running-the-application)
+    - [AppImage Release (Running)](#appimage-release-running)
     - [Binary Release (Running)](#binary-release-running)
     - [Python Package Release (Running)](#python-package-release-running)
     - [Autostart on Login](#autostart-on-login)
   - [Command-Line Options](#command-line-options)
-    - [Available Flags](#available-flags)
+    - [Usage Syntax](#usage-syntax)
+    - [Positional Arguments](#positional-arguments)
+    - [Available Options](#available-options)
     - [Example Usage](#example-usage)
   - [System Tray Interface](#system-tray-interface)
     - [Status Indicators](#status-indicators)
@@ -44,6 +48,29 @@ This guide covers how to use the LM Studio Tray Manager application after setup.
     - [High CPU Usage](#high-cpu-usage)
 
 ## Quick Start
+
+### AppImage Release (Recommended for most users)
+
+```bash
+# Make executable (if needed)
+chmod +x ./lmstudio-tray-manager-*.AppImage
+
+# Run directly with daemon autostart
+./lmstudio-tray-manager-*.AppImage --auto-start-daemon
+
+# Or without autostart
+./lmstudio-tray-manager-*.AppImage
+
+# Monitor logs (in another terminal)
+tail -f ~/.local/share/lmstudio-tray-manager/logs/lmstudio_tray.log
+```
+
+**Why AppImage?**
+
+- ✓ Self-contained (no setup.sh needed)
+- ✓ All GTK3 dependencies bundled
+- ✓ Works on any Linux distribution
+- ✓ No Python venv required
 
 ### Binary Release
 
@@ -77,6 +104,28 @@ tail -f ./logs/lmstudio_tray.log
 ```
 
 ## Running the Application
+
+### AppImage Release (Running)
+
+The AppImage is fully self-contained and can be run directly without any setup:
+
+```bash
+# Basic run (no autostart)
+./lmstudio-tray-manager-*.AppImage
+
+# With daemon autostart
+./lmstudio-tray-manager-*.AppImage --auto-start-daemon
+
+# With GUI mode
+./lmstudio-tray-manager-*.AppImage --gui
+
+# Run in background
+./lmstudio-tray-manager-*.AppImage --auto-start-daemon &
+```
+
+**Note:** The AppImage bundles all GTK3/GObject dependencies, so no `setup.sh` is required. Just make it executable and run it. The only external requirement is that you have LM Studio daemon installed.
+
+AppImage logs are stored in: `~/.local/share/lmstudio-tray-manager/logs/`
 
 ### Binary Release (Running)
 
@@ -140,30 +189,62 @@ Then enable autostart in your desktop environment settings.
 
 ## Command-Line Options
 
-### Available Flags
+### Usage Syntax
 
 ```bash
---help              Show help message
---version           Show version and exit
---debug             Run in debug mode with verbose output
---gui               Start with desktop GUI mode (stops daemon first)
---auto-start-daemon Start daemon automatically on launch
+lmstudio-tray-manager [OPTIONS] [model] [script_dir]
+```
+
+### Positional Arguments
+
+```bash
+model               Model name to monitor (optional)
+script_dir          Script directory for logs and VERSION file (optional)
+                    If a relative path is provided, it will be resolved to
+                    an absolute path. Defaults to current working directory.
+```
+
+### Available Options
+
+```bash
+-h, --help              Show help message and exit
+-v, --version           Show version and exit
+-d, --debug             Run in debug mode with verbose output
+-g, --gui               Start with desktop GUI mode (stops daemon first)
+-a, --auto-start-daemon Start daemon automatically on launch
 ```
 
 ### Example Usage
 
 ```bash
+# Show help
+./lmstudio-tray-manager --help
+
 # Show version
 ./lmstudio-tray-manager --version
+./lmstudio-tray-manager -v
 
 # Run with debug output
 ./lmstudio-tray-manager --debug
+./lmstudio-tray-manager -d
 
 # Launch GUI mode (if desktop app installed)
 ./lmstudio-tray-manager --gui
+./lmstudio-tray-manager -g
 
 # Start daemon and monitor in tray
 ./lmstudio-tray-manager --auto-start-daemon
+./lmstudio-tray-manager -a
+
+# Combine flags (short forms)
+./lmstudio-tray-manager -d -a    # debug + auto-start daemon
+./lmstudio-tray-manager -dg      # debug + gui
+
+# With model name and custom log directory
+./lmstudio-tray-manager "my-model-name" "/path/to/logs"
+
+# Model name with auto-start and debug
+./lmstudio-tray-manager -da "llama-model"
 ```
 
 ## System Tray Interface
@@ -388,9 +469,10 @@ The tray manager creates four log files:
 
 | Log File | Purpose | Created By |
 | -------- | ------- | ---------- |
-| `.logs/setup.log` | Installation history | `setup.sh` |
-| `.logs/lmstudio_autostart.log` | Daemon startup events | `lmstudio_autostart.sh` |
-| `.logs/lmstudio_tray.log` | Tray monitor activity | `lmstudio_tray.py` |
+| `.logs/setup.log` | Installation history | `setup.sh` (Source/Binary releases) |
+| `.logs/lmstudio_autostart.log` | Daemon startup events | `lmstudio_autostart.sh` (Source/Binary releases) |
+| `.logs/lmstudio_tray.log` | Tray monitor activity (Binary/Source) | `lmstudio_tray.py` (Source) |
+| `~/.local/share/lmstudio-tray-manager/logs/lmstudio_tray.log` | Tray monitor activity (AppImage) | AppImage release |
 | `.logs/build.log` | Build process details | `build.sh` or `build_binary.py` |
 
 **Log Format Examples:**

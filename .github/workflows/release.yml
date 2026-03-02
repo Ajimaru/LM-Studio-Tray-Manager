@@ -136,10 +136,10 @@ jobs:
             fi
           done
 
-          if [[ -f "docs/SETUP.md" ]]; then
+          if [[ -d "docs" ]]; then
             mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"
-            cp -a "docs/SETUP.md" "$STAGE_DIR_SRC/docs/SETUP.md"
-            cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"
+            cp -a docs/* "$STAGE_DIR_SRC/docs/"
+            cp -a docs/* "$STAGE_DIR_BIN/docs/"
           fi
 
           # Copy assets to both packages

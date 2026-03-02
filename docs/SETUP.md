@@ -5,16 +5,27 @@
 > distributions. Package‑manager automation is available for **apt, dnf,
 > pacman, zypper, and apk**; other distros receive manual‑install guidance.
 
-The `setup.sh` script automates the complete setup process for LM Studio Tray Manager.
+## Quick Summary
+
+**If you have an AppImage release** (easiest option - recommended):
+
+```bash
+chmod +x lmstudio-tray-manager-*.AppImage
+./lmstudio-tray-manager-*.AppImage --auto-start-daemon
+# That's it! No setup.sh needed.
+```
+
+For other installation types (binary, Python source), `setup.sh` automates configuration and dependency checking.
 
 ## Table of Contents
 
 - [Setup Guide](#setup-guide)
+  - [Quick Summary](#quick-summary)
   - [Table of Contents](#table-of-contents)
   - [What setup.sh Does](#what-setupsh-does)
   - [Installation Types](#installation-types)
     - [AppImage Release (Simplest)](#appimage-release-simplest)
-    - [Binary Release (Recommended)](#binary-release-recommended)
+    - [Binary Release](#binary-release)
     - [Python Package Release](#python-package-release)
   - [Quick Start](#quick-start)
   - [Dry-run Mode](#dry-run-mode)
@@ -102,13 +113,29 @@ script directory
 - ✓ Fast setup (only checks LM Studio daemon and desktop app)
 - ✓ Runs on any Linux distribution (kernel ≥ 4.4)
 
-**Next steps:**
+**⚠️ setup.sh is optional for AppImage releases!**
+
+You can run the AppImage directly without `setup.sh`:
 
 ```bash
+# Just make it executable and run
+chmod +x ./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage
 ./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage --auto-start-daemon
 ```
 
-### Binary Release (Recommended)
+**Or use setup.sh if you want to:**
+
+- Verify LM Studio daemon is installed
+- Detect and configure the LM Studio desktop app
+- Get a setup log file for troubleshooting
+
+```bash
+chmod +x setup.sh
+./setup.sh
+./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage --auto-start-daemon
+```
+
+### Binary Release
 
 **Detection:** Script finds `lmstudio-tray-manager` binary in the script directory
 
@@ -272,12 +299,11 @@ After running `./setup.sh` (or `chmod +x` manually):
 ```files
 .
 ├── lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage  # Self-contained AppImage
-├── .logs/                      # 📝 Log files directory
-│   └── setup.log               # Setup script log (created during setup)
+└── ~/.local/share/lmstudio-tray-manager/logs/         # 📝 Log files directory (AppImage-specific)
+    └── lmstudio_tray.log                              # Tray monitor log (created at runtime)
 ```
 
-**Note:** No venv or GTK3 dependencies needed; the AppImage is fully
-self-contained.
+**Note:** No venv or GTK3 dependencies needed; the AppImage is fully self-contained. Logs are stored in your home directory due to AppImage's read-only filesystem.
 
 ### For Binary Release
 

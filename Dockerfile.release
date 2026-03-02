@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     tar \
     gzip \
+    file \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0 \
     && groupadd -r builder \
@@ -62,6 +63,7 @@ RUN bash -c ' \
     APPDIR="$(mktemp -d)/AppDir"; \
     mkdir -p "$APPDIR"; \
     cp -a "dist/lmstudio-tray-manager" "$APPDIR/lmstudio-tray-manager"; \
+    cp -a "VERSION" "$APPDIR/VERSION"; \
     chmod +x "$APPDIR/lmstudio-tray-manager"; \
     printf "%s\n" "#!/usr/bin/env bash" \
         "APPDIR=\"\$(dirname \"\$(readlink -f \"\$0\")\")\""  \
@@ -111,10 +113,10 @@ RUN bash -c ' \
       fi; \
     done; \
     \
-    if [[ -f "docs/SETUP.md" ]]; then \
+    if [[ -d "docs" ]]; then \
       mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"; \
-      cp -a "docs/SETUP.md" "$STAGE_DIR_SRC/docs/SETUP.md"; \
-      cp -a "docs/SETUP.md" "$STAGE_DIR_BIN/docs/SETUP.md"; \
+      cp -a docs/* "$STAGE_DIR_SRC/docs/"; \
+      cp -a docs/* "$STAGE_DIR_BIN/docs/"; \
     fi; \
     \
     if [[ -d "assets" ]]; then \
