@@ -38,8 +38,8 @@ jobs:
           CONTAINER_ID=$(docker create lmstudio-release:latest)
           trap "docker rm -f $CONTAINER_ID" EXIT
 
-          # Copy artifacts from container
-          docker cp "$CONTAINER_ID":/app/dist dist
+          # Copy artifacts from container (they are stored in /workspace/release/)
+          docker cp "$CONTAINER_ID":/workspace/release dist
 
           echo "✅ Artifacts extracted to dist/"
           ls -lh dist/
