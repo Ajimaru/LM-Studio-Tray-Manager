@@ -445,25 +445,25 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     AppImg["📦 AppImage<br/>(recommended)"]
                     Bin["📦 Binary Release"]
                     Src["📦 Source Package"]
-                    
+
                     AppImg -->|"chmod +x"| Run1["Run directly<br/>./lmstudio-tray-manager-*.AppImage"]
                     AppImg -->|"Optional: verify<br/>daemon & desktop app"| Setup["setup.sh"]
-                    
+
                     Bin -->|"Make executable"| Run2["Run directly<br/>./lmstudio-tray-manager --auto-start-daemon"]
                     Bin -->|"or: verify deps"| Setup
-                    
+
                     Src -->|"Required: setup<br/>environment"| Setup
-                    
+
                     Run1 -->|"Starts tray monitor"| Monitor["GTK3 System Tray<br/>Monitors daemon & API"]
                     Run2 -->|"Starts tray monitor"| Monitor
                     Setup -->|"Shows appropriate<br/>commands for your<br/>installation type"| Run1
                     Setup -->|"or"| Run2
                     Setup -->|"or configure venv"| Src
-                    
+
                     User --> AppImg
                     User --> Bin
                     User --> Src
-                    
+
                     Monitor -->|"Connects to"| Daemon["LM Studio Daemon<br/>(llmster)"]
                     Daemon -->|"Manages"| Models["Model Files<br/>(configurable)"]
             </div>
@@ -475,25 +475,25 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     AppImg["<b>AppImage Release</b><br/>(Self-contained)"]
                     Bin["<b>Binary Release</b><br/>(PyInstaller bundle)"]
                     Src["<b>Source Package</b><br/>(Python source)"]
-                    
+
                     AppImg -->|"Direct execution<br/>chmod +x + run"| TrayBin["<b>lmstudio-tray-manager</b><br/>(AppImage runtime)"]
-                    
+
                     Bin -->|"Direct execution<br/>chmod +x + run"| TrayBin2["<b>lmstudio-tray-manager</b><br/>(PyInstaller binary)"]
-                    
+
                     Src -->|"setup.sh<br/>creates venv"| Autostart["<b>lmstudio_autostart.sh</b><br/>Daemon Orchestration"]
                     Src -->|"or direct: activate venv<br/>+ python3"| Tray["<b>lmstudio_tray.py</b><br/>GTK3 System Tray"]
-                    
+
                     TrayBin -->|"Monitors"| Daemon["LM Studio Daemon<br/>(llmster)"]
                     TrayBin2 -->|"Monitors"| Daemon
                     Autostart -->|"Orchestrates"| Daemon
                     Tray -->|"Monitors"| Daemon
-                    
+
                     Autostart -->|"Starts if needed"| TrayBin2
                     Autostart -->|"Fallback"| Tray
-                    
+
                     Daemon -->|"Provides"| API["LM Studio API<br/>host:port (configurable)"]
                     Daemon -->|"Manages"| Models["Model Files"]
-                    
+
                     TrayBin -->|"Monitors"| API
                     TrayBin2 -->|"Monitors"| API
                     Tray -->|"Monitors"| API
@@ -649,9 +649,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
     <button class="jump-to-top" id="jump-to-top" aria-label="Jump to top">↑ Top</button>
 
     <script>
-    // Progressive enhancement guard
     (function(){
-        // Read time
         const readEl = document.getElementById('read-time');
         if (readEl) {
             const text = document.body.innerText || '';
@@ -660,7 +658,6 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
             readEl.textContent = `Estimated read time: ${minutes} min`;
         }
 
-        // Jump to top
         const jumpBtn = document.getElementById('jump-to-top');
         if (jumpBtn) {
             window.addEventListener('scroll', () => {
@@ -670,12 +667,9 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
             jumpBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
         }
 
-        // Mermaid wird später in applyMermaidTheme initialisiert
-
-        // Highlight current section in TOC (deterministic scroll-based)
         const links = Array.from(document.querySelectorAll('.toc a'));
         const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
-        const offset = 120; // pixels from top to consider a section as 'current'
+        const offset = 120;
         let suppressTOCUpdate = false;
         function setActiveSectionById(id) {
             links.forEach(a => a.setAttribute('aria-current', 'false'));
@@ -684,7 +678,6 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
         }
         function updateTOCHighlight() {
             if (suppressTOCUpdate) return;
-            // Choose the last section whose top is above the offset; fallback to first
             let active = sections[0];
             for (const s of sections) {
                 const top = s.getBoundingClientRect().top;
@@ -692,7 +685,6 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
             }
             if (active) setActiveSectionById(active.id);
         }
-        // Initialize and bind events
         updateTOCHighlight();
         let ticking = false;
         window.addEventListener('scroll', () => {
@@ -703,7 +695,6 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
             }
         }, { passive: true });
         window.addEventListener('hashchange', () => updateTOCHighlight());
-        // Improve accuracy on TOC click: smooth scroll with offset and immediate highlight
         links.forEach(a => a.addEventListener('click', (e) => {
             const targetId = a.getAttribute('href')?.slice(1);
             if (!targetId) return;
@@ -711,17 +702,13 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
             if (!el) return;
             e.preventDefault();
             suppressTOCUpdate = true;
-            // Update URL without triggering hashchange
             history.pushState(null, '', `#${targetId}`);
-            // Compute scroll target with offset
-            const y = window.scrollY + el.getBoundingClientRect().top - offset + 1; // +1 to ensure it crosses threshold
+            const y = window.scrollY + el.getBoundingClientRect().top - offset + 1;
             window.scrollTo({ top: y, behavior: 'smooth' });
             setActiveSectionById(targetId);
-            // Re-enable auto updates after scroll settles
             setTimeout(() => { suppressTOCUpdate = false; updateTOCHighlight(); }, 450);
         }));
 
-        // Theme toggle: persist in localStorage and update Mermaid theme
         const themeBtn = document.getElementById('theme-toggle');
         const root = document.body;
         const storedTheme = localStorage.getItem('theme');
@@ -732,63 +719,70 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                 themeBtn.textContent = storedTheme === 'dark' ? 'Dark' : 'Light';
             }
         } else {
-            // default dark
             root.setAttribute('data-theme', 'dark');
             if (themeBtn) themeBtn.textContent = 'Dark';
         }
-        function applyMermaidTheme(theme) {
+        async function applyMermaidTheme(theme) {
             try {
-                if (window.mermaid) {
-                    const themeCSSDark = `
-                      .node rect, .node circle, .node ellipse, .node polygon { fill: #1f254b; stroke: #7aa2f7; }
-                      .node text { fill: #e6e9ef; }
-                      .edgeLabel rect { fill: #131735; stroke: #7aa2f7; }
-                      .cluster rect { fill: #0f1221; stroke: #7aa2f7; }
-                      .label, .edgeLabel tspan { fill: #e6e9ef; }
-                    `;
-                    const themeCSSLight = `
-                      .node rect, .node circle, .node ellipse, .node polygon { fill: #eef2ff; stroke: #3366ff; }
-                      .node text { fill: #1c2333; }
-                      .edgeLabel rect { fill: #f8fafc; stroke: #3366ff; }
-                      .cluster rect { fill: #ffffff; stroke: #3366ff; }
-                      .label, .edgeLabel tspan { fill: #1c2333; }
-                    `;
-                    const cfg = {
-                        startOnLoad: false,
-                        theme: 'base',
-                        themeVariables: theme === 'light' ? {
-                            primaryColor: '#eef2ff',
-                            primaryBorderColor: '#3366ff',
-                            primaryTextColor: '#1c2333',
-                            secondaryColor: '#f8fafc',
-                            lineColor: '#2dbf71',
-                            textColor: '#1c2333',
-                            noteBkgColor: '#e6ffed',
-                            noteTextColor: '#093',
-                        } : {
-                            primaryColor: '#1f254b',
-                            primaryBorderColor: '#7aa2f7',
-                            primaryTextColor: '#e6e9ef',
-                            secondaryColor: '#1a1f3b',
-                            lineColor: '#9ece6a',
-                            textColor: '#e6e9ef',
-                            noteBkgColor: '#1b3a2b',
-                            noteTextColor: '#e6ffe6',
-                        },
-                        themeCSS: theme === 'light' ? themeCSSLight : themeCSSDark,
-                        flowchart: { curve: 'basis' }
-                    };
-                    mermaid.initialize(cfg);
-                    mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                if (!window.mermaid) {
+                    return;
                 }
-            } catch(e) {}
-        }
-    applyMermaidTheme(root.getAttribute('data-theme'));
-    // In case mermaid script (deferred) wasn't ready yet, re-apply after DOM is ready
-    document.addEventListener('DOMContentLoaded', () => applyMermaidTheme(root.getAttribute('data-theme')));
-    window.addEventListener('load', () => applyMermaidTheme(root.getAttribute('data-theme')));
 
-        themeBtn?.addEventListener('click', () => {
+                const themeCSSDark = `
+                  .node rect, .node circle, .node ellipse, .node polygon { fill: #1f254b; stroke: #7aa2f7; }
+                  .node text { fill: #e6e9ef; }
+                  .edgeLabel rect { fill: #131735; stroke: #7aa2f7; }
+                  .cluster rect { fill: #0f1221; stroke: #7aa2f7; }
+                  .label, .edgeLabel tspan { fill: #e6e9ef; }
+                `;
+                const themeCSSLight = `
+                  .node rect, .node circle, .node ellipse, .node polygon { fill: #eef2ff; stroke: #3366ff; }
+                  .node text { fill: #1c2333; }
+                  .edgeLabel rect { fill: #f8fafc; stroke: #3366ff; }
+                  .cluster rect { fill: #ffffff; stroke: #3366ff; }
+                  .label, .edgeLabel tspan { fill: #1c2333; }
+                `;
+                const cfg = {
+                    startOnLoad: true,
+                    theme: 'base',
+                    themeVariables: theme === 'light' ? {
+                        primaryColor: '#eef2ff',
+                        primaryBorderColor: '#3366ff',
+                        primaryTextColor: '#1c2333',
+                        secondaryColor: '#f8fafc',
+                        lineColor: '#2dbf71',
+                        textColor: '#1c2333',
+                        noteBkgColor: '#e6ffed',
+                        noteTextColor: '#093',
+                    } : {
+                        primaryColor: '#1f254b',
+                        primaryBorderColor: '#7aa2f7',
+                        primaryTextColor: '#e6e9ef',
+                        secondaryColor: '#1a1f3b',
+                        lineColor: '#9ece6a',
+                        textColor: '#e6e9ef',
+                        noteBkgColor: '#1b3a2b',
+                        noteTextColor: '#e6ffe6',
+                    },
+                    themeCSS: theme === 'light' ? themeCSSLight : themeCSSDark,
+                    flowchart: { curve: 'basis' }
+                };
+
+                mermaid.initialize(cfg);
+
+                await mermaid.run({
+                    querySelector: '.mermaid'
+                });
+            } catch(e) {
+                console.error('Mermaid rendering error:', e);
+            }
+        }
+
+    window.addEventListener('load', () => {
+        applyMermaidTheme(root.getAttribute('data-theme'));
+    });
+
+        themeBtn?.addEventListener('click', async () => {
             const current = root.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
             root.setAttribute('data-theme', next);
@@ -797,7 +791,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                 themeBtn.setAttribute('aria-pressed', String(next === 'light'));
                 themeBtn.textContent = next === 'dark' ? 'Dark' : 'Light';
             }
-            applyMermaidTheme(next);
+            await applyMermaidTheme(next);
         });
     })();
     </script>
