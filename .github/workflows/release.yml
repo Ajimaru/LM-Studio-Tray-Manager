@@ -75,12 +75,13 @@ jobs:
 
           # Copy the self-contained binary
           cp -a ".build-cache/lmstudio-tray-manager" "$APPDIR/lmstudio-tray-manager"
+          cp -a "VERSION" "$APPDIR/VERSION"
           chmod +x "$APPDIR/lmstudio-tray-manager"
 
           # AppRun launcher (printf avoids heredoc column-1 YAML conflicts)
           printf '%s\n' '#!/usr/bin/env bash' \
             'APPDIR="$(dirname "$(readlink -f "$0")")"' \
-            'exec "$APPDIR/lmstudio-tray-manager" "$@"' \
+            'exec "$APPDIR/lmstudio-tray-manager" "" "$APPDIR" "$@"' \
             > "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"
 

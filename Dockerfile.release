@@ -154,7 +154,8 @@ RUN bash -c ' \
     APPDIR="AppDir"; \
     mkdir -p "${APPDIR}/usr/bin"; \
     cp "dist/lmstudio-tray-manager" "${APPDIR}/usr/bin/"; \
-    printf "#!/bin/bash\nSELF=\"\$(readlink -f \"\$0\")\"\nAPPDIR=\"\$(dirname \"\$SELF\")\"\nexec \"\$APPDIR/usr/bin/lmstudio-tray-manager\" \"\$@\"\n" \
+    cp "VERSION" "${APPDIR}/VERSION"; \
+    printf "#!/bin/bash\nSELF=\"\$(readlink -f \"\$0\")\"\nAPPDIR=\"\$(dirname \"\$SELF\")\"\nexec \"\$APPDIR/usr/bin/lmstudio-tray-manager\" \"\" \"\$APPDIR\" \"\$@\"\n" \
       > "${APPDIR}/AppRun"; \
     chmod +x "${APPDIR}/AppRun"; \
     printf "[Desktop Entry]\nName=LM Studio Tray Manager\nExec=lmstudio-tray-manager\nIcon=lmstudio-tray-manager\nType=Application\nCategories=Utility;\n" \
