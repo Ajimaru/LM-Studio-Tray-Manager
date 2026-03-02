@@ -121,11 +121,45 @@ jobs:
           cp -a ".build-cache/lmstudio-tray-manager" \
             "$STAGE_DIR_BIN/lmstudio-tray-manager"
 
+      - name: Build AppImage
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          ARCH="$(uname -m)"
+          APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-${ARCH}.AppImage"
+
+          # Download appimagetool for this architecture
+          curl -fsSL -o /tmp/appimagetool \
+            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${ARCH}.AppImage"
+          chmod +x /tmp/appimagetool
+
+          # Create AppDir structure
+          APPDIR="AppDir"
+          mkdir -p "${APPDIR}/usr/bin"
+          cp ".build-cache/lmstudio-tray-manager" "${APPDIR}/usr/bin/"
+
+          printf '#!/bin/bash\nSELF="$(readlink -f "${0}")"\nAPPDIR="$(dirname "${SELF}")"\nexec "${APPDIR}/usr/bin/lmstudio-tray-manager" "$@"\n' \
+            > "${APPDIR}/AppRun"
+          chmod +x "${APPDIR}/AppRun"
+
+          printf '[Desktop Entry]\nName=LM Studio Tray Manager\nExec=lmstudio-tray-manager\nIcon=lmstudio-tray-manager\nType=Application\nCategories=Utility;\n' \
+            > "${APPDIR}/lmstudio-tray-manager.desktop"
+
+          if [[ -f "assets/img/lmstudio-tray-manager.png" ]]; then
+            cp "assets/img/lmstudio-tray-manager.png" \
+              "${APPDIR}/lmstudio-tray-manager.png"
+          fi
+
+          APPIMAGE_EXTRACT_AND_RUN=1 /tmp/appimagetool \
+            "${APPDIR}" "dist/${APPIMAGE_NAME}"
+
       - name: Create archives
         run: |
           set -euo pipefail
 
-              TAG="${GITHUB_REF_NAME}"
+          TAG="${GITHUB_REF_NAME}"
           # match names used earlier (lowercase, include platform)
           VERSION="${TAG#v}"
           PKG_NAME_SRC="lmstudio-tray-manager-${VERSION}-linux-x86_64"
@@ -139,7 +173,7 @@ jobs:
         run: |
           set -euo pipefail
           cd dist
-          sha256sum *.tar.gz > SHA256SUMS.txt
+          sha256sum *.tar.gz *.AppImage > SHA256SUMS.txt
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
@@ -148,4 +182,5 @@ jobs:
           generate_release_notes: true
           files: |
             dist/*.tar.gz
+            dist/*.AppImage
             dist/SHA256SUMS.txt
