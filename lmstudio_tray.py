@@ -2263,14 +2263,25 @@ class TrayIcon:
                 if app_path.lower().endswith(".appimage"):
                     cmd.append("--no-sandbox")
 
-                subprocess.Popen(  # nosec B603
+                if not isinstance(cmd, list) or not cmd:
+                    raise ValueError("Command must be a non-empty list")
+                if not all(isinstance(arg, str) for arg in cmd):
+                    raise ValueError("All command arguments must be strings")
+                if not os.path.isabs(cmd[0]):
+                    raise ValueError(
+                        f"Executable must be absolute path: {cmd[0]}"
+                    )
+
+                with subprocess.Popen(  # nosec B603
                     cmd,
                     start_new_session=True,
                     close_fds=True,
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                )
+                    shell=False,
+                ):
+                    pass
 
                 self.lms_ps_resume_at = time.monotonic() + 12.0
 
