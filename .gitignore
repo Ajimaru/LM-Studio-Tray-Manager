@@ -24,7 +24,7 @@ release/
 
 #Ignore AI rules
 .github/instructions/codacy.instructions.md
-.qodo/
+.github/instructions/snyk_rules.instructions.md
 .codacy/
 .vscode/
 .continue/

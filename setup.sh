@@ -35,15 +35,11 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" || exit 1; pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
 LOGS_DIR="$SCRIPT_DIR/.logs"
 LOGFILE="$LOGS_DIR/setup.log"
-
-# Create .logs directory if it doesn't exist
 mkdir -p "$LOGS_DIR"
-
-# Create/clear logfile with timestamp
 cat > "$LOGFILE" << EOF
 ================================================================================
 LM Studio Setup Log
@@ -51,17 +47,15 @@ Started: $(date '+%Y-%m-%d %H:%M:%S')
 ================================================================================
 EOF
 
-# Function to log messages to file and display them
 log_output() {
     local level="$1"
     shift
     local message="$*"
-
-    # Format for log file
+    if [ -n "$HOME" ]; then
+        message="${message//$HOME/~}"
+    fi
     local log_entry
     log_entry="[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message"
-
-    # Write to log file
     echo "$log_entry" >> "$LOGFILE"
 }
 
@@ -72,132 +66,26 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Detect the available system package manager
-detect_pkg_manager() {
-    if command -v apt-get >/dev/null 2>&1; then
-        echo "apt"
-    elif command -v dnf >/dev/null 2>&1; then
-        echo "dnf"
-    elif command -v pacman >/dev/null 2>&1; then
-        echo "pacman"
-    elif command -v zypper >/dev/null 2>&1; then
-        echo "zypper"
-    elif command -v apk >/dev/null 2>&1; then
-        echo "apk"
-    else
-        echo "unknown"
-    fi
-}
-
-# Install GTK3/GObject typelibs using the detected package manager.
-# Prints manual instructions and returns 1 if no supported manager found.
-install_gtk3_typelibs() {
-    local pkg_mgr
-    pkg_mgr="$(detect_pkg_manager)"
-    log_output "INFO" "Detected package manager: $pkg_mgr"
-    case "$pkg_mgr" in
-        apt)
-            sudo apt-get update
-            sudo apt-get install -y \
-                gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1
-            ;;
-        dnf)
-            sudo dnf install -y gtk3 libappindicator-gtk3
-            ;;
-        pacman)
-            sudo pacman -Sy --noconfirm gtk3 libayatana-appindicator
-            ;;
-        zypper)
-            sudo zypper install -y \
-                typelib-1_0-Gtk-3_0 libayatana-appindicator3-0_1
-            ;;
-        apk)
-            sudo apk add --no-cache gtk+3.0 gobject-introspection
-            ;;
-        *)
-            print_error "No supported package manager found."
-            print_info "Install GTK3/GObject typelibs manually:"
-            print_info \
-"  Debian/Ubuntu: sudo apt-get install gir1.2-gtk-3.0"
-            print_info \
-"                   gir1.2-ayatanaappindicator3-0.1"
-            print_info \
-"  Fedora/RHEL:   sudo dnf install gtk3 libappindicator-gtk3"
-            print_info \
-"  Arch Linux:    sudo pacman -S gtk3 libayatana-appindicator"
-            print_info \
-"  openSUSE:      sudo zypper install typelib-1_0-Gtk-3_0"
-            print_info \
-"  Alpine:        sudo apk add gtk+3.0 gobject-introspection"
-            return 1
-            ;;
-    esac
-}
-
-# Install Python 3 (with venv support) using the detected package manager.
-# Prints manual instructions and returns 1 if no supported manager found.
-install_python3() {
-    local pkg_mgr
-    pkg_mgr="$(detect_pkg_manager)"
-    log_output "INFO" "Detected package manager: $pkg_mgr"
-    case "$pkg_mgr" in
-        apt)
-            sudo apt-get update
-            sudo apt-get install -y python3 python3-venv python3-dev
-            ;;
-        dnf)
-            sudo dnf install -y python3 python3-devel
-            ;;
-        pacman)
-            sudo pacman -Sy --noconfirm python python-pip
-            ;;
-        zypper)
-            sudo zypper install -y python3 python3-devel
-            ;;
-        apk)
-            sudo apk add --no-cache python3 python3-dev py3-pip
-            ;;
-        *)
-            print_error "No supported package manager found."
-            print_info "Install Python 3 manually:"
-            print_info \
-"  Debian/Ubuntu: sudo apt-get install python3 python3-venv python3-dev"
-            print_info \
-"  Fedora/RHEL:   sudo dnf install python3 python3-devel"
-            print_info \
-"  Arch Linux:    sudo pacman -S python python-pip"
-            print_info \
-"  openSUSE:      sudo zypper install python3 python3-devel"
-            print_info \
-"  Alpine:        sudo apk add python3 python3-dev py3-pip"
-            return 1
-            ;;
-    esac
-}
-
-# Utility functions
 print_header() {
     local header="═══════════════════════════════════════"
-    echo -e "${BLUE}$header${NC}"
-    echo -e "${BLUE}$1${NC}"
-    echo -e "${BLUE}$header${NC}"
-
-    # Log without colors
+    printf '%b\n' "${BLUE}${header}${NC}"
+    printf '%b\n' "${BLUE}$1${NC}"
+    printf '%b\n' "${BLUE}${header}${NC}"
     log_output "INFO" "--- $1 ---"
 }
 
 print_step() {
-    echo -e "${GREEN}✓${NC} $1"
+    printf '%b %s\n' "${GREEN}✓${NC}" "$1"
     log_output "OK" "$1"
 }
 
 print_error() {
-    echo -e "${RED}✗${NC} $1"
+    printf '%b %s\n' "${RED}✗${NC}" "$1"
     log_output "ERROR" "$1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    printf '%b %s\n' "${YELLOW}⚠${NC}" "$1"
     log_output "WARN" "$1"
 }
 
@@ -210,7 +98,7 @@ ask_yes_no() {
     local prompt="$1"
     local response
     while true; do
-        read -p "$(echo -e "${YELLOW}""$prompt""${NC}" [y/n]: )" -r response
+        read -rp "$(printf '%b' "${YELLOW}${prompt}${NC} [y/n]: ")" response
         case "$response" in
             [yY][eE][sS]|[yY])
                 return 0
@@ -219,13 +107,13 @@ ask_yes_no() {
                 return 1
                 ;;
             *)
-                echo "Please answer y or n"
+                printf '%b
+' "Please answer y or n"
                 ;;
         esac
     done
 }
 
-# Check OS
 if [[ "$OSTYPE" != "linux"* ]]; then
     print_error "This script only works on Linux"
     exit 1
@@ -253,8 +141,6 @@ if command -v lms >/dev/null 2>&1 || [ -x "$HOME/.lmstudio/bin/lms" ]; then
     LMS_CLI=$(command -v lms 2>/dev/null || echo "$HOME/.lmstudio/bin/lms")
     echo "   Location: $LMS_CLI"
     log_output "INFO" "LM Studio daemon found at: $LMS_CLI"
-
-    # Log version if available
     if lms_version=$("$LMS_CLI" --version 2>&1); then
         log_output "INFO" "LM Studio daemon version: $lms_version"
     fi
@@ -303,8 +189,7 @@ log_output "INFO" "Step 2: Checking for LM Studio desktop app"
 FOUND_PKG=false
 APP_INSTALLED=false
 
-# Check for a natively-installed LM Studio package (any distro)
-if command -v dpkg >/dev/null 2>&1 && dpkg -l | grep -q lm-studio 2>/dev/null; then
+if dpkg -l | grep -q lm-studio; then
     print_step "LM Studio desktop app found (deb package)"
     log_output "INFO" "LM Studio desktop app installed via deb package"
     APP_INSTALLED=true
@@ -321,7 +206,6 @@ elif command -v pacman >/dev/null 2>&1 && pacman -Qi lm-studio >/dev/null 2>&1; 
     FOUND_PKG=true
 fi
 
-# Check for App Image in common locations (including current script directory)
 log_output "DEBUG" "Searching for AppImage in common locations"
 for appimage_path in "$SCRIPT_DIR" "$HOME/LM_Studio" "$HOME/Applications" "$HOME/.local/bin" "$HOME/Apps" "/opt/lm-studio"; do
     if [ -d "$appimage_path" ]; then
@@ -469,26 +353,29 @@ fi
 # ============================================================================
 
 check_gtk_typelibs() {
-    # try importing via system Python; this covers most cases and avoids hard
-    # coding paths. if python3 is missing, fall back to file existence tests.
     if command -v python3 >/dev/null 2>&1; then
         python3 - <<'PYCODE' >/dev/null 2>&1
 import gi
 try:
     gi.require_version("Gtk", "3.0")
+    # indicator namespace may be either AyatanaAppIndicator3 or AppIndicator3
+    try:
+        gi.require_version("AyatanaAppIndicator3", "0.1")
+    except ValueError:
+        gi.require_version("AppIndicator3", "0.1")
     from gi.repository import Gtk
 except Exception:
     raise
 PYCODE
         return $?
     fi
-
-    # fallback: check for typelib files directly
-    for lib in "/usr/lib/girepository-1.0/Gtk-3.0.typelib" "/usr/lib/girepository-1.0/AyatanaAppIndicator3-0.1.typelib"; do
-        if [ ! -f "$lib" ]; then
-            return 1
-        fi
-    done
+    if [ ! -f "/usr/lib/girepository-1.0/Gtk-3.0.typelib" ]; then
+        return 1
+    fi
+    if [ ! -f "/usr/lib/girepository-1.0/AyatanaAppIndicator3-0.1.typelib" ] && \
+       [ ! -f "/usr/lib/girepository-1.0/AppIndicator3-0.1.typelib" ]; then
+        return 1
+    fi
     return 0
 }
 
@@ -503,18 +390,24 @@ else
     print_warning "GTK3/GObject typelibs not found"
     log_output "WARN" "GTK3/GObject typelibs missing"
     echo ""
-    print_info \
-"The application requires GTK3/GObject typelibs (e.g. gir1.2-gtk-3.0)."
+    print_info "The application requires GTK3/GObject typelibs (gir1.2-gtk-3.0),"
+    print_info "an AppIndicator3 typelib (gir1.2-ayatanaappindicator3-0.1 or the"
+    print_info "equivalent package for your distribution), and the Python3 GObject"
+    print_info "bindings package (python3-gi)."
     if [ "$DRY_RUN" = "1" ]; then
-        print_info \
-"[DRY-RUN] Would install GTK3 typelibs via $(detect_pkg_manager)"
-        log_output "INFO" "DRY-RUN: GTK typelibs installation skipped"
+        print_info "[DRY-RUN] Would install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 python3-gi"
+        log_output "INFO" "DRY-RUN: GTK typelibs and python3-gi installation skipped"
     else
-        if ask_yes_no "Install required GTK3 packages now?"; then
-            log_output "INFO" "User chose to install GTK3 typelibs"
-            if install_gtk3_typelibs; then
-                print_step "GTK3 typelibs installed successfully"
-                log_output "INFO" "GTK3 typelibs installed successfully"
+        if ask_yes_no "Install required GTK3, AppIndicator, and python3-gi packages now?"; then
+            log_output "INFO" "User chose to install GTK3 typelibs and python3-gi"
+            echo "Updating package manager..."
+            log_output "INFO" "Running apt update"
+            sudo apt update
+            echo "Installing GTK3, AppIndicator typelibs, and python3-gi..."
+            log_output "INFO" "Installing packages: gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 python3-gi"
+            if sudo apt install -y gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 python3-gi; then
+                print_step "GTK3 typelibs and python3-gi installed successfully"
+                log_output "INFO" "GTK3 typelibs and python3-gi installed successfully"
             else
                 print_error "Failed to install GTK3 typelibs"
                 log_output "ERROR" "GTK3 typelibs installation failed"
@@ -530,55 +423,89 @@ else
 fi
 
 # ============================================================================
-# 5. Check Python 3 (only for Python package releases)
+# 5. Check Python + PyGObject compatibility (only for Python package releases)
 # ============================================================================
 if [ "$BINARY_RELEASE" = false ]; then
-    echo -e "\n${BLUE}Step 5: Checking Python 3${NC}"
-    log_output "INFO" "Step 5: Checking for Python 3"
+    echo -e "\n${BLUE}Step 5: Checking Python + PyGObject compatibility${NC}"
+    log_output "INFO" "Step 5: Looking for Python interpreter with working gi"
 
-    # Use python3.12 if available, otherwise fall back to python3,
-    # mirroring build.sh behaviour.
-    if command -v python3.12 >/dev/null 2>&1; then
-        PYTHON_BIN="python3.12"
-    elif command -v python3 >/dev/null 2>&1; then
-        PYTHON_BIN="python3"
-    else
-        PYTHON_BIN=""
-    fi
+    PYTHON_PATH=""
+    for candidate in \
+        python3 \
+        python3.13 python3.12 python3.11 python3.10 \
+        python3.9 python3.8
+    do
+        if ! command -v "$candidate" >/dev/null 2>&1; then
+            continue
+        fi
 
-    if [ -n "$PYTHON_BIN" ]; then
-        print_step "Python 3 found: $PYTHON_BIN"
-        PYTHON_VERSION=$("$PYTHON_BIN" --version)
+        CANDIDATE_PATH=$(command -v "$candidate")
+        if "$CANDIDATE_PATH" - <<'PYCODE' >/dev/null 2>&1
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk  # noqa: F401
+PYCODE
+        then
+            PYTHON_PATH="$CANDIDATE_PATH"
+            break
+        fi
+    done
+
+    if [ -n "$PYTHON_PATH" ]; then
+        PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
+        print_step "Compatible Python interpreter found"
         echo "   $PYTHON_VERSION"
-        log_output "INFO" "Python found: $PYTHON_BIN ($PYTHON_VERSION)"
-        python_path=$(command -v "$PYTHON_BIN")
-        log_output "INFO" "Python location: $python_path"
+        echo "   Path: $PYTHON_PATH"
+        log_output "INFO" "Compatible interpreter: $PYTHON_VERSION ($PYTHON_PATH)"
     else
-        print_warning "Python 3 not found"
-        log_output "WARN" "No Python 3 interpreter found in PATH"
+        print_warning "No Python interpreter with working PyGObject found"
+        log_output "WARN" "No interpreter with successful gi import"
         echo ""
-        echo "Python 3 is required."
+        print_info "No installed Python on this system can currently import gi."
+        print_info "The setup needs a Python interpreter with GTK3/PyGObject support."
+
         if [ "$DRY_RUN" = "1" ]; then
-            print_info \
-"[DRY-RUN] Would install Python 3 via $(detect_pkg_manager)"
-            log_output "INFO" "DRY-RUN: Would install Python 3 packages"
-            PYTHON_BIN="python3"
+            print_info "[DRY-RUN] Would install: python3 python3-venv python3-gi"
+            print_info "[DRY-RUN] Would then re-check gi import with python3"
+            log_output "INFO" "DRY-RUN: Would install python3/python3-venv/python3-gi"
         else
-            if ask_yes_no "Would you like to install Python 3?"; then
-                log_output "INFO" "User accepted Python 3 installation"
-                if install_python3; then
-                    print_step "Python 3 installed successfully"
-                    log_output "INFO" "Python 3 packages installed successfully"
-                    PYTHON_BIN="python3"
+            if ask_yes_no "Install python3, python3-venv and python3-gi now?"; then
+                log_output "INFO" "User accepted Python + PyGObject installation"
+                echo "Updating package manager..."
+                log_output "INFO" "Running apt update"
+                sudo apt update
+                echo "Installing python3, python3-venv and python3-gi..."
+                log_output "INFO" "Installing packages: python3 python3-venv python3-gi"
+                if ! sudo apt install -y python3 python3-venv python3-gi; then
+                    print_error "Failed to install Python/PyGObject packages"
+                    log_output "ERROR" "apt install failed for python3 python3-venv python3-gi"
+                    exit 1
+                fi
+
+                if command -v python3 >/dev/null 2>&1 && \
+                   python3 - <<'PYCODE' >/dev/null 2>&1
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk  # noqa: F401
+PYCODE
+                then
+                    PYTHON_PATH=$(command -v python3)
+                    PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
+                    print_step "Compatible Python interpreter installed"
+                    echo "   $PYTHON_VERSION"
+                    echo "   Path: $PYTHON_PATH"
+                    log_output "INFO" "Interpreter installed and validated: $PYTHON_VERSION ($PYTHON_PATH)"
                 else
-                    print_error "Failed to install Python 3"
-                    log_output "ERROR" "Python 3 installation failed"
+                    print_error "python3 was installed, but gi import still fails"
+                    print_info "Use binary release or install matching PyGObject packages"
+                    print_info "for one local Python interpreter, then run setup again."
+                    log_output "ERROR" "Post-install gi validation failed"
                     exit 1
                 fi
             else
-                log_output "ERROR" \
-"User declined Python 3 installation - setup cancelled"
-                print_error "Python 3 is required. Setup cancelled."
+                print_error "A Python interpreter with working PyGObject is required."
+                print_info "Alternatively, use the binary release without Python setup."
+                log_output "ERROR" "User declined Python/PyGObject installation"
                 exit 1
             fi
         fi
@@ -586,7 +513,7 @@ if [ "$BINARY_RELEASE" = false ]; then
 fi
 
 # ============================================================================
-# 5. Create Python Virtual Environment (only for Python package)
+# 6. Create Python Virtual Environment (only for Python package)
 # ============================================================================
 if [ "$BINARY_RELEASE" = false ]; then
     echo -e "\n${BLUE}Step 6: Creating Python Virtual Environment${NC}"
@@ -597,7 +524,7 @@ if [ "$BINARY_RELEASE" = false ]; then
             print_info "[DRY-RUN] Would remove existing venv: $VENV_DIR"
             log_output "INFO" "DRY-RUN: Would remove existing venv at $VENV_DIR"
         fi
-        print_info "[DRY-RUN] Would create venv: $PYTHON_BIN -m venv --system-site-packages $VENV_DIR"
+        print_info "[DRY-RUN] Would create venv: ${PYTHON_PATH:-python3} -m venv --system-site-packages $VENV_DIR"
         print_info "[DRY-RUN] Would upgrade pip/setuptools in venv"
         log_output "INFO" "DRY-RUN: Would create venv and upgrade pip/setuptools"
         print_step "Dry-run: venv step simulated"
@@ -606,7 +533,6 @@ if [ "$BINARY_RELEASE" = false ]; then
             print_warning "Removing existing venv..."
             log_output "WARN" "Existing venv found at $VENV_DIR - removing"
 
-            # Safety check: refuse to remove dangerous paths
             case "$VENV_DIR" in
                 ""|"/"|"."|".." )
                     print_error "Refusing to remove unsafe venv path: '$VENV_DIR'"
@@ -615,7 +541,6 @@ if [ "$BINARY_RELEASE" = false ]; then
                     ;;
             esac
 
-            # Ensure venv dir is under the script directory
             VENV_ABS="$(cd "$SCRIPT_DIR" && cd "$VENV_DIR" 2>/dev/null && pwd -P)"
             SCRIPT_ABS="$(cd "$SCRIPT_DIR" && pwd -P)"
             log_output "DEBUG" "Venv absolute path: $VENV_ABS"
@@ -640,7 +565,7 @@ if [ "$BINARY_RELEASE" = false ]; then
 
         echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
         log_output "INFO" "Creating Python venv at $VENV_DIR with system-site-packages"
-        if "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"; then
+        if "${PYTHON_PATH:-python3}" -m venv --system-site-packages "$VENV_DIR"; then
             print_step "Virtual environment created"
             log_output "INFO" "Virtual environment created successfully at $VENV_DIR"
         else
@@ -649,7 +574,6 @@ if [ "$BINARY_RELEASE" = false ]; then
             exit 1
         fi
 
-        # Upgrade pip and setuptools
         print_info "Upgrading pip and setuptools..."
         log_output "INFO" "Upgrading pip and setuptools in venv"
         if "$VENV_DIR/bin/python3" -m pip install --upgrade pip setuptools >/dev/null 2>&1; then
@@ -660,15 +584,29 @@ if [ "$BINARY_RELEASE" = false ]; then
             print_warning "Could not upgrade pip/setuptools (may continue anyway)"
             log_output "WARN" "Failed to upgrade pip/setuptools - continuing anyway"
         fi
+
+        if "$VENV_DIR/bin/python3" - <<'PYCODE' >/dev/null 2>&1
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk  # noqa: F401
+PYCODE
+        then
+            print_step "Verified: gi import works in venv"
+            log_output "INFO" "gi import test succeeded in venv"
+        else
+            print_error "gi import fails in venv despite compatible system interpreter"
+            log_output "ERROR" "gi import test failed in venv"
+            exit 1
+        fi
     fi
 else
-    echo -e "\n${BLUE}Step 5: Python Virtual Environment${NC}"
+    echo -e "\n${BLUE}Step 6: Python Virtual Environment${NC}"
     print_step "Skipped (using binary release)"
-    log_output "INFO" "Step 5: Skipped venv creation (binary release)"
+    log_output "INFO" "Step 6: Skipped venv creation (binary release)"
 fi
 
 # ============================================================================
-# 6. Summary
+# 7. Summary
 # ============================================================================
 echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
 if [ "$DRY_RUN" = "1" ]; then

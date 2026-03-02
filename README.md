@@ -5,7 +5,7 @@
 Automation scripts for LM Studio & llmster - to control and monitor the applications from the system tray.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![Python + gi](https://img.shields.io/badge/Python-gi_compatible-blue.svg)](https://www.python.org/downloads/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://www.linux.org/)
 [![LM Studio App v0.4.3+](https://img.shields.io/badge/LM_Studio_App-v0.4.3+-green.svg)](https://lmstudio.ai/download)
 [![llmster v0.0.3+](https://img.shields.io/badge/llmster-v0.0.3+-green.svg)](https://lmstudio.ai)
@@ -99,9 +99,9 @@ chmod +x setup.sh lmstudio_autostart.sh
 This setup script:
 
 - ✓ Checks for LM Studio daemon (llmster)
-- ✓ Checks for LM Studio desktop app - detects native packages or AppImage
-- ✓ Checks for Python 3 - installs via the detected package manager if missing
-- ✓ Creates a Python virtual environment with PyGObject/GTK3 support
+- ✓ Checks for LM Studio desktop app - intelligently detects .deb or AppImage
+- ✓ Checks for a Python interpreter with working PyGObject (`gi`)
+- ✓ Creates a virtual environment with the compatible interpreter
 
 **Verify:**
 
@@ -117,7 +117,7 @@ This setup script:
 
 - **LM Studio Daemon** (llmster v0.0.3+): Headless backend for model inference
 - **LM Studio Desktop App** (v0.4.3+): GUI frontend for model management and interaction
-- **Python 3** with PyGObject (for GTK3 system tray)
+- **Python with working PyGObject (`gi`)** for GTK3 system tray
 - Linux system with GNOME/GTK3 support (Pop!_OS, Ubuntu, Fedora, etc.)
 
 > ⚠️ **Linux only** – this project is designed for Linux desktops. Windows

@@ -187,7 +187,7 @@
                 <li><code>setup.sh</code> - One-time setup script to create Python virtual environment (see <a href="../README.md" target="_blank" rel="noopener">README.md</a>)</li>
                 <li><code>lmstudio_autostart.sh</code> - Bash script for automated daemon startup and model loading</li>
                 <li><code>lmstudio_tray.py</code> - Python script for system tray monitoring</li>
-                <li><code>build.sh</code> - Build script for a standalone tray binary (PyInstaller)</li>
+                <li><code>build.sh</code> - Build script for a standalone tray binary (PyInstaller); now checks for a C compiler and zlib development library, offering to install missing build tools automatically</li>
             </ul>
             <p>The <code>lmstudio_autostart.sh</code> script ensures the LM Studio daemon is running, waits for the API, optionally loads a model, and starts the tray monitor. When <code>dist/lmstudio-tray-manager</code> exists, the autostart script prefers the binary and forwards flags. The <code>lmstudio_tray.py</code> script provides a system tray icon for real-time monitoring and quick actions.</p>
             <p><strong>All log files are written to the <code>.logs/</code> directory</strong> for easy access and cleanup.</p>
@@ -204,8 +204,9 @@
                 <li>✓ Detect binary vs. Python release</li>
                 <li>✓ Verify GTK3/GObject typelibs and install if missing</li>
                 <li>✓ Create Python venv (if needed)</li>
-                <li>✓ Install Python 3.10 (if needed)</li>
+                <li>✓ Detect a Python interpreter with working <code>gi</code></li>
                 <li>✓ Log all operations to <code>.logs/setup.log</code></li>
+                <li>✓ Home directory paths are masked in logs for privacy</li>
             </ul>
             <p>After setup, run:</p>
             <pre><code># Binary release
@@ -265,11 +266,18 @@
         <section id="logging-troubleshooting">
             <h2>Logging & Troubleshooting</h2>
             <p>All logs are written to the <code>.logs/</code> directory:</p>
+            <p><strong>GLib schema error:</strong> if the binary aborts with a
+            "Settings schema... does not contain a key named 'antialiasing'"
+            message, install
+            <code>gsettings-desktop-schemas</code> or launch with
+            <code>GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas</code>. The
+            tray attempts to set this variable automatically on startup.</p>
             <ul>
                 <li><code>.logs/setup.log</code> - Setup script log</li>
                 <li><code>.logs/lmstudio_autostart.log</code> - Daemon startup log</li>
                 <li><code>.logs/lmstudio_tray.log</code> - Tray monitor log</li>
             </ul>
+            <p><em>Note: setup.log replaces `$HOME` with `~` to avoid exposing your home directory.</em></p>
 
             <h3>View Logs</h3>
             <pre><code>tail -f .logs/lmstudio_tray.log
@@ -358,6 +366,7 @@ EOF</code></pre>
                         <li>🟢 App is currently running</li>
                         <li>🟡 App is installed but not running (will start on click)</li>
                         <li>🔴 App not found (.deb or AppImage) - disabled</li>
+                        <li><em>AppImage launches automatically include <code>--no-sandbox</code> to avoid SUID sandbox errors.</em></li>
                     </ul>
                 </li>
                 <li><strong>🟢/🟡/🔴 Start LM Studio Daemon:</strong> Ensure daemon is running
@@ -436,7 +445,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     User["👤 User"]
                     Setup["<b>setup.sh</b><br/>Setup & Environment Checks<br/>(Shows context-specific commands)"]
                     Autostart["<b>lmstudio_autostart.sh</b><br/>Daemon Orchestration"]
-                    Build["<b>build.sh</b><br/>Builds standalone binary"]
+                    Build["<b>build.sh</b><br/>Builds standalone binary<br/>(requires C compiler + zlib dev)"]
                     TrayBin["<b>lmstudio-tray-manager</b><br/>Standalone tray binary"]
                     Tray["<b>lmstudio_tray.py</b><br/>GTK3 System Tray Monitor"]
                     Daemon["LM Studio Daemon<br/>(llmster)"]
@@ -470,15 +479,15 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     A["<b>setup.sh</b><br/>START"] --> B["Check LM Studio Daemon"]
                     B --> C["Check Desktop App"]
                     C --> X["Check GTK3/GObject typelibs"]
-                    X --> D["Check Python 3.10"]
+                    X --> D["Check Python + gi compatibility"]
                     D --> E{"Binary release<br/>detected?"}
                     E -->|Yes| F["✓ Binary Found"]
                     F --> G["Show Binary Commands"]
-                    G --> G1["📦 Using pre-built binary release<br/>./lmstudio-tray-manager --auto-start-daemon<br/>./lmstudio-tray-manager --gui<br/>./lmstudio-tray-manager --debug<br/>etc."]
+                    G --> G1["Using pre-built binary release<br/>./lmstudio-tray-manager --auto-start-daemon<br/>./lmstudio-tray-manager --gui<br/>./lmstudio-tray-manager --debug<br/>etc."]
                     G1 --> H["<b>END (Success)</b><br/>No venv needed"]
                     E -->|No| I["Python Release Detected"]
-                    I --> J{"Python 3.10<br/>installed?"}
-                    J -->|No| K["Install Python 3.10<br/>via apt"]
+                    I --> J{"Compatible Python<br/>with gi found?"}
+                    J -->|No| K["Install python3 + python3-gi<br/>via apt"]
                     J -->|Yes| L["Create venv<br/>(./venv)"]
                     K --> L
                     L --> M["Enable system-site-packages<br/>for GTK3/PyGObject"]
@@ -496,14 +505,15 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     B --> C{--gui flag?}
                     C -->|Yes| D[Stop daemon]
                     D --> E[Start LM Studio GUI]
-                    E --> L["Start tray monitor<br/>(binary preferred; passes --gui)"]
+                    E --> S[Sanitize runtime environment<br/>Remove Snap/GTK/Python vars]
+                    S --> L["Start tray monitor<br/>(binary preferred; passes --gui)"]
                     C -->|No| F[Start LM Studio daemon]
                     F --> G[Wait for API<br/>host:port<br/>configurable]
                     G --> H{Model specified?}
                     H -->|Yes| J[Load model via lms CLI]
                     H -->|No| K[Skip model loading]
-                    J --> L
-                    K --> L
+                    J --> S
+                    K --> S
                     L --> I["<b>END</b>"]
             </div>
 

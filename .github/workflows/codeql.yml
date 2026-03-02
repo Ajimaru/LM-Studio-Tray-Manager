@@ -9,6 +9,7 @@
 # the `language` matrix defined below to confirm you have the correct set of
 # supported CodeQL languages.
 #
+# Advanced CodeQL scanning workflow with scheduled and on-push runs
 name: "CodeQL Advanced"
 
 # limit permissions at the workflow level; avoid granting write-all

@@ -8,6 +8,7 @@ applyTo: '**'
 ## File Naming Conventions
 
 ❌ **NEVER use long file names** (max 50 chars including extension)
+
 - Use lowercase, underscores, descriptive but concise names
 - Example: `lmstudio_tray.py` ✅ vs `lmstudio_tray_manager_with_gtk3_integration_module.py` ❌
 
