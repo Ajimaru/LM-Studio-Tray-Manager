@@ -120,7 +120,10 @@ This setup script:
 - **Python with working PyGObject (`gi`)** for GTK3 system tray
 - Linux system with GNOME/GTK3 support (Pop!_OS, Ubuntu, Fedora, etc.)
 
-> ⚠️ **Linux only** – this project is designed for Linux desktops. Windows and macOS are not supported yet; the tray integration and setup scripts rely on GTK3 and Linux package formats.
+> ⚠️ **Linux only** – this project is designed for Linux desktops. Windows
+> and macOS are not supported yet; the tray integration relies on GTK3.
+> Package‑manager automation supports **apt, dnf, pacman, zypper, and apk**.
+> Other distros receive manual installation guidance.
 
 ## Quick Reference
 
