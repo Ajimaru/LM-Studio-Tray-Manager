@@ -31,6 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     file \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0 \
+    && ARCH="$(uname -m)" \
+    && curl -fsSL -o /usr/local/bin/appimagetool \
+       "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${ARCH}.AppImage" \
+    && chmod +x /usr/local/bin/appimagetool \
     && groupadd -r builder \
     && useradd -r -g builder -d /home/builder -s /sbin/nologin \
        -c "Non-root build user" builder \
@@ -144,12 +148,25 @@ RUN bash -c ' \
     fi; \
     cp -a "dist/lmstudio-tray-manager" "$STAGE_DIR_BIN/lmstudio-tray-manager"; \
     \
+    VERSION="${TAG#v}"; \
+    ARCH="$(uname -m)"; \
+    APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-${ARCH}.AppImage"; \
+    APPDIR="AppDir"; \
+    mkdir -p "${APPDIR}/usr/bin"; \
+    cp "dist/lmstudio-tray-manager" "${APPDIR}/usr/bin/"; \
+    printf "#!/bin/bash\nSELF=\"\$(readlink -f \"\$0\")\"\nAPPDIR=\"\$(dirname \"\$SELF\")\"\nexec \"\$APPDIR/usr/bin/lmstudio-tray-manager\" \"\$@\"\n" \
+      > "${APPDIR}/AppRun"; \
+    chmod +x "${APPDIR}/AppRun"; \
+    printf "[Desktop Entry]\nName=LM Studio Tray Manager\nExec=lmstudio-tray-manager\nIcon=lmstudio-tray-manager\nType=Application\nCategories=Utility;\n" \
+      > "${APPDIR}/lmstudio-tray-manager.desktop"; \
+    if [[ -f "assets/img/lmstudio-tray-manager.png" ]]; then \
+      cp "assets/img/lmstudio-tray-manager.png" "${APPDIR}/lmstudio-tray-manager.png"; \
+    fi; \
+    APPIMAGE_EXTRACT_AND_RUN=1 /usr/local/bin/appimagetool \
+      "${APPDIR}" "release/${APPIMAGE_NAME}"; \
+    \
     tar -czf "release/${PKG_NAME_SRC}.tar.gz" -C release "$PKG_NAME_SRC"; \
     tar -czf "release/${PKG_NAME_BIN}.tar.gz" -C release "$PKG_NAME_BIN"; \
-    \
-    if [[ -f "dist/$APPIMAGE_NAME" ]]; then \
-      cp -a "dist/$APPIMAGE_NAME" "release/$APPIMAGE_NAME"; \
-    fi; \
     \
     cd release && sha256sum *.tar.gz *.AppImage > SHA256SUMS.txt; \
     ls -lh *.tar.gz *.AppImage SHA256SUMS.txt \
