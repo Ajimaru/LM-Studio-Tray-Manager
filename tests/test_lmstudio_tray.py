@@ -7034,3 +7034,321 @@ def test_macos_stop_desktop_app_cooldown(macos_module, monkeypatch):
     )
     tray.stop_desktop_app(None)
     assert kills == []  # nosec B101
+
+
+def test_macos_tray_icon_init(macos_module, monkeypatch):
+    """MacOSTrayIcon.__init__ creates timers and initialises state."""
+    timers_started = []
+
+    class FakeTimer:
+        def __init__(self, cb, interval):
+            self.cb = cb
+            self.interval = interval
+            self.running = False
+
+        def start(self):
+            self.running = True
+            timers_started.append(self)
+
+    monkeypatch.setattr(macos_module._rumps_lib, "Timer", FakeTimer)
+    # Ensure no background threads actually run
+    monkeypatch.setattr(
+        macos_module,
+        "get_llmster_cmd",
+        lambda: None,
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "get_desktop_app_pids",
+        lambda: [],
+    )
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon,
+        "_APP_LOCATIONS",
+        [],
+    )
+    tray = macos_module.MacOSTrayIcon()
+    assert tray is not None  # nosec B101
+    # Three timers: status, update, initial-update
+    assert len(timers_started) == 3  # nosec B101
+    assert all(t.running for t in timers_started)  # nosec B101
+
+
+def test_macos_tray_icon_init_auto_start(macos_module, monkeypatch):
+    """MacOSTrayIcon.__init__ launches auto-start thread when flag is set."""
+    class FakeTimer:
+        def __init__(self, *_a):
+            pass
+        def start(self):
+            pass
+
+    monkeypatch.setattr(macos_module._rumps_lib, "Timer", FakeTimer)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    macos_module._AppState.AUTO_START_DAEMON = True
+    threads_started = []
+    original_thread = macos_module.threading.Thread
+
+    class FakeThread:
+        def __init__(self, target=None, daemon=True, name=""):
+            self.target = target
+            self.daemon = daemon
+            self.name = name
+
+        def start(self):
+            threads_started.append(self.name)
+
+    monkeypatch.setattr(macos_module.threading, "Thread", FakeThread)
+    try:
+        tray = macos_module.MacOSTrayIcon()
+        assert tray is not None  # nosec B101
+        assert any("auto-start" in n for n in threads_started)  # nosec B101
+    finally:
+        macos_module._AppState.AUTO_START_DAEMON = False
+        monkeypatch.setattr(macos_module.threading, "Thread", original_thread)
+
+
+def test_macos_tray_icon_init_gui_mode(macos_module, monkeypatch):
+    """MacOSTrayIcon.__init__ launches GUI thread when --gui is set."""
+    class FakeTimer:
+        def __init__(self, *_a):
+            pass
+        def start(self):
+            pass
+
+    monkeypatch.setattr(macos_module._rumps_lib, "Timer", FakeTimer)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    macos_module._AppState.GUI_MODE = True
+    threads_started = []
+
+    class FakeThread:
+        def __init__(self, target=None, daemon=True, name=""):
+            self.name = name
+
+        def start(self):
+            threads_started.append(self.name)
+
+    monkeypatch.setattr(macos_module.threading, "Thread", FakeThread)
+    try:
+        tray = macos_module.MacOSTrayIcon()
+        assert tray is not None  # nosec B101
+        assert any("auto-gui" in n for n in threads_started)  # nosec B101
+    finally:
+        macos_module._AppState.GUI_MODE = False
+
+
+def test_macos_start_daemon_thread_starts(macos_module, monkeypatch):
+    """start_daemon launches a thread when cooldown allows."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    called = []
+    monkeypatch.setattr(
+        tray, "_start_daemon_body", lambda: called.append(1)
+    )
+    tray.start_daemon(None)
+    assert called  # nosec B101
+
+
+def test_macos_stop_daemon_thread_starts(macos_module, monkeypatch):
+    """stop_daemon launches a thread when cooldown allows."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    called = []
+    monkeypatch.setattr(
+        tray, "_stop_daemon_body", lambda: called.append(1)
+    )
+    tray.stop_daemon(None)
+    assert called  # nosec B101
+
+
+def test_macos_start_desktop_app_thread_starts(
+    macos_module, monkeypatch
+):
+    """start_desktop_app launches a thread when cooldown allows."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    called = []
+    monkeypatch.setattr(
+        tray, "_start_desktop_app_body", lambda: called.append(1)
+    )
+    tray.start_desktop_app(None)
+    assert called  # nosec B101
+
+
+def test_macos_force_stop_llmster_oserror_ignored(
+    macos_module, monkeypatch
+):
+    """_force_stop_llmster silently ignores OSError from pkill."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_pkill_cmd", lambda: "/usr/bin/pkill"
+    )
+    call_count = [0]
+
+    def raise_oserror(cmd):
+        call_count[0] += 1
+        raise OSError("permission denied")
+
+    monkeypatch.setattr(macos_module, "_run_safe_command", raise_oserror)
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    # Should not raise despite OSError
+    tray._force_stop_llmster()  # noqa: SLF001
+    assert call_count[0] > 0  # nosec B101
+
+
+def test_macos_check_model_lms_ps_fail_api_false(
+    macos_module, monkeypatch
+):
+    """Sets INFO when lms ps errors and API reports no model."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "WARN"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=1, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(macos_module, "check_api_models", lambda: False)
+    tray.check_model()
+    assert tray.title == "ℹ️"  # nosec B101
+
+
+def test_macos_get_desktop_app_status_get_pids_error(
+    macos_module, monkeypatch
+):
+    """get_desktop_app_status handles OSError from get_desktop_app_pids."""
+    tray = _make_macos_tray(macos_module)
+
+    def raise_oserror():
+        raise OSError("no ps")
+
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", raise_oserror)
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    status = tray.get_desktop_app_status()
+    assert status == "not_found"  # nosec B101
+
+
+def test_macos_stop_desktop_app_kill_permission_error(
+    macos_module, monkeypatch
+):
+    """stop_desktop_app ignores PermissionError when killing process."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: [9999]
+    )
+
+    def raise_permerror(pid, sig):
+        raise PermissionError("not allowed")
+
+    monkeypatch.setattr(os, "kill", raise_permerror)
+    monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
+    # Should not raise
+    tray.stop_desktop_app(None)
+
+
+def test_macos_manual_check_updates_returns_when_notified(
+    macos_module, monkeypatch
+):
+    """manual_check_updates returns early when check_updates notifies."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "check_updates", lambda: True)
+    tray.manual_check_updates(None)
+    # No alert should have been shown since check_updates handled it
+    assert DummyRumpsModule._alerts == []  # nosec B101
+
+
+def test_run_macos_launches_tray(macos_module, monkeypatch, tmp_path):
+    """_run_macos sets up logging and calls MacOSTrayIcon().run()."""
+    ran = []
+
+    class FakeTimer:
+        def __init__(self, *_a):
+            pass
+        def start(self):
+            pass
+
+    monkeypatch.setattr(macos_module._rumps_lib, "Timer", FakeTimer)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    monkeypatch.setattr(
+        macos_module, "kill_existing_instances", lambda: None
+    )
+    monkeypatch.setattr(
+        macos_module, "get_app_version", lambda: "v1.0.0"
+    )
+    monkeypatch.setattr(
+        macos_module._AppState, "script_dir", str(tmp_path)
+    )
+
+    original_run = macos_module.MacOSTrayIcon.run
+
+    def fake_run(self):
+        ran.append(1)
+
+    monkeypatch.setattr(macos_module.MacOSTrayIcon, "run", fake_run)
+    try:
+        macos_module._run_macos(
+            SimpleNamespace(auto_start_daemon=False, gui=False)
+        )
+        assert ran  # nosec B101
+    finally:
+        monkeypatch.setattr(macos_module.MacOSTrayIcon, "run", original_run)
+
+
+def test_macos_start_daemon_body_attempt_oserror(
+    macos_module, monkeypatch
+):
+    """_start_daemon_body catches OSError during daemon start attempt."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+
+    def raise_oserror(_cmd):
+        raise OSError("exec failed")
+
+    monkeypatch.setattr(macos_module, "_run_safe_command", raise_oserror)
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    tray._start_daemon_body()  # noqa: SLF001
+    assert any(
+        "failed" in n[2].lower()
+        for n in DummyRumpsModule._notifications
+    )  # nosec B101
+
+
+def test_macos_build_daemon_attempts_llmster(macos_module, monkeypatch):
+    """_build_daemon_attempts uses llmster when lms is absent."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(
+        macos_module,
+        "get_llmster_cmd",
+        lambda: "/usr/local/bin/llmster",
+    )
+    start_attempts = tray._build_daemon_attempts("start")  # noqa: SLF001
+    stop_attempts = tray._build_daemon_attempts("stop")  # noqa: SLF001
+    assert len(start_attempts) > 0  # nosec B101
+    assert all(
+        a[0] == "/usr/local/bin/llmster" for a in start_attempts
+    )  # nosec B101
+    assert len(stop_attempts) > 0  # nosec B101
