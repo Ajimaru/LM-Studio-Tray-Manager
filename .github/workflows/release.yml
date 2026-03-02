@@ -38,9 +38,8 @@ jobs:
           CONTAINER_ID=$(docker create lmstudio-release:latest)
           trap "docker rm -f $CONTAINER_ID" EXIT
 
-          # Create dist directory and copy artifacts
-          mkdir -p dist
-          docker cp "$CONTAINER_ID":/app/dist/. dist/
+          # Copy artifacts from container
+          docker cp "$CONTAINER_ID":/app/dist dist
 
           echo "✅ Artifacts extracted to dist/"
           ls -lh dist/
