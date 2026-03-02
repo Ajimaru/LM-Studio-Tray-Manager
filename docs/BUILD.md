@@ -2,16 +2,20 @@
 
 This document describes how to build standalone releases of LM Studio Tray Manager.
 
-**For most users and distributions, the [AppImage release](#appimage-see-issue-62) is recommended.** It's self-contained with all dependencies included and requires no setup script. See [Alternative Approaches](#alternative-approaches) for other options.
+**For most users and distributions, the [AppImage release](#appimage-recommended---fully-portable) is recommended.** It's fully self-contained with Python, GTK3, all dependencies, and the application bundled together—truly portable across all Linux distributions. No setup script or system dependencies needed. See [AppImage (Recommended)](#appimage-recommended---fully-portable) for details.
 
 ## Table of Contents
 
 - [Building Binary Distribution](#building-binary-distribution)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
+    - [AppImage (Recommended) - Fully Portable](#appimage-recommended---fully-portable)
+    - [Binary (Build locally)](#binary-build-locally)
   - [Quick Start](#quick-start)
-    - [Automated Build (Recommended)](#automated-build-recommended)
-    - [Manual Build](#manual-build)
+    - [AppImage Build (Docker-based, Recommended)](#appimage-build-docker-based-recommended)
+    - [Automated Binary Build (Local)](#automated-binary-build-local)
+    - [Manual Binary Build](#manual-binary-build)
+    - [Docker AppImage Build (Alternative)](#docker-appimage-build-alternative)
   - [Requirements](#requirements)
     - [Build Dependencies](#build-dependencies)
     - [Python Packages](#python-packages)
@@ -32,26 +36,57 @@ This document describes how to build standalone releases of LM Studio Tray Manag
     - [Large Binary Size](#large-binary-size)
   - [Alternative Approaches](#alternative-approaches)
     - [Nuitka](#nuitka)
-    - [AppImage (see issue #62)](#appimage-see-issue-62)
+    - [AppImage (Recommended) - Fully Portable Release](#appimage-recommended---fully-portable-release)
     - [Rust Rewrite](#rust-rewrite)
   - [Support](#support)
   - [Next Steps](#next-steps)
 
 ## Overview
 
-The binary build process creates a single executable file that bundles:
+The project offers multiple build approaches with different portability levels:
+
+### AppImage (Recommended) - Fully Portable
+
+The AppImage release is the **most portable and recommended option**:
+
+- ✅ Bundles everything: Python, GTK3, GObject-Introspection, all libraries
+- ✅ Single executable file (~34 MB)
+- ✅ Works on virtually any modern Linux system
+- ✅ No setup script or system dependencies needed
+- ✅ Just `chmod +x` and run
+
+**Build method:** `Dockerfile.release` (Docker-based, recommended)
+
+### Binary (Build locally)
+
+For custom builds on your machine:
 
 - Python interpreter
-- All Python application code and Python dependencies (PyGObject, etc.)
+- All Python application code and PyGObject
 - Application assets (icons, VERSION file, etc.)
 
-**Note:** GTK3 and GObject Introspection (GI) shared libraries and typelibs are
-not bundled into the executable. They must be installed and available on
-the target system at runtime.
+**Note:** GTK3 and GObject Introspection (GI) shared libraries must be installed on the target system at runtime.
 
 ## Quick Start
 
-### Automated Build (Recommended)
+### AppImage Build (Docker-based, Recommended)
+
+For a fully portable AppImage with all dependencies bundled:
+
+```bash
+docker build -f Dockerfile.release -t lmstudio-release:latest .
+```
+
+This produces a 34 MB AppImage with:
+
+- Python 3.12
+- GTK3 runtime + all required libraries
+- GObject-Introspection + typelibs
+- Application code and assets
+
+**GitHub Actions:** The `release.yml` workflow automatically uses this method when you push a version tag.
+
+### Automated Binary Build (Local)
 
 ```bash
 chmod +x build.sh
@@ -67,7 +102,7 @@ This will:
 5. Strip debug symbols
 6. Show final binary size
 
-### Manual Build
+### Manual Binary Build
 
 ```bash
 # Install build dependencies (pinned versions)
@@ -78,6 +113,17 @@ python3 build_binary.py
 
 # Or build using spec file
 pyinstaller lmstudio-tray-manager.spec
+```
+
+### Docker AppImage Build (Alternative)
+
+For Windows/macOS developers without native Linux, use Docker:
+
+```bash
+docker build -f Dockerfile.release -t lmstudio-release:latest .
+docker create --name release-temp lmstudio-release:latest
+docker cp release-temp:/app/dist dist/
+docker rm release-temp
 ```
 
 ## Requirements
@@ -324,43 +370,90 @@ For smaller binaries or different requirements, consider:
 - Faster startup time
 - More complex build process
 
-### AppImage (see [issue #62](https://github.com/Ajimaru/LM-Studio-Tray-Manager/issues/62))
+### AppImage (Recommended) - Fully Portable Release
 
 **What is it?**
 
-- Standard Linux app format - truly portable across all distributions
-- Complete runtime environment bundled: Python, GTK3, all dependencies
+The AppImage is the **standard Linux application format** - truly portable across all distributions:
+
+- Standard Linux app format recognized by most desktop environments
+- Complete runtime environment bundled: Python, GTK3, GObject-Introspection, all libraries
 - Single executable file that's completely self-contained
-- Larger size (~26 MB) but truly universal compatibility
+- Just ~34 MB with all dependencies included
+- **Zero external dependencies** (except LM Studio daemon itself)
 
 **How is it different from Binary Release?**
 
-- **Binary Release:** Python + dependencies bundled, but requires system GTK3/GObject at runtime
-- **AppImage:** Everything bundled including GTK3 runtime - **zero external dependencies** (except LM Studio itself)
+| Aspect | Binary Release | AppImage |
+| --- | --- | --- |
+| Python | ✓ Bundled | ✓ Bundled |
+| PyGObject | ✓ Bundled | ✓ Bundled |
+| GTK3 Runtime | ✗ System dep | ✓ Bundled |
+| GI Typelibs | ✗ System dep | ✓ Bundled |
+| Size | 15-25 MB | 34 MB |
+| Setup needed | Yes (setup.sh) | No |
+| Portability | Medium | **Excellent** |
 
 **Key advantages:**
 
-- ✓ Works on any Linux distro without additional setup
+- ✓ Works on virtually any Linux distribution (2022+)
 - ✓ No `setup.sh` needed - just `chmod +x` and run
 - ✓ Better for distribution to end users
 - ✓ Self-contained: LM Studio daemon is the *only* external requirement
+- ✓ Works on systems where GTK3 isn't installed
 
-**Building:**
+**Building AppImage:**
+
+#### Option 1: Docker (Recommended)
 
 ```bash
-# Docker build (recommended)
-./build.sh  # Creates AppImage in release/ directory
+# Build AppImage using Dockerfile.release
+docker build -f Dockerfile.release -t lmstudio-release:latest .
+
+# Extract artifacts
+CONTAINER_ID=$(docker create lmstudio-release:latest)
+docker cp "$CONTAINER_ID":/app/dist/. dist/
+docker rm "$CONTAINER_ID"
+
+# Result: 34 MB AppImage with all dependencies
+ls -lh dist/*.AppImage
 ```
 
-**Using:**
+#### Option 2: GitHub Actions (Automatic)
+
+The `release.yml` workflow automatically builds AppImage using `Dockerfile.release` when you push a version tag:
+
+```bash
+git tag v0.6.1
+git push origin v0.6.1
+# → release.yml builds AppImage automatically
+```
+
+**Using AppImage:**
 
 ```bash
 chmod +x lmstudio-tray-manager-*.AppImage
 ./lmstudio-tray-manager-*.AppImage --auto-start-daemon
 ```
 
-**Note:** Chromium-based AppImages often fail to start due to an
-incorrectly configured SUID sandbox helper. The tray manager now
+**Linux Compatibility:**
+
+The AppImage works on most modern Linux systems with glibc ≥ 2.35 (released 2022):
+
+| Distribution | Version | Status | glibc |
+| --- | --- | --- | --- |
+| Ubuntu | 24.04, 23.10, 22.04 LTS | ✅ Full | ≥ 2.35 |
+| Debian | 12 (Bookworm), 11+ | ✅ Full | ≥ 2.36 |
+| Fedora | 39+ | ✅ Full | ≥ 2.38 |
+| openSUSE Leap | 15.5+ | ✅ Full | ≥ 2.35 |
+| Linux Mint | 21.x+ | ✅ Full | ≥ 2.35 |
+| Pop!_OS | 22.04+ | ✅ Full | ≥ 2.35 |
+| **Older systems** | < 2022 | ⚠️ May not work | < 2.35 |
+
+**For older Linux systems:** Use the source tarball with Python package release instead.
+
+**Note:** Chromium-based AppImages occasionally fail to start due to an
+incorrectly configured SUID sandbox helper. The tray manager
 automatically launches AppImages with `--no-sandbox` to work around this
 issue; otherwise you may need to run the AppImage manually with that flag.
 

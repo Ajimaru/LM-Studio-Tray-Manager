@@ -14,6 +14,26 @@ Automation scripts for LM Studio & llmster - to control and monitor the applicat
 
 ---
 
+## Table of Contents
+
+- [LM-Studio-Tray-Manager](#lm-studio-tray-manager)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Screenshots](#screenshots)
+  - [Getting Started](#getting-started)
+    - [User Installation (from Release)](#user-installation-from-release)
+      - [Path 0 (Recommended): AppImage](#path-0-recommended-appimage)
+      - [Path 1 : Binary release](#path-1--binary-release)
+      - [Path 2 : Python package](#path-2--python-package)
+  - [Requirements](#requirements)
+  - [Quick Reference](#quick-reference)
+  - [Troubleshooting](#troubleshooting)
+  - [Documentation](#documentation)
+  - [Security \& Community](#security--community)
+  - [Project Meta](#project-meta)
+  - [Official Resources](#official-resources)
+  - [License](#license)
+
 ## Features
 
 - **🖥️ System Tray Monitor**: GTK3 tray integration with live daemon/app controls and status transitions
@@ -50,6 +70,13 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 **Download:**
 
 - `lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage`
+
+**Why AppImage?**
+
+✅ **Fully self-contained** - No dependencies to install, no setup script needed  
+✅ **Portable** - Works on Ubuntu, Debian, Fedora, openSUSE, Linux Mint, and most other Linux distributions (2022+)  
+✅ **Universal** - Includes Python, GTK3, GObject-Introspection, and all required libraries  
+✅ **Simple** - Just `chmod +x` and run
 
 **Make executable and run directly:**
 

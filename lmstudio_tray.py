@@ -478,9 +478,20 @@ def main():
     if app_namespace is None:
         print(
             "Error: could not find a suitable AppIndicator3 namespace "
-            "(tried AyatanaAppIndicator3 and AppIndicator3).\n"
-            "Please install the gir1.2-ayatanaappindicator3-0.1 package "
-            "or the equivalent for your distribution.",
+            "(tried AyatanaAppIndicator3 and AppIndicator3).",
+            file=sys.stderr,
+        )
+        print(
+            "Please install the required packages for your distribution.",
+            file=sys.stderr,
+        )
+        print(
+            "See installation instructions at:",
+            file=sys.stderr,
+        )
+        print(
+            "https://github.com/Ajimaru/LM-Studio-Tray-Manager/"
+            "blob/main/docs/SETUP.md",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -499,6 +510,7 @@ def main():
         app_indicator_module,
         gdk_pixbuf_module,
     )
+
     logs_dir = _get_writable_logs_dir(_AppState.script_dir)
     log_level = (
         logging.DEBUG if _AppState.DEBUG_MODE else logging.INFO
@@ -528,6 +540,18 @@ def main():
 
     if _AppState.DEBUG_MODE:
         logging.captureWarnings(True)
+
+    app_indicator_module = importlib.import_module(
+        f"gi.repository.{app_namespace}"
+    )
+    _AppState.set_gtk_modules(
+        gtk_module,
+        glib_module,
+        app_indicator_module,
+        gdk_pixbuf_module,
+    )
+
+    if _AppState.DEBUG_MODE:
         warnings_logger = logging.getLogger('py.warnings')
         warnings_logger.setLevel(logging.DEBUG)
         logging.debug(

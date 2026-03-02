@@ -29,171 +29,47 @@ jobs:
             exit 1
           fi
 
-      - name: Install binary build dependencies
+      - name: Build release artifacts using Docker (Dockerfile.release)
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y \
-            bc \
-            pkg-config \
-            python3.12 \
-            python3.12-venv \
-            python3.12-dev \
-            python3-gi \
-            gobject-introspection \
-            gir1.2-gtk-3.0 \
-            gir1.2-ayatanaappindicator3-0.1 \
-            libgirepository1.0-dev
+          docker build -f Dockerfile.release -t lmstudio-release:latest .
 
-      - name: Build standalone binary
+          # Extract artifacts from Docker image
+          CONTAINER_ID=$(docker create lmstudio-release:latest)
+          trap "docker rm -f $CONTAINER_ID" EXIT
+
+          # Create dist directory and copy artifacts
+          mkdir -p dist
+          docker cp "$CONTAINER_ID":/app/dist/. dist/
+
+          echo "✅ Artifacts extracted to dist/"
+          ls -lh dist/
+
+      - name: Verify release artifacts
         run: |
           set -euo pipefail
-          mkdir -p .build-cache
-          ./build.sh
-          if [[ ! -f "dist/lmstudio-tray-manager" ]]; then
-            echo "Binary missing after build"
-            exit 1
-          fi
-          cp -a "dist/lmstudio-tray-manager" ".build-cache/lmstudio-tray-manager"
-
-      - name: Build AppImage
-        run: |
-          set -euo pipefail
-
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
-          APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage"
 
-          # Download appimagetool (run without FUSE via APPIMAGE_EXTRACT_AND_RUN)
-          curl -fsSL -o /tmp/appimagetool \
-            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x /tmp/appimagetool
+          # Verify all expected artifacts exist
+          APPIMAGE="dist/lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage"
+          SOURCE_TAR="dist/lmstudio-tray-manager-${VERSION}-linux-x86_64.tar.gz"
+          BINARY_TAR="dist/lmstudio-tray-manager-${VERSION}-linux-x86_64-binary.tar.gz"
+          CHECKSUMS="dist/SHA256SUMS.txt"
 
-          # Build AppDir structure
-          APPDIR="$(mktemp -d)/AppDir"
-          mkdir -p "$APPDIR"
+          echo "Verifying artifacts..."
+          [[ -f "$APPIMAGE" ]] || { echo "❌ AppImage missing: $APPIMAGE"; exit 1; }
+          [[ -f "$SOURCE_TAR" ]] || { echo "❌ Source tarball missing: $SOURCE_TAR"; exit 1; }
+          [[ -f "$BINARY_TAR" ]] || { echo "❌ Binary tarball missing: $BINARY_TAR"; exit 1; }
+          [[ -f "$CHECKSUMS" ]] || { echo "❌ Checksums missing: $CHECKSUMS"; exit 1; }
 
-          # Copy the self-contained binary
-          cp -a ".build-cache/lmstudio-tray-manager" "$APPDIR/lmstudio-tray-manager"
-          chmod +x "$APPDIR/lmstudio-tray-manager"
-
-          # AppRun launcher (printf avoids heredoc column-1 YAML conflicts)
-          printf '%s\n' '#!/usr/bin/env bash' \
-            'APPDIR="$(dirname "$(readlink -f "$0")")"' \
-            'exec "$APPDIR/lmstudio-tray-manager" "$@"' \
-            > "$APPDIR/AppRun"
-          chmod +x "$APPDIR/AppRun"
-
-          # Desktop entry (required by AppImage spec)
-          printf '%s\n' '[Desktop Entry]' \
-            'Name=LM Studio Tray Manager' \
-            'Exec=lmstudio-tray-manager' \
-            'Icon=lmstudio-tray-manager' \
-            'Type=Application' \
-            'Categories=Utility;' \
-            > "$APPDIR/lmstudio-tray-manager.desktop"
-
-          # Icon (required by AppImage spec)
-          cp "assets/img/lm-studio-tray-manager.png" \
-            "$APPDIR/lmstudio-tray-manager.png"
-
-          # Build AppImage (no FUSE needed in CI)
-          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 \
-            /tmp/appimagetool "$APPDIR" ".build-cache/$APPIMAGE_NAME"
-
-          echo "AppImage built: $APPIMAGE_NAME"
-
-      - name: Prepare release packages
-        run: |
-          set -euo pipefail
-
-          TAG="${GITHUB_REF_NAME}"
-          # strip leading 'v' for version string and construct lowercase names
-          VERSION="${TAG#v}"
-          PKG_NAME_SRC="lmstudio-tray-manager-${VERSION}-linux-x86_64"
-          PKG_NAME_BIN="${PKG_NAME_SRC}-binary"
-          STAGE_DIR_SRC="dist/${PKG_NAME_SRC}"
-          STAGE_DIR_BIN="dist/${PKG_NAME_BIN}"
-          APPIMAGE_NAME="${PKG_NAME_SRC}.AppImage"
-
-          rm -rf dist
-          mkdir -p "$STAGE_DIR_SRC" "$STAGE_DIR_BIN"
-
-          FILES=(
-            "lmstudio_autostart.sh"
-            "lmstudio_tray.py"
-            "setup.sh"
-            "README.md"
-            "LICENSE"
-            "AUTHORS"
-            "VERSION"
-          )
-
-          for file in "${FILES[@]}"; do
-            if [[ -f "$file" ]]; then
-              mkdir -p "$STAGE_DIR_SRC/$(dirname "$file")"
-              cp -a "$file" "$STAGE_DIR_SRC/$file"
-            fi
-          done
-
-          if [[ -d "docs" ]]; then
-            mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"
-            cp -a docs/* "$STAGE_DIR_SRC/docs/"
-            cp -a docs/* "$STAGE_DIR_BIN/docs/"
-          fi
-
-          # Copy assets to both packages
-          if [[ -d "assets" ]]; then
-            cp -a "assets" "$STAGE_DIR_SRC/assets"
-            cp -a "assets" "$STAGE_DIR_BIN/assets"
-          fi
-
-          BIN_FILES=()
-          for file in "${FILES[@]}"; do
-            if [[ "$file" != "lmstudio_tray.py" ]] && [[ "$file" != "lmstudio_autostart.sh" ]]; then
-              BIN_FILES+=("$file")
-            fi
-          done
-
-          for file in "${BIN_FILES[@]}"; do
-            if [[ -f "$file" ]]; then
-              mkdir -p "$STAGE_DIR_BIN/$(dirname "$file")"
-              cp -a "$file" "$STAGE_DIR_BIN/$file"
-            fi
-          done
-
-          if [[ ! -f ".build-cache/lmstudio-tray-manager" ]]; then
-            echo "Error: Binary not found at .build-cache/lmstudio-tray-manager"
-            exit 1
-          fi
-          cp -a ".build-cache/lmstudio-tray-manager" \
-            "$STAGE_DIR_BIN/lmstudio-tray-manager"
-
-          # Copy AppImage as a standalone release artifact
-          if [[ ! -f ".build-cache/$APPIMAGE_NAME" ]]; then
-            echo "Error: AppImage not found at .build-cache/$APPIMAGE_NAME"
-            exit 1
-          fi
-          cp -a ".build-cache/$APPIMAGE_NAME" "dist/$APPIMAGE_NAME"
-
-      - name: Create archives
-        run: |
-          set -euo pipefail
-
-          TAG="${GITHUB_REF_NAME}"
-          # match names used earlier (lowercase, include platform)
-          VERSION="${TAG#v}"
-          PKG_NAME_SRC="lmstudio-tray-manager-${VERSION}-linux-x86_64"
-          PKG_NAME_BIN="${PKG_NAME_SRC}-binary"
-
-          tar -czf "dist/${PKG_NAME_SRC}.tar.gz" -C dist "$PKG_NAME_SRC"
-          tar -czf "dist/${PKG_NAME_BIN}.tar.gz" -C dist "$PKG_NAME_BIN"
-
-      - name: Generate checksums
-        run: |
-          set -euo pipefail
-          cd dist
-          sha256sum *.tar.gz *.AppImage > SHA256SUMS.txt
+          echo "✅ All artifacts present"
+          echo
+          echo "Checksums:"
+          cat "$CHECKSUMS"
+          echo
+          echo "Artifact sizes:"
+          ls -lh "$APPIMAGE" "$SOURCE_TAR" "$BINARY_TAR" | awk '{print $9, "("$5")"}'
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
