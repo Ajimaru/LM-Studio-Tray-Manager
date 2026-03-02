@@ -4,6 +4,7 @@ FROM ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
+# Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bc \
     build-essential \
@@ -30,150 +31,175 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tar \
     gzip \
     file \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0 \
-    && ARCH="$(uname -m)" \
-    && curl -fsSL -o /usr/local/bin/appimagetool \
-       "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${ARCH}.AppImage" \
-    && chmod +x /usr/local/bin/appimagetool \
-    && groupadd -r builder \
-    && useradd -r -g builder -d /home/builder -s /sbin/nologin \
-       -c "Non-root build user" builder \
-    && mkdir -p /home/builder \
-    && chown -R builder:builder /home/builder
+    && rm -rf /var/lib/apt/lists/*
 
-# Download appimagetool as root before switching to builder user
+# Download appimagetool
 RUN curl -fsSL -o /usr/local/bin/appimagetool \
     https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
     && chmod +x /usr/local/bin/appimagetool
+
+# Create non-root user
+RUN groupadd -r builder \
+    && useradd -r -g builder -d /home/builder -m builder
 
 ENV PYTHON=/usr/bin/python3.12
 
 WORKDIR /workspace
 RUN chown builder:builder /workspace
 
-COPY . .
-RUN chown -R builder:builder /workspace
+# Copy project files
+COPY --chown=builder:builder . .
 
-# Build the binary
+# Build as non-root user
 USER builder
-RUN ./build.sh
 
-# Build AppImage
-RUN bash -c ' \
-    set -euo pipefail; \
+# Step 1: Build the PyInstaller binary
+RUN echo "=== Building PyInstaller binary ===" \
+    && bash -c 'set -e; \
+    python3.12 -m venv --system-site-packages venv; \
+    source venv/bin/activate; \
+    python3.12 -m pip install --upgrade pip setuptools wheel; \
+    python3.12 -m pip install -r requirements-build.txt; \
+    python3.12 -m PyInstaller \
+      --onefile \
+      --name=lmstudio-tray-manager \
+      --clean \
+      --hidden-import gi \
+      --hidden-import gi.repository \
+      --hidden-import gi.repository.Gtk \
+      --hidden-import gi.repository.GLib \
+      --hidden-import gi.repository.GObject \
+      --hidden-import gi.repository.Gio \
+      --hidden-import gi.repository.Gdk \
+      --hidden-import gi.repository.GdkPixbuf \
+      --hidden-import gi.repository.Pango \
+      --hidden-import gi.repository.PangoCairo \
+      --hidden-import gi.repository.AyatanaAppIndicator3 \
+      --hidden-import gi.repository.AppIndicator3 \
+      --hidden-import gi.repository.cairo \
+      --hidden-import cairo \
+      --add-data VERSION:. \
+      --add-data AUTHORS:. \
+      --add-data assets:assets \
+      lmstudio_tray.py; \
+    ls -lh dist/lmstudio-tray-manager; \
+    file dist/lmstudio-tray-manager'
+
+# Step 2: Prepare release directories and copy source files
+RUN bash -c 'set -e; \
     TAG=$(cat VERSION); \
     VERSION="${TAG#v}"; \
-    APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage"; \
-    APPDIR="$(mktemp -d)/AppDir"; \
-    mkdir -p "$APPDIR"; \
-    cp -a "dist/lmstudio-tray-manager" "$APPDIR/lmstudio-tray-manager"; \
-    cp -a "VERSION" "$APPDIR/VERSION"; \
-    chmod +x "$APPDIR/lmstudio-tray-manager"; \
-    printf "%s\n" "#!/usr/bin/env bash" \
-        "APPDIR=\"\$(dirname \"\$(readlink -f \"\$0\")\")\""  \
-        "exec \"\$APPDIR/lmstudio-tray-manager\" \"\$@\"" \
-        > "$APPDIR/AppRun"; \
-    chmod +x "$APPDIR/AppRun"; \
-    printf "%s\n" "[Desktop Entry]" \
-        "Name=LM Studio Tray Manager" \
-        "Exec=lmstudio-tray-manager" \
-        "Icon=lmstudio-tray-manager" \
-        "Type=Application" \
-        "Categories=Utility;" \
-        > "$APPDIR/lmstudio-tray-manager.desktop"; \
-    cp "assets/img/lm-studio-tray-manager.png" \
-        "$APPDIR/lmstudio-tray-manager.png"; \
-    ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 \
-        /usr/local/bin/appimagetool "$APPDIR" "dist/$APPIMAGE_NAME"; \
-    echo "AppImage built: $APPIMAGE_NAME" \
-'
-
-# Prepare release packages
-RUN bash -c ' \
-    set -euo pipefail; \
-    TAG=$(cat VERSION); \
-    VERSION="${TAG#v}"; \
-    echo "Build version: ${TAG}"; \
+    echo "=== Preparing release for version ${VERSION} ==="; \
     PKG_NAME_SRC="lmstudio-tray-manager-${VERSION}-linux-x86_64"; \
     PKG_NAME_BIN="${PKG_NAME_SRC}-binary"; \
-    APPIMAGE_NAME="${PKG_NAME_SRC}.AppImage"; \
     STAGE_DIR_SRC="release/${PKG_NAME_SRC}"; \
     STAGE_DIR_BIN="release/${PKG_NAME_BIN}"; \
-    \
-    rm -rf release; \
     mkdir -p "$STAGE_DIR_SRC" "$STAGE_DIR_BIN"; \
-    \
-    FILES=("lmstudio_autostart.sh" "lmstudio_tray.py" "setup.sh" "README.md" "LICENSE" "AUTHORS" "VERSION"); \
-    \
+    FILES=(lmstudio_autostart.sh lmstudio_tray.py setup.sh README.md LICENSE AUTHORS VERSION); \
     for file in "${FILES[@]}"; do \
-      if [[ ! -f "$file" ]]; then \
-        echo "Error: Required file missing: $file" >&2; \
-        exit 1; \
-      fi; \
-      mkdir -p "$STAGE_DIR_SRC/$(dirname "$file")"; \
-      cp -a "$file" "$STAGE_DIR_SRC/$file"; \
-      if [[ "$file" == *.sh ]]; then \
-        chmod 0755 "$STAGE_DIR_SRC/$file"; \
-      fi; \
+      cp -a "$file" "$STAGE_DIR_SRC/"; \
+      [[ "$file" == *.sh ]] && chmod +x "$STAGE_DIR_SRC/$file"; \
     done; \
-    \
-    if [[ -d "docs" ]]; then \
-      mkdir -p "$STAGE_DIR_SRC/docs" "$STAGE_DIR_BIN/docs"; \
-      cp -a docs/* "$STAGE_DIR_SRC/docs/"; \
-      cp -a docs/* "$STAGE_DIR_BIN/docs/"; \
-    fi; \
-    \
-    if [[ -d "assets" ]]; then \
-      cp -a "assets" "$STAGE_DIR_SRC/assets"; \
-      cp -a "assets" "$STAGE_DIR_BIN/assets"; \
-    fi; \
-    \
-    BIN_FILES=(); \
-    for file in "${FILES[@]}"; do \
-      if [[ "$file" != "lmstudio_tray.py" ]] && [[ "$file" != "lmstudio_autostart.sh" ]]; then \
-        BIN_FILES+=("$file"); \
-      fi; \
+    [[ -d docs ]] && cp -r docs "$STAGE_DIR_SRC/"; \
+    [[ -d assets ]] && cp -r assets "$STAGE_DIR_SRC/"; \
+    for file in setup.sh README.md LICENSE AUTHORS VERSION; do \
+      [[ -f "$file" ]] && cp -a "$file" "$STAGE_DIR_BIN/"; \
     done; \
-    \
-    for file in "${BIN_FILES[@]}"; do \
-      if [[ -f "$file" ]]; then \
-        mkdir -p "$STAGE_DIR_BIN/$(dirname "$file")"; \
-        cp -a "$file" "$STAGE_DIR_BIN/$file"; \
-      fi; \
-    done; \
-    \
-    if [[ ! -f "dist/lmstudio-tray-manager" ]]; then \
-      echo "Error: Binary not found"; \
-      exit 1; \
-    fi; \
-    cp -a "dist/lmstudio-tray-manager" "$STAGE_DIR_BIN/lmstudio-tray-manager"; \
-    \
+    [[ -d docs ]] && cp -r docs "$STAGE_DIR_BIN/"; \
+    [[ -d assets ]] && cp -r assets "$STAGE_DIR_BIN/"; \
+    cp dist/lmstudio-tray-manager "$STAGE_DIR_BIN/"; \
+    chmod +x "$STAGE_DIR_BIN/lmstudio-tray-manager"'
+
+# Step 3: Create AppImage with bundled GTK3/GI dependencies
+RUN bash -c 'set -e; \
+    TAG=$(cat VERSION); \
     VERSION="${TAG#v}"; \
-    ARCH="$(uname -m)"; \
-    APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-${ARCH}.AppImage"; \
+    ARCH=x86_64; \
+    APPIMAGE_NAME="lmstudio-tray-manager-${VERSION}-linux-${ARCH}.AppImage"; \
+    echo "=== Creating AppImage: ${APPIMAGE_NAME} ==="; \
     APPDIR="AppDir"; \
-    mkdir -p "${APPDIR}/usr/bin"; \
-    cp "dist/lmstudio-tray-manager" "${APPDIR}/usr/bin/"; \
-    cp "VERSION" "${APPDIR}/VERSION"; \
-    printf "#!/bin/bash\nSELF=\"\$(readlink -f \"\$0\")\"\nAPPDIR=\"\$(dirname \"\$SELF\")\"\nexec \"\$APPDIR/usr/bin/lmstudio-tray-manager\" \"\" \"\$APPDIR\" \"\$@\"\n" \
-      > "${APPDIR}/AppRun"; \
-    chmod +x "${APPDIR}/AppRun"; \
-    printf "[Desktop Entry]\nName=LM Studio Tray Manager\nExec=lmstudio-tray-manager\nIcon=lmstudio-tray-manager\nType=Application\nCategories=Utility;\n" \
-      > "${APPDIR}/lmstudio-tray-manager.desktop"; \
-    if [[ -f "assets/img/lmstudio-tray-manager.png" ]]; then \
-      cp "assets/img/lmstudio-tray-manager.png" "${APPDIR}/lmstudio-tray-manager.png"; \
-    fi; \
-    APPIMAGE_EXTRACT_AND_RUN=1 /usr/local/bin/appimagetool \
-      "${APPDIR}" "release/${APPIMAGE_NAME}"; \
+    mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/lib" "${APPDIR}/usr/lib/girepository-1.0" "${APPDIR}/usr/share/glib-2.0/schemas"; \
     \
+    echo "Copying binary..."; \
+    cp dist/lmstudio-tray-manager "${APPDIR}/usr/bin/"; \
+    cp VERSION "${APPDIR}/"; \
+    \
+    echo "Bundling GTK3 and GObject-Introspection libraries..."; \
+    LIBS_TO_COPY=(\
+        "libgtk-3.so.0" \
+        "libgdk-3.so.0" \
+        "libgio-2.0.so.0" \
+        "libglib-2.0.so.0" \
+        "libgobject-2.0.so.0" \
+        "libgirepository-1.0.so.1" \
+        "libcairo.so.2" \
+        "libcairo-gobject.so.2" \
+        "libpango-1.0.so.0" \
+        "libpangocairo-1.0.so.0" \
+        "libgdk_pixbuf-2.0.so.0" \
+        "libayatana-appindicator3.so.1" \
+        "libayatana-indicator3.so.7" \
+        "libdbusmenu-gtk3.so.4" \
+        "libdbusmenu-glib.so.4" \
+    ); \
+    for lib in "${LIBS_TO_COPY[@]}"; do \
+        if [[ -f "/usr/lib/x86_64-linux-gnu/$lib" ]]; then \
+            cp -L "/usr/lib/x86_64-linux-gnu/$lib" "${APPDIR}/usr/lib/"; \
+        fi; \
+    done; \
+    \
+    echo "Copying GObject-Introspection typelibs..."; \
+    TYPELIBS=(\
+        "Gtk-3.0.typelib" \
+        "Gdk-3.0.typelib" \
+        "Gio-2.0.typelib" \
+        "GLib-2.0.typelib" \
+        "GObject-2.0.typelib" \
+        "cairo-1.0.typelib" \
+        "Pango-1.0.typelib" \
+        "PangoCairo-1.0.typelib" \
+        "GdkPixbuf-2.0.typelib" \
+        "AyatanaAppIndicator3-0.1.typelib" \
+    ); \
+    for typelib in "${TYPELIBS[@]}"; do \
+        if [[ -f "/usr/lib/x86_64-linux-gnu/girepository-1.0/$typelib" ]]; then \
+            cp "/usr/lib/x86_64-linux-gnu/girepository-1.0/$typelib" "${APPDIR}/usr/lib/girepository-1.0/"; \
+        fi; \
+    done; \
+    \
+    echo "Creating AppRun wrapper with environment setup..."; \
+    printf "#!/bin/bash\n" > "${APPDIR}/AppRun"; \
+    printf "SELF=\$(readlink -f \"\$0\")\n" >> "${APPDIR}/AppRun"; \
+    printf "APPDIR=\$(dirname \"\$SELF\")\n\n" >> "${APPDIR}/AppRun"; \
+    printf "# Set library and typelib paths\n" >> "${APPDIR}/AppRun"; \
+    printf "export LD_LIBRARY_PATH=\"\${APPDIR}/usr/lib:\${LD_LIBRARY_PATH}\"\n" >> "${APPDIR}/AppRun"; \
+    printf "export GI_TYPELIB_PATH=\"\${APPDIR}/usr/lib/girepository-1.0:\${GI_TYPELIB_PATH}\"\n" >> "${APPDIR}/AppRun"; \
+    printf "export XDG_DATA_DIRS=\"\${APPDIR}/usr/share:\${XDG_DATA_DIRS}\"\n\n" >> "${APPDIR}/AppRun"; \
+    printf "# Execute the binary with empty model and AppDir as script_dir\n" >> "${APPDIR}/AppRun"; \
+    printf "exec \"\${APPDIR}/usr/bin/lmstudio-tray-manager\" \"\" \"\${APPDIR}\" \"\$@\"\n" >> "${APPDIR}/AppRun"; \
+    chmod +x "${APPDIR}/AppRun"; \
+    \
+    printf "[Desktop Entry]\nName=LM Studio Tray Manager\nExec=lmstudio-tray-manager\nIcon=lmstudio-tray-manager\nType=Application\nCategories=Utility;\n" > "${APPDIR}/lmstudio-tray-manager.desktop"; \
+    [[ -f assets/img/lm-studio-tray-manager.png ]] && \
+      cp assets/img/lm-studio-tray-manager.png "${APPDIR}/lmstudio-tray-manager.png"; \
+    \
+    echo "Building AppImage..."; \
+    ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 /usr/local/bin/appimagetool "${APPDIR}" "release/${APPIMAGE_NAME}"; \
+    ls -lh "release/${APPIMAGE_NAME}"'
+
+# Step 4: Create tarballs and checksums
+RUN bash -c 'set -e; \
+    TAG=$(cat VERSION); \
+    VERSION="${TAG#v}"; \
+    PKG_NAME_SRC="lmstudio-tray-manager-${VERSION}-linux-x86_64"; \
+    PKG_NAME_BIN="${PKG_NAME_SRC}-binary"; \
+    echo "=== Creating tarballs ==="; \
     tar -czf "release/${PKG_NAME_SRC}.tar.gz" -C release "$PKG_NAME_SRC"; \
     tar -czf "release/${PKG_NAME_BIN}.tar.gz" -C release "$PKG_NAME_BIN"; \
-    \
+    echo "=== Creating checksums ==="; \
     cd release && sha256sum *.tar.gz *.AppImage > SHA256SUMS.txt; \
-    ls -lh *.tar.gz *.AppImage SHA256SUMS.txt \
-'
-
-USER builder
+    echo ""; \
+    echo "✅ Release artifacts created:"; \
+    ls -lh *.tar.gz *.AppImage SHA256SUMS.txt'
 
 CMD ["/bin/bash"]

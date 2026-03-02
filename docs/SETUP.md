@@ -24,7 +24,7 @@ For other installation types (binary, Python source), `setup.sh` automates confi
   - [Table of Contents](#table-of-contents)
   - [What setup.sh Does](#what-setupsh-does)
   - [Installation Types](#installation-types)
-    - [AppImage Release (Simplest)](#appimage-release-simplest)
+    - [AppImage Release (Simplest) - Fully Self-Contained](#appimage-release-simplest---fully-self-contained)
     - [Binary Release](#binary-release)
     - [Python Package Release](#python-package-release)
   - [Quick Start](#quick-start)
@@ -101,21 +101,22 @@ The setup script automatically detects your installation type and configures acc
 
 The setup script automatically detects your installation type:
 
-### AppImage Release (Simplest)
+### AppImage Release (Simplest) - Fully Self-Contained
 
 **Detection:** Script finds a `lmstudio-tray-manager*.AppImage` file in the
 script directory
 
 **What happens:**
 
-- ✓ No Python venv needed (fully self-contained)
-- ✓ No GTK3 system packages required (bundled in AppImage)
+- ✓ No Python venv needed (fully self-contained Python 3.12 included)
+- ✓ No GTK3 system packages required (all libraries bundled in AppImage)
 - ✓ Fast setup (only checks LM Studio daemon and desktop app)
-- ✓ Runs on any Linux distribution (kernel ≥ 4.4)
+- ✓ **Works on any modern Linux distribution** (glibc ≥ 2.35, i.e. systems from 2022+)
+- ✓ Supports: Ubuntu 22.04+, Debian 11+, Fedora 39+, openSUSE Leap 15.5+, Linux Mint 21+, and many more
 
 **⚠️ setup.sh is optional for AppImage releases!**
 
-You can run the AppImage directly without `setup.sh`:
+You can run the AppImage directly without `setup.sh` - no dependencies at all:
 
 ```bash
 # Just make it executable and run
