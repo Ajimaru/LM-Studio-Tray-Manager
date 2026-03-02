@@ -50,6 +50,7 @@ except ImportError:
 
 DEFAULT_APP_VERSION = "dev"
 
+
 def load_version_from_dir(base_dir):
     """Load app version from the VERSION file.
 
@@ -1598,6 +1599,18 @@ class TrayIcon:
             ValueError: If command format is invalid or executable is not
                 absolute path.
         """
+        if (
+            isinstance(command, list)
+            and len(command) >= 3
+            and isinstance(command[0], str)
+            and os.path.basename(command[0]) == "notify-send"
+            and isinstance(command[2], str)
+        ):
+            icon_prefixes = ("✅", "ℹ️", "⚠️", "❌")
+            message = command[2].lstrip()
+            if not message.startswith(icon_prefixes):
+                command = list(command)
+                command[2] = f"ℹ️ {command[2]}"
         return _run_safe_command(command)
 
     def _run_daemon_attempts(self, attempts, stop_when):
