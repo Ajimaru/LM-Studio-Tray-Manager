@@ -13,6 +13,7 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
   - [Table of Contents](#table-of-contents)
   - [What setup.sh Does](#what-setupsh-does)
   - [Installation Types](#installation-types)
+    - [AppImage Release (Simplest)](#appimage-release-simplest)
     - [Binary Release (Recommended)](#binary-release-recommended)
     - [Python Package Release](#python-package-release)
   - [Quick Start](#quick-start)
@@ -23,6 +24,7 @@ The `setup.sh` script automates the complete setup process for LM Studio Tray Ma
     - [If No Compatible Python Is Found](#if-no-compatible-python-is-found)
   - [What's Inside the venv?](#whats-inside-the-venv)
   - [File Structure After Setup](#file-structure-after-setup)
+    - [For AppImage Release](#for-appimage-release)
     - [For Binary Release](#for-binary-release)
     - [For Python Package](#for-python-package)
   - [Environment Variables](#environment-variables)
@@ -58,12 +60,15 @@ The setup script automatically detects your installation type and configures acc
    - Optional (only needed for `--gui` option)
 
 3. **Installation Type Detection** - Automatically determines setup path
+   - **AppImage Release:** Detects `lmstudio-tray-manager*.AppImage` in script directory;
+     makes it executable if needed; skips GTK3 check (AppImage bundles its own runtime)
    - **Binary Release:** Detects `lmstudio-tray-manager` binary in script directory
-   - **Python Package:** No binary found - proceeds with Python setup
+   - **Python Package:** No binary or AppImage found - proceeds with Python setup
    - This detection is **non-intrusive**: just a file existence check
 
-4. **GTK3/GObject typelibs** - Needed by both binary and Python package releases
-   - Checked on every run, regardless of installation type
+4. **GTK3/GObject typelibs** - Needed by binary and Python package releases
+   - Skipped for AppImage releases (GTK3 is bundled inside the AppImage)
+   - Checked on every non-AppImage run, regardless of installation type
    - Uses a simple Python import test or file lookup
    - If missing, prompts to install via the detected package manager
      (apt, dnf, pacman, zypper, or apk). When no manager is found,
@@ -84,6 +89,24 @@ The setup script automatically detects your installation type and configures acc
 ## Installation Types
 
 The setup script automatically detects your installation type:
+
+### AppImage Release (Simplest)
+
+**Detection:** Script finds a `lmstudio-tray-manager*.AppImage` file in the
+script directory
+
+**What happens:**
+
+- ✓ No Python venv needed (fully self-contained)
+- ✓ No GTK3 system packages required (bundled in AppImage)
+- ✓ Fast setup (only checks LM Studio daemon and desktop app)
+- ✓ Runs on any Linux distribution (kernel ≥ 4.4)
+
+**Next steps:**
+
+```bash
+./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage --auto-start-daemon
+```
 
 ### Binary Release (Recommended)
 
@@ -241,6 +264,20 @@ Selecting `y` installs `python3`, `python3-venv`, and `python3-gi` via `apt`.
 - **Full PyGObject + GTK3 support** for system tray functionality
 
 ## File Structure After Setup
+
+### For AppImage Release
+
+After running `./setup.sh` (or `chmod +x` manually):
+
+```files
+.
+├── lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage  # Self-contained AppImage
+├── .logs/                      # 📝 Log files directory
+│   └── setup.log               # Setup script log (created during setup)
+```
+
+**Note:** No venv or GTK3 dependencies needed; the AppImage is fully
+self-contained.
 
 ### For Binary Release
 
