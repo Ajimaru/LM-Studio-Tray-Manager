@@ -536,8 +536,8 @@ if [ "$BINARY_RELEASE" = false ]; then
     echo -e "\n${BLUE}Step 5: Checking Python 3${NC}"
     log_output "INFO" "Step 5: Checking for Python 3"
 
-    # Prefer python3.10 when available (best PyGObject compatibility),
-    # but accept any python3 — mirroring build.sh behaviour.
+    # Use python3.10 if available, otherwise fall back to python3,
+    # mirroring build.sh behaviour.
     if command -v python3.10 >/dev/null 2>&1; then
         PYTHON_BIN="python3.10"
     elif command -v python3 >/dev/null 2>&1; then

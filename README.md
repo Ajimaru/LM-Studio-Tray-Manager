@@ -100,8 +100,8 @@ This setup script:
 
 - ✓ Checks for LM Studio daemon (llmster)
 - ✓ Checks for LM Studio desktop app - detects native packages or AppImage
-- ✓ Checks for Python 3.10 - installs via the detected package manager if missing
-- ✓ Creates Python 3.10 virtual environment with PyGObject/GTK3 support
+- ✓ Checks for Python 3 - installs via the detected package manager if missing
+- ✓ Creates a Python virtual environment with PyGObject/GTK3 support
 
 **Verify:**
 
@@ -117,7 +117,7 @@ This setup script:
 
 - **LM Studio Daemon** (llmster v0.0.3+): Headless backend for model inference
 - **LM Studio Desktop App** (v0.4.3+): GUI frontend for model management and interaction
-- **Python 3.10** with PyGObject (for GTK3 system tray)
+- **Python 3** with PyGObject (for GTK3 system tray)
 - Linux system with GNOME/GTK3 support (Pop!_OS, Ubuntu, Fedora, etc.)
 
 > ⚠️ **Linux only** – this project is designed for Linux desktops. Windows

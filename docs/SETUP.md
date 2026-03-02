@@ -69,8 +69,8 @@ The setup script automatically detects your installation type and configures acc
 
 5. **Python 3** - Required for PyGObject/GTK3 compatibility (packages only)
    - **Only checked for Python package releases** (step 3 must detect no binary)
-   - Prefers `python3.10` when available (best PyGObject compatibility),
-     but accepts any `python3` interpreter
+   - Uses the system `python3` interpreter (or `python3.10` if that is what
+     the system provides)
    - Installs automatically if missing via the detected package manager
    - When no supported manager is found, manual instructions are shown
    - Binary releases skip this step entirely
@@ -112,7 +112,7 @@ The setup script automatically detects your installation type:
 - ✓ Checks for LM Studio daemon
 - ✓ Checks for LM Studio desktop app
 - ✓ Checks for GTK3/GObject typelibs (installs if missing)
-- ✓ Checks for Python 3 (prefers 3.10, accepts any python3)
+- ✓ Checks for Python 3 (installs if missing)
 - ✓ Sets up GTK3 and PyGObject support
 
 **Next steps:**
@@ -237,8 +237,7 @@ installation instructions are displayed.
 
 ## What's Inside the venv?
 
-- **Python 3** (prefers 3.10 when available for best PyGObject compatibility,
-  but accepts any Python 3 interpreter)
+- **Python 3** (any version available on the system)
 - **System site-packages** enabled (includes GTK3 introspection data)
 - **Isolated environment** (pip packages don't conflict with system Python)
 - **Full PyGObject + GTK3 support** for system tray functionality
@@ -434,22 +433,11 @@ If the tray monitor is running but icon not visible:
 
 ## Python Version Notes
 
-The setup script prefers `python3.10` when it is available because PyGObject
-(Python GTK3 bindings) has a complex setup:
-
-- **PyGObject binaries** (`.so` files) are pre-compiled for Python 3.10 in
-  Debian/Ubuntu and many other distributions
-- System Python 3.12 may not have pre-compiled PyGObject binaries on all
-  distros (as of early 2026), requiring compilation from source
-- Recompiling from source requires a C compiler, GObject headers, and pkg-config
-- venv with `--system-site-packages` gives us the best of both worlds:
-  - Isolated Python environment
-  - Access to pre-compiled system PyGObject + GTK3
-  - No compilation needed, fast setup
-
-However, **any Python 3 interpreter** is accepted; `python3.10` is simply
-preferred. If your distro ships a newer Python that includes PyGObject
-packages, it will work as-is.
+The setup script uses `python3.10` when it is available (mirroring `build.sh`),
+otherwise it falls back to any `python3` found in `PATH`. All Python 3 versions
+have good PyGObject compatibility; the venv is created with
+`--system-site-packages` so GTK3 introspection data installed at the system
+level is always accessible regardless of the Python version used.
 
 ## Next Steps
 
