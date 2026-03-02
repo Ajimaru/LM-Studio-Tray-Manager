@@ -150,8 +150,7 @@ jobs:
 
           BIN_FILES=()
           for file in "${FILES[@]}"; do
-            if [[ "$file" != "lmstudio_tray.py" ]] && \
-               [[ "$file" != "lmstudio_autostart.sh" ]]; then
+            if [[ "$file" != "lmstudio_tray.py" ]] && [[ "$file" != "lmstudio_autostart.sh" ]]; then
               BIN_FILES+=("$file")
             fi
           done

@@ -186,14 +186,24 @@ fi
 echo -e "\n${BLUE}Step 2: Checking LM Studio Desktop App${NC}"
 log_output "INFO" "Step 2: Checking for LM Studio desktop app"
 
-FOUND_DEB=false
+FOUND_PKG=false
 APP_INSTALLED=false
 
 if dpkg -l | grep -q lm-studio; then
     print_step "LM Studio desktop app found (deb package)"
     log_output "INFO" "LM Studio desktop app installed via deb package"
     APP_INSTALLED=true
-    FOUND_DEB=true
+    FOUND_PKG=true
+elif command -v rpm >/dev/null 2>&1 && rpm -q lm-studio >/dev/null 2>&1; then
+    print_step "LM Studio desktop app found (rpm package)"
+    log_output "INFO" "LM Studio desktop app installed via rpm package"
+    APP_INSTALLED=true
+    FOUND_PKG=true
+elif command -v pacman >/dev/null 2>&1 && pacman -Qi lm-studio >/dev/null 2>&1; then
+    print_step "LM Studio desktop app found (pacman package)"
+    log_output "INFO" "LM Studio desktop app installed via pacman"
+    APP_INSTALLED=true
+    FOUND_PKG=true
 fi
 
 log_output "DEBUG" "Searching for AppImage in common locations"
@@ -213,11 +223,12 @@ done
 
 if [ "$APP_INSTALLED" = false ]; then
     print_warning "LM Studio desktop app not found"
-    log_output "WARN" "LM Studio desktop app not found (checked deb package and AppImage locations)"
+    log_output "WARN" \
+"LM Studio desktop app not found (checked native packages and AppImage locations)"
     echo ""
     print_info "The desktop app is required for the --gui option."
     print_info "Choose installation method:"
-    print_info "  1) Install .deb package (recommended for Ubuntu/Debian)"
+    print_info "  1) Download installer/package from lmstudio.ai"
     print_info "  2) Use AppImage (manual download)"
     print_info "  3) Skip (can be installed later)"
     echo ""
@@ -233,7 +244,7 @@ if [ "$APP_INSTALLED" = false ]; then
 
     case "$app_choice" in
         1)
-            log_output "INFO" "User chose deb package installation"
+            log_output "INFO" "User chose to download LM Studio installer"
             echo "Opening LM Studio download page..."
             if [ "$DRY_RUN" = "1" ]; then
                 print_info "[DRY-RUN] Would open https://lmstudio.ai/download"
@@ -247,8 +258,9 @@ if [ "$APP_INSTALLED" = false ]; then
                 log_output "INFO" "No browser launcher found, displaying URL"
                 echo "Please visit: https://lmstudio.ai/download"
             fi
-            print_warning "Please download and install the .deb package, then run this script again"
-            log_output "WARN" "Setup paused - waiting for deb package installation"
+            print_warning \
+"Download and install LM Studio for your distro, then run this script again"
+            log_output "WARN" "Setup paused - waiting for LM Studio installation"
             ;;
         2)
             log_output "INFO" "User chose AppImage installation"
@@ -282,9 +294,9 @@ if [ "$APP_INSTALLED" = false ]; then
 fi
 
 if [ "$APP_INSTALLED" = true ]; then
-    if [ "$FOUND_DEB" = true ]; then
-        echo "   Desktop app: deb package"
-        log_output "INFO" "Desktop app installation method: deb package"
+    if [ "$FOUND_PKG" = true ]; then
+        echo "   Desktop app: native package"
+        log_output "INFO" "Desktop app installation method: native package"
     elif [ -n "$APPIMAGE_PATH" ]; then
         echo "   Desktop app: AppImage at $APPIMAGE_PATH"
         log_output "INFO" "Desktop app installation method: AppImage at $APPIMAGE_PATH"
@@ -366,23 +378,19 @@ if [ -n "$APPIMAGE_FILE" ]; then
     fi
 elif [ -x "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
     print_step "Binary release detected (lmstudio-tray-manager)"
-    log_output "INFO" \
-        "Binary release detected: executable lmstudio-tray-manager found"
+    log_output "INFO" "Binary release detected: executable lmstudio-tray-manager found"
     print_info "Skipping Python virtual environment creation"
     BINARY_RELEASE=true
 elif [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
     print_warning "Found lmstudio-tray-manager but it is not executable"
-    log_output "WARN" \
-        "Binary file exists but lacks execute permission: $SCRIPT_DIR/lmstudio-tray-manager"
+    log_output "WARN" "Binary file exists but lacks execute permission: $SCRIPT_DIR/lmstudio-tray-manager"
     if [ "$DRY_RUN" = "1" ]; then
-        print_info \
-            "[DRY-RUN] Would make it executable: chmod +x $SCRIPT_DIR/lmstudio-tray-manager"
+        print_info "[DRY-RUN] Would make it executable: chmod +x $SCRIPT_DIR/lmstudio-tray-manager"
         print_info "[DRY-RUN] Would treat this as a binary release after chmod"
         log_output "INFO" "DRY-RUN: Would chmod +x and treat as binary release"
         BINARY_RELEASE=true
     else
-        if ask_yes_no \
-            "Make lmstudio-tray-manager executable (chmod +x) and continue as binary release?"; then
+        if ask_yes_no "Make lmstudio-tray-manager executable (chmod +x) and continue as binary release?"; then
             log_output "INFO" "User accepted to make binary executable"
             if chmod +x "$SCRIPT_DIR/lmstudio-tray-manager"; then
                 print_step "Binary made executable"
@@ -394,18 +402,15 @@ elif [ -f "$SCRIPT_DIR/lmstudio-tray-manager" ]; then
                 exit 1
             fi
         else
-            log_output "ERROR" \
-                "User declined to make binary executable - cannot continue"
-            print_error \
-                "Binary exists but is not executable; cannot continue safely. Setup cancelled."
+            log_output "ERROR" "User declined to make binary executable - cannot continue"
+            print_error "Binary exists but is not executable; cannot continue safely. Setup cancelled."
             print_info "Fix permissions and re-run: chmod +x ./lmstudio-tray-manager"
             exit 1
         fi
     fi
 else
     print_info "Python package release detected"
-    log_output "INFO" \
-        "Python package (source) release detected - no binary executable found"
+    log_output "INFO" "Python package (source) release detected - no binary executable found"
     print_info "Python virtual environment will be created"
 fi
 
@@ -475,11 +480,12 @@ else
                 log_output "INFO" "GTK3 typelibs and python3-gi installed successfully"
             else
                 print_error "Failed to install GTK3 typelibs"
-                log_output "ERROR" "apt install failed for GTK3 typelibs"
+                log_output "ERROR" "GTK3 typelibs installation failed"
                 exit 1
             fi
         else
-            log_output "ERROR" "User declined GTK3 typelibs installation - setup cancelled"
+            log_output "ERROR" \
+"User declined GTK3 typelibs installation - setup cancelled"
             print_error "GTK3/GObject libraries are required. Setup cancelled."
             exit 1
         fi

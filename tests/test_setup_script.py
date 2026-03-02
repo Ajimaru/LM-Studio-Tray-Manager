@@ -68,7 +68,7 @@ def test_exit_if_user_declines_install(_monkeypatch, tmp_path):
 def test_appimage_detected_dry_run(tmp_path):
     """An AppImage in the script dir is detected and reported in dry-run."""
     script_dir, _ = _make_setup_copy(tmp_path)
-    appimage = script_dir / "lmstudio-tray-manager-0.5.2-linux-x86_64.AppImage"
+    appimage = script_dir / "lmstudio-tray-manager-0.5.3-linux-x86_64.AppImage"
     appimage.write_text("", encoding="utf-8")
     appimage.chmod(0o755)
     proc = subprocess.run(
@@ -85,7 +85,7 @@ def test_appimage_detected_dry_run(tmp_path):
 def test_appimage_skips_gtk3_check(tmp_path):
     """When an AppImage is present, the GTK3 check step is skipped."""
     script_dir, _ = _make_setup_copy(tmp_path)
-    appimage = script_dir / "lmstudio-tray-manager-0.5.2-linux-x86_64.AppImage"
+    appimage = script_dir / "lmstudio-tray-manager-0.5.3-linux-x86_64.AppImage"
     appimage.write_text("", encoding="utf-8")
     appimage.chmod(0o755)
     proc = subprocess.run(
@@ -102,7 +102,7 @@ def test_appimage_skips_gtk3_check(tmp_path):
 def test_appimage_not_executable_dry_run(tmp_path):
     """A non-executable AppImage triggers chmod offer in dry-run mode."""
     script_dir, _ = _make_setup_copy(tmp_path)
-    appimage = script_dir / "lmstudio-tray-manager-0.5.2-linux-x86_64.AppImage"
+    appimage = script_dir / "lmstudio-tray-manager-0.5.3-linux-x86_64.AppImage"
     appimage.write_text("", encoding="utf-8")
     appimage.chmod(0o644)  # not executable
     proc = subprocess.run(
@@ -120,7 +120,7 @@ def test_appimage_not_executable_dry_run(tmp_path):
 def test_appimage_not_executable_user_declines(tmp_path):
     """Declining chmod on a non-executable AppImage cancels setup."""
     script_dir, _ = _make_setup_copy(tmp_path)
-    appimage = script_dir / "lmstudio-tray-manager-0.5.2-linux-x86_64.AppImage"
+    appimage = script_dir / "lmstudio-tray-manager-0.5.3-linux-x86_64.AppImage"
     appimage.write_text("", encoding="utf-8")
     appimage.chmod(0o644)  # not executable
     proc = subprocess.run(

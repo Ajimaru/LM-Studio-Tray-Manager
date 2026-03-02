@@ -3812,7 +3812,13 @@ def test_show_status_dialog_error_path(tray_module, monkeypatch):
     """Render status dialog with API fallback message when lms is missing."""
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        lambda *_a, **_k: (_ for _ in ()).throw(
+            tray_module.urllib_error.URLError("connection refused")
+        ),
+    )
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
     assert "No models loaded" in dialog.secondary  # nosec B101
@@ -4763,7 +4769,6 @@ def test_show_status_dialog_api_fallback_lms_fail(
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_json
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
 
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -4812,7 +4817,6 @@ def test_show_status_dialog_api_fallback_no_lms(
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_json
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
 
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -4867,7 +4871,6 @@ def test_show_status_dialog_api_invalid_json(
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_bad
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
 
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -4915,7 +4918,6 @@ def test_show_status_dialog_api_non_dict_response(
     monkeypatch.setattr(
         tray_module.urllib_request, "urlopen", mock_urlopen_list
     )
-    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
 
     tray.show_status_dialog(None)
     dialog = tray_module.Gtk.MessageDialog.last_instance
@@ -4998,3 +5000,420 @@ def test_get_default_script_dir_with_none_argv(tray_module, monkeypatch):
     monkeypatch.setattr(os, "getcwd", lambda: "/current/dir")
     result = _call_member(tray_module, "_get_default_script_dir")
     assert result == "/current/dir"  # nosec B101
+
+
+def test_get_asset_path_prefers_meipass(tray_module, tmp_path, monkeypatch):
+    """Prefer bundled PyInstaller assets when _MEIPASS is present."""
+    meipass_dir = tmp_path / "bundle"
+    meipass_asset = meipass_dir / "assets" / "img" / "icon.svg"
+    meipass_asset.parent.mkdir(parents=True)
+    meipass_asset.write_text("svg", encoding="utf-8")
+
+    monkeypatch.setattr(sys, "_MEIPASS", str(meipass_dir), raising=False)
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path / "x"))
+
+    result = tray_module.get_asset_path("img", "icon.svg")
+    assert result == str(meipass_asset)  # nosec B101
+
+
+def test_get_asset_path_falls_back_to_script_dir(
+    tray_module, tmp_path, monkeypatch
+):
+    """Return asset from script_dir when bundle assets are unavailable."""
+    script_dir = tmp_path / "script"
+    script_asset = script_dir / "assets" / "img" / "icon.svg"
+    script_asset.parent.mkdir(parents=True)
+    script_asset.write_text("svg", encoding="utf-8")
+
+    monkeypatch.setattr(sys, "_MEIPASS", None, raising=False)
+    tray_module.sync_app_state_for_tests(script_dir_val=str(script_dir))
+
+    result = tray_module.get_asset_path("img", "icon.svg")
+    assert result == str(script_asset)  # nosec B101
+
+
+def test_get_asset_path_falls_back_to_cwd(tray_module, tmp_path, monkeypatch):
+    """Return asset from current working directory as last fallback."""
+    cwd_dir = tmp_path / "cwd"
+    cwd_asset = cwd_dir / "assets" / "img" / "icon.svg"
+    cwd_asset.parent.mkdir(parents=True)
+    cwd_asset.write_text("svg", encoding="utf-8")
+
+    monkeypatch.setattr(sys, "_MEIPASS", None, raising=False)
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path / "none"))
+    monkeypatch.chdir(cwd_dir)
+
+    result = tray_module.get_asset_path("img", "icon.svg")
+    assert result == str(cwd_asset)  # nosec B101
+
+
+def test_get_asset_path_returns_none_when_missing(
+    tray_module, tmp_path, monkeypatch
+):
+    """Return None when asset does not exist in any search location."""
+    monkeypatch.setattr(sys, "_MEIPASS", None, raising=False)
+    tray_module.sync_app_state_for_tests(script_dir_val=str(tmp_path / "none"))
+    monkeypatch.chdir(tmp_path)
+
+    result = tray_module.get_asset_path("img", "missing.svg")
+    assert result is None  # nosec B101
+
+
+def test_save_config_replace_failure_removes_tmp(
+    tray_module, tmp_path, monkeypatch
+):
+    """Clean up temporary file if final replace fails."""
+    config_file = tmp_path / "config.json"
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda _p: str(config_file),
+    )
+
+    def _raise_replace(_src, _dst):
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(tray_module.os, "replace", _raise_replace)
+
+    with pytest.raises(OSError):
+        tray_module.save_config("host", 1234)
+
+    assert not (tmp_path / "config.json.tmp").exists()  # nosec B101
+
+
+def test_save_config_replace_failure_remove_failure(
+    tray_module, tmp_path, monkeypatch
+):
+    """Keep original error when tmp cleanup also fails."""
+    config_file = tmp_path / "config.json"
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda _p: str(config_file),
+    )
+
+    def _raise_replace(_src, _dst):
+        raise OSError("replace failed")
+
+    def _raise_remove(_path):
+        raise OSError("remove failed")
+
+    monkeypatch.setattr(tray_module.os, "replace", _raise_replace)
+    monkeypatch.setattr(tray_module.os, "remove", _raise_remove)
+
+    with pytest.raises(OSError):
+        tray_module.save_config("host", 1234)
+
+
+def test_validate_url_scheme_invalid_host_with_whitespace(tray_module):
+    """Reject hosts containing whitespace."""
+    tray_module.sync_app_state_for_tests(api_host_val="bad host")
+    tray_module.sync_app_state_for_tests(api_port_val=1234)
+
+    with pytest.raises(ValueError):
+        _call_member(tray_module, "_validate_url_scheme", "http://x")
+
+
+def test_validate_url_scheme_invalid_host_with_path_chars(tray_module):
+    """Reject hosts containing slash/query/hash delimiters."""
+    tray_module.sync_app_state_for_tests(api_host_val="example.com/path")
+    tray_module.sync_app_state_for_tests(api_port_val=1234)
+
+    with pytest.raises(ValueError):
+        _call_member(tray_module, "_validate_url_scheme", "http://x")
+
+
+def test_validate_url_scheme_invalid_single_colon_host(tray_module):
+    """Reject host:port literals in API_HOST.
+
+    Port is configured separately.
+    """
+    tray_module.sync_app_state_for_tests(api_host_val="localhost:8080")
+    tray_module.sync_app_state_for_tests(api_port_val=1234)
+
+    with pytest.raises(ValueError):
+        _call_member(tray_module, "_validate_url_scheme", "http://x")
+
+
+def test_validate_url_scheme_wraps_ipv6_host(tray_module):
+    """Wrap bare IPv6 hosts in brackets when building endpoint URL."""
+    tray_module.sync_app_state_for_tests(api_host_val="2001:db8::1")
+    tray_module.sync_app_state_for_tests(api_port_val=1234)
+
+    result = _call_member(tray_module, "_validate_url_scheme", "http://x")
+    assert result == "http://[2001:db8::1]:1234"  # nosec B101
+
+
+def test_validate_url_scheme_rejects_invalid_port(tray_module):
+    """Reject out-of-range API ports."""
+    tray_module.sync_app_state_for_tests(api_host_val="localhost")
+    tray_module.sync_app_state_for_tests(api_port_val=70000)
+
+    with pytest.raises(ValueError):
+        _call_member(tray_module, "_validate_url_scheme", "http://x")
+
+
+def test_show_config_dialog_without_gtk_logs_error(tray_module, monkeypatch):
+    """Return early when GTK module is unavailable."""
+    tray = _make_tray_instance(tray_module)
+    app_state = _call_member(tray_module, "_AppState")
+    monkeypatch.setattr(app_state, "Gtk", None)
+
+    tray.show_config_dialog(None)
+
+
+def test_show_config_dialog_save_error_shows_error_dialog(
+    tray_module, monkeypatch
+):
+    """Display a GTK error dialog when save_config raises."""
+    tray = _make_tray_instance(tray_module)
+    tray_module.sync_app_state_for_tests(
+        api_host_val="localhost",
+        api_port_val=1234,
+    )
+
+    original_dialog = tray_module.Gtk.Dialog
+
+    def _dialog_factory(**_kwargs):
+        dialog = original_dialog(**_kwargs)
+        dialog.response = tray_module.Gtk.ResponseType.OK
+        return dialog
+
+    def _raise_save(_host, _port):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(
+        tray_module.Gtk.MessageType,
+        "ERROR",
+        tray_module.Gtk.MessageType.INFO,
+        raising=False,
+    )
+    monkeypatch.setattr(tray_module.Gtk, "Dialog", _dialog_factory)
+    monkeypatch.setattr(tray_module, "save_config", _raise_save)
+
+    tray.show_config_dialog(None)
+
+    error_dialog = tray_module.Gtk.MessageDialog.last_instance
+    assert error_dialog is not None  # nosec B101
+    assert error_dialog.ran is True  # nosec B101
+    assert error_dialog.destroyed is True  # nosec B101
+    assert "Failed to save configuration" in error_dialog.text  # nosec B101
+
+
+def test_show_config_dialog_invalid_input_warns(tray_module, monkeypatch):
+    """Do not save when host/port input is invalid."""
+    tray = _make_tray_instance(tray_module)
+    tray_module.sync_app_state_for_tests(
+        api_host_val="",
+        api_port_val="invalid",
+    )
+
+    original_dialog = tray_module.Gtk.Dialog
+
+    def _dialog_factory(**_kwargs):
+        dialog = original_dialog(**_kwargs)
+        dialog.response = tray_module.Gtk.ResponseType.OK
+        return dialog
+
+    called = {"save": False}
+
+    def _save_marker(_host, _port):
+        called["save"] = True
+
+    monkeypatch.setattr(tray_module.Gtk, "Dialog", _dialog_factory)
+    monkeypatch.setattr(tray_module, "save_config", _save_marker)
+
+    tray.show_config_dialog(None)
+    assert called["save"] is False  # nosec B101
+
+
+def test_run_validated_command_adds_info_icon_to_notify(
+    tray_module, monkeypatch
+):
+    """Prepend info icon for notify-send messages without icon prefix."""
+    calls = []
+
+    def _capture(command):
+        calls.append(command)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray_module, "_run_safe_command", _capture)
+
+    _call_member(
+        tray_module.TrayIcon,
+        "_run_validated_command",
+        ["/usr/bin/notify-send", "Title", "message"],
+    )
+
+    assert calls[0][2] == "ℹ️ message"  # nosec B101
+
+
+def test_run_validated_command_keeps_existing_icon(tray_module, monkeypatch):
+    """Keep existing icon prefix on notify-send messages."""
+    calls = []
+
+    def _capture(command):
+        calls.append(command)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray_module, "_run_safe_command", _capture)
+
+    _call_member(
+        tray_module.TrayIcon,
+        "_run_validated_command",
+        ["/usr/bin/notify-send", "Title", "✅ already"],
+    )
+
+    assert calls[0][2] == "✅ already"  # nosec B101
+
+
+def test_run_daemon_attempts_breaks_on_timeout(tray_module, monkeypatch):
+    """Stop daemon attempt loop when a command times out."""
+    tray = _make_tray_instance(tray_module)
+
+    def _timeout(_command):
+        raise subprocess.TimeoutExpired(cmd="cmd", timeout=1)
+
+    monkeypatch.setattr(tray, "_run_validated_command", _timeout)
+    attempts = [["/bin/echo", "x"]]
+
+    result = _call_member(
+        tray,
+        "_run_daemon_attempts",
+        attempts,
+        lambda _r: False,
+    )
+    assert result is None  # nosec B101
+
+
+def test_start_desktop_app_daemon_still_running_after_verification(
+    tray_module, monkeypatch
+):
+    """Notify and abort GUI launch when daemon still runs after stop."""
+    tray = _make_tray_instance(tray_module)
+    notify_calls = []
+
+    states = [False, True]
+
+    def _is_running():
+        return states.pop(0) if states else True
+
+    def _capture_notify(command):
+        notify_calls.append(command)
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray_module, "is_llmster_running", _is_running)
+    monkeypatch.setattr(
+        tray,
+        "_stop_daemon_with_notification",
+        lambda: (True, None),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "get_notify_send_cmd",
+        lambda: "/usr/bin/notify-send",
+    )
+    monkeypatch.setattr(tray, "_run_validated_command", _capture_notify)
+
+    tray.start_desktop_app(None)
+
+    assert any("Daemon could not be stopped" in str(c) for c in notify_calls)
+
+
+@pytest.mark.parametrize(
+    "api_has_models,expected_icon",
+    [(True, "emblem-default"), (False, "dialog-information")],
+)
+def test_check_model_daemon_running_without_lms_ps_uses_api(
+    tray_module,
+    monkeypatch,
+    api_has_models,
+    expected_icon,
+):
+    """Use API fallback when daemon runs and lms-ps path is skipped."""
+    tray = _make_tray_instance(tray_module)
+    tray.last_status = "WARN"
+
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray, "_can_use_lms_ps", lambda *_a: False)
+    monkeypatch.setattr(
+        tray_module,
+        "check_api_models",
+        lambda: api_has_models,
+    )
+    monkeypatch.setattr(tray_module, "get_notify_send_cmd", lambda: None)
+
+    assert tray.check_model() is True  # nosec B101
+    assert tray.indicator.icon_calls[-1][0] == expected_icon  # nosec B101
+
+
+def test_check_model_app_running_lms_ps_no_models_sets_info(
+    tray_module, monkeypatch
+):
+    """Set INFO when lms ps succeeds but reports no loaded model."""
+    tray = _make_tray_instance(tray_module)
+    tray.last_status = "WARN"
+
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "running")
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray, "_can_use_lms_ps", lambda *_a: True)
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=0, stdout="available models only"),
+    )
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
+    monkeypatch.setattr(tray_module, "get_notify_send_cmd", lambda: None)
+
+    assert tray.check_model() is True  # nosec B101
+    assert (
+        tray.indicator.icon_calls[-1][0]
+        == "dialog-information"
+    )  # nosec B101
+
+
+def test_check_model_app_running_lms_ps_error_uses_api_false(
+    tray_module, monkeypatch
+):
+    """Set INFO when lms ps fails and API reports no loaded models."""
+    tray = _make_tray_instance(tray_module)
+    tray.last_status = "WARN"
+
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "running")
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(tray, "_can_use_lms_ps", lambda *_a: True)
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=1, stdout="", stderr="boom"),
+    )
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: False)
+    monkeypatch.setattr(tray_module, "get_notify_send_cmd", lambda: None)
+
+    assert tray.check_model() is True  # nosec B101
+    assert (
+        tray.indicator.icon_calls[-1][0]
+        == "dialog-information"
+    )  # nosec B101
+
+
+def test_check_model_any_running_without_lms_uses_api_true(
+    tray_module, monkeypatch
+):
+    """Set OK when runtime is active and API reports loaded models."""
+    tray = _make_tray_instance(tray_module)
+    tray.last_status = "WARN"
+
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(tray_module, "check_api_models", lambda: True)
+    monkeypatch.setattr(tray_module, "get_notify_send_cmd", lambda: None)
+
+    assert tray.check_model() is True  # nosec B101
+    assert tray.indicator.icon_calls[-1][0] == "emblem-default"  # nosec B101

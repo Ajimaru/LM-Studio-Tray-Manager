@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   codeql:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       # fetch repository to runner
@@ -36,7 +36,7 @@ jobs:
         uses: github/codeql-action/analyze@v4
 
   gitleaks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       # clone full history, required by gitleaks
