@@ -12,8 +12,6 @@ Automation scripts for LM Studio & llmster - to control and monitor the applicat
 [![Release](https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ajimaru/LM-Studio-Tray-Manager/total.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases)
 
----
-
 ## Features
 
 - **🖥️ System Tray Monitor**: GTK3 tray integration with live daemon/app controls and status transitions
