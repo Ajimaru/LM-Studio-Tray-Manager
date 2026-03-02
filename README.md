@@ -49,14 +49,7 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 
 - `lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage`
 
-**Why AppImage?**
-
-✅ **Fully self-contained** - No dependencies to install, no setup script needed  
-✅ **Portable** - Works on Ubuntu, Debian, Fedora, openSUSE, Linux Mint, and most other Linux distributions (2022+)  
-✅ **Universal** - Includes Python, GTK3, GObject-Introspection, and all required libraries  
-✅ **Simple** - Just `chmod +x` and run
-
-**Make executable and run directly:**
+**Extract and run:**
 
 ```bash
 # example (replace X.Y.Z with version)
