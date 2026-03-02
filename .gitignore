@@ -21,6 +21,8 @@ build/
 .mypy_cache/
 .pyright/
 release/
+coverage.xml
+htmlcov/
 
 #Ignore AI rules
 .github/instructions/codacy.instructions.md

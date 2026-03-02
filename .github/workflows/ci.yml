@@ -109,7 +109,7 @@ jobs:
       - name: Run tests (with coverage)
         if: ${{ matrix.run-coverage }}
         run: |
-          pytest -q --cov=lmstudio_tray --cov=build_binary --cov-branch --cov-report=xml:coverage.xml
+          pytest --cov-report=xml:coverage.xml
 
       # send coverage report to Codecov
       - name: Upload coverage to Codecov
