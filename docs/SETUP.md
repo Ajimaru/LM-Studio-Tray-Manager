@@ -1,18 +1,28 @@
 # Setup Guide
 
-> ⚠️ **Linux‑only application.** The tray manager relies on GTK3; Windows
-> and macOS are not supported yet. AppImage support is universal across Linux
-> distributions. Package‑manager automation is available for **apt, dnf,
-> pacman, zypper, and apk**; other distros receive manual‑install guidance.
+> **Platform support:** Linux (GTK3 + AppIndicator3) and macOS (rumps / PyObjC).
+> Windows is not supported. AppImage releases are Linux-only.
+> Package‑manager automation is available for **apt, dnf,
+> pacman, zypper, and apk** on Linux; on macOS `setup.sh` uses `pip` to
+> install the `rumps` dependency.
 
 ## Quick Summary
 
-**If you have an AppImage release** (easiest option - recommended):
+**If you have an AppImage release** (Linux, easiest option - recommended):
 
 ```bash
 chmod +x lmstudio-tray-manager-*.AppImage
 ./lmstudio-tray-manager-*.AppImage --auto-start-daemon
 # That's it! No setup.sh needed.
+```
+
+**macOS (Python source):**
+
+```bash
+# 1. Install rumps (macOS tray library):
+pip install rumps
+# 2. Run the tray monitor:
+python3 lmstudio_tray.py --auto-start-daemon
 ```
 
 For other installation types (binary, Python source), `setup.sh` automates configuration and dependency checking.
@@ -582,6 +592,63 @@ can differ by Python version.
 - If one interpreter fails `import gi`, setup checks other installed Python versions.
 - The created venv uses the first compatible interpreter found.
 - Binary releases are unaffected and skip Python environment creation entirely.
+
+## macOS Installation
+
+The tray manager supports macOS natively using the
+[`rumps`](https://github.com/jaredks/rumps) library (PyObjC-based).
+
+### Requirements
+
+- macOS 11 Big Sur or later (recommended)
+- Python 3.8+
+- `rumps` Python package (`pip install rumps`)
+- LM Studio daemon (`lms` CLI from [lmstudio.ai](https://lmstudio.ai/))
+- LM Studio desktop app (optional, for `--gui` mode)
+
+### Quick start
+
+```bash
+# Install the macOS tray dependency
+pip install rumps
+
+# Run the tray monitor
+python3 lmstudio_tray.py --auto-start-daemon
+```
+
+### Using setup.sh on macOS
+
+`setup.sh` supports macOS and will:
+
+1. Check for the LM Studio daemon (`lms` CLI).
+2. Check for `LM Studio.app` in `/Applications` or `~/Applications`.
+3. Detect installation type (binary or Python source).
+4. Check for / install the `rumps` Python package.
+5. Create a Python virtual environment and install `rumps` into it.
+
+```bash
+./setup.sh          # interactive setup
+./setup.sh --dry-run  # preview steps without making changes
+```
+
+### Notifications
+
+On macOS, notifications are sent via `rumps.notification()`.
+You may need to allow notifications for Terminal (or your Python process)
+in **System Settings → Notifications**.
+
+### Desktop app detection
+
+The tray manager looks for `LM Studio.app` in:
+
+- `/Applications/LM Studio.app`
+- `~/Applications/LM Studio.app`
+
+### Known limitations
+
+- AppImage releases are Linux-only; use the Python source release on macOS.
+- The macOS tray displays a status emoji (✅ / ℹ️ / ⚠️ / ❌) in the menu bar
+  rather than a custom icon, since GTK icon themes are not available.
 
 ## Next Steps
 
