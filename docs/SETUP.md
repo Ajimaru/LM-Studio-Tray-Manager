@@ -16,7 +16,17 @@ chmod +x lmstudio-tray-manager-*.AppImage
 # That's it! No setup.sh needed.
 ```
 
-**macOS (Python source):**
+**macOS (.app bundle - recommended):**
+
+```bash
+# 1. Extract the .app bundle:
+tar -xzf lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz
+
+# 2. Open in Finder or launch from terminal:
+open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
+```
+
+**macOS (Python source - alternative):**
 
 ```bash
 # 1. Install rumps (macOS tray library):
