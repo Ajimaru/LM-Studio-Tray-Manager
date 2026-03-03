@@ -671,6 +671,22 @@ def _completed(returncode=0, stdout="", stderr=""):
     return SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
 
 
+class _DummyPopen:
+    """Minimal Popen stub that supports the context manager protocol."""
+
+    def __init__(self, pid=12345):
+        """Store the fake process identifier."""
+        self.pid = pid
+
+    def __enter__(self):
+        """Return self to satisfy context manager protocol."""
+        return self
+
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
+        """No-op exit; process is detached."""
+        return False
+
+
 @pytest.fixture(name="tray_module")
 def tray_module_fixture(monkeypatch, tmp_path):
     """Import lmstudio_tray with mocked GI/GTK dependencies."""
@@ -2074,7 +2090,7 @@ def test_start_desktop_app_force_stops_daemon_before_launch(
 
     def mock_popen(*_a, **_k):
         popen_calls.append(True)
-        return SimpleNamespace(pid=12345)
+        return _DummyPopen(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
     monkeypatch.setattr(
@@ -2127,7 +2143,7 @@ def test_start_desktop_app_appimage_found_and_started(
 
     def mock_popen(args, **_k):
         popen_args.append(args)
-        return SimpleNamespace(pid=123)
+        return _DummyPopen(pid=123)
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
 
     tray.start_desktop_app(None)
@@ -2166,7 +2182,7 @@ def test_start_desktop_app_prefers_lmstudio_appimage(
 
     def mock_popen(args, **_k):
         popen_calls.append(args)
-        return SimpleNamespace(pid=123)
+        return _DummyPopen(pid=123)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
     monkeypatch.setattr(
@@ -2210,7 +2226,7 @@ def test_start_desktop_app_deb_path_appimage(
 
     def mock_popen(args, **_kwargs):
         popen_calls.append(args)
-        return SimpleNamespace(pid=12345)
+        return _DummyPopen(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
@@ -2286,7 +2302,7 @@ def test_start_desktop_app_deb_path(tray_module, monkeypatch):
 
     def mock_popen(*_a, **_k):
         popen_calls.append(True)
-        return SimpleNamespace(pid=12345)
+        return _DummyPopen(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
 
@@ -2336,7 +2352,7 @@ def test_start_desktop_app_popen_kwargs(tray_module, monkeypatch):
 
     def mock_popen(_args, **kwargs):
         captured_kwargs.update(kwargs)
-        return SimpleNamespace(pid=12345)
+        return _DummyPopen(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
 
@@ -3708,7 +3724,7 @@ def test_start_desktop_app_stops_daemon_even_on_false_negative(
 
     def fake_popen(*_args, **_kwargs):
         popen_called.append(True)
-        return SimpleNamespace(pid=123)
+        return _DummyPopen(pid=123)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", fake_popen)
     tray.start_desktop_app(None)
