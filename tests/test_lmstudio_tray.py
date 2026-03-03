@@ -172,6 +172,7 @@ class DummyAboutDialog:
         self.logo = None
         self.modal = False
         self.copyright = ""
+        self.license = ""
         self.ran = False
         self.destroyed = False
         self.signals = {}
@@ -219,6 +220,10 @@ class DummyAboutDialog:
     def set_copyright(self, text):
         """Store copyright string."""
         self.copyright = text
+
+    def set_license(self, text):
+        """Store license text."""
+        self.license = text
 
     def set_modal(self, modal):
         """Store modal setting."""

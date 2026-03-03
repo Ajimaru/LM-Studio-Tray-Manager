@@ -2635,6 +2635,7 @@ class TrayIcon:
         )
         dialog.set_comments(comment_text)
         dialog.set_copyright(f"© 2025-2026 {APP_MAINTAINER}")
+        dialog.set_license("This program comes WITHOUT ANY WARRANTY.")
 
         def _iter_children(widget):
             if not hasattr(widget, "get_children"):
@@ -3968,7 +3969,9 @@ class MacOSTrayIcon(_RumpsBase):
             f"LM Studio Tray Manager "
             f"v{_AppState.APP_VERSION}\n"
             f"Maintainer: {APP_MAINTAINER}\n"
-            f"{APP_REPOSITORY}"
+            f"{APP_REPOSITORY}\n"
+            f"\n"
+            f"This program comes WITHOUT ANY WARRANTY."
         )
 
         rumps_lib = _rumps_lib
