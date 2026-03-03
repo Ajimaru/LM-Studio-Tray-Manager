@@ -333,7 +333,10 @@ GUI_MODE = False
 INTERVAL = 10
 UPDATE_CHECK_INTERVAL = 60 * 60 * 24
 
+# --------------------------------------------
 # === GTK icon names from the icon browser ===
+# --------------------------------------------
+
 ICON_OK = "emblem-default"         # ✅ Model loaded
 ICON_FAIL = "emblem-unreadable"    # ❌ Daemon and app not installed
 ICON_WARN = "dialog-warning"       # ⚠️ Daemon and app stopped
@@ -412,7 +415,9 @@ def get_release_url(tag: Optional[str] = None) -> str:
         return f"{base}/releases/tag/{tag}"
     return f"{base}/releases/latest"
 
+# -----------------------
 # === Path to lms-CLI ===
+# -----------------------
 
 
 LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
@@ -445,7 +450,10 @@ def main():
     """
     args = parse_args()
 
+    # -------------------------------------------
     # === Model name from argument or default ===
+    # -------------------------------------------
+
     _AppState.apply_cli_args(args)
 
     load_config()
@@ -1306,7 +1314,6 @@ def get_desktop_app_pids():
             ):
                 continue
 
-            # macOS: LM Studio.app process
             if IS_MACOS:
                 if (
                     "LM Studio.app/Contents/MacOS" in cmd_args
@@ -1516,7 +1523,10 @@ class TrayIcon:
         daemon_indicator = self.get_status_indicator(daemon_status)
         app_indicator = self.get_status_indicator(app_status)
 
+        # ----------------------
         # === DAEMON CONTROL ===
+        # ----------------------
+
         if daemon_status == "running":
             daemon_item = gtk.MenuItem(
                 label=f"{daemon_indicator} Daemon (Running)"
@@ -1541,7 +1551,10 @@ class TrayIcon:
             not_found_item.set_sensitive(False)
             self.menu.append(not_found_item)
 
+        # ---------------------------
         # === DESKTOP APP CONTROL ===
+        # ---------------------------
+
         if app_status == "running":
             app_item = gtk.MenuItem(
                 label=f"{app_indicator} Desktop App (Running)"
@@ -3169,7 +3182,6 @@ class MacOSTrayIcon(_RumpsBase):
     so that the correct start/stop actions are always shown.
     """
 
-    # macOS .app locations checked for LM Studio
     _APP_LOCATIONS = [
         "/Applications/LM Studio.app",
         os.path.expanduser("~/Applications/LM Studio.app"),
@@ -3194,19 +3206,16 @@ class MacOSTrayIcon(_RumpsBase):
         self.title = "⚠️"
         self.build_menu()
 
-        # Periodic status check
         self._status_timer = _rumps_lib.Timer(
             self._check_model_tick, INTERVAL
         )
         self._status_timer.start()
 
-        # Periodic update check
         self._update_timer = _rumps_lib.Timer(
             self._update_check_tick, UPDATE_CHECK_INTERVAL
         )
         self._update_timer.start()
 
-        # One-shot initial update check after 5 s
         self._initial_timer = _rumps_lib.Timer(
             self._initial_update_check_once, 5
         )
@@ -3312,14 +3321,19 @@ class MacOSTrayIcon(_RumpsBase):
             title (str): Notification title.
             message (str): Notification body text.
         """
+        rumps_lib = _rumps_lib
+        if rumps_lib is None:
+            logging.debug("Notification skipped: rumps is not installed")
+            return
+
         try:
-            _rumps_lib.notification(
+            rumps_lib.notification(
                 title=title,
                 subtitle="",
                 message=message,
                 sound=False,
             )
-        except Exception as exc:  # pragma: no cover
+        except (AttributeError, OSError, RuntimeError, TypeError) as exc:
             logging.debug("Notification failed: %s", exc)
 
     # ------------------------------------------------------------------
@@ -3328,6 +3342,9 @@ class MacOSTrayIcon(_RumpsBase):
 
     def build_menu(self):
         """Rebuild the macOS menu-bar menu with current status."""
+        rumps_lib = _rumps_lib
+        if rumps_lib is None:
+            raise RuntimeError("rumps is not installed")
         daemon_status = self.get_daemon_status()
         app_status = self.get_desktop_app_status()
         d_ind = self.get_status_indicator(daemon_status)
@@ -3335,84 +3352,82 @@ class MacOSTrayIcon(_RumpsBase):
 
         items = []
 
-        # --- Daemon control ---
         if daemon_status == "running":
             items.append(
-                _rumps_lib.MenuItem(f"{d_ind} Daemon (Running)")
+                rumps_lib.MenuItem(f"{d_ind} Daemon (Running)")
             )
             items.append(
-                _rumps_lib.MenuItem(
+                rumps_lib.MenuItem(
                     "  \u2192 Stop Daemon",
                     callback=self.stop_daemon,
                 )
             )
         elif daemon_status == "stopped":
             items.append(
-                _rumps_lib.MenuItem(
+                rumps_lib.MenuItem(
                     f"{d_ind} Start Daemon (Headless)",
                     callback=self.start_daemon,
                 )
             )
         else:
             items.append(
-                _rumps_lib.MenuItem(
+                rumps_lib.MenuItem(
                     f"{d_ind} Daemon (Not Installed)"
                 )
             )
 
-        # --- Desktop app control ---
         if app_status == "running":
             items.append(
-                _rumps_lib.MenuItem(f"{a_ind} Desktop App (Running)")
+                rumps_lib.MenuItem(f"{a_ind} Desktop App (Running)")
             )
             items.append(
-                _rumps_lib.MenuItem(
+                rumps_lib.MenuItem(
                     "  \u2192 Stop Desktop App",
                     callback=self.stop_desktop_app,
                 )
             )
         elif app_status == "stopped":
             items.append(
-                _rumps_lib.MenuItem(
+                rumps_lib.MenuItem(
                     f"{a_ind} Start Desktop App",
                     callback=self.start_desktop_app,
                 )
             )
         else:
             items.append(
-                _rumps_lib.MenuItem(
+                rumps_lib.MenuItem(
                     f"{a_ind} Desktop App (Not Installed)"
                 )
             )
 
-        items.append(None)  # separator
+        items.append(None)
 
         items.append(
-            _rumps_lib.MenuItem(
+            rumps_lib.MenuItem(
                 "Show Status",
                 callback=self.show_status_dialog,
             )
         )
 
-        options = _rumps_lib.MenuItem("Options")
+        options = rumps_lib.MenuItem("Options")
         options.add(
-            _rumps_lib.MenuItem(
+            rumps_lib.MenuItem(
                 "Check for Updates",
                 callback=self.manual_check_updates,
             )
         )
         options.add(
-            _rumps_lib.MenuItem(
+            rumps_lib.MenuItem(
                 "About",
                 callback=self.show_about_dialog,
             )
         )
         items.append(options)
 
-        items.append(None)  # separator
+        items.append(None)
 
         items.append(
-            _rumps_lib.MenuItem(
+            rumps_lib.MenuItem(
                 "Quit Tray",
                 callback=self.quit_app,
             )
@@ -3917,12 +3932,13 @@ class MacOSTrayIcon(_RumpsBase):
     # Dialogs
     # ------------------------------------------------------------------
 
-    def show_status_dialog(self, _sender):
+    def show_status_dialog(self, sender):
         """Show a rumps alert with the current LM Studio CLI status.
 
         Args:
-            _sender: rumps sender object (unused).
+            sender: rumps sender object (unused).
         """
+        _ = sender
         text = "No models loaded or error."
         lms_cmd = get_lms_cmd()
         if lms_cmd:
@@ -3934,21 +3950,32 @@ class MacOSTrayIcon(_RumpsBase):
                     text = "No model loaded (lms ps returned no output)."
             except (OSError, subprocess.SubprocessError) as e:
                 text = f"Error running lms ps: {e}"
-        _rumps_lib.alert(title="LM Studio Status", message=text)
 
-    def show_about_dialog(self, _sender):
+        rumps_lib = _rumps_lib
+        if rumps_lib is None:
+            logging.error("rumps is not installed; cannot show status dialog")
+            return
+        rumps_lib.alert(title="LM Studio Status", message=text)
+
+    def show_about_dialog(self, sender):
         """Show basic application information in a rumps alert.
 
         Args:
-            _sender: rumps sender object (unused).
+            sender: rumps sender object (unused).
         """
+        _ = sender
         msg = (
             f"LM Studio Tray Manager "
             f"v{_AppState.APP_VERSION}\n"
             f"Maintainer: {APP_MAINTAINER}\n"
             f"{APP_REPOSITORY}"
         )
-        _rumps_lib.alert(title=APP_NAME, message=msg)
+
+        rumps_lib = _rumps_lib
+        if rumps_lib is None:
+            logging.error("rumps is not installed; cannot show about dialog")
+            return
+        rumps_lib.alert(title=APP_NAME, message=msg)
 
     # ------------------------------------------------------------------
     # Update check
@@ -4017,6 +4044,7 @@ class MacOSTrayIcon(_RumpsBase):
         Args:
             _sender: rumps sender object (unused).
         """
+        _ = _sender
         notified = self.check_updates()
         if notified:
             return
@@ -4041,7 +4069,12 @@ class MacOSTrayIcon(_RumpsBase):
         else:
             detail = f" ({error})" if error else ""
             msg = "Unable to check for updates." + detail
-        _rumps_lib.alert(title="Update Check", message=msg)
+
+        rumps_lib = _rumps_lib
+        if rumps_lib is None:
+            logging.error("rumps is not installed; cannot show update dialog")
+            return
+        rumps_lib.alert(title="Update Check", message=msg)
 
     # ------------------------------------------------------------------
     # Auto-start helpers
@@ -4075,8 +4108,13 @@ class MacOSTrayIcon(_RumpsBase):
         Args:
             _sender: rumps sender object (unused).
         """
+        _ = _sender
         logging.info("Tray icon terminated")
-        _rumps_lib.quit_application()
+        rumps_lib = _rumps_lib
+        if rumps_lib is None:
+            logging.error("rumps is not installed; cannot quit application")
+            return
+        rumps_lib.quit_application()
 
 
 if __name__ == "__main__":
