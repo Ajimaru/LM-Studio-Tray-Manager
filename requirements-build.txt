@@ -5,8 +5,13 @@
 # To update: download new versions, verify integrity, and update hashes:
 #   pip download --no-deps <package>==<version>
 #   sha256sum <downloaded-file>
+#
+# macOS runtime dependency (not needed for the Linux binary build):
+# rumps 0.4.0 (source: rumps-0.4.0.tar.gz)
+# rumps==0.4.0 \
+#     --hash=sha256:17fb33c21b54b1e25db0d71d1d793dc19dc3c0b7d8c79dc6d833d0cffc8b1596
 
-# PyInstaller 6.13.0 (source: pyinstaller-6.13.0.tar.gz)
+# PyInstaller 6.19.0 (source: pyinstaller-6.19.0.tar.gz)
 pyinstaller==6.19.0 \
     --hash=sha256:1ec54ef967996ca61dacba676227e2b23219878ccce5ee9d6f3aada7b8ed8abf \
     --hash=sha256:3c5c251054fe4cfaa04c34a363dcfbf811545438cb7198304cd444756bc2edd2 \
@@ -26,7 +31,7 @@ pyinstaller==6.19.0 \
 altgraph==0.17.5 \
     --hash=sha256:f3a22400bce1b0c701683820ac4f3b159cd301acab067c51c653e06961600597
 
-# pyinstaller-hooks-contrib 2025.2 (source: pyinstaller_hooks_contrib-2025.2-py3-none-any.whl)
+# pyinstaller-hooks-contrib 2026.1 (source: pyinstaller_hooks_contrib-2026.1-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
 pyinstaller-hooks-contrib==2026.1 \
     --hash=sha256:66ad4888ba67de6f3cfd7ef554f9dd1a4389e2eb19f84d7129a5a6818e3f2180 \
