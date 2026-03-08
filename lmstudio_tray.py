@@ -1280,6 +1280,38 @@ def is_llmster_running():
     return False
 
 
+def _is_lm_studio_appimage_label(value):
+    """Return True when *value* identifies an LM Studio Desktop App AppImage.
+
+    Matches:
+    - LM-Studio-0.4.6-1-x64_<hash>.AppImage (official desktop app)
+    - LM Studio.AppImage (simple name)
+
+    Excludes:
+    - LM-Studio-Bench-*.AppImage (bench tool)
+    - lmstudio-tray-manager-*.AppImage (tray manager)
+    - Other similarly named tools
+    """
+    if not isinstance(value, str):
+        return False
+
+    text = value.lower()
+    if ".appimage" not in text:
+        return False
+
+    has_lm_studio_name = (
+        "lm-studio" in text
+        or "lm studio" in text
+    )
+    if not has_lm_studio_name:
+        return False
+
+    if any(x in text for x in ("bench", "tray", "manager")):
+        return False
+
+    return True
+
+
 def get_desktop_app_pids():
     """Return PIDs of LM Studio desktop app root processes."""
     pids = []
@@ -1323,6 +1355,7 @@ def get_desktop_app_pids():
                     pids.append(int(pid_text))
                     continue
             else:
+                cmd_args_lower = cmd_args.lower()
                 if (
                     "/opt/LM Studio/lm-studio" in cmd_args
                     or cmd_args.startswith("/usr/bin/lm-studio")
@@ -1332,15 +1365,16 @@ def get_desktop_app_pids():
                     pids.append(int(pid_text))
                     continue
 
-                if ".appimage" in cmd_args.lower():
-                    if (
-                        "lm-studio" in cmd_args.lower()
-                        or "lm_studio" in cmd_args.lower()
-                    ):
-                        pids.append(int(pid_text))
-                        continue
+                if _is_lm_studio_appimage_label(cmd_args_lower):
+                    pids.append(int(pid_text))
+                    continue
 
-                if "/lm-studio" in cmd_args and ".mount_" in cmd_args:
+                is_lm_studio_mount = (
+                    "/lm-studio" in cmd_args
+                    and ".mount_" in cmd_args
+                    and "bench" not in cmd_args_lower
+                )
+                if is_lm_studio_mount:
                     pids.append(int(pid_text))
                     continue
     except (OSError, subprocess.SubprocessError, ValueError):
@@ -1702,16 +1736,10 @@ class TrayIcon:
                 try:
                     candidates = [
                         f for f in os.listdir(search_path)
-                        if f.lower().endswith(".appimage")
-                    ]
-                    lm_candidates = [
-                        f for f in candidates
-                        if "lm-studio" in f.lower() or "lm_studio" in f.lower()
+                        if _is_lm_studio_appimage_label(f)
                     ]
                     picked = None
-                    if lm_candidates:
-                        picked = sorted(lm_candidates)[0]
-                    elif candidates:
+                    if candidates:
                         picked = sorted(candidates)[0]
                     if picked:
                         app_path = os.path.join(search_path, picked)
@@ -2286,20 +2314,11 @@ class TrayIcon:
                 try:
                     candidates = [
                         f for f in os.listdir(search_path)
-                        if f.lower().endswith(".appimage")
+                        if _is_lm_studio_appimage_label(f)
                     ]
                     if not candidates:
                         continue
-                    lm_candidates = [
-                        f for f in candidates
-                        if "lm-studio" in f.lower()
-                        or "lm_studio" in f.lower()
-                    ]
-                    picked = None
-                    if lm_candidates:
-                        picked = sorted(lm_candidates)[0]
-                    else:
-                        picked = sorted(candidates)[0]
+                    picked = sorted(candidates)[0]
                     app_path = os.path.join(search_path, picked)
                     app_found = True
                     logging.info("Found AppImage: %s", app_path)

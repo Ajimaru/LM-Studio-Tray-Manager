@@ -1688,6 +1688,22 @@ def test_get_desktop_app_pids_appimage(tray_module, monkeypatch):
     assert tray_module.get_desktop_app_pids() == [777]  # nosec B101
 
 
+def test_get_desktop_app_pids_excludes_bench_appimage(
+    tray_module, monkeypatch
+):
+    """Do not treat LM-Studio-Bench AppImage as desktop app."""
+    output = (
+        "777 /home/user/Apps/LM-Studio-Bench-x86_64.AppImage -w\n"
+        "888 /home/user/Apps/LM-Studio-0.4.6.AppImage --no-sandbox\n"
+    )
+    monkeypatch.setattr(
+        tray_module.subprocess,
+        "run",
+        lambda *_a, **_k: _completed(returncode=0, stdout=output),
+    )
+    assert tray_module.get_desktop_app_pids() == [888]  # nosec B101
+
+
 def test_get_desktop_app_pids_extracted_appimage(tray_module, monkeypatch):
     """Detect extracted AppImage mount processes."""
     output = (
@@ -1701,6 +1717,26 @@ def test_get_desktop_app_pids_extracted_appimage(tray_module, monkeypatch):
         lambda *_a, **_k: _completed(returncode=0, stdout=output),
     )
     assert tray_module.get_desktop_app_pids() == [999, 1001]  # nosec B101
+
+
+def test_get_desktop_app_pids_excludes_bench_mount(tray_module, monkeypatch):
+    """Do not treat mounted LM-Studio-Bench processes as desktop app."""
+    output = (
+        "1030190 /tmp/.mount_LM-StuhafobM/usr/venv/bin/python "
+        "/tmp/.mount_LM-StuhafobM/usr/share/lm-studio-bench/"
+        "run.py -w\n"
+        "1030201 /tmp/.mount_LM-StuhafobM/usr/venv/bin/python "
+        "/tmp/.mount_LM-StuhafobM/usr/share/lm-studio-bench/"
+        "src/tray.py\n"
+        "999 /tmp/.mount_LM-Studio/lm-studio --no-sandbox\n"
+    )
+    monkeypatch.setattr(
+        tray_module.subprocess,
+        "run",
+        lambda *_a, **_k: _completed(returncode=0, stdout=output),
+    )
+    # Only the real LM Studio mount should be detected, not Bench
+    assert tray_module.get_desktop_app_pids() == [999]  # nosec B101
 
 
 def test_get_desktop_app_pids_no_ps(tray_module, monkeypatch):
@@ -4357,6 +4393,62 @@ def test_get_desktop_app_status_appimage_search(
 
     result = _call_member(tray, "get_desktop_app_status")
     assert result == "stopped"  # nosec B101
+
+
+def test_get_desktop_app_status_ignores_bench_appimage(
+    tray_module, monkeypatch, tmp_path
+):
+    """Do not treat LM-Studio-Bench AppImage as desktop app install."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: None)
+
+    apps_dir = tmp_path / "Apps"
+    apps_dir.mkdir()
+    (apps_dir / "LM-Studio-Bench-x86_64.AppImage").touch()
+
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda p: str(apps_dir) if "Apps" in p else "/nonexistent",
+    )
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "isdir",
+        lambda p: str(p) == str(apps_dir),
+    )
+
+    result = _call_member(tray, "get_desktop_app_status")
+    assert result == "not_found"  # nosec B101
+
+
+def test_is_lm_studio_appimage_label_variants(tray_module):
+    """Accept LM Studio Desktop App names and reject other tools."""
+    assert _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "LM-Studio-0.4.6-1-x64_f041fd4c995356505e187941a4c78adf.AppImage",
+    )
+    assert _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "LM Studio.AppImage",
+    )
+    assert _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "LM-Studio.AppImage",
+    )
+    assert not _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "LM-Studio-Bench-x86_64.AppImage",
+    )
+    assert not _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "lmstudio-tray-manager-0.6.2.AppImage",
+    )
 
 
 def test_get_desktop_app_status_permission_error(
