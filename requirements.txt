@@ -4,6 +4,9 @@
 # (for example Snyk) can parse it reliably. Versions remain pinned exactly.
 #
 # Hash-locked variants are maintained separately in requirements-build.txt.
+#
+# macOS runtime dependency (not needed for the Linux binary build):
+#   rumps>=0.4.0   — install with: pip install rumps
 
 # PyInstaller 6.19.0 (source: pyinstaller-6.19.0.tar.gz)
 pyinstaller==6.19.0
@@ -14,11 +17,11 @@ altgraph==0.17.5
 
 # pyinstaller-hooks-contrib 2026.1 (source: pyinstaller_hooks_contrib-2026.1-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
-pyinstaller-hooks-contrib==2026.2
+pyinstaller-hooks-contrib==2026.3
 
 # setuptools 82.0.0 (source: setuptools-82.0.0-py3-none-any.whl)
 # Required by PyInstaller (>=42.0.0)
-setuptools==82.0.0
+setuptools==82.0.1
 
 # packaging 26.0 (source: packaging-26.0-py3-none-any.whl)
 # Required by PyInstaller (>=22.0)

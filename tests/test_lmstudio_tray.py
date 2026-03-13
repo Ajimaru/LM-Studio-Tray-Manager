@@ -25,7 +25,7 @@ import sys
 import urllib.error
 from email.message import Message
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
+from types import ModuleType, SimpleNamespace, MethodType
 import pytest
 
 
@@ -172,6 +172,7 @@ class DummyAboutDialog:
         self.logo = None
         self.modal = False
         self.copyright = ""
+        self.license = ""
         self.ran = False
         self.destroyed = False
         self.signals = {}
@@ -219,6 +220,10 @@ class DummyAboutDialog:
     def set_copyright(self, text):
         """Store copyright string."""
         self.copyright = text
+
+    def set_license(self, text):
+        """Store license text."""
+        self.license = text
 
     def set_modal(self, modal):
         """Store modal setting."""
@@ -664,6 +669,26 @@ class DummyUrlLib:
         return DummyUrlLib.DummyOpenerDirector(
             self.payload, self.raise_exc
         )
+
+
+class DummyProcess:
+    """Dummy subprocess.Popen object supporting context manager protocol.
+
+    Used in mock_popen functions to simulate subprocess.Popen behavior
+    while supporting the context manager protocol (with statement).
+    """
+
+    def __init__(self, pid=1):
+        """Initialize with a process ID."""
+        self.pid = pid
+
+    def __enter__(self):
+        """Support context manager entry."""
+        return self
+
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
+        """Support context manager exit with no cleanup."""
+        return False
 
 
 def _completed(returncode=0, stdout="", stderr=""):
@@ -1663,6 +1688,22 @@ def test_get_desktop_app_pids_appimage(tray_module, monkeypatch):
     assert tray_module.get_desktop_app_pids() == [777]  # nosec B101
 
 
+def test_get_desktop_app_pids_excludes_bench_appimage(
+    tray_module, monkeypatch
+):
+    """Do not treat LM-Studio-Bench AppImage as desktop app."""
+    output = (
+        "777 /home/user/Apps/LM-Studio-Bench-x86_64.AppImage -w\n"
+        "888 /home/user/Apps/LM-Studio-0.4.6.AppImage --no-sandbox\n"
+    )
+    monkeypatch.setattr(
+        tray_module.subprocess,
+        "run",
+        lambda *_a, **_k: _completed(returncode=0, stdout=output),
+    )
+    assert tray_module.get_desktop_app_pids() == [888]  # nosec B101
+
+
 def test_get_desktop_app_pids_extracted_appimage(tray_module, monkeypatch):
     """Detect extracted AppImage mount processes."""
     output = (
@@ -1676,6 +1717,26 @@ def test_get_desktop_app_pids_extracted_appimage(tray_module, monkeypatch):
         lambda *_a, **_k: _completed(returncode=0, stdout=output),
     )
     assert tray_module.get_desktop_app_pids() == [999, 1001]  # nosec B101
+
+
+def test_get_desktop_app_pids_excludes_bench_mount(tray_module, monkeypatch):
+    """Do not treat mounted LM-Studio-Bench processes as desktop app."""
+    output = (
+        "1030190 /tmp/.mount_LM-StuhafobM/usr/venv/bin/python "
+        "/tmp/.mount_LM-StuhafobM/usr/share/lm-studio-bench/"
+        "run.py -w\n"
+        "1030201 /tmp/.mount_LM-StuhafobM/usr/venv/bin/python "
+        "/tmp/.mount_LM-StuhafobM/usr/share/lm-studio-bench/"
+        "src/tray.py\n"
+        "999 /tmp/.mount_LM-Studio/lm-studio --no-sandbox\n"
+    )
+    monkeypatch.setattr(
+        tray_module.subprocess,
+        "run",
+        lambda *_a, **_k: _completed(returncode=0, stdout=output),
+    )
+    # Only the real LM Studio mount should be detected, not Bench
+    assert tray_module.get_desktop_app_pids() == [999]  # nosec B101
 
 
 def test_get_desktop_app_pids_no_ps(tray_module, monkeypatch):
@@ -2074,7 +2135,7 @@ def test_start_desktop_app_force_stops_daemon_before_launch(
 
     def mock_popen(*_a, **_k):
         popen_calls.append(True)
-        return SimpleNamespace(pid=12345)
+        return DummyProcess(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
     monkeypatch.setattr(
@@ -2127,7 +2188,7 @@ def test_start_desktop_app_appimage_found_and_started(
 
     def mock_popen(args, **_k):
         popen_args.append(args)
-        return SimpleNamespace(pid=123)
+        return DummyProcess(pid=123)
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
 
     tray.start_desktop_app(None)
@@ -2166,7 +2227,7 @@ def test_start_desktop_app_prefers_lmstudio_appimage(
 
     def mock_popen(args, **_k):
         popen_calls.append(args)
-        return SimpleNamespace(pid=123)
+        return DummyProcess(pid=123)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
     monkeypatch.setattr(
@@ -2210,7 +2271,7 @@ def test_start_desktop_app_deb_path_appimage(
 
     def mock_popen(args, **_kwargs):
         popen_calls.append(args)
-        return SimpleNamespace(pid=12345)
+        return DummyProcess(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
@@ -2286,7 +2347,7 @@ def test_start_desktop_app_deb_path(tray_module, monkeypatch):
 
     def mock_popen(*_a, **_k):
         popen_calls.append(True)
-        return SimpleNamespace(pid=12345)
+        return DummyProcess(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
 
@@ -2336,7 +2397,7 @@ def test_start_desktop_app_popen_kwargs(tray_module, monkeypatch):
 
     def mock_popen(_args, **kwargs):
         captured_kwargs.update(kwargs)
-        return SimpleNamespace(pid=12345)
+        return DummyProcess(pid=12345)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
 
@@ -3703,12 +3764,11 @@ def test_start_desktop_app_stops_daemon_even_on_false_negative(
         "run",
         lambda *_a, **_k: _completed(returncode=0),
     )
-
     popen_called = []
 
     def fake_popen(*_args, **_kwargs):
         popen_called.append(True)
-        return SimpleNamespace(pid=123)
+        return DummyProcess(pid=123)
 
     monkeypatch.setattr(tray_module.subprocess, "Popen", fake_popen)
     tray.start_desktop_app(None)
@@ -4318,7 +4378,7 @@ def test_get_desktop_app_status_appimage_search(
 
     apps_dir = tmp_path / "Apps"
     apps_dir.mkdir()
-    (apps_dir / "LMStudio.AppImage").touch()
+    (apps_dir / "LM Studio.AppImage").touch()
 
     monkeypatch.setattr(
         tray_module.os.path,
@@ -4333,6 +4393,62 @@ def test_get_desktop_app_status_appimage_search(
 
     result = _call_member(tray, "get_desktop_app_status")
     assert result == "stopped"  # nosec B101
+
+
+def test_get_desktop_app_status_ignores_bench_appimage(
+    tray_module, monkeypatch, tmp_path
+):
+    """Do not treat LM-Studio-Bench AppImage as desktop app install."""
+    tray = _make_tray_instance(tray_module)
+    monkeypatch.setattr(tray_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(tray_module, "get_dpkg_cmd", lambda: None)
+
+    apps_dir = tmp_path / "Apps"
+    apps_dir.mkdir()
+    (apps_dir / "LM-Studio-Bench-x86_64.AppImage").touch()
+
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "expanduser",
+        lambda p: str(apps_dir) if "Apps" in p else "/nonexistent",
+    )
+    monkeypatch.setattr(
+        tray_module.os.path,
+        "isdir",
+        lambda p: str(p) == str(apps_dir),
+    )
+
+    result = _call_member(tray, "get_desktop_app_status")
+    assert result == "not_found"  # nosec B101
+
+
+def test_is_lm_studio_appimage_label_variants(tray_module):
+    """Accept LM Studio Desktop App names and reject other tools."""
+    assert _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "LM-Studio-0.4.6-1-x64_f041fd4c995356505e187941a4c78adf.AppImage",
+    )
+    assert _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "LM Studio.AppImage",
+    )
+    assert _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "LM-Studio.AppImage",
+    )
+    assert not _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "LM-Studio-Bench-x86_64.AppImage",
+    )
+    assert not _call_member(  # nosec B101
+        tray_module,
+        "_is_lm_studio_appimage_label",
+        "lmstudio-tray-manager-0.6.2.AppImage",
+    )
 
 
 def test_get_desktop_app_status_permission_error(
@@ -4755,7 +4871,7 @@ def test_show_status_dialog_api_fallback_lms_fail(
             return self
 
         def __exit__(self, *args):
-            pass
+            ...
 
         def read(self):
             """
@@ -4804,7 +4920,7 @@ def test_show_status_dialog_api_fallback_no_lms(
             return self
 
         def __exit__(self, *args):
-            pass
+            ...
 
         def read(self):
             """Retrieve the payload data.
@@ -4858,7 +4974,7 @@ def test_show_status_dialog_api_invalid_json(
             return self
 
         def __exit__(self, *args):
-            pass
+            ...
 
         def read(self):
             """Return the payload data stored in this object.
@@ -4898,7 +5014,7 @@ def test_show_status_dialog_api_non_dict_response(
             return self
 
         def __exit__(self, *args):
-            pass
+            ...
 
         def read(self):
             """
@@ -4948,7 +5064,7 @@ def test_check_api_models_with_invalid_data(tray_module, monkeypatch):
             return self
 
         def __exit__(self, *args):
-            pass
+            ...
 
         def read(self):
             """
@@ -5420,3 +5536,2012 @@ def test_check_model_any_running_without_lms_uses_api_true(
 
     assert tray.check_model() is True  # nosec B101
     assert tray.indicator.icon_calls[-1][0] == "emblem-default"  # nosec B101
+
+
+class DummyRumpsMenuItem:
+    """Lightweight rumps.MenuItem stub for testing."""
+
+    def __init__(self, title="", callback=None, **_kwargs):
+        """Initialize a dummy menu item."""
+        self.title = title
+        self.callback = callback
+        self._children = []
+
+    def add(self, item):
+        """Add a child menu item."""
+        self._children.append(item)
+
+
+class DummyRumpsMenu:
+    """Lightweight rumps.Menu stub."""
+
+    def __init__(self):
+        """Initialize an empty menu."""
+        self._items = []
+
+    def clear(self):
+        """Clear all menu items."""
+        self._items.clear()
+
+    def update(self, items):
+        """Add new items to the menu."""
+        for item in items:
+            self._items.append(item)
+
+    def __iter__(self):
+        """Iterate over menu items."""
+        return iter(self._items)
+
+
+class DummyRumpsTimer:
+    """Lightweight rumps.Timer stub."""
+
+    def __init__(self, callback, interval):
+        """Initialize a dummy timer."""
+        self.callback = callback
+        self.interval = interval
+        self.running = False
+
+    def start(self):
+        """Mark timer as started."""
+        self.running = True
+
+    def stop(self):
+        """Mark timer as stopped."""
+        self.running = False
+
+
+class DummyRumpsApp:
+    """Base class stub for rumps.App."""
+
+    def __init__(self, name, **_kwargs):
+        """Initialize the app stub."""
+        self.name = name
+        self.title = ""
+        self.menu = DummyRumpsMenu()
+        self.icon = None
+
+    def run(self):
+        """Stub run method - does nothing in tests."""
+
+
+class DummyRumpsModule(ModuleType):
+    """Stub for the rumps module used in macOS tray tests."""
+
+    App = DummyRumpsApp
+    MenuItem = DummyRumpsMenuItem
+    Timer = DummyRumpsTimer
+    _notifications = []
+    _alerts = []
+    _quit_called = False
+
+    @staticmethod
+    def notification(title="", subtitle="", message="", sound=False):
+        """Record a notification call."""
+        DummyRumpsModule._notifications.append(
+            (title, subtitle, message)
+        )
+
+    @staticmethod
+    def alert(title="", message=""):
+        """Record an alert call."""
+        DummyRumpsModule._alerts.append((title, message))
+
+    @staticmethod
+    def quit_application():
+        """Record quit call."""
+        DummyRumpsModule._quit_called = True
+
+    @classmethod
+    def get_notifications(cls):
+        """Get the list of recorded notifications."""
+        return cls._notifications
+
+    @classmethod
+    def get_alerts(cls):
+        """Get the list of recorded alerts."""
+        return cls._alerts
+
+    @classmethod
+    def is_quit_called(cls):
+        """Check if quit was called."""
+        return cls._quit_called
+
+    @classmethod
+    def reset(cls):
+        """Reset recorded state between tests."""
+        cls._notifications.clear()
+        cls._alerts.clear()
+        cls._quit_called = False
+
+
+@pytest.fixture(name="macos_module")
+def macos_module_fixture(monkeypatch, tmp_path):
+    """Load lmstudio_tray with IS_MACOS=True and a rumps stub."""
+    rumps_stub = DummyRumpsModule("rumps")
+    DummyRumpsModule.reset()
+
+    monkeypatch.setitem(sys.modules, "rumps", rumps_stub)
+
+    gi_mod = ModuleType("gi")
+    monkeypatch.setattr(
+        gi_mod,
+        "require_version",
+        lambda *_args, **_kwargs: None,
+        raising=False,
+    )
+    monkeypatch.setitem(sys.modules, "gi", gi_mod)
+
+    def safe_run(*_args, **_kwargs):
+        """Return a safe default subprocess result during import."""
+        return _completed(returncode=1, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", safe_run)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(os, "getpid", lambda: 99999)
+
+    module_name = "lmstudio_tray_macos"
+    sys.modules.pop(module_name, None)
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        str(Path(__file__).resolve().parents[1] / "lmstudio_tray.py"),
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Failed to create module spec or loader")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+
+    monkeypatch.setattr(module, "IS_MACOS", True)
+    monkeypatch.setattr(module, "_rumps_lib", rumps_stub)
+    monkeypatch.setattr(module, "_RumpsBase", DummyRumpsApp)
+
+    yield module
+
+
+def _make_macos_tray(module):
+    """Build a partially initialised MacOSTrayIcon for unit tests."""
+    tray = module.MacOSTrayIcon.__new__(module.MacOSTrayIcon)
+    tray.title = "⚠️"
+    tray.menu = DummyRumpsMenu()
+    tray.last_status = None
+    tray.action_lock_until = 0.0
+    tray.lms_ps_resume_at = 0.0
+    _call_member(tray, "__setattr__", "_seen_desktop_call", False)
+    _call_member(tray, "__setattr__", "_last_desktop_detection", None)
+    tray.last_update_version = None
+    tray.update_status = "Unknown"
+    tray.latest_update_version = None
+    tray.last_update_error = None
+    tray.build_menu = lambda: None
+    return tray
+
+
+def test_is_macos_flag_exists(tray_module):
+    """IS_MACOS must be a boolean attribute on the module."""
+    assert isinstance(tray_module.IS_MACOS, bool)  # nosec B101
+
+
+def test_rumps_base_is_object_when_rumps_missing(tray_module):
+    """_RumpsBase is 'object' when rumps is not installed."""
+    assert (
+        _call_member(tray_module, "__getattribute__", "_rumps_lib") is None
+    )  # nosec B101
+    assert (
+        _call_member(tray_module, "__getattribute__", "_RumpsBase") is object
+    )  # nosec B101
+
+
+def test_get_desktop_app_pids_macos_app_detected(
+    macos_module, monkeypatch
+):
+    """macOS process table entry for LM Studio.app is recognised."""
+    ps_output = (
+        "1234 /Applications/LM Studio.app/Contents/MacOS/LM Studio\n"
+        "5678 --type=renderer something\n"
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "get_ps_cmd",
+        lambda: "/bin/ps",
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=0, stdout=ps_output),
+    )
+    pids = macos_module.get_desktop_app_pids()
+    assert pids == [1234]  # nosec B101
+
+
+def test_get_desktop_app_pids_macos_excludes_linux_patterns(
+    macos_module, monkeypatch
+):
+    """On macOS, Linux-specific .appimage paths are not matched."""
+    ps_output = (
+        "9999 /home/user/LM-Studio-0.4.0-x86_64.AppImage --no-sandbox\n"
+    )
+    monkeypatch.setattr(macos_module, "get_ps_cmd", lambda: "/bin/ps")
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=0, stdout=ps_output),
+    )
+    assert macos_module.get_desktop_app_pids() == []  # nosec B101
+
+
+def test_get_desktop_app_pids_macos_lm_studio_process_name(
+    macos_module, monkeypatch
+):
+    """Bare 'LM Studio' process name is matched on macOS."""
+    ps_output = "1111 LM Studio\n"
+    monkeypatch.setattr(macos_module, "get_ps_cmd", lambda: "/bin/ps")
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=0, stdout=ps_output),
+    )
+    assert macos_module.get_desktop_app_pids() == [1111]  # nosec B101
+
+
+def test_macos_get_daemon_status_not_found(macos_module, monkeypatch):
+    """Returns 'not_found' when llmster is absent."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    assert tray.get_daemon_status() == "not_found"  # nosec B101
+
+
+def test_macos_get_daemon_status_running(macos_module, monkeypatch):
+    """Returns 'running' when llmster process is detected."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_llmster_cmd", lambda: "/usr/local/bin/llmster"
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: True)
+    assert tray.get_daemon_status() == "running"  # nosec B101
+
+
+def test_macos_get_daemon_status_stopped(macos_module, monkeypatch):
+    """Returns 'stopped' when llmster is installed but not running."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_llmster_cmd", lambda: "/usr/local/bin/llmster"
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    assert tray.get_daemon_status() == "stopped"  # nosec B101
+
+
+def test_macos_get_daemon_status_error(macos_module, monkeypatch):
+    """Returns 'not_found' on subprocess errors."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module,
+        "get_llmster_cmd",
+        lambda: "/usr/local/bin/llmster",
+    )
+
+    def raise_oserror():
+        raise OSError("no such process")
+
+    monkeypatch.setattr(macos_module, "is_llmster_running", raise_oserror)
+    assert tray.get_daemon_status() == "not_found"  # nosec B101
+
+
+def test_macos_get_desktop_app_status_running(macos_module, monkeypatch):
+    """Returns 'running' when PIDs are found for LM Studio."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: [1234]
+    )
+    assert tray.get_desktop_app_status() == "running"  # nosec B101
+
+
+def test_macos_get_desktop_app_status_stopped(
+    macos_module, monkeypatch, tmp_path
+):
+    """Returns 'stopped' when .app bundle is present but not running."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: []
+    )
+    app_dir = tmp_path / "LM Studio.app"
+    app_dir.mkdir()
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon,
+        "_APP_LOCATIONS",
+        [str(app_dir)],
+    )
+    assert tray.get_desktop_app_status() == "stopped"  # nosec B101
+
+
+def test_macos_get_desktop_app_status_not_found(
+    macos_module, monkeypatch
+):
+    """Returns 'not_found' when .app is absent and no PIDs exist."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: []
+    )
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon,
+        "_APP_LOCATIONS",
+        [],
+    )
+    assert tray.get_desktop_app_status() == "not_found"  # nosec B101
+
+
+def test_macos_get_status_indicator(macos_module):
+    """Status strings produce the expected emoji indicators."""
+    tray = _make_macos_tray(macos_module)
+    assert tray.get_status_indicator("running") == "🟢"  # nosec B101
+    assert tray.get_status_indicator("stopped") == "🟡"  # nosec B101
+    assert tray.get_status_indicator("not_found") == "🔴"  # nosec B101
+    assert tray.get_status_indicator("unknown") == "🔴"  # nosec B101
+
+
+def test_macos_notify_sends_rumps_notification(macos_module):
+    """_notify() calls rumps.notification with the right arguments."""
+    DummyRumpsModule.reset()
+    tray = _make_macos_tray(macos_module)
+    _call_member(tray, "_notify", "Hello", "World")
+    notifications = DummyRumpsModule.get_notifications()
+    assert len(notifications) == 1  # nosec B101
+    assert notifications[0][0] == "Hello"  # nosec B101
+    assert notifications[0][2] == "World"  # nosec B101
+
+
+def test_macos_build_menu_daemon_running(macos_module, monkeypatch):
+    """build_menu shows stop action when daemon is running."""
+    tray = _make_macos_tray(macos_module)
+    tray.build_menu = lambda: macos_module.MacOSTrayIcon.build_menu(tray)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.build_menu()
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("Daemon (Running)" in t for t in titles)  # nosec B101
+    assert any("Stop Daemon" in t for t in titles)  # nosec B101
+
+
+def test_macos_build_menu_daemon_stopped(macos_module, monkeypatch):
+    """build_menu shows start action when daemon is stopped."""
+    tray = _make_macos_tray(macos_module)
+    tray.build_menu = MethodType(
+        macos_module.MacOSTrayIcon.build_menu, tray
+    )
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.build_menu()
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("Start Daemon" in t for t in titles)  # nosec B101
+
+
+def test_macos_build_menu_daemon_not_found(macos_module, monkeypatch):
+    """build_menu shows 'Not Installed' label when daemon absent."""
+    tray = _make_macos_tray(macos_module)
+    tray.build_menu = lambda: macos_module.MacOSTrayIcon.build_menu(tray)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.build_menu()
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("Not Installed" in t for t in titles)  # nosec B101
+
+
+def test_macos_build_menu_app_running(macos_module, monkeypatch):
+    """build_menu shows stop action when desktop app is running."""
+    tray = _make_macos_tray(macos_module)
+    tray.build_menu = lambda: macos_module.MacOSTrayIcon.build_menu(tray)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "running")
+    tray.build_menu()
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("Desktop App (Running)" in t for t in titles)  # nosec B101
+    assert any("Stop Desktop App" in t for t in titles)  # nosec B101
+
+
+def test_macos_build_menu_app_stopped(macos_module, monkeypatch):
+    """build_menu shows start action when desktop app is stopped."""
+    tray = _make_macos_tray(macos_module)
+    tray.build_menu = lambda: macos_module.MacOSTrayIcon.build_menu(tray)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    tray.build_menu()
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("Start Desktop App" in t for t in titles)  # nosec B101
+
+
+def test_macos_check_model_fail(macos_module, monkeypatch):
+    """Sets ❌ title and emits notification when both are not_found."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "WARN"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.check_model()
+    assert tray.title == "❌"  # nosec B101
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "not installed" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_check_model_warn(macos_module, monkeypatch):
+    """Sets ⚠️ title when both daemon and app are stopped."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "OK"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    tray.check_model()
+    assert tray.title == "⚠️"  # nosec B101
+
+
+def test_macos_check_model_ok_via_lms_ps(macos_module, monkeypatch):
+    """Sets ✅ title when lms ps reports a loaded model."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "WARN"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=0, stdout="model loaded"),
+    )
+    monkeypatch.setattr(macos_module, "_has_loaded_model", lambda _: True)
+    tray.check_model()
+    assert tray.title == "✅"  # nosec B101
+
+
+def test_macos_check_model_info_no_model(macos_module, monkeypatch):
+    """Sets ℹ️ title when daemon is running but no model is loaded."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "WARN"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=0, stdout="no models"),
+    )
+    monkeypatch.setattr(macos_module, "_has_loaded_model", lambda _: False)
+    monkeypatch.setattr(macos_module, "check_api_models", lambda: False)
+    tray.check_model()
+    assert tray.title == "ℹ️"  # nosec B101
+
+
+def test_macos_check_model_ok_via_api(macos_module, monkeypatch):
+    """Sets ✅ via API fallback when lms ps fails."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "WARN"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=1, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(macos_module, "check_api_models", lambda: True)
+    tray.check_model()
+    assert tray.title == "✅"  # nosec B101
+
+
+def test_macos_check_model_info_no_lms_cmd(macos_module, monkeypatch):
+    """Sets ℹ️ when runtime is active but lms cmd not found and API empty."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = None
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "check_api_models", lambda: False)
+    tray.check_model()
+    assert tray.title == "ℹ️"  # nosec B101
+
+
+def test_macos_check_model_ok_api_no_lms(macos_module, monkeypatch):
+    """Sets ✅ via API when lms cmd is absent but API shows model loaded."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = None
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "check_api_models", lambda: True)
+    tray.check_model()
+    assert tray.title == "✅"  # nosec B101
+
+
+def test_macos_check_model_error_sets_fail_icon(
+    macos_module, monkeypatch
+):
+    """Sets ❌ when an OSError occurs during status check."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = None
+
+    def raise_oserror():
+        raise OSError("test error")
+
+    monkeypatch.setattr(tray, "get_daemon_status", raise_oserror)
+    tray.check_model()
+    assert tray.title == "❌"  # nosec B101
+
+
+def test_macos_check_model_timeout_keeps_status(
+    macos_module, monkeypatch
+):
+    """TimeoutExpired in check_model is caught without changing title."""
+    tray = _make_macos_tray(macos_module)
+    tray.title = "✅"
+
+    def raise_timeout():
+        raise subprocess.TimeoutExpired(cmd="lms", timeout=5)
+
+    monkeypatch.setattr(tray, "get_daemon_status", raise_timeout)
+    tray.check_model()
+    assert tray.title == "✅"  # nosec B101
+
+
+def test_macos_check_model_status_change_ok_notification(
+    macos_module, monkeypatch
+):
+    """Status change to OK sends a notification."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "WARN"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+
+    def _run_safe_command_stub(command):
+        _ = command
+        return _completed(returncode=0, stdout="model loaded")
+
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        _run_safe_command_stub,
+    )
+    monkeypatch.setattr(macos_module, "_has_loaded_model", lambda _: True)
+    tray.check_model()
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "model is loaded" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_check_model_status_change_info_notification(
+    macos_module, monkeypatch
+):
+    """Status change to INFO sends the appropriate notification."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "OK"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "check_api_models", lambda: False)
+    tray.check_model()
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "no model" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_check_model_status_change_warn_notification(
+    macos_module, monkeypatch
+):
+    """Status change to WARN sends the appropriate notification."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "OK"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "stopped")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    tray.check_model()
+    assert any(
+        "neither" in n[2].lower()
+        for n in DummyRumpsModule.get_notifications()
+    )  # nosec B101
+
+
+def test_macos_build_daemon_attempts_start(macos_module, monkeypatch):
+    """_build_daemon_attempts returns start commands when lms is found."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    attempts = _call_member(tray, "_build_daemon_attempts", "start")
+    assert len(attempts) > 0  # nosec B101
+    assert all(a[0] == "/usr/local/bin/lms" for a in attempts)  # nosec B101
+
+
+def test_macos_build_daemon_attempts_stop(macos_module, monkeypatch):
+    """_build_daemon_attempts returns stop commands when lms is found."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    attempts = _call_member(tray, "_build_daemon_attempts", "stop")
+    assert len(attempts) > 0  # nosec B101
+    assert all("down" in a or "stop" in a for a in attempts)  # nosec B101
+
+
+def test_macos_stop_daemon_with_notification_no_cmd(
+    macos_module, monkeypatch
+):
+    """_stop_daemon_with_notification notifies when no stop command found."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    stopped, _ = _call_member(tray, "_stop_daemon_with_notification")
+    assert not stopped  # nosec B101
+    assert any(
+        "not found" in n[2].lower()
+        for n in DummyRumpsModule.get_notifications()
+    )  # nosec B101
+
+
+def test_macos_stop_daemon_with_notification_success(
+    macos_module, monkeypatch
+):
+    """_stop_daemon_with_notification notifies on successful stop."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda cmd: _completed(returncode=0),
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        tray,
+        "_force_stop_llmster",
+        lambda: None,
+    )
+    stopped, _ = _call_member(tray, "_stop_daemon_with_notification")
+    assert stopped  # nosec B101
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "stopped" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_stop_daemon_with_notification_fail(
+    macos_module, monkeypatch
+):
+    """_stop_daemon_with_notification notifies on failed stop."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda *_args, **_kwargs: _completed(returncode=1, stderr="nope"),
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: True)
+    monkeypatch.setattr(tray, "_force_stop_llmster", lambda: None)
+    stopped, _ = _call_member(tray, "_stop_daemon_with_notification")
+    assert not stopped  # nosec B101
+    assert any(
+        "failed" in n[2].lower()
+        for n in DummyRumpsModule.get_notifications()
+    )  # nosec B101
+
+
+def test_macos_start_daemon_body_no_cmd(macos_module, monkeypatch):
+    """_start_daemon_body notifies when no start command is available."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    _call_member(tray, "_start_daemon_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "not found" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_start_daemon_body_success(macos_module, monkeypatch):
+    """_start_daemon_body notifies when daemon starts."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda cmd: _completed(returncode=0),
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: True)
+    monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
+    _call_member(tray, "_start_daemon_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "running" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_start_daemon_body_fail(macos_module, monkeypatch):
+    """_start_daemon_body notifies on failure to start daemon."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+
+    def _run_safe_command_stub(command):
+        _ = command
+        return _completed(returncode=0)
+
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        _run_safe_command_stub,
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    _call_member(tray, "_start_daemon_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "failed" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_start_daemon_cooldown(macos_module, monkeypatch):
+    """start_daemon respects the action cooldown."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = float("inf")
+    called = []
+    monkeypatch.setattr(
+        tray, "_start_daemon_body", lambda: called.append(1)
+    )
+    tray.start_daemon(None)
+    assert not called  # nosec B101
+
+
+def test_macos_stop_daemon_body_success(macos_module, monkeypatch):
+    """_stop_daemon_body calls stop and refreshes menu on success."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    refreshed = []
+    monkeypatch.setattr(
+        tray,
+        "_stop_daemon_with_notification",
+        lambda: (True, None),
+    )
+    monkeypatch.setattr(tray, "build_menu", lambda: refreshed.append(1))
+    monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
+    _call_member(tray, "_stop_daemon_body")
+    assert refreshed  # nosec B101
+
+
+def test_macos_start_desktop_app_body_no_open(
+    macos_module, monkeypatch
+):
+    """_start_desktop_app_body notifies when 'open' is unavailable."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(macos_module.shutil, "which", lambda _: None)
+    _call_member(tray, "_start_desktop_app_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "open" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_start_desktop_app_body_not_found(
+    macos_module, monkeypatch
+):
+    """_start_desktop_app_body notifies when .app bundle is missing."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        macos_module.shutil, "which", lambda _: "/usr/bin/open"
+    )
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    _call_member(tray, "_start_desktop_app_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "no lm studio" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_start_desktop_app_body_success(
+    macos_module, monkeypatch, tmp_path
+):
+    """_start_desktop_app_body launches the app and notifies success."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    app_dir = tmp_path / "LM Studio.app"
+    app_dir.mkdir()
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        macos_module.shutil, "which", lambda _: "/usr/bin/open"
+    )
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", [str(app_dir)]
+    )
+    monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
+
+    launched = []
+
+    def fake_popen(cmd, **kwargs):
+        _ = kwargs
+        launched.append(cmd)
+        return SimpleNamespace()
+
+    monkeypatch.setattr(macos_module.subprocess, "Popen", fake_popen)
+    _call_member(tray, "_start_desktop_app_body")
+    assert launched  # nosec B101
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "starting" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_stop_desktop_app_no_pids(macos_module, monkeypatch):
+    """stop_desktop_app does nothing when no desktop PIDs found."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: []
+    )
+    kills = []
+    monkeypatch.setattr(os, "kill", lambda pid, _sig: kills.append(pid))
+    tray.stop_desktop_app(None)
+    assert not kills  # nosec B101
+
+
+def test_macos_stop_desktop_app_sends_sigterm(
+    macos_module, monkeypatch
+):
+    """stop_desktop_app sends SIGTERM to desktop app PIDs."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: [4321]
+    )
+    kills = []
+    monkeypatch.setattr(
+        os, "kill", lambda pid, sig: kills.append((pid, sig))
+    )
+    monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
+    tray.stop_desktop_app(None)
+    assert (4321, signal.SIGTERM) in kills  # nosec B101
+
+
+def test_macos_show_status_dialog_lms_ps_success(
+    macos_module, monkeypatch
+):
+    """show_status_dialog shows lms ps output in a rumps alert."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _: _completed(returncode=0, stdout="model: qwen"),
+    )
+    tray.show_status_dialog(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "qwen" in alerts[0][1]  # nosec B101
+
+
+def test_macos_show_status_dialog_no_lms_cmd(
+    macos_module, monkeypatch
+):
+    """show_status_dialog shows fallback message when lms is absent."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    tray.show_status_dialog(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "No models" in alerts[0][1]  # nosec B101
+
+
+def test_macos_show_about_dialog(macos_module):
+    """show_about_dialog shows version and repository info."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    app_state = _call_member(
+        macos_module,
+        "__getattribute__",
+        "_AppState",
+    )
+    app_state.APP_VERSION = "1.2.3"
+    tray.show_about_dialog(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "1.2.3" in alerts[0][1]  # nosec B101
+
+
+def test_macos_check_updates_dev_build(macos_module):
+    """check_updates returns False for dev build."""
+    tray = _make_macos_tray(macos_module)
+    app_state = _call_member(
+        macos_module,
+        "__getattribute__",
+        "_AppState",
+    )
+    app_state.APP_VERSION = "dev"
+    result = tray.check_updates()
+    assert not result  # nosec B101
+    assert tray.update_status == "Dev build"  # nosec B101
+
+
+def test_macos_check_updates_no_latest(macos_module, monkeypatch):
+    """check_updates returns False when release fetch fails."""
+    tray = _make_macos_tray(macos_module)
+    app_state = _call_member(
+        macos_module,
+        "__getattribute__",
+        "_AppState",
+    )
+    app_state.APP_VERSION = "v1.0.0"
+    monkeypatch.setattr(
+        macos_module,
+        "get_latest_release_version",
+        lambda: (None, "timeout"),
+    )
+    result = tray.check_updates()
+    assert not result  # nosec B101
+    assert tray.update_status == "Unknown"  # nosec B101
+
+
+def test_macos_check_updates_up_to_date(macos_module, monkeypatch):
+    """check_updates sets status to 'Up to date' when current."""
+    tray = _make_macos_tray(macos_module)
+    app_state = _call_member(
+        macos_module,
+        "__getattribute__",
+        "_AppState",
+    )
+    app_state.APP_VERSION = "v1.0.0"
+    monkeypatch.setattr(
+        macos_module,
+        "get_latest_release_version",
+        lambda: ("v1.0.0", None),
+    )
+    result = tray.check_updates()
+    assert not result  # nosec B101
+    assert tray.update_status == "Up to date"  # nosec B101
+
+
+def test_macos_check_updates_new_version(macos_module, monkeypatch):
+    """check_updates notifies when a newer version is available."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    app_state = _call_member(
+        macos_module,
+        "__getattribute__",
+        "_AppState",
+    )
+    app_state.APP_VERSION = "v1.0.0"
+    monkeypatch.setattr(
+        macos_module,
+        "get_latest_release_version",
+        lambda: ("v1.1.0", None),
+    )
+    result = tray.check_updates()
+    assert result  # nosec B101
+    assert tray.update_status == "Update available"  # nosec B101
+    assert DummyRumpsModule.get_notifications()  # nosec B101
+
+
+def test_macos_manual_check_updates_up_to_date(
+    macos_module, monkeypatch
+):
+    """manual_check_updates shows an alert when already up to date."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "check_updates", lambda: False)
+    tray.update_status = "Up to date"
+    app_state = _call_member(
+        macos_module,
+        "__getattribute__",
+        "_AppState",
+    )
+    app_state.APP_VERSION = "v1.0.0"
+    tray.manual_check_updates(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "up to date" in alerts[0][1].lower()  # nosec B101
+
+
+def test_macos_manual_check_updates_error(macos_module, monkeypatch):
+    """manual_check_updates shows an alert with error detail."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "check_updates", lambda: False)
+    tray.update_status = "Unknown"
+    tray.last_update_error = "connection refused"
+    tray.latest_update_version = None
+    tray.manual_check_updates(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "connection refused" in alerts[0][1]  # nosec B101
+
+
+def test_macos_manual_check_updates_dev_build(
+    macos_module, monkeypatch
+):
+    """manual_check_updates shows 'Dev build' message."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "check_updates", lambda: False)
+    tray.update_status = "Dev build"
+    tray.manual_check_updates(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "dev build" in alerts[0][1].lower()  # nosec B101
+
+
+def test_macos_manual_check_updates_ahead_of_release(
+    macos_module, monkeypatch
+):
+    """manual_check_updates shows 'Ahead of release' message."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "check_updates", lambda: False)
+    tray.update_status = "Ahead of release"
+    tray.latest_update_version = "v0.9.0"
+    app_state = _call_member(
+        macos_module,
+        "__getattribute__",
+        "_AppState",
+    )
+    app_state.APP_VERSION = "v1.0.0"
+    tray.manual_check_updates(None)
+    assert DummyRumpsModule.get_alerts()  # nosec B101
+
+
+def test_macos_quit_app(macos_module):
+    """quit_app calls rumps.quit_application."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    tray.quit_app(None)
+    assert DummyRumpsModule.is_quit_called()  # nosec B101
+
+
+def test_macos_begin_action_cooldown_allows(macos_module):
+    """begin_action_cooldown allows action when not in cooldown."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    assert tray.begin_action_cooldown("test")  # nosec B101
+
+
+def test_macos_begin_action_cooldown_blocks(macos_module):
+    """begin_action_cooldown blocks action when in cooldown."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = float("inf")
+    assert not tray.begin_action_cooldown("test")  # nosec B101
+
+
+def test_macos_force_stop_llmster_no_pkill(macos_module, monkeypatch):
+    """_force_stop_llmster logs warning when pkill is absent."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "get_pkill_cmd", lambda: None)
+    # Should not raise
+    _call_member(tray, "_force_stop_llmster")
+
+
+def test_macos_force_stop_llmster_stops_process(
+    macos_module, monkeypatch
+):
+    """_force_stop_llmster calls pkill to stop llmster."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_pkill_cmd", lambda: "/usr/bin/pkill"
+    )
+    calls = []
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda cmd: calls.append(cmd) or _completed(returncode=0),
+    )
+    monkeypatch.setattr(
+        macos_module, "is_llmster_running", lambda: False
+    )
+    _call_member(tray, "_force_stop_llmster")
+    assert calls  # nosec B101
+
+
+def test_run_macos_missing_rumps(macos_module, monkeypatch):
+    """_run_macos exits with error when rumps is not installed."""
+    monkeypatch.setattr(macos_module, "_rumps_lib", None)
+    with pytest.raises(SystemExit) as exc_info:
+        _call_member(macos_module, "_run_macos", SimpleNamespace())
+    assert exc_info.value.code == 1  # nosec B101
+
+
+def test_macos_stop_desktop_app_processes(macos_module, monkeypatch):
+    """_stop_desktop_app_processes sends SIGTERM to desktop PIDs."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: [1111]
+    )
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    kills = []
+    monkeypatch.setattr(
+        os, "kill", lambda pid, sig: kills.append((pid, sig))
+    )
+    result = _call_member(tray, "_stop_desktop_app_processes")
+    assert result  # nosec B101
+    assert any(p == 1111 for p, _ in kills)  # nosec B101
+
+
+def test_macos_timer_callbacks(macos_module, monkeypatch):
+    """Timer callbacks delegate to their respective methods."""
+    tray = _make_macos_tray(macos_module)
+    tray.build_menu = lambda: None
+    called = []
+    monkeypatch.setattr(
+        tray, "check_model", lambda: called.append("model") or True
+    )
+    monkeypatch.setattr(
+        tray, "check_updates", lambda: called.append("updates") or False
+    )
+    sender = DummyRumpsTimer(None, 5)
+    _call_member(tray, "_check_model_tick", sender)
+    _call_member(tray, "_update_check_tick", sender)
+    _call_member(tray, "_initial_update_check_once", sender)
+    assert "model" in called  # nosec B101
+    assert "updates" in called  # nosec B101
+    assert not sender.running  # noqa: SLF001 (stopped after initial)
+
+
+def test_macos_schedule_menu_refresh(macos_module, monkeypatch):
+    """_schedule_menu_refresh schedules a delayed rebuild via threading."""
+    tray = _make_macos_tray(macos_module)
+    scheduled = []
+
+    class ImmediateTimer:  # pylint: disable=too-few-public-methods
+        """Immediate timer stub that runs callbacks synchronously in tests."""
+
+        def __init__(self, _delay, fn):
+            """Run the provided callback immediately and record scheduling."""
+            self.daemon = True
+            fn()
+            scheduled.append(fn)
+
+        def start(self):
+            """Provide a Timer-compatible start method for monkeypatching."""
+            return None
+
+    monkeypatch.setattr(macos_module.threading, "Timer", ImmediateTimer)
+    monkeypatch.setattr(tray, "build_menu", lambda: None)
+    _call_member(tray, "_schedule_menu_refresh", 0)
+    assert scheduled  # nosec B101
+
+
+def test_macos_maybe_auto_start_daemon(macos_module, monkeypatch):
+    """_maybe_auto_start_daemon stops then starts the daemon."""
+    tray = _make_macos_tray(macos_module)
+    calls = []
+    monkeypatch.setattr(
+        tray,
+        "_stop_daemon_with_notification",
+        lambda: calls.append("stop") or (True, None),
+    )
+    monkeypatch.setattr(
+        tray, "start_daemon", lambda sender: calls.append("start")
+    )
+    _call_member(tray, "_maybe_auto_start_daemon")
+    assert "stop" in calls  # nosec B101
+    assert "start" in calls  # nosec B101
+
+
+def test_macos_maybe_start_gui(macos_module, monkeypatch):
+    """_maybe_start_gui calls start_desktop_app."""
+    tray = _make_macos_tray(macos_module)
+    called = []
+    monkeypatch.setattr(
+        tray, "start_desktop_app", lambda s: called.append(1)
+    )
+    _call_member(tray, "_maybe_start_gui")
+    assert called  # nosec B101
+
+
+def test_macos_check_updates_ahead_of_release(macos_module, monkeypatch):
+    """check_updates sets 'Ahead of release' when current is newer."""
+    tray = _make_macos_tray(macos_module)
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    app_state.APP_VERSION = "v2.0.0"
+    monkeypatch.setattr(
+        macos_module,
+        "get_latest_release_version",
+        lambda: ("v1.0.0", None),
+    )
+    tray.check_updates()
+    assert tray.update_status == "Ahead of release"  # nosec B101
+
+
+def test_macos_start_desktop_app_cooldown(macos_module, monkeypatch):
+    """start_desktop_app respects the action cooldown."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = float("inf")
+    called = []
+    monkeypatch.setattr(
+        tray, "_start_desktop_app_body", lambda: called.append(1)
+    )
+    tray.start_desktop_app(None)
+    assert not called  # nosec B101
+
+
+def test_macos_stop_daemon_cooldown(macos_module, monkeypatch):
+    """stop_daemon respects the action cooldown."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = float("inf")
+    called = []
+    monkeypatch.setattr(
+        tray, "_stop_daemon_body", lambda: called.append(1)
+    )
+    tray.stop_daemon(None)
+    assert not called  # nosec B101
+
+
+def test_macos_check_updates_notified_once(macos_module, monkeypatch):
+    """check_updates notifies only once per unique latest version."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    app_state.APP_VERSION = "v1.0.0"
+    monkeypatch.setattr(
+        macos_module,
+        "get_latest_release_version",
+        lambda: ("v1.1.0", None),
+    )
+    tray.check_updates()
+    tray.check_updates()
+    notifications = DummyRumpsModule.get_notifications()
+    assert len(notifications) == 1  # nosec B101
+
+
+def test_macos_start_daemon_body_stops_app_first(
+    macos_module, monkeypatch
+):
+    """_start_daemon_body stops desktop app before starting daemon."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    calls = []
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "running")
+    monkeypatch.setattr(
+        tray,
+        "_stop_desktop_app_processes",
+        lambda: calls.append("stopped") or True,
+    )
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda cmd: _completed(returncode=0),
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: True)
+    monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
+    _call_member(tray, "_start_daemon_body")
+    assert "stopped" in calls  # nosec B101
+
+
+def test_macos_start_daemon_body_app_stop_fails(
+    macos_module, monkeypatch
+):
+    """_start_daemon_body notifies when desktop app cannot be stopped."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "running")
+    monkeypatch.setattr(
+        tray, "_stop_desktop_app_processes", lambda: False
+    )
+    _call_member(tray, "_start_daemon_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "failed" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_show_status_dialog_lms_ps_empty(
+    macos_module, monkeypatch
+):
+    """show_status_dialog shows fallback when lms ps output is empty."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda unused_arg: _completed(returncode=0, stdout=""),
+    )
+    tray.show_status_dialog(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "No model" in alerts[0][1]  # nosec B101
+
+
+def test_macos_show_status_dialog_lms_ps_error(
+    macos_module, monkeypatch
+):
+    """show_status_dialog shows error text when lms ps raises OSError."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+
+    def raise_os(cmd):
+        raise OSError("oops")
+
+    monkeypatch.setattr(macos_module, "_run_safe_command", raise_os)
+    tray.show_status_dialog(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "oops" in alerts[0][1]  # nosec B101
+
+
+def test_macos_build_menu_includes_quit(macos_module, monkeypatch):
+    """build_menu always includes a Quit Tray item."""
+    tray = _make_macos_tray(macos_module)
+    tray.build_menu = lambda: macos_module.MacOSTrayIcon.build_menu(tray)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.build_menu()
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("Quit" in t for t in titles)  # nosec B101
+
+
+def test_macos_build_menu_includes_show_status(
+    macos_module, monkeypatch
+):
+    """build_menu always includes Show Status item."""
+    tray = _make_macos_tray(macos_module)
+    build_method = macos_module.MacOSTrayIcon.build_menu
+    tray.build_menu = lambda: build_method(tray)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.build_menu()
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("Show Status" in t for t in titles)  # nosec B101
+
+
+def test_macos_force_stop_llmster_sigkill_path(
+    macos_module, monkeypatch
+):
+    """_force_stop_llmster escalates to SIGKILL when process persists."""
+    tray = _make_macos_tray(macos_module)
+    still_running = [True]
+    calls = []
+
+    def fake_run_safe(cmd):
+        calls.append(cmd)
+        return _completed(returncode=0)
+
+    call_count = [0]
+
+    def still_running_check():
+        call_count[0] += 1
+        if call_count[0] <= 13:
+            return still_running[0]
+        return False
+
+    monkeypatch.setattr(
+        macos_module, "get_pkill_cmd", lambda: "/usr/bin/pkill"
+    )
+    monkeypatch.setattr(macos_module, "_run_safe_command", fake_run_safe)
+    monkeypatch.setattr(
+        macos_module, "is_llmster_running", still_running_check
+    )
+    monkeypatch.setattr(macos_module.time, "sleep", lambda _: None)
+    _call_member(tray, "_force_stop_llmster")
+    kill_cmds = [c for c in calls if "-9" in c]
+    assert kill_cmds  # nosec B101
+
+
+def test_macos_stop_desktop_app_processes_sigkill(
+    macos_module, monkeypatch
+):
+    """_stop_desktop_app_processes escalates to SIGKILL when app persists."""
+    tray = _make_macos_tray(macos_module)
+    call_count = [0]
+
+    def still_running():
+        call_count[0] += 1
+        return "running" if call_count[0] <= 10 else "stopped"
+
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: [5555]
+    )
+    monkeypatch.setattr(
+        tray, "get_desktop_app_status", still_running
+    )
+    kills = []
+    monkeypatch.setattr(
+        os, "kill", lambda pid, sig: kills.append((pid, sig))
+    )
+    monkeypatch.setattr(macos_module.time, "sleep", lambda _: None)
+    _call_member(tray, "_stop_desktop_app_processes")
+    sigs = [sig for _, sig in kills]
+    assert signal.SIGTERM in sigs  # nosec B101
+
+
+def test_macos_stop_daemon_body_error(macos_module, monkeypatch):
+    """_stop_daemon_body notifies on OSError."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+
+    def raise_oserror():
+        raise OSError("test error")
+
+    monkeypatch.setattr(
+        tray, "_stop_daemon_with_notification", raise_oserror
+    )
+    _call_member(tray, "_stop_daemon_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any("test error" in n[2] for n in notifications)  # nosec B101
+
+
+def test_macos_manual_check_updates_update_available(
+    macos_module, monkeypatch
+):
+    """manual_check_updates shows update URL when version is available."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "check_updates", lambda: False)
+    tray.update_status = "Update available"
+    tray.latest_update_version = "v2.0.0"
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    app_state.APP_VERSION = "v1.0.0"
+    tray.manual_check_updates(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert "v2.0.0" in alerts[0][1]  # nosec B101
+
+
+def test_macos_maybe_auto_start_daemon_error(
+    macos_module, monkeypatch
+):
+    """_maybe_auto_start_daemon handles stop errors gracefully."""
+    tray = _make_macos_tray(macos_module)
+    calls = []
+
+    def raise_oserror():
+        raise OSError("stop error")
+
+    monkeypatch.setattr(
+        tray, "_stop_daemon_with_notification", raise_oserror
+    )
+    monkeypatch.setattr(
+        tray, "start_daemon", lambda _unused: calls.append("start")
+    )
+    _call_member(tray, "_maybe_auto_start_daemon")
+    assert "start" in calls  # nosec B101
+
+
+def test_macos_start_desktop_app_body_stops_daemon(
+    macos_module, monkeypatch
+):
+    """_start_desktop_app_body stops daemon when it is running."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    stopped = []
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: True)
+    monkeypatch.setattr(
+        tray,
+        "_stop_daemon_with_notification",
+        lambda: stopped.append(1) or (True, None),
+    )
+    monkeypatch.setattr(
+        macos_module.shutil, "which", lambda _: None
+    )
+    _call_member(tray, "_start_desktop_app_body")
+    assert stopped  # nosec B101
+
+
+def test_macos_start_desktop_app_body_popen_error(
+    macos_module, monkeypatch, tmp_path
+):
+    """_start_desktop_app_body notifies when Popen raises OSError."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    app_dir = tmp_path / "LM Studio.app"
+    app_dir.mkdir()
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    monkeypatch.setattr(
+        macos_module.shutil, "which", lambda _: "/usr/bin/open"
+    )
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", [str(app_dir)]
+    )
+
+    def raise_oserror(*_unused_a, **_unused_kw):
+        raise OSError("permission denied")
+
+    monkeypatch.setattr(macos_module.subprocess, "Popen", raise_oserror)
+    _call_member(tray, "_start_desktop_app_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "permission denied" in n[2] for n in notifications
+    )  # nosec B101
+
+
+def test_macos_get_desktop_app_status_caches_detection(
+    macos_module, monkeypatch, tmp_path
+):
+    """get_desktop_app_status caches the detection result."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: []
+    )
+    app_dir = tmp_path / "LM Studio.app"
+    app_dir.mkdir()
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", [str(app_dir)]
+    )
+    status1 = tray.get_desktop_app_status()
+    status2 = tray.get_desktop_app_status()
+    assert status1 == "stopped"  # nosec B101
+    assert status2 == "stopped"  # nosec B101
+    seen_call = _call_member(tray, "__getattribute__", "_seen_desktop_call")
+    assert seen_call  # nosec B101
+
+
+def test_macos_check_model_no_last_status_no_notify(
+    macos_module, monkeypatch
+):
+    """check_model does not notify on first status observation."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = None
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.check_model()
+    notifications = DummyRumpsModule.get_notifications()
+    assert not notifications  # nosec B101
+
+
+def test_macos_stop_daemon_with_notification_detail_from_stderr(
+    macos_module, monkeypatch
+):
+    """_stop_daemon_with_notification includes stderr detail on failure."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _unused_cmd: _completed(returncode=1, stderr="port in use"),
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: True)
+    monkeypatch.setattr(tray, "_force_stop_llmster", lambda: None)
+    stopped, _ = _call_member(tray, "_stop_daemon_with_notification")
+    assert not stopped  # nosec B101
+    notifications = DummyRumpsModule.get_notifications()
+    assert any("port in use" in n[2] for n in notifications)  # nosec B101
+
+
+def test_macos_stop_desktop_app_cooldown(macos_module, monkeypatch):
+    """stop_desktop_app respects cooldown."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = float("inf")
+    kills = []
+    monkeypatch.setattr(
+        os, "kill", lambda pid, sig: kills.append((pid, sig))
+    )
+    tray.stop_desktop_app(None)
+    assert not kills  # nosec B101
+
+
+def test_macos_tray_icon_init(macos_module, monkeypatch):
+    """MacOSTrayIcon.__init__ creates timers and initialises state."""
+    timers_started = []
+
+    class FakeTimer:
+        """Stub timer class for testing."""
+
+        def __init__(self, cb, interval):
+            """Initialize timer with callback and interval."""
+            self.cb = cb
+            self.interval = interval
+            self.running = False
+
+        def start(self):
+            """Mark timer as started."""
+            self.running = True
+            timers_started.append(self)
+
+    rumps_lib = _call_member(macos_module, "__getattribute__", "_rumps_lib")
+    monkeypatch.setattr(rumps_lib, "Timer", FakeTimer)
+    monkeypatch.setattr(
+        macos_module,
+        "get_llmster_cmd",
+        lambda: None,
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "get_desktop_app_pids",
+        lambda: [],
+    )
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon,
+        "_APP_LOCATIONS",
+        [],
+    )
+    tray = macos_module.MacOSTrayIcon()
+    assert tray is not None  # nosec B101
+    assert len(timers_started) == 3  # nosec B101
+    assert all(t.running for t in timers_started)  # nosec B101
+
+
+def test_macos_tray_icon_init_auto_start(macos_module, monkeypatch):
+    """MacOSTrayIcon.__init__ launches auto-start thread when flag is set."""
+
+    class FakeTimer:
+        """Stub timer class for testing."""
+
+        def __init__(self, *_unused_args):
+            """Initialize timer (unused args)."""
+
+        def start(self):
+            """No-op timer start."""
+
+    rumps_lib = _call_member(macos_module, "__getattribute__", "_rumps_lib")
+    monkeypatch.setattr(rumps_lib, "Timer", FakeTimer)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    app_state.AUTO_START_DAEMON = True
+    threads_started = []
+    original_thread = macos_module.threading.Thread
+
+    class FakeThread:
+        """Stub thread class for testing."""
+
+        def __init__(self, target=None, daemon=True, name=""):
+            """Initialize thread with target and name."""
+            self.target = target
+            self.daemon = daemon
+            self.name = name
+
+        def start(self):
+            """Record thread start."""
+            threads_started.append(self.name)
+
+    monkeypatch.setattr(macos_module.threading, "Thread", FakeThread)
+    try:
+        tray = macos_module.MacOSTrayIcon()
+        assert tray is not None  # nosec B101
+        assert any("auto-start" in n for n in threads_started)  # nosec B101
+    finally:
+        app_state.AUTO_START_DAEMON = False
+        monkeypatch.setattr(macos_module.threading, "Thread", original_thread)
+
+
+def test_macos_tray_icon_init_gui_mode(macos_module, monkeypatch):
+    """MacOSTrayIcon.__init__ launches GUI thread when --gui is set."""
+
+    class FakeTimer:
+        """Stub timer class for testing."""
+
+        def __init__(self, *_a):
+            """Initialize fake timer (unused args)."""
+
+        def start(self):
+            """No-op timer start."""
+
+    monkeypatch.setattr(
+        _call_member(macos_module, "__getattribute__", "_rumps_lib"),
+        "Timer",
+        FakeTimer,
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    app_state.GUI_MODE = True
+    threads_started = []
+
+    class FakeThread:
+        """Stub thread class for testing."""
+
+        def __init__(self, target=None, daemon=True, name=""):
+            """Initialize thread with target and name."""
+            self.name = name
+
+        def start(self):
+            """Record thread start."""
+            threads_started.append(self.name)
+
+    monkeypatch.setattr(macos_module.threading, "Thread", FakeThread)
+    try:
+        tray = macos_module.MacOSTrayIcon()
+        assert tray is not None  # nosec B101
+        assert any("auto-gui" in n for n in threads_started)  # nosec B101
+    finally:
+        app_state.GUI_MODE = False
+
+
+def test_macos_start_daemon_thread_starts(macos_module, monkeypatch):
+    """start_daemon launches a thread when cooldown allows."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    called = []
+    monkeypatch.setattr(
+        tray, "_start_daemon_body", lambda: called.append(1)
+    )
+    tray.start_daemon(None)
+    assert called  # nosec B101
+
+
+def test_macos_stop_daemon_thread_starts(macos_module, monkeypatch):
+    """stop_daemon launches a thread when cooldown allows."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    called = []
+    monkeypatch.setattr(
+        tray, "_stop_daemon_body", lambda: called.append(1)
+    )
+    tray.stop_daemon(None)
+    assert called  # nosec B101
+
+
+def test_macos_start_desktop_app_thread_starts(
+    macos_module, monkeypatch
+):
+    """start_desktop_app launches a thread when cooldown allows."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    called = []
+    monkeypatch.setattr(
+        tray, "_start_desktop_app_body", lambda: called.append(1)
+    )
+    tray.start_desktop_app(None)
+    assert called  # nosec B101
+
+
+def test_macos_force_stop_llmster_oserror_ignored(
+    macos_module, monkeypatch
+):
+    """_force_stop_llmster silently ignores OSError from pkill."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_pkill_cmd", lambda: "/usr/bin/pkill"
+    )
+    call_count = [0]
+
+    def raise_oserror(_cmd):
+        """Raise OSError simulating pkill failure."""
+        call_count[0] += 1
+        raise OSError("permission denied")
+
+    monkeypatch.setattr(macos_module, "_run_safe_command", raise_oserror)
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    _call_member(tray, "_force_stop_llmster")
+    assert call_count[0] > 0  # nosec B101
+
+
+def test_macos_check_model_lms_ps_fail_api_false(
+    macos_module, monkeypatch
+):
+    """Sets INFO when lms ps errors and API reports no model."""
+    tray = _make_macos_tray(macos_module)
+    tray.last_status = "WARN"
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "running")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: "/usr/bin/lms")
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=1, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(macos_module, "check_api_models", lambda: False)
+    tray.check_model()
+    assert tray.title == "ℹ️"  # nosec B101
+
+
+def test_macos_get_desktop_app_status_get_pids_error(
+    macos_module, monkeypatch
+):
+    """get_desktop_app_status handles OSError from get_desktop_app_pids."""
+    tray = _make_macos_tray(macos_module)
+
+    def raise_oserror():
+        raise OSError("no ps")
+
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", raise_oserror)
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    status = tray.get_desktop_app_status()
+    assert status == "not_found"  # nosec B101
+
+
+def test_macos_stop_desktop_app_kill_permission_error(
+    macos_module, monkeypatch
+):
+    """stop_desktop_app ignores PermissionError when killing process."""
+    tray = _make_macos_tray(macos_module)
+    tray.action_lock_until = 0.0
+    monkeypatch.setattr(
+        macos_module, "get_desktop_app_pids", lambda: [9999]
+    )
+
+    def raise_permerror(_pid, _sig):
+        """Raise PermissionError simulating kill failure."""
+        raise PermissionError("not allowed")
+
+    monkeypatch.setattr(os, "kill", raise_permerror)
+    monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
+    tray.stop_desktop_app(None)
+
+
+def test_macos_manual_check_updates_returns_when_notified(
+    macos_module, monkeypatch
+):
+    """manual_check_updates returns early when check_updates notifies."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(tray, "check_updates", lambda: True)
+    tray.manual_check_updates(None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert not alerts  # nosec B101
+
+
+def test_run_macos_launches_tray(macos_module, monkeypatch, tmp_path):
+    """_run_macos sets up logging and calls MacOSTrayIcon().run()."""
+    ran = []
+
+    class FakeTimer:
+        """Stub timer class for testing."""
+
+        def __init__(self, *_a):
+            """Initialize fake timer (unused args)."""
+
+        def start(self):
+            """No-op timer start."""
+
+    rumps_lib = _call_member(
+        macos_module, "__getattribute__", "_rumps_lib"
+    )
+    monkeypatch.setattr(rumps_lib, "Timer", FakeTimer)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "_APP_LOCATIONS", []
+    )
+    monkeypatch.setattr(
+        macos_module, "kill_existing_instances", lambda: None
+    )
+    monkeypatch.setattr(
+        macos_module, "get_app_version", lambda: "v1.0.0"
+    )
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    monkeypatch.setattr(app_state, "script_dir", str(tmp_path))
+
+    original_run = macos_module.MacOSTrayIcon.run
+
+    def fake_run(_self):
+        """Record run invocation."""
+        ran.append(1)
+
+    monkeypatch.setattr(macos_module.MacOSTrayIcon, "run", fake_run)
+    try:
+        _call_member(
+            macos_module,
+            "_run_macos",
+            SimpleNamespace(auto_start_daemon=False, gui=False),
+        )
+        assert ran  # nosec B101
+    finally:
+        monkeypatch.setattr(macos_module.MacOSTrayIcon, "run", original_run)
+
+
+def test_macos_start_daemon_body_attempt_oserror(
+    macos_module, monkeypatch
+):
+    """_start_daemon_body catches OSError during daemon start attempt."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+
+    def raise_oserror(_cmd):
+        """Raise OSError simulating command execution failure."""
+        raise OSError("exec failed")
+
+    monkeypatch.setattr(macos_module, "_run_safe_command", raise_oserror)
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    _call_member(tray, "_start_daemon_body")
+    notifications = DummyRumpsModule.get_notifications()
+    assert any(
+        "failed" in n[2].lower()
+        for n in notifications
+    )  # nosec B101
+
+
+def test_macos_build_daemon_attempts_llmster(macos_module, monkeypatch):
+    """_build_daemon_attempts uses llmster when lms is absent."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(
+        macos_module,
+        "get_llmster_cmd",
+        lambda: "/usr/local/bin/llmster",
+    )
+    start_attempts = _call_member(
+        tray, "_build_daemon_attempts", "start"
+    )
+    stop_attempts = _call_member(
+        tray, "_build_daemon_attempts", "stop"
+    )
+    assert len(start_attempts) > 0  # nosec B101
+    assert all(
+        a[0] == "/usr/local/bin/llmster" for a in start_attempts
+    )  # nosec B101
+    assert len(stop_attempts) > 0  # nosec B101

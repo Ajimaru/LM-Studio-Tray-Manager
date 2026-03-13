@@ -11,9 +11,11 @@ This document describes how to build standalone releases of LM Studio Tray Manag
   - [Overview](#overview)
     - [AppImage (Recommended) - Fully Portable](#appimage-recommended---fully-portable)
     - [Binary (Build locally)](#binary-build-locally)
+    - [macOS .app Bundle](#macos-app-bundle)
   - [Quick Start](#quick-start)
     - [AppImage Build (Docker-based, Recommended)](#appimage-build-docker-based-recommended)
     - [Automated Binary Build (Local)](#automated-binary-build-local)
+    - [macOS .app Build (Local)](#macos-app-build-local)
     - [Manual Binary Build](#manual-binary-build)
     - [Docker AppImage Build (Alternative)](#docker-appimage-build-alternative)
   - [Requirements](#requirements)
@@ -23,6 +25,11 @@ This document describes how to build standalone releases of LM Studio Tray Manag
     - [Method 1: Shell Script (Easiest)](#method-1-shell-script-easiest)
     - [Method 2: Python Script](#method-2-python-script)
     - [Method 3: PyInstaller Spec File](#method-3-pyinstaller-spec-file)
+  - [macOS Build Details](#macos-build-details)
+    - [Build Script](#build-script)
+    - [Local Testing](#local-testing)
+    - [Release Artifacts](#release-artifacts)
+    - [Code Signing (Optional)](#code-signing-optional)
   - [Optimization](#optimization)
     - [Size Reduction](#size-reduction)
     - [Expected Sizes](#expected-sizes)
@@ -37,6 +44,8 @@ This document describes how to build standalone releases of LM Studio Tray Manag
   - [Alternative Approaches](#alternative-approaches)
     - [Nuitka](#nuitka)
     - [AppImage (Recommended) - Fully Portable Release](#appimage-recommended---fully-portable-release)
+      - [Option 1: Docker (Recommended)](#option-1-docker-recommended)
+      - [Option 2: GitHub Actions (Automatic)](#option-2-github-actions-automatic)
     - [Rust Rewrite](#rust-rewrite)
   - [Support](#support)
   - [Next Steps](#next-steps)
@@ -47,7 +56,7 @@ The project offers multiple build approaches with different portability levels:
 
 ### AppImage (Recommended) - Fully Portable
 
-The AppImage release is the **most portable and recommended option**:
+The AppImage release is the **most portable and recommended option** for Linux:
 
 - ✅ Bundles everything: Python, GTK3, GObject-Introspection, all libraries
 - ✅ Single executable file (~34 MB)
@@ -59,13 +68,26 @@ The AppImage release is the **most portable and recommended option**:
 
 ### Binary (Build locally)
 
-For custom builds on your machine:
+For custom Linux builds on your machine:
 
 - Python interpreter
 - All Python application code and PyGObject
 - Application assets (icons, VERSION file, etc.)
 
 **Note:** GTK3 and GObject Introspection (GI) shared libraries must be installed on the target system at runtime.
+
+### macOS .app Bundle
+
+Native macOS application bundle built with PyInstaller:
+
+- ✅ Self-contained .app directory structure
+- ✅ Includes Python 3.12 runtime and all dependencies
+- ✅ Bundles rumps library (macOS tray integration)
+- ✅ ~50-80 MB uncompressed, ~30 MB as tar.gz
+- ✅ Works on macOS 12+
+- Optional: Code Sign + Notarize for Gatekeeper approval
+
+**Build method:** `./build_macos.sh` (local) or GitHub Actions `build-macos` job (CI/CD)
 
 ## Quick Start
 
@@ -101,6 +123,46 @@ This will:
 4. Run PyInstaller
 5. Strip debug symbols
 6. Show final binary size
+
+### macOS .app Build (Local)
+
+For building a native macOS .app bundle on your Mac:
+
+```bash
+chmod +x build_macos.sh
+./build_macos.sh
+```
+
+This will:
+
+1. Check for Python 3 and Xcode Command Line Tools
+2. Create a Python venv with rumps (macOS tray library)
+3. Install all build dependencies
+4. Build with PyInstaller for macOS (.onedir format)
+5. Bundle application resources
+6. Create a .tar.gz release archive with checksums
+
+**Output:**
+
+- **App bundle:** `dist/LM-Studio-Tray-Manager.app`
+- **Release archive:** `release/lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz`
+- **Checksums:** `release/SHA256SUMS-macos.txt`
+
+**Test the app:**
+
+```bash
+# From terminal
+dist/LM-Studio-Tray-Manager.app/Contents/MacOS/LM-Studio-Tray-Manager
+
+# Or from Finder
+open dist/LM-Studio-Tray-Manager.app --args --auto-start-daemon
+```
+
+**Clean build:**
+
+```bash
+./build_macos.sh --clean
+```
 
 ### Manual Binary Build
 
@@ -220,6 +282,82 @@ pyinstaller lmstudio-tray-manager.spec
 - Excluded modules
 - Data files
 - Build flags (strip, console)
+
+## macOS Build Details
+
+### Build Script
+
+The `build_macos.sh` script is the easiest way to build for macOS:
+
+**Features:**
+
+- Automatic Python 3 and Xcode Command Line Tools detection
+- Creates isolated venv with rumps library
+- PyInstaller with macOS-specific options:
+  - `--onedir` format (better for bundling resources)
+  - Bundle identifier: `com.lmstudio.tray-manager`
+  - Automatic icon detection from `assets/img/`
+- Resource bundling (setup.sh, README.md, LICENSE, assets)
+- Automatic .tar.gz archive creation with checksums
+
+### Local Testing
+
+Test the unsigned app directly:
+
+```bash
+# Start the app from command line
+dist/LM-Studio-Tray-Manager.app/Contents/MacOS/LM-Studio-Tray-Manager
+
+# Or with options
+dist/LM-Studio-Tray-Manager.app/Contents/MacOS/LM-Studio-Tray-Manager --debug
+
+# Or from Finder
+open dist/LM-Studio-Tray-Manager.app
+
+# Or with auto-start daemon
+open dist/LM-Studio-Tray-Manager.app --args --auto-start-daemon
+```
+
+**Verify:**
+
+- Menu bar icon appears in top-right corner
+- `lms ps` shows daemon status
+- Click menu bar icon to see tray menu and options
+
+### Release Artifacts
+
+After building, release artifacts are created in the `release/` directory:
+
+- **Archive:** `lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz`
+- **Checksums:** `SHA256SUMS-macos.txt`
+
+These can be distributed directly or uploaded to GitHub Releases.
+
+### Code Signing (Optional)
+
+For distribution beyond testing, code signing is recommended:
+
+1. **Obtain Developer ID Certificate**
+   - Enroll in [Apple Developer Program](https://developer.apple.com/programs/)
+   - Create a Developer ID Application certificate
+
+2. **Sign the .app bundle**
+
+   ```bash
+   codesign --force --deep --options runtime \
+     --sign "Developer ID Application: Your Name (TEAM1234567)" \
+     dist/LM-Studio-Tray-Manager.app
+   ```
+
+3. **Notarize for Gatekeeper**
+
+   ```bash
+   xcrun notarytool submit lmstudio-tray-manager-vX.Y.Z-macos.zip \
+     --keychain-profile "AC_NOTARY" \
+     --wait
+   ```
+
+See [macOS Code Signing Guide](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution) for detailed instructions.
 
 ## Optimization
 

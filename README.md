@@ -6,7 +6,7 @@ Automation scripts for LM Studio & llmster - to control and monitor the applicat
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python + gi](https://img.shields.io/badge/Python-gi_compatible-blue.svg)](https://www.python.org/downloads/)
-[![Platform](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://www.linux.org/)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%26%20macOS-orange.svg)](https://www.linux.org/)
 [![LM Studio App v0.4.3+](https://img.shields.io/badge/LM_Studio_App-v0.4.3+-green.svg)](https://lmstudio.ai/download)
 [![llmster v0.0.3+](https://img.shields.io/badge/llmster-v0.0.3+-green.svg)](https://lmstudio.ai)
 [![Release](https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
@@ -39,7 +39,7 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 
 **2.** Choose your installation path:
 
-#### Path 0 (Recommended): AppImage
+#### Path 0 : AppImage
 
 <!-- markdownlint-disable MD033 -->
 <details>
@@ -49,14 +49,7 @@ https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest
 
 - `lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage`
 
-**Why AppImage?**
-
-✅ **Fully self-contained** - No dependencies to install, no setup script needed  
-✅ **Portable** - Works on Ubuntu, Debian, Fedora, openSUSE, Linux Mint, and most other Linux distributions (2022+)  
-✅ **Universal** - Includes Python, GTK3, GObject-Introspection, and all required libraries  
-✅ **Simple** - Just `chmod +x` and run
-
-**Make executable and run directly:**
+**Extract and run:**
 
 ```bash
 # example (replace X.Y.Z with version)
@@ -162,17 +155,57 @@ This setup script:
 </details>
 <!-- markdownlint-enable MD033 -->
 
+#### Path 3 : macOS .app Bundle
+
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Show macOS install steps</summary>
+
+**Download:**
+
+- `lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz` (or signed release)
+
+**Extract and run:**
+
+```bash
+# example (replace X.Y.Z with version)
+VERSION=vX.Y.Z
+tar -xzf lmstudio-tray-manager-${VERSION}-macos-unsigned.tar.gz
+
+# Double-click the .app in Finder, or run from terminal:
+open ./LM-Studio-Tray-Manager.app
+
+# Or start daemon automatically:
+open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
+```
+
+**Verify:**
+
+- Menu bar icon appears in the top-right corner
+- `lms ps` (check LM Studio daemon)
+- Click menu bar icon to see tray menu
+
+**Note:** The unsigned .app works for testing. For distribution, code signing is recommended.
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
+## Platform Support
+
+- **Linux**: GTK3 + AppIndicator3 (Ubuntu, Fedora, openSUSE, Debian, Arch, etc.)
+- **macOS**: rumps / PyObjC (Monterey, Ventura, Sonoma, and later)
+- **Windows**: Not supported
+
 ## Requirements
 
 - **LM Studio Daemon** (llmster v0.0.3+): Headless backend for model inference
 - **LM Studio Desktop App** (v0.4.3+): GUI frontend for model management and interaction
-- **Python with working PyGObject (`gi`)** for GTK3 system tray
-- Linux system with GNOME/GTK3 support (Pop!_OS, Ubuntu, Fedora, etc.)
+- **Python 3.8+** for source builds
+- Linux system with GNOME/GTK3 support (AppImage works everywhere), or macOS 12+
 
-> ⚠️ **Linux only** – this project is designed for Linux desktops. Windows
-> and macOS are not supported yet; the tray integration relies on GTK3.
-> Package‑manager automation supports **apt, dnf, pacman, zypper, and apk**.
+> **Linux:** Package‑manager automation supports **apt, dnf, pacman, zypper, and apk**.
 > Other distros receive manual installation guidance.
+> **macOS:** Builds require Xcode Command Line Tools.
 
 ## Quick Reference
 
