@@ -44,6 +44,88 @@ jobs:
           echo "✅ Artifacts extracted to dist/"
           ls -lh dist/
 
+  build-macos:
+    runs-on: macos-latest
+    needs: build-and-release
+
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build macOS .app bundle (unsigned)
+        run: |
+          set -euo pipefail
+          
+          # Get version from VERSION file
+          VERSION=$(cat VERSION)
+          echo "Building version: ${VERSION}"
+          
+          # Create virtual environment
+          python3 -m venv venv
+          source venv/bin/activate
+          
+          # Install dependencies
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install -r requirements-build.txt
+          python3 -m pip install rumps
+          
+          # Build with PyInstaller
+          python3 -m PyInstaller \
+            --onedir \
+            --name=LM-Studio-Tray-Manager \
+            --clean \
+            --osx-bundle-identifier=com.lmstudio.tray-manager \
+            --add-data VERSION:. \
+            --add-data AUTHORS:. \
+            --add-data assets:assets \
+            lmstudio_tray.py
+          
+          echo "✅ .app bundle created"
+          ls -lh dist/LM-Studio-Tray-Manager.app/Contents/MacOS/LM-Studio-Tray-Manager
+
+      - name: Create macOS release artifacts
+        run: |
+          set -euo pipefail
+          
+          VERSION=$(cat VERSION)
+          RELEASE_DIR="release"
+          mkdir -p "$RELEASE_DIR"
+          
+          # Copy additional files to app bundle Resources
+          APP_RESOURCES="dist/LM-Studio-Tray-Manager.app/Contents/Resources"
+          cp -v setup.sh "$APP_RESOURCES/"
+          cp -v lmstudio_autostart.sh "$APP_RESOURCES/"
+          cp -v README.md "$APP_RESOURCES/"
+          cp -v LICENSE "$APP_RESOURCES/"
+          cp -v AUTHORS "$APP_RESOURCES/"
+          
+          # Create archive
+          ARCHIVE_NAME="lmstudio-tray-manager-${VERSION}-macos-unsigned.tar.gz"
+          tar -czf "$RELEASE_DIR/${ARCHIVE_NAME}" -C dist LM-Studio-Tray-Manager.app
+          
+          echo "✅ macOS release archive created"
+          ls -lh "$RELEASE_DIR/${ARCHIVE_NAME}"
+          
+          # Create checksum
+          cd "$RELEASE_DIR"
+          sha256sum "${ARCHIVE_NAME}" > "SHA256SUMS-macos.txt"
+          cat "SHA256SUMS-macos.txt"
+
+      - name: Upload macOS artifacts
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          name: ${{ github.ref_name }}
+          files: |
+            release/lmstudio-tray-manager-*-macos-unsigned.tar.gz
+            release/SHA256SUMS-macos.txt
+
       - name: Verify release artifacts
         run: |
           set -euo pipefail
@@ -56,13 +138,13 @@ jobs:
           BINARY_TAR="dist/lmstudio-tray-manager-${VERSION}-linux-x86_64-binary.tar.gz"
           CHECKSUMS="dist/SHA256SUMS.txt"
 
-          echo "Verifying artifacts..."
+          echo "Verifying Linux artifacts..."
           [[ -f "$APPIMAGE" ]] || { echo "❌ AppImage missing: $APPIMAGE"; exit 1; }
           [[ -f "$SOURCE_TAR" ]] || { echo "❌ Source tarball missing: $SOURCE_TAR"; exit 1; }
           [[ -f "$BINARY_TAR" ]] || { echo "❌ Binary tarball missing: $BINARY_TAR"; exit 1; }
           [[ -f "$CHECKSUMS" ]] || { echo "❌ Checksums missing: $CHECKSUMS"; exit 1; }
 
-          echo "✅ All artifacts present"
+          echo "✅ All Linux artifacts present"
           echo
           echo "Checksums:"
           cat "$CHECKSUMS"
@@ -70,7 +152,7 @@ jobs:
           echo "Artifact sizes:"
           ls -lh "$APPIMAGE" "$SOURCE_TAR" "$BINARY_TAR" | awk '{print $9, "("$5")"}'
 
-      - name: Create GitHub release
+      - name: Create GitHub release (Linux)
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           name: ${{ github.ref_name }}

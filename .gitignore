@@ -10,6 +10,7 @@ __pycache__/
 eggs/
 pip-wheel-metadata/
 venv/
+.venv/
 .logs/
 dist/
 build/

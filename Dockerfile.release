@@ -1,4 +1,8 @@
 # Release Build Container (mimics GitHub Actions ubuntu-24.04)
+# NOTE: macOS builds are not supported in Docker (Docker runs Linux containers)
+# For local macOS testing, use: ./build_macos.sh
+# For CI: GitHub Actions job 'build-macos' runs on macos-latest
+
 FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
