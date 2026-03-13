@@ -4378,7 +4378,7 @@ def test_get_desktop_app_status_appimage_search(
 
     apps_dir = tmp_path / "Apps"
     apps_dir.mkdir()
-    (apps_dir / "LMStudio.AppImage").touch()
+    (apps_dir / "LM Studio.AppImage").touch()
 
     monkeypatch.setattr(
         tray_module.os.path,

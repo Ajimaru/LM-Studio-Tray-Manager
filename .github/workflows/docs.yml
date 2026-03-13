@@ -55,7 +55,7 @@ jobs:
 
       - name: Install MkDocs and dependencies
         run: |
-          pip install mkdocs mkdocs-material mkdocstrings[python]
+          pip install -r requirements-docs.txt
 
       - name: Build MkDocs site
         run: mkdocs build
