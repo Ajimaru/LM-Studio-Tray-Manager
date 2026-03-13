@@ -17,11 +17,11 @@ altgraph==0.17.5
 
 # pyinstaller-hooks-contrib 2026.1 (source: pyinstaller_hooks_contrib-2026.1-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
-pyinstaller-hooks-contrib==2026.1
+pyinstaller-hooks-contrib==2026.2
 
 # setuptools 82.0.0 (source: setuptools-82.0.0-py3-none-any.whl)
 # Required by PyInstaller (>=42.0.0)
-setuptools==82.0.0
+setuptools==82.0.1
 
 # packaging 26.0 (source: packaging-26.0-py3-none-any.whl)
 # Required by PyInstaller (>=22.0)
