@@ -2,7 +2,9 @@
 """LM Studio Tray Icon Monitor - system tray app for monitoring LM Studio daemon and desktop app.
 
 Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
-Usage: lmstudio_tray.py [model] [script_dir] [--debug] [--auto-start-daemon] [--gui] [--version]
+Usage:
+    lmstudio_tray.py [model] [script_dir] [--debug]
+    [--auto-start-daemon] [--gui] [--version]
 """
 
 import argparse
