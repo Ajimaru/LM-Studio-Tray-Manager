@@ -1,0 +1,2072 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python API documentation for LM Studio Tray Manager">
+      
+      
+        <meta name="author" content="Ajimaru">
+      
+      
+      
+        <link rel="prev" href="../core/">
+      
+      
+        <link rel="next" href="../tray/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Configuration - LM Studio Tray Manager - Python API Reference</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configuration-management" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LM Studio Tray Manager - Python API Reference" class="md-header__button md-logo" aria-label="LM Studio Tray Manager - Python API Reference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LM Studio Tray Manager - Python API Reference
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ajimaru/LM-Studio-Tray-Manager
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../lmstudio_tray/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LM Studio Tray Manager - Python API Reference" class="md-nav__button md-logo" aria-label="LM Studio Tray Manager - Python API Reference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    LM Studio Tray Manager - Python API Reference
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ajimaru/LM-Studio-Tray-Manager
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lmstudio_tray/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lmstudio_tray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lmstudio_tray
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="lmstudio_tray">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray._get_config_path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _get_config_path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.load_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.save_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        save_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray._normalize_api_port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _normalize_api_port
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lmstudio_tray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lmstudio_tray
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="lmstudio_tray">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.get_api_base_url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_api_base_url
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.get_api_models_url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_api_models_url
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lm-studio-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LM Studio Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lmstudio_tray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lmstudio_tray
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="lmstudio_tray">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.get_lms_cmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_lms_cmd
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.get_llmster_cmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_llmster_cmd
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray._has_loaded_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _has_loaded_model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tray/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Tray
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lmstudio_tray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lmstudio_tray
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="lmstudio_tray">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray._get_config_path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _get_config_path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.load_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.save_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        save_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray._normalize_api_port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _normalize_api_port
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lmstudio_tray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lmstudio_tray
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="lmstudio_tray">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.get_api_base_url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_api_base_url
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.get_api_models_url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_api_models_url
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lm-studio-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LM Studio Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lmstudio_tray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lmstudio_tray
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="lmstudio_tray">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.get_lms_cmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_lms_cmd
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray.get_llmster_cmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_llmster_cmd
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lmstudio_tray._has_loaded_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _has_loaded_model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="configuration-management">Configuration Management<a class="headerlink" href="#configuration-management" title="Permanent link">&para;</a></h1>
+<p>Functions for loading, validating, and managing application configuration.</p>
+<h2 id="configuration-file">Configuration File<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h2>
+<p>The application stores configuration at <code>~/.config/lmstudio_tray.json</code>.</p>
+<h2 id="configuration-functions">Configuration Functions<a class="headerlink" href="#configuration-functions" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="lmstudio_tray" class="doc doc-heading">
+            <span class="doc doc-object-name doc-module-name">lmstudio_tray</span>
+
+
+<a href="#lmstudio_tray" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>LM Studio Tray Icon Monitor.</p>
+<p>A system tray application that monitors the status of the LM Studio
+daemon and desktop app. It displays visual indicators and notifications when
+status changes, and supports starting/stopping daemon and desktop app as well
+as viewing status information through a context menu.</p>
+<p>On Linux the tray uses GTK3 + AppIndicator3.
+On macOS the tray uses the <code>rumps</code> library (PyObjC-based).</p>
+
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <p>lmstudio_tray.py [model][script_dir] [options]</p>
+</details>
+
+<details class="notes" open>
+  <summary>Notes</summary>
+  <p>Command-line arguments:
+    model: Model name to monitor (optional, default: "no-model-passed").
+    script_dir: Script directory for logs and VERSION file (optional,
+        default: current working directory).
+    --debug, -d: Enable debug logging (flag).
+    --auto-start-daemon, -a: Start llmster daemon on launch (flag).
+    --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
+    --version, -v: Print version and exit (flag).
+    --help: Show help message and exit (flag).</p>
+<p>Logging is written to .logs/ in the script directory, or if that
+directory is read-only (e.g., AppImage), logs are written to
+~/.local/share/lmstudio-tray-manager/logs/.
+If the VERSION file is missing, a default version string is used.</p>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+<h3 id="lmstudio_tray-functions">Functions<a href="#lmstudio_tray-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray._get_config_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">_get_config_path</span>
+
+
+<a href="#lmstudio_tray._get_config_path" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">_get_config_path</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the user config file path in the home config directory.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-718">718</a></span>
+<span class="normal"><a href="#__codelineno-0-719">719</a></span>
+<span class="normal"><a href="#__codelineno-0-720">720</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-718" name="__codelineno-0-718"></a><span class="k">def</span> <span class="nf">_get_config_path</span><span class="p">():</span>
+<a id="__codelineno-0-719" name="__codelineno-0-719"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the user config file path in the home config directory.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-720" name="__codelineno-0-720"></a>    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.config/lmstudio_tray.json&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray.load_config" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">load_config</span>
+
+
+<a href="#lmstudio_tray.load_config" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">load_config</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load config values for the LM Studio API endpoint.</p>
+<p>Updates _AppState.API_HOST and _AppState.API_PORT when valid values are
+present in the config file.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-734">734</a></span>
+<span class="normal"><a href="#__codelineno-0-735">735</a></span>
+<span class="normal"><a href="#__codelineno-0-736">736</a></span>
+<span class="normal"><a href="#__codelineno-0-737">737</a></span>
+<span class="normal"><a href="#__codelineno-0-738">738</a></span>
+<span class="normal"><a href="#__codelineno-0-739">739</a></span>
+<span class="normal"><a href="#__codelineno-0-740">740</a></span>
+<span class="normal"><a href="#__codelineno-0-741">741</a></span>
+<span class="normal"><a href="#__codelineno-0-742">742</a></span>
+<span class="normal"><a href="#__codelineno-0-743">743</a></span>
+<span class="normal"><a href="#__codelineno-0-744">744</a></span>
+<span class="normal"><a href="#__codelineno-0-745">745</a></span>
+<span class="normal"><a href="#__codelineno-0-746">746</a></span>
+<span class="normal"><a href="#__codelineno-0-747">747</a></span>
+<span class="normal"><a href="#__codelineno-0-748">748</a></span>
+<span class="normal"><a href="#__codelineno-0-749">749</a></span>
+<span class="normal"><a href="#__codelineno-0-750">750</a></span>
+<span class="normal"><a href="#__codelineno-0-751">751</a></span>
+<span class="normal"><a href="#__codelineno-0-752">752</a></span>
+<span class="normal"><a href="#__codelineno-0-753">753</a></span>
+<span class="normal"><a href="#__codelineno-0-754">754</a></span>
+<span class="normal"><a href="#__codelineno-0-755">755</a></span>
+<span class="normal"><a href="#__codelineno-0-756">756</a></span>
+<span class="normal"><a href="#__codelineno-0-757">757</a></span>
+<span class="normal"><a href="#__codelineno-0-758">758</a></span>
+<span class="normal"><a href="#__codelineno-0-759">759</a></span>
+<span class="normal"><a href="#__codelineno-0-760">760</a></span>
+<span class="normal"><a href="#__codelineno-0-761">761</a></span>
+<span class="normal"><a href="#__codelineno-0-762">762</a></span>
+<span class="normal"><a href="#__codelineno-0-763">763</a></span>
+<span class="normal"><a href="#__codelineno-0-764">764</a></span>
+<span class="normal"><a href="#__codelineno-0-765">765</a></span>
+<span class="normal"><a href="#__codelineno-0-766">766</a></span>
+<span class="normal"><a href="#__codelineno-0-767">767</a></span>
+<span class="normal"><a href="#__codelineno-0-768">768</a></span>
+<span class="normal"><a href="#__codelineno-0-769">769</a></span>
+<span class="normal"><a href="#__codelineno-0-770">770</a></span>
+<span class="normal"><a href="#__codelineno-0-771">771</a></span>
+<span class="normal"><a href="#__codelineno-0-772">772</a></span>
+<span class="normal"><a href="#__codelineno-0-773">773</a></span>
+<span class="normal"><a href="#__codelineno-0-774">774</a></span>
+<span class="normal"><a href="#__codelineno-0-775">775</a></span>
+<span class="normal"><a href="#__codelineno-0-776">776</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-734" name="__codelineno-0-734"></a><span class="k">def</span> <span class="nf">load_config</span><span class="p">():</span>
+<a id="__codelineno-0-735" name="__codelineno-0-735"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load config values for the LM Studio API endpoint.</span>
+<a id="__codelineno-0-736" name="__codelineno-0-736"></a>
+<a id="__codelineno-0-737" name="__codelineno-0-737"></a><span class="sd">    Updates _AppState.API_HOST and _AppState.API_PORT when valid values are</span>
+<a id="__codelineno-0-738" name="__codelineno-0-738"></a><span class="sd">    present in the config file.</span>
+<a id="__codelineno-0-739" name="__codelineno-0-739"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-740" name="__codelineno-0-740"></a>    <span class="n">config_path</span> <span class="o">=</span> <span class="n">_get_config_path</span><span class="p">()</span>
+<a id="__codelineno-0-741" name="__codelineno-0-741"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Attempting to load config from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
+<a id="__codelineno-0-742" name="__codelineno-0-742"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-743" name="__codelineno-0-743"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+<a id="__codelineno-0-744" name="__codelineno-0-744"></a>            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+<a id="__codelineno-0-745" name="__codelineno-0-745"></a>    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+<a id="__codelineno-0-746" name="__codelineno-0-746"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-747" name="__codelineno-0-747"></a>            <span class="s2">&quot;Config file not found at </span><span class="si">%s</span><span class="s2">, using defaults&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-748" name="__codelineno-0-748"></a>            <span class="n">config_path</span>
+<a id="__codelineno-0-749" name="__codelineno-0-749"></a>        <span class="p">)</span>
+<a id="__codelineno-0-750" name="__codelineno-0-750"></a>        <span class="k">return</span>
+<a id="__codelineno-0-751" name="__codelineno-0-751"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+<a id="__codelineno-0-752" name="__codelineno-0-752"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+<a id="__codelineno-0-753" name="__codelineno-0-753"></a>            <span class="s2">&quot;Failed to load config from </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-754" name="__codelineno-0-754"></a>            <span class="n">config_path</span><span class="p">,</span>
+<a id="__codelineno-0-755" name="__codelineno-0-755"></a>            <span class="n">exc</span>
+<a id="__codelineno-0-756" name="__codelineno-0-756"></a>        <span class="p">)</span>
+<a id="__codelineno-0-757" name="__codelineno-0-757"></a>        <span class="k">return</span>
+<a id="__codelineno-0-758" name="__codelineno-0-758"></a>
+<a id="__codelineno-0-759" name="__codelineno-0-759"></a>    <span class="n">host</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;api_host&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-0-760" name="__codelineno-0-760"></a>    <span class="n">port_raw</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;api_port&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-0-761" name="__codelineno-0-761"></a>
+<a id="__codelineno-0-762" name="__codelineno-0-762"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">host</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+<a id="__codelineno-0-763" name="__codelineno-0-763"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-764" name="__codelineno-0-764"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Loaded API host: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="p">)</span>
+<a id="__codelineno-0-765" name="__codelineno-0-765"></a>
+<a id="__codelineno-0-766" name="__codelineno-0-766"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">port_raw</span><span class="p">)</span>
+<a id="__codelineno-0-767" name="__codelineno-0-767"></a>    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-768" name="__codelineno-0-768"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span> <span class="o">=</span> <span class="n">port</span>
+<a id="__codelineno-0-769" name="__codelineno-0-769"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Loaded API port: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="p">)</span>
+<a id="__codelineno-0-770" name="__codelineno-0-770"></a>
+<a id="__codelineno-0-771" name="__codelineno-0-771"></a>    <span class="k">if</span> <span class="n">host</span> <span class="ow">or</span> <span class="n">port</span><span class="p">:</span>
+<a id="__codelineno-0-772" name="__codelineno-0-772"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-773" name="__codelineno-0-773"></a>            <span class="s2">&quot;Config loaded successfully: http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-774" name="__codelineno-0-774"></a>            <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="p">,</span>
+<a id="__codelineno-0-775" name="__codelineno-0-775"></a>            <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span>
+<a id="__codelineno-0-776" name="__codelineno-0-776"></a>        <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray.save_config" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">save_config</span>
+
+
+<a href="#lmstudio_tray.save_config" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">save_config</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="n">api_port</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Persist config values for the LM Studio API endpoint.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-779">779</a></span>
+<span class="normal"><a href="#__codelineno-0-780">780</a></span>
+<span class="normal"><a href="#__codelineno-0-781">781</a></span>
+<span class="normal"><a href="#__codelineno-0-782">782</a></span>
+<span class="normal"><a href="#__codelineno-0-783">783</a></span>
+<span class="normal"><a href="#__codelineno-0-784">784</a></span>
+<span class="normal"><a href="#__codelineno-0-785">785</a></span>
+<span class="normal"><a href="#__codelineno-0-786">786</a></span>
+<span class="normal"><a href="#__codelineno-0-787">787</a></span>
+<span class="normal"><a href="#__codelineno-0-788">788</a></span>
+<span class="normal"><a href="#__codelineno-0-789">789</a></span>
+<span class="normal"><a href="#__codelineno-0-790">790</a></span>
+<span class="normal"><a href="#__codelineno-0-791">791</a></span>
+<span class="normal"><a href="#__codelineno-0-792">792</a></span>
+<span class="normal"><a href="#__codelineno-0-793">793</a></span>
+<span class="normal"><a href="#__codelineno-0-794">794</a></span>
+<span class="normal"><a href="#__codelineno-0-795">795</a></span>
+<span class="normal"><a href="#__codelineno-0-796">796</a></span>
+<span class="normal"><a href="#__codelineno-0-797">797</a></span>
+<span class="normal"><a href="#__codelineno-0-798">798</a></span>
+<span class="normal"><a href="#__codelineno-0-799">799</a></span>
+<span class="normal"><a href="#__codelineno-0-800">800</a></span>
+<span class="normal"><a href="#__codelineno-0-801">801</a></span>
+<span class="normal"><a href="#__codelineno-0-802">802</a></span>
+<span class="normal"><a href="#__codelineno-0-803">803</a></span>
+<span class="normal"><a href="#__codelineno-0-804">804</a></span>
+<span class="normal"><a href="#__codelineno-0-805">805</a></span>
+<span class="normal"><a href="#__codelineno-0-806">806</a></span>
+<span class="normal"><a href="#__codelineno-0-807">807</a></span>
+<span class="normal"><a href="#__codelineno-0-808">808</a></span>
+<span class="normal"><a href="#__codelineno-0-809">809</a></span>
+<span class="normal"><a href="#__codelineno-0-810">810</a></span>
+<span class="normal"><a href="#__codelineno-0-811">811</a></span>
+<span class="normal"><a href="#__codelineno-0-812">812</a></span>
+<span class="normal"><a href="#__codelineno-0-813">813</a></span>
+<span class="normal"><a href="#__codelineno-0-814">814</a></span>
+<span class="normal"><a href="#__codelineno-0-815">815</a></span>
+<span class="normal"><a href="#__codelineno-0-816">816</a></span>
+<span class="normal"><a href="#__codelineno-0-817">817</a></span>
+<span class="normal"><a href="#__codelineno-0-818">818</a></span>
+<span class="normal"><a href="#__codelineno-0-819">819</a></span>
+<span class="normal"><a href="#__codelineno-0-820">820</a></span>
+<span class="normal"><a href="#__codelineno-0-821">821</a></span>
+<span class="normal"><a href="#__codelineno-0-822">822</a></span>
+<span class="normal"><a href="#__codelineno-0-823">823</a></span>
+<span class="normal"><a href="#__codelineno-0-824">824</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-779" name="__codelineno-0-779"></a><span class="k">def</span> <span class="nf">save_config</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="n">api_port</span><span class="p">):</span>
+<a id="__codelineno-0-780" name="__codelineno-0-780"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist config values for the LM Studio API endpoint.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-781" name="__codelineno-0-781"></a>    <span class="n">host</span> <span class="o">=</span> <span class="n">api_host</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+<a id="__codelineno-0-782" name="__codelineno-0-782"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">api_port</span><span class="p">)</span>
+<a id="__codelineno-0-783" name="__codelineno-0-783"></a>
+<a id="__codelineno-0-784" name="__codelineno-0-784"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">or</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-785" name="__codelineno-0-785"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+<a id="__codelineno-0-786" name="__codelineno-0-786"></a>            <span class="s2">&quot;Invalid config values: host=&#39;</span><span class="si">%s</span><span class="s2">&#39;, port=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-787" name="__codelineno-0-787"></a>            <span class="n">host</span><span class="p">,</span>
+<a id="__codelineno-0-788" name="__codelineno-0-788"></a>            <span class="n">api_port</span>
+<a id="__codelineno-0-789" name="__codelineno-0-789"></a>        <span class="p">)</span>
+<a id="__codelineno-0-790" name="__codelineno-0-790"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid api_host/api_port&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-791" name="__codelineno-0-791"></a>
+<a id="__codelineno-0-792" name="__codelineno-0-792"></a>    <span class="n">config_path</span> <span class="o">=</span> <span class="n">_get_config_path</span><span class="p">()</span>
+<a id="__codelineno-0-793" name="__codelineno-0-793"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+<a id="__codelineno-0-794" name="__codelineno-0-794"></a>        <span class="s2">&quot;Saving config to </span><span class="si">%s</span><span class="s2">: host=</span><span class="si">%s</span><span class="s2">, port=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-795" name="__codelineno-0-795"></a>        <span class="n">config_path</span><span class="p">,</span>
+<a id="__codelineno-0-796" name="__codelineno-0-796"></a>        <span class="n">host</span><span class="p">,</span>
+<a id="__codelineno-0-797" name="__codelineno-0-797"></a>        <span class="n">port</span>
+<a id="__codelineno-0-798" name="__codelineno-0-798"></a>    <span class="p">)</span>
+<a id="__codelineno-0-799" name="__codelineno-0-799"></a>    <span class="n">config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+<a id="__codelineno-0-800" name="__codelineno-0-800"></a>    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-801" name="__codelineno-0-801"></a>    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-802" name="__codelineno-0-802"></a>        <span class="s2">&quot;api_host&quot;</span><span class="p">:</span> <span class="n">host</span><span class="p">,</span>
+<a id="__codelineno-0-803" name="__codelineno-0-803"></a>        <span class="s2">&quot;api_port&quot;</span><span class="p">:</span> <span class="n">port</span><span class="p">,</span>
+<a id="__codelineno-0-804" name="__codelineno-0-804"></a>    <span class="p">}</span>
+<a id="__codelineno-0-805" name="__codelineno-0-805"></a>    <span class="n">tmp_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config_path</span><span class="si">}</span><span class="s2">.tmp&quot;</span>
+<a id="__codelineno-0-806" name="__codelineno-0-806"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-807" name="__codelineno-0-807"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+<a id="__codelineno-0-808" name="__codelineno-0-808"></a>            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">config_file</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-0-809" name="__codelineno-0-809"></a>            <span class="n">config_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+<a id="__codelineno-0-810" name="__codelineno-0-810"></a>            <span class="n">os</span><span class="o">.</span><span class="n">fsync</span><span class="p">(</span><span class="n">config_file</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
+<a id="__codelineno-0-811" name="__codelineno-0-811"></a>        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
+<a id="__codelineno-0-812" name="__codelineno-0-812"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-813" name="__codelineno-0-813"></a>            <span class="s2">&quot;Config saved successfully to </span><span class="si">%s</span><span class="s2">: http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-814" name="__codelineno-0-814"></a>            <span class="n">config_path</span><span class="p">,</span>
+<a id="__codelineno-0-815" name="__codelineno-0-815"></a>            <span class="n">host</span><span class="p">,</span>
+<a id="__codelineno-0-816" name="__codelineno-0-816"></a>            <span class="n">port</span>
+<a id="__codelineno-0-817" name="__codelineno-0-817"></a>        <span class="p">)</span>
+<a id="__codelineno-0-818" name="__codelineno-0-818"></a>    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+<a id="__codelineno-0-819" name="__codelineno-0-819"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Failed to write config: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
+<a id="__codelineno-0-820" name="__codelineno-0-820"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-821" name="__codelineno-0-821"></a>            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
+<a id="__codelineno-0-822" name="__codelineno-0-822"></a>        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+<a id="__codelineno-0-823" name="__codelineno-0-823"></a>            <span class="k">pass</span>
+<a id="__codelineno-0-824" name="__codelineno-0-824"></a>        <span class="k">raise</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray._normalize_api_port" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">_normalize_api_port</span>
+
+
+<a href="#lmstudio_tray._normalize_api_port" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">_normalize_api_port</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Normalize and validate the API port value.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-723">723</a></span>
+<span class="normal"><a href="#__codelineno-0-724">724</a></span>
+<span class="normal"><a href="#__codelineno-0-725">725</a></span>
+<span class="normal"><a href="#__codelineno-0-726">726</a></span>
+<span class="normal"><a href="#__codelineno-0-727">727</a></span>
+<span class="normal"><a href="#__codelineno-0-728">728</a></span>
+<span class="normal"><a href="#__codelineno-0-729">729</a></span>
+<span class="normal"><a href="#__codelineno-0-730">730</a></span>
+<span class="normal"><a href="#__codelineno-0-731">731</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-723" name="__codelineno-0-723"></a><span class="k">def</span> <span class="nf">_normalize_api_port</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<a id="__codelineno-0-724" name="__codelineno-0-724"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize and validate the API port value.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-725" name="__codelineno-0-725"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-726" name="__codelineno-0-726"></a>        <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<a id="__codelineno-0-727" name="__codelineno-0-727"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+<a id="__codelineno-0-728" name="__codelineno-0-728"></a>        <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-729" name="__codelineno-0-729"></a>    <span class="k">if</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">port</span> <span class="o">&lt;=</span> <span class="mi">65535</span><span class="p">:</span>
+<a id="__codelineno-0-730" name="__codelineno-0-730"></a>        <span class="k">return</span> <span class="n">port</span>
+<a id="__codelineno-0-731" name="__codelineno-0-731"></a>    <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="api-configuration">API Configuration<a class="headerlink" href="#api-configuration" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="lmstudio_tray" class="doc doc-heading">
+            <span class="doc doc-object-name doc-module-name">lmstudio_tray</span>
+
+
+<a href="#lmstudio_tray" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>LM Studio Tray Icon Monitor.</p>
+<p>A system tray application that monitors the status of the LM Studio
+daemon and desktop app. It displays visual indicators and notifications when
+status changes, and supports starting/stopping daemon and desktop app as well
+as viewing status information through a context menu.</p>
+<p>On Linux the tray uses GTK3 + AppIndicator3.
+On macOS the tray uses the <code>rumps</code> library (PyObjC-based).</p>
+
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <p>lmstudio_tray.py [model][script_dir] [options]</p>
+</details>
+
+<details class="notes" open>
+  <summary>Notes</summary>
+  <p>Command-line arguments:
+    model: Model name to monitor (optional, default: "no-model-passed").
+    script_dir: Script directory for logs and VERSION file (optional,
+        default: current working directory).
+    --debug, -d: Enable debug logging (flag).
+    --auto-start-daemon, -a: Start llmster daemon on launch (flag).
+    --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
+    --version, -v: Print version and exit (flag).
+    --help: Show help message and exit (flag).</p>
+<p>Logging is written to .logs/ in the script directory, or if that
+directory is read-only (e.g., AppImage), logs are written to
+~/.local/share/lmstudio-tray-manager/logs/.
+If the VERSION file is missing, a default version string is used.</p>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+<h3 id="lmstudio_tray-functions">Functions<a href="#lmstudio_tray-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray.get_api_base_url" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_api_base_url</span>
+
+
+<a href="#lmstudio_tray.get_api_base_url" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_api_base_url</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the base URL for the LM Studio API endpoint.</p>
+<p>Constructs the URL using the configured API_HOST and API_PORT
+from _AppState.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>str</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>Base API URL in format http://host:port</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RAISES</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+              <span class="doc-raises-annotation">
+                  <code><span title="ValueError">ValueError</span></code>
+              </span>
+            </td>
+            <td class="doc-raises-details">
+              <div class="doc-md-description">
+                <p>If the API host or port configuration is invalid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-861">861</a></span>
+<span class="normal"><a href="#__codelineno-0-862">862</a></span>
+<span class="normal"><a href="#__codelineno-0-863">863</a></span>
+<span class="normal"><a href="#__codelineno-0-864">864</a></span>
+<span class="normal"><a href="#__codelineno-0-865">865</a></span>
+<span class="normal"><a href="#__codelineno-0-866">866</a></span>
+<span class="normal"><a href="#__codelineno-0-867">867</a></span>
+<span class="normal"><a href="#__codelineno-0-868">868</a></span>
+<span class="normal"><a href="#__codelineno-0-869">869</a></span>
+<span class="normal"><a href="#__codelineno-0-870">870</a></span>
+<span class="normal"><a href="#__codelineno-0-871">871</a></span>
+<span class="normal"><a href="#__codelineno-0-872">872</a></span>
+<span class="normal"><a href="#__codelineno-0-873">873</a></span>
+<span class="normal"><a href="#__codelineno-0-874">874</a></span>
+<span class="normal"><a href="#__codelineno-0-875">875</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-861" name="__codelineno-0-861"></a><span class="k">def</span> <span class="nf">get_api_base_url</span><span class="p">():</span>
+<a id="__codelineno-0-862" name="__codelineno-0-862"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the base URL for the LM Studio API endpoint.</span>
+<a id="__codelineno-0-863" name="__codelineno-0-863"></a>
+<a id="__codelineno-0-864" name="__codelineno-0-864"></a><span class="sd">    Constructs the URL using the configured API_HOST and API_PORT</span>
+<a id="__codelineno-0-865" name="__codelineno-0-865"></a><span class="sd">    from _AppState.</span>
+<a id="__codelineno-0-866" name="__codelineno-0-866"></a>
+<a id="__codelineno-0-867" name="__codelineno-0-867"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-868" name="__codelineno-0-868"></a><span class="sd">        str: Base API URL in format http://host:port</span>
+<a id="__codelineno-0-869" name="__codelineno-0-869"></a>
+<a id="__codelineno-0-870" name="__codelineno-0-870"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-871" name="__codelineno-0-871"></a><span class="sd">        ValueError: If the API host or port configuration is invalid.</span>
+<a id="__codelineno-0-872" name="__codelineno-0-872"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-873" name="__codelineno-0-873"></a>    <span class="k">return</span> <span class="n">_validate_url_scheme</span><span class="p">(</span>
+<a id="__codelineno-0-874" name="__codelineno-0-874"></a>        <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-875" name="__codelineno-0-875"></a>    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray.get_api_models_url" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_api_models_url</span>
+
+
+<a href="#lmstudio_tray.get_api_models_url" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_api_models_url</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the full URL for the LM Studio API models endpoint.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-878">878</a></span>
+<span class="normal"><a href="#__codelineno-0-879">879</a></span>
+<span class="normal"><a href="#__codelineno-0-880">880</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-878" name="__codelineno-0-878"></a><span class="k">def</span> <span class="nf">get_api_models_url</span><span class="p">():</span>
+<a id="__codelineno-0-879" name="__codelineno-0-879"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the full URL for the LM Studio API models endpoint.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-880" name="__codelineno-0-880"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_api_base_url</span><span class="p">()</span><span class="si">}</span><span class="s2">/v1/models&quot;</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="lm-studio-commands">LM Studio Commands<a class="headerlink" href="#lm-studio-commands" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="lmstudio_tray" class="doc doc-heading">
+            <span class="doc doc-object-name doc-module-name">lmstudio_tray</span>
+
+
+<a href="#lmstudio_tray" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>LM Studio Tray Icon Monitor.</p>
+<p>A system tray application that monitors the status of the LM Studio
+daemon and desktop app. It displays visual indicators and notifications when
+status changes, and supports starting/stopping daemon and desktop app as well
+as viewing status information through a context menu.</p>
+<p>On Linux the tray uses GTK3 + AppIndicator3.
+On macOS the tray uses the <code>rumps</code> library (PyObjC-based).</p>
+
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <p>lmstudio_tray.py [model][script_dir] [options]</p>
+</details>
+
+<details class="notes" open>
+  <summary>Notes</summary>
+  <p>Command-line arguments:
+    model: Model name to monitor (optional, default: "no-model-passed").
+    script_dir: Script directory for logs and VERSION file (optional,
+        default: current working directory).
+    --debug, -d: Enable debug logging (flag).
+    --auto-start-daemon, -a: Start llmster daemon on launch (flag).
+    --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
+    --version, -v: Print version and exit (flag).
+    --help: Show help message and exit (flag).</p>
+<p>Logging is written to .logs/ in the script directory, or if that
+directory is read-only (e.g., AppImage), logs are written to
+~/.local/share/lmstudio-tray-manager/logs/.
+If the VERSION file is missing, a default version string is used.</p>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+<h3 id="lmstudio_tray-functions">Functions<a href="#lmstudio_tray-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray.get_lms_cmd" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_lms_cmd</span>
+
+
+<a href="#lmstudio_tray.get_lms_cmd" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_lms_cmd</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the LM Studio CLI path if executable or resolve it from PATH.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-999"> 999</a></span>
+<span class="normal"><a href="#__codelineno-0-1000">1000</a></span>
+<span class="normal"><a href="#__codelineno-0-1001">1001</a></span>
+<span class="normal"><a href="#__codelineno-0-1002">1002</a></span>
+<span class="normal"><a href="#__codelineno-0-1003">1003</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-999" name="__codelineno-0-999"></a><span class="k">def</span> <span class="nf">get_lms_cmd</span><span class="p">():</span>
+<a id="__codelineno-0-1000" name="__codelineno-0-1000"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the LM Studio CLI path if executable or resolve it from PATH.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-1001" name="__codelineno-0-1001"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">LMS_CLI</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">LMS_CLI</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+<a id="__codelineno-0-1002" name="__codelineno-0-1002"></a>        <span class="k">return</span> <span class="n">LMS_CLI</span>
+<a id="__codelineno-0-1003" name="__codelineno-0-1003"></a>    <span class="k">return</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;lms&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray.get_llmster_cmd" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_llmster_cmd</span>
+
+
+<a href="#lmstudio_tray.get_llmster_cmd" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_llmster_cmd</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return llmster executable path from PATH or LM Studio install dir.</p>
+<p>When running in debug mode this helper logs its findings so users can
+troubleshoot missing or mis-located binaries.  To avoid filling the log
+with identical messages the function only emits a debug statement on the
+first invocation or when the resolved candidate changes.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1009">1009</a></span>
+<span class="normal"><a href="#__codelineno-0-1010">1010</a></span>
+<span class="normal"><a href="#__codelineno-0-1011">1011</a></span>
+<span class="normal"><a href="#__codelineno-0-1012">1012</a></span>
+<span class="normal"><a href="#__codelineno-0-1013">1013</a></span>
+<span class="normal"><a href="#__codelineno-0-1014">1014</a></span>
+<span class="normal"><a href="#__codelineno-0-1015">1015</a></span>
+<span class="normal"><a href="#__codelineno-0-1016">1016</a></span>
+<span class="normal"><a href="#__codelineno-0-1017">1017</a></span>
+<span class="normal"><a href="#__codelineno-0-1018">1018</a></span>
+<span class="normal"><a href="#__codelineno-0-1019">1019</a></span>
+<span class="normal"><a href="#__codelineno-0-1020">1020</a></span>
+<span class="normal"><a href="#__codelineno-0-1021">1021</a></span>
+<span class="normal"><a href="#__codelineno-0-1022">1022</a></span>
+<span class="normal"><a href="#__codelineno-0-1023">1023</a></span>
+<span class="normal"><a href="#__codelineno-0-1024">1024</a></span>
+<span class="normal"><a href="#__codelineno-0-1025">1025</a></span>
+<span class="normal"><a href="#__codelineno-0-1026">1026</a></span>
+<span class="normal"><a href="#__codelineno-0-1027">1027</a></span>
+<span class="normal"><a href="#__codelineno-0-1028">1028</a></span>
+<span class="normal"><a href="#__codelineno-0-1029">1029</a></span>
+<span class="normal"><a href="#__codelineno-0-1030">1030</a></span>
+<span class="normal"><a href="#__codelineno-0-1031">1031</a></span>
+<span class="normal"><a href="#__codelineno-0-1032">1032</a></span>
+<span class="normal"><a href="#__codelineno-0-1033">1033</a></span>
+<span class="normal"><a href="#__codelineno-0-1034">1034</a></span>
+<span class="normal"><a href="#__codelineno-0-1035">1035</a></span>
+<span class="normal"><a href="#__codelineno-0-1036">1036</a></span>
+<span class="normal"><a href="#__codelineno-0-1037">1037</a></span>
+<span class="normal"><a href="#__codelineno-0-1038">1038</a></span>
+<span class="normal"><a href="#__codelineno-0-1039">1039</a></span>
+<span class="normal"><a href="#__codelineno-0-1040">1040</a></span>
+<span class="normal"><a href="#__codelineno-0-1041">1041</a></span>
+<span class="normal"><a href="#__codelineno-0-1042">1042</a></span>
+<span class="normal"><a href="#__codelineno-0-1043">1043</a></span>
+<span class="normal"><a href="#__codelineno-0-1044">1044</a></span>
+<span class="normal"><a href="#__codelineno-0-1045">1045</a></span>
+<span class="normal"><a href="#__codelineno-0-1046">1046</a></span>
+<span class="normal"><a href="#__codelineno-0-1047">1047</a></span>
+<span class="normal"><a href="#__codelineno-0-1048">1048</a></span>
+<span class="normal"><a href="#__codelineno-0-1049">1049</a></span>
+<span class="normal"><a href="#__codelineno-0-1050">1050</a></span>
+<span class="normal"><a href="#__codelineno-0-1051">1051</a></span>
+<span class="normal"><a href="#__codelineno-0-1052">1052</a></span>
+<span class="normal"><a href="#__codelineno-0-1053">1053</a></span>
+<span class="normal"><a href="#__codelineno-0-1054">1054</a></span>
+<span class="normal"><a href="#__codelineno-0-1055">1055</a></span>
+<span class="normal"><a href="#__codelineno-0-1056">1056</a></span>
+<span class="normal"><a href="#__codelineno-0-1057">1057</a></span>
+<span class="normal"><a href="#__codelineno-0-1058">1058</a></span>
+<span class="normal"><a href="#__codelineno-0-1059">1059</a></span>
+<span class="normal"><a href="#__codelineno-0-1060">1060</a></span>
+<span class="normal"><a href="#__codelineno-0-1061">1061</a></span>
+<span class="normal"><a href="#__codelineno-0-1062">1062</a></span>
+<span class="normal"><a href="#__codelineno-0-1063">1063</a></span>
+<span class="normal"><a href="#__codelineno-0-1064">1064</a></span>
+<span class="normal"><a href="#__codelineno-0-1065">1065</a></span>
+<span class="normal"><a href="#__codelineno-0-1066">1066</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1009" name="__codelineno-0-1009"></a><span class="k">def</span> <span class="nf">get_llmster_cmd</span><span class="p">():</span>
+<a id="__codelineno-0-1010" name="__codelineno-0-1010"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return llmster executable path from PATH or LM Studio install dir.</span>
+<a id="__codelineno-0-1011" name="__codelineno-0-1011"></a>
+<a id="__codelineno-0-1012" name="__codelineno-0-1012"></a><span class="sd">    When running in debug mode this helper logs its findings so users can</span>
+<a id="__codelineno-0-1013" name="__codelineno-0-1013"></a><span class="sd">    troubleshoot missing or mis-located binaries.  To avoid filling the log</span>
+<a id="__codelineno-0-1014" name="__codelineno-0-1014"></a><span class="sd">    with identical messages the function only emits a debug statement on the</span>
+<a id="__codelineno-0-1015" name="__codelineno-0-1015"></a><span class="sd">    first invocation or when the resolved candidate changes.</span>
+<a id="__codelineno-0-1016" name="__codelineno-0-1016"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1017" name="__codelineno-0-1017"></a>    <span class="n">state</span> <span class="o">=</span> <span class="n">_get_llmster_cmd_state</span>
+<a id="__codelineno-0-1018" name="__codelineno-0-1018"></a>
+<a id="__codelineno-0-1019" name="__codelineno-0-1019"></a>    <span class="n">llmster_cmd</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;llmster&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1020" name="__codelineno-0-1020"></a>    <span class="k">if</span> <span class="n">llmster_cmd</span><span class="p">:</span>
+<a id="__codelineno-0-1021" name="__codelineno-0-1021"></a>        <span class="n">candidate</span> <span class="o">=</span> <span class="n">llmster_cmd</span>
+<a id="__codelineno-0-1022" name="__codelineno-0-1022"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-1023" name="__codelineno-0-1023"></a>        <span class="n">llmster_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1024" name="__codelineno-0-1024"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">llmster_root</span><span class="p">):</span>
+<a id="__codelineno-0-1025" name="__codelineno-0-1025"></a>            <span class="n">candidate</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-1026" name="__codelineno-0-1026"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-1027" name="__codelineno-0-1027"></a>            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-1028" name="__codelineno-0-1028"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-1029" name="__codelineno-0-1029"></a>                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">llmster_root</span><span class="p">):</span>
+<a id="__codelineno-0-1030" name="__codelineno-0-1030"></a>                    <span class="n">candidate_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+<a id="__codelineno-0-1031" name="__codelineno-0-1031"></a>                        <span class="n">llmster_root</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="s2">&quot;llmster&quot;</span>
+<a id="__codelineno-0-1032" name="__codelineno-0-1032"></a>                    <span class="p">)</span>
+<a id="__codelineno-0-1033" name="__codelineno-0-1033"></a>                    <span class="k">if</span> <span class="p">(</span>
+<a id="__codelineno-0-1034" name="__codelineno-0-1034"></a>                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
+<a id="__codelineno-0-1035" name="__codelineno-0-1035"></a>                        <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">)</span>
+<a id="__codelineno-0-1036" name="__codelineno-0-1036"></a>                    <span class="p">):</span>
+<a id="__codelineno-0-1037" name="__codelineno-0-1037"></a>                        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
+<a id="__codelineno-0-1038" name="__codelineno-0-1038"></a>            <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">PermissionError</span><span class="p">):</span>
+<a id="__codelineno-0-1039" name="__codelineno-0-1039"></a>                <span class="n">candidate</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-1040" name="__codelineno-0-1040"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-1041" name="__codelineno-0-1041"></a>                <span class="n">candidate</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">candidates</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">candidates</span> <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-0-1042" name="__codelineno-0-1042"></a>
+<a id="__codelineno-0-1043" name="__codelineno-0-1043"></a>    <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-1044" name="__codelineno-0-1044"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;seen_call&quot;</span><span class="p">]:</span>
+<a id="__codelineno-0-1045" name="__codelineno-0-1045"></a>        <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-1046" name="__codelineno-0-1046"></a>    <span class="k">elif</span> <span class="n">candidate</span> <span class="o">!=</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;last_candidate&quot;</span><span class="p">]:</span>
+<a id="__codelineno-0-1047" name="__codelineno-0-1047"></a>        <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-1048" name="__codelineno-0-1048"></a>
+<a id="__codelineno-0-1049" name="__codelineno-0-1049"></a>    <span class="k">if</span> <span class="n">log_needed</span><span class="p">:</span>
+<a id="__codelineno-0-1050" name="__codelineno-0-1050"></a>        <span class="k">if</span> <span class="n">candidate</span><span class="p">:</span>
+<a id="__codelineno-0-1051" name="__codelineno-0-1051"></a>            <span class="k">if</span> <span class="n">llmster_cmd</span><span class="p">:</span>
+<a id="__codelineno-0-1052" name="__codelineno-0-1052"></a>                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Found llmster on PATH: </span><span class="si">%s</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-1053" name="__codelineno-0-1053"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-1054" name="__codelineno-0-1054"></a>                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Resolved llmster candidate: </span><span class="si">%s</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-1055" name="__codelineno-0-1055"></a>            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
+<a id="__codelineno-0-1056" name="__codelineno-0-1056"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-1057" name="__codelineno-0-1057"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)):</span>
+<a id="__codelineno-0-1058" name="__codelineno-0-1058"></a>                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No ~/.lmstudio/llmster directory present&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1059" name="__codelineno-0-1059"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-1060" name="__codelineno-0-1060"></a>                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+<a id="__codelineno-0-1061" name="__codelineno-0-1061"></a>                    <span class="s2">&quot;No executable llmster binaries found under </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-1062" name="__codelineno-0-1062"></a>                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1063" name="__codelineno-0-1063"></a>                <span class="p">)</span>
+<a id="__codelineno-0-1064" name="__codelineno-0-1064"></a>    <span class="n">state</span><span class="p">[</span><span class="s2">&quot;last_candidate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidate</span>
+<a id="__codelineno-0-1065" name="__codelineno-0-1065"></a>    <span class="n">state</span><span class="p">[</span><span class="s2">&quot;seen_call&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-1066" name="__codelineno-0-1066"></a>    <span class="k">return</span> <span class="n">candidate</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="lmstudio_tray._has_loaded_model" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">_has_loaded_model</span>
+
+
+<a href="#lmstudio_tray._has_loaded_model" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">_has_loaded_model</span><span class="p">(</span><span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return True if <code>lms ps</code> output indicates a loaded model.</p>
+<p>Some releases of the CLI print <em>all</em> available models even when none
+are actually loaded.  Other releases explicitly say "No models are
+currently loaded.".  We treat such outputs as <em>not</em> containing a
+loaded model; a debug log entry is emitted so the behavior is
+traceable.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>lmstudio_tray.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1069">1069</a></span>
+<span class="normal"><a href="#__codelineno-0-1070">1070</a></span>
+<span class="normal"><a href="#__codelineno-0-1071">1071</a></span>
+<span class="normal"><a href="#__codelineno-0-1072">1072</a></span>
+<span class="normal"><a href="#__codelineno-0-1073">1073</a></span>
+<span class="normal"><a href="#__codelineno-0-1074">1074</a></span>
+<span class="normal"><a href="#__codelineno-0-1075">1075</a></span>
+<span class="normal"><a href="#__codelineno-0-1076">1076</a></span>
+<span class="normal"><a href="#__codelineno-0-1077">1077</a></span>
+<span class="normal"><a href="#__codelineno-0-1078">1078</a></span>
+<span class="normal"><a href="#__codelineno-0-1079">1079</a></span>
+<span class="normal"><a href="#__codelineno-0-1080">1080</a></span>
+<span class="normal"><a href="#__codelineno-0-1081">1081</a></span>
+<span class="normal"><a href="#__codelineno-0-1082">1082</a></span>
+<span class="normal"><a href="#__codelineno-0-1083">1083</a></span>
+<span class="normal"><a href="#__codelineno-0-1084">1084</a></span>
+<span class="normal"><a href="#__codelineno-0-1085">1085</a></span>
+<span class="normal"><a href="#__codelineno-0-1086">1086</a></span>
+<span class="normal"><a href="#__codelineno-0-1087">1087</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1069" name="__codelineno-0-1069"></a><span class="k">def</span> <span class="nf">_has_loaded_model</span><span class="p">(</span><span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-1070" name="__codelineno-0-1070"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if ``lms ps`` output indicates a loaded model.</span>
+<a id="__codelineno-0-1071" name="__codelineno-0-1071"></a>
+<a id="__codelineno-0-1072" name="__codelineno-0-1072"></a><span class="sd">    Some releases of the CLI print *all* available models even when none</span>
+<a id="__codelineno-0-1073" name="__codelineno-0-1073"></a><span class="sd">    are actually loaded.  Other releases explicitly say &quot;No models are</span>
+<a id="__codelineno-0-1074" name="__codelineno-0-1074"></a><span class="sd">    currently loaded.&quot;.  We treat such outputs as *not* containing a</span>
+<a id="__codelineno-0-1075" name="__codelineno-0-1075"></a><span class="sd">    loaded model; a debug log entry is emitted so the behavior is</span>
+<a id="__codelineno-0-1076" name="__codelineno-0-1076"></a><span class="sd">    traceable.</span>
+<a id="__codelineno-0-1077" name="__codelineno-0-1077"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1078" name="__codelineno-0-1078"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+<a id="__codelineno-0-1079" name="__codelineno-0-1079"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-1080" name="__codelineno-0-1080"></a>    <span class="n">text</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<a id="__codelineno-0-1081" name="__codelineno-0-1081"></a>    <span class="k">if</span> <span class="s2">&quot;no models&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+<a id="__codelineno-0-1082" name="__codelineno-0-1082"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output explicitly reports no models&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1083" name="__codelineno-0-1083"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-1084" name="__codelineno-0-1084"></a>    <span class="k">if</span> <span class="s2">&quot;available&quot;</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">and</span> <span class="s2">&quot;loaded&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+<a id="__codelineno-0-1085" name="__codelineno-0-1085"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output contains only available models, ignoring&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1086" name="__codelineno-0-1086"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-1087" name="__codelineno-0-1087"></a>    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

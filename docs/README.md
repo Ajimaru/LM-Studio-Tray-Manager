@@ -9,7 +9,7 @@ Welcome to the LM-Studio-Tray-Manager documentation.
 - **[Build Guide](BUILD.md)** - PyInstaller build and runtime requirements
 - **[Setup Guide](SETUP.md)** - Complete setup.sh and Python environment guide
 - **[Usage Guide](USE.md)** - Application usage, CLI options, system tray interface, and troubleshooting
-- **[Python Docstrings Reference](python_docstrings.html)** - Static API-style documentation from `lmstudio_tray.py`
+- **[Python API Reference](mkdocs/index.html)** - Interactive API documentation generated from `lmstudio_tray.py` with MkDocs
 - **[Third-Party Licenses](../THIRD_PARTY_LICENSES.md)** – Overview of external runtime and CI dependencies
 
 ## File Organization
@@ -21,7 +21,8 @@ docs/
 ├── BUILD.md                # Binary build and runtime guide
 ├── SETUP.md                # Comprehensive setup and environment guide
 ├── USE.md                  # Application usage, CLI options, system tray interface, and troubleshooting
-├── python_docstrings.html  # Static docstrings reference for lmstudio_tray.py
+├── mkdocs/                 # MkDocs-generated Python API reference
+│   └── index.html          # API documentation entry point
 └── README.md               # This file
 ```
 
