@@ -1,3 +1,4 @@
+site_url: https://<user>.github.io/<repo>/
 site_name: LM Studio Tray Manager - Python API Reference
 site_description: Python API documentation for LM Studio Tray Manager
 site_author: Ajimaru
