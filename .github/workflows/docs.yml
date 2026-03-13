@@ -47,6 +47,29 @@ jobs:
       - name: Install HTMLHint
         run: npm install -g htmlhint
 
+      # Build MkDocs documentation
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install MkDocs and dependencies
+        run: |
+          pip install mkdocs mkdocs-material mkdocstrings[python]
+
+      - name: Build MkDocs site
+        run: mkdocs build
+
+      - name: Verify MkDocs output is up to date
+        run: |
+          # Fail if 'mkdocs build' modified any tracked files under docs/mkdocs
+          if ! git diff --quiet -- docs/mkdocs; then
+            echo "ERROR: 'mkdocs build' produced changes in 'docs/mkdocs'."
+            echo "Please run 'mkdocs build' locally and commit the updated files."
+            git diff -- docs/mkdocs
+            exit 1
+          fi
+
       - name: HTML lint
         # adjust glob as needed; lint the generated docs HTML files
         run: |
@@ -57,7 +80,7 @@ jobs:
         run: |
           test -f docs/index.html
           test -f docs/guide.html
-          test -f docs/python_docstrings.html
+          test -f docs/mkdocs/index.html
           test -f docs/README.md
           test -f docs/SETUP.md
           test -f docs/USE.md
@@ -77,6 +100,6 @@ jobs:
             docs/BUILD.md
             docs/index.html
             docs/guide.html
-            docs/python_docstrings.html
+            docs/mkdocs/index.html
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
