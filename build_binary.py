@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-"""
-PyInstaller build script for LM Studio Tray Manager.
+"""PyInstaller build script for LM Studio Tray Manager.
 
-This script creates a standalone binary using PyInstaller that bundles the
-LM Studio Tray Manager Python code, resources, and GTK3/GObject-related
-Python modules (via hidden imports), as well as optional GdkPixbuf loader
-.so files when available. System GTK3/GObject/gi shared libraries must be
-provided by the target environment at runtime; this script does not build
-a fully self-contained GTK runtime.
+Creates standalone binary with Python code, resources, GTK3/GObject modules, and optional GdkPixbuf loaders.
+System GTK3/GObject/gi libraries must be provided by target environment at runtime.
 """
 
 import glob
@@ -21,20 +16,16 @@ from pathlib import Path
 
 
 def validate_pkg_config_path(path):
-    """Validate pkg-config executable path for safe subprocess execution.
-
-    Security: Ensures that the pkg-config path is safe by verifying it's
-    an absolute path with no injection vectors (null bytes, path traversal).
-    Executable and file checks are deferred to OS at runtime.
+    """Validate pkg-config path is absolute, safe, and contains no injection vectors.
 
     Args:
-        path: String path to the pkg-config executable to validate.
-
-    Raises:
-        ValueError: If the path is not safe to execute.
+        path: pkg-config executable path.
 
     Returns:
-        str: The validated absolute path to pkg-config.
+        str: Validated absolute path.
+
+    Raises:
+        ValueError: If path unsafe.
     """
     if not path:
         raise ValueError("pkg-config path is empty")
@@ -51,14 +42,10 @@ def validate_pkg_config_path(path):
 
 
 def get_gdk_pixbuf_loaders():
-    """Find and return GdkPixbuf loaders directory and files.
+    """Find and return GdkPixbuf loaders dir and cache file.
 
     Returns:
-        tuple[str | None, str | None]: A tuple of (loaders_dir,
-            cache_file) where loaders_dir is the path to the GdkPixbuf
-            loaders directory and cache_file is the path to loaders.cache.
-            Both elements are None if the loaders cannot be found or an
-            error occurs.
+        tuple[str | None, str | None]: (loaders_dir, cache_file) or (None, None) on error.
     """
     pkg_config_path = shutil.which("pkg-config")
     if not pkg_config_path:
@@ -102,14 +89,10 @@ def get_gdk_pixbuf_loaders():
 
 
 def check_dependencies():
-    """Check and install required build dependencies.
-
-    Returns:
-        None
+    """Check and install PyInstaller from requirements-build.txt if needed.
 
     Raises:
-        SystemExit: If requirements-build.txt is not found or if PyInstaller
-            installation fails.
+        SystemExit: If requirements-build.txt missing or install fails.
     """
     if importlib.util.find_spec("PyInstaller") is not None:
         print("✓ PyInstaller is installed")
@@ -142,11 +125,10 @@ def check_dependencies():
 
 
 def get_hidden_imports():
-    """Return list of hidden imports needed for GTK3/GObject.
+    """Return list of GTK3/GObject hidden imports for PyInstaller.
 
     Returns:
-        list[str]: Hidden import module names required for GTK3/GObject
-            functionality in the standalone binary.
+        list[str]: Hidden import module names.
     """
     return [
         "gi",
@@ -167,17 +149,10 @@ def get_hidden_imports():
 
 
 def get_data_files():
-    """
-    Collect package data files and directories to include with the
-    built binary.
-
-    Includes the repository's VERSION and AUTHORS files (if present) and
-    the assets directory (if present).
+    """Collect VERSION, AUTHORS, and assets directory for inclusion in binary.
 
     Returns:
-        list[tuple[str, str]]: List of (source, destination) tuples where
-        ``source`` is the filesystem path to a file or directory and
-        ``destination`` is the target path relative to the binary root.
+        list[tuple[str, str]]: (source, destination) tuples for PyInstaller.
     """
     data_files = []
     seen = set()
@@ -207,24 +182,15 @@ def get_data_files():
 
 
 def validate_pyinstaller_cmd(cmd):
-    """Validate the PyInstaller command list before execution.
+    """Validate PyInstaller command list for safety before execution.
 
-    Security: This function ensures that the dynamically-constructed
-    command list is safe to execute by:
-    - Verifying command structure and types (non-empty list, trusted prefix)
-    - Validating all arguments are strings
-    - Preventing null byte injection in arguments
-    - Validating --add-data and --add-binary format
-    - Preventing path traversal (../) and argument injection (-) attacks
-
-    Note: PyInstaller will independently verify that source files exist
-    and are readable during the build process.
+    Ensures trusted prefix, string args, no null bytes, valid data flags, and no path traversal.
 
     Args:
-        cmd: List of command arguments to validate.
+        cmd: Command list to validate.
 
     Raises:
-        ValueError: When the command list is malformed or unsafe.
+        ValueError: If command malformed or unsafe.
     """
     if not isinstance(cmd, list) or not cmd:
         raise ValueError("PyInstaller command must be a non-empty list")
@@ -260,11 +226,10 @@ def validate_pyinstaller_cmd(cmd):
 
 
 def build_binary():
-    """Build the standalone binary using PyInstaller.
+    """Build standalone binary using PyInstaller.
 
     Returns:
-        int: Exit code (0 on successful build, 1 if binary creation
-            fails or binary is missing after build completion).
+        int: 0 on success, 1 on failure.
     """
     print("\n" + "="*60)
     print("Building LM Studio Tray Manager Binary")
