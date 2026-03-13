@@ -55,6 +55,8 @@ jobs:
 
       - name: Install MkDocs and dependencies
         run: |
+          # Use the pinned docs toolchain from requirements-docs.txt so
+          # generated MkDocs output remains deterministic in CI.
           pip install -r requirements-docs.txt
 
       - name: Build MkDocs site
