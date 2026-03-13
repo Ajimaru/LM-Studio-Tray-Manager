@@ -1,32 +1,8 @@
 #!/usr/bin/env python3
-"""LM Studio Tray Icon Monitor.
+"""LM Studio Tray Icon Monitor - system tray app for monitoring LM Studio daemon and desktop app.
 
-A system tray application that monitors the status of the LM Studio
-daemon and desktop app. It displays visual indicators and notifications when
-status changes, and supports starting/stopping daemon and desktop app as well
-as viewing status information through a context menu.
-
-On Linux the tray uses GTK3 + AppIndicator3.
-On macOS the tray uses the ``rumps`` library (PyObjC-based).
-
-Usage:
-    lmstudio_tray.py [model] [script_dir] [options]
-
-Notes:
-    Command-line arguments:
-        model: Model name to monitor (optional, default: "no-model-passed").
-        script_dir: Script directory for logs and VERSION file (optional,
-            default: current working directory).
-        --debug, -d: Enable debug logging (flag).
-        --auto-start-daemon, -a: Start llmster daemon on launch (flag).
-        --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
-        --version, -v: Print version and exit (flag).
-        --help: Show help message and exit (flag).
-
-    Logging is written to .logs/ in the script directory, or if that
-    directory is read-only (e.g., AppImage), logs are written to
-    ~/.local/share/lmstudio-tray-manager/logs/.
-    If the VERSION file is missing, a default version string is used.
+Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
+Usage: lmstudio_tray.py [model] [script_dir] [--debug] [--auto-start-daemon] [--gui] [--version]
 """
 
 import argparse
@@ -64,14 +40,13 @@ DEFAULT_APP_VERSION = "dev"
 
 
 def load_version_from_dir(base_dir):
-    """Load app version from the VERSION file.
+    """Load version from VERSION file in base_dir, or DEFAULT_APP_VERSION if missing.
 
     Args:
-        base_dir (str): Directory path containing the VERSION file.
+        base_dir (str): Directory containing VERSION file.
 
     Returns:
-        str: Version string read from the VERSION file, or DEFAULT_APP_VERSION
-            if the file is missing or empty.
+        str: Version string or DEFAULT_APP_VERSION.
     """
     version_path = os.path.join(base_dir, "VERSION")
     try:
@@ -85,13 +60,10 @@ def load_version_from_dir(base_dir):
 
 
 def _get_default_script_dir():
-    """Get the default script directory.
-
-    Returns the directory containing the currently executing script,
-    or the current working directory if the script path cannot be determined.
+    """Get script directory or current directory if unavailable.
 
     Returns:
-        str: Absolute path to the script directory.
+        str: Absolute path to script directory.
     """
     if sys.argv and sys.argv[0]:
         return os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -100,17 +72,13 @@ def _get_default_script_dir():
 
 
 def _get_writable_logs_dir(base_script_dir):
-    """Get a writable directory for logs.
-
-    If base_script_dir is writable, returns base_script_dir/.logs.
-    Otherwise (e.g., in AppImage), returns a writable location
-    in the user's home directory.
+    """Get writable logs directory, fallback to ~/.local/share if needed.
 
     Args:
-        base_script_dir (str): The script directory to check.
+        base_script_dir (str): Script directory to check.
 
     Returns:
-        str: Absolute path to a writable logs directory.
+        str: Absolute path to writable logs directory.
     """
     logs_dir = os.path.join(base_script_dir, ".logs")
 
@@ -130,28 +98,13 @@ def _get_writable_logs_dir(base_script_dir):
 
 
 def parse_args():
-    """Parse command-line arguments from sys.argv.
-
-    This function reads all arguments and flags provided on the command line
-    via sys.argv and returns them as a structured namespace object.
-
-    Command-line Arguments:
-        model (str): Model name to monitor; positional, optional.
-        script_dir (str): Script directory for logs; positional, optional.
-        --debug, -d (bool): Flag to enable debug logging.
-        --auto-start-daemon, -a (bool): Start daemon on launch.
-        --gui, -g (bool): Start LM Studio GUI on launch.
-        --version, -v (bool): Print version and exit.
-        --help (bool): Print help message and exit.
+    """Parse command-line arguments and return namespace.
 
     Returns:
-        argparse.Namespace: Parsed arguments as an object with attributes
-            matching argument names (e.g., namespace.model, namespace.debug).
+        argparse.Namespace: Parsed arguments.
 
     Raises:
-        SystemExit: If --help or --version flags are used, or if the
-            argument parser encounters invalid arguments (handled by
-            argparse.ArgumentParser).
+        SystemExit: On --help, --version, or invalid arguments.
     """
     parser = argparse.ArgumentParser(
         description="LM Studio Tray Monitor",
@@ -218,17 +171,10 @@ class _AppState:
 
     @classmethod
     def apply_cli_args(cls, args: argparse.Namespace) -> None:
-        """Apply parsed command-line arguments to app state.
+        """Apply parsed CLI args to app state, converting script_dir to absolute path.
 
         Args:
-            args (argparse.Namespace): Parsed command-line arguments.
-                Expected fields: model, script_dir, debug, gui,
-                auto_start_daemon.  ``script_dir`` will be converted to an
-                absolute path before assignment, so callers can safely supply
-                relative directory names.
-
-        Returns:
-            None.
+            args (argparse.Namespace): Parsed CLI arguments.
         """
         cls.MODEL = args.model
         cls.script_dir = os.path.abspath(args.script_dir)
@@ -244,19 +190,7 @@ class _AppState:
         app_indicator_module: ModuleType,
         gdk_pixbuf_module: ModuleType,
     ) -> None:
-        """Store imported GTK-related module references on the class.
-
-        Args:
-            gtk_module (ModuleType): The Gtk module to store as cls.Gtk.
-            glib_module (ModuleType): The GLib module to store as cls.GLib.
-            app_indicator_module (ModuleType): The AppIndicator3 module
-                to store as cls.AppIndicator3.
-            gdk_pixbuf_module (ModuleType): The GdkPixbuf module to store
-                as cls.GdkPixbuf.
-
-        Returns:
-            None.
-        """
+        """Store GTK-related module references in class attributes."""
         cls.Gtk = gtk_module
         cls.GLib = glib_module
         cls.AppIndicator3 = app_indicator_module
@@ -275,27 +209,7 @@ def sync_app_state_for_tests(
     api_host_val: Optional[str] = None,
     api_port_val: Optional[int] = None,
 ) -> None:
-    """Synchronize test mocks with _AppState and module-level variables.
-
-    This public helper function allows tests to update both _AppState
-    (private class) and module-level variables in a coordinated way,
-    avoiding direct access to _AppState.
-
-    Args:
-        gtk_mod (ModuleType, optional): GTK module to set.
-        glib_mod (ModuleType, optional): GLib module to set.
-        app_mod (ModuleType, optional): AppIndicator3 module to set.
-        gdk_pixbuf_mod (ModuleType, optional): GdkPixbuf module to set.
-        script_dir_val (str, optional): script_dir value to set.
-        app_version_val (str, optional): APP_VERSION value to set.
-        auto_start_val (bool, optional): AUTO_START_DAEMON value to set.
-        gui_mode_val (bool, optional): GUI_MODE value to set.
-        api_host_val (str, optional): API host value to set.
-        api_port_val (int, optional): API port value to set.
-
-    Returns:
-        None.
-    """
+    """Sync test mocks with _AppState and module-level variables."""
 
     if gtk_mod is not None:
         _AppState.Gtk = gtk_mod
@@ -352,14 +266,7 @@ LATEST_RELEASE_API_URL = (
 
 
 def _ensure_gsettings_schema():
-    """Set GSETTINGS_SCHEMA_DIR if not already set and schemas exist.
-
-    This prevents GSettings crashes when running PyInstaller binaries
-    on systems where GTK tries to load missing schema keys.
-
-    Returns:
-        None.
-    """
+    """Set GSETTINGS_SCHEMA_DIR if not set and schemas exist (prevents PyInstaller crashes)."""
     if "GSETTINGS_SCHEMA_DIR" in os.environ:
         return
 
@@ -370,12 +277,7 @@ def _ensure_gsettings_schema():
 
 
 def _copy_to_clipboard(url: str) -> None:
-    """Open *url* in the default web browser.
-
-    Historically this helper copied the link to the clipboard; the
-    behaviour was updated to perform an indirect open instead.  It remains
-    easily monkey‑patchable for unit tests.
-    """
+    """Open URL in default browser (historically copied to clipboard, remains test-patchable)."""
     try:
         webbrowser.open(url)
     except (OSError, ValueError):
@@ -383,13 +285,13 @@ def _copy_to_clipboard(url: str) -> None:
 
 
 def _activate_link(url: str) -> bool:
-    """Open a link from GTK dialogs and report success.
+    """Open link from GTK dialog and return True on success.
 
     Args:
-        url (str): URL from the activate-link signal.
+        url (str): URL from activate-link signal.
 
     Returns:
-        bool: True when the URL open was attempted successfully.
+        bool: True if opened successfully.
     """
     try:
         webbrowser.open(url)
@@ -399,16 +301,13 @@ def _activate_link(url: str) -> bool:
 
 
 def get_release_url(tag: Optional[str] = None) -> str:
-    """Return a GitHub URL for a release.
+    """Return GitHub release URL for specified tag or latest release.
 
     Args:
-        tag (str, optional): A release tag name (e.g. "v1.2.3"). If
-            provided the URL will point directly to that tag. If omitted
-            the generic ``/releases/latest`` URL is returned, which
-            GitHub redirects to the newest release.
+        tag (str, optional): Release tag name (e.g. "v1.2.3").
 
     Returns:
-        str: Absolute URL to the desired release page.
+        str: URL to release page.
     """
     base = APP_REPOSITORY.rstrip("/")
     if tag:
@@ -424,29 +323,19 @@ LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 
 def get_app_version():
-    """Load app version from VERSION file in script directory.
-
-    Reads the app version from the VERSION file located in the script
-    directory. Falls back to DEFAULT_APP_VERSION if the file is missing
-    or unreadable.
+    """Load app version from VERSION file in script_dir, fallback to DEFAULT_APP_VERSION.
 
     Returns:
-        str: Version string read from the VERSION file, or
-            DEFAULT_APP_VERSION if loading fails.
+        str: Version string.
     """
     return load_version_from_dir(_AppState.script_dir)
 
 
 def main():
-    """Initialize module globals from CLI args and run the tray application.
-
-    Parses command-line arguments (from sys.argv) via parse_args(), loads
-    tray dependencies (GTK on Linux, rumps on macOS), configures logging,
-    and starts the tray main loop.
-    Exits immediately when the --version flag is provided.
+    """Parse CLI args, load dependencies, configure logging, and start tray application.
 
     Raises:
-        SystemExit: When --version flag is provided (via sys.exit(0)).
+        SystemExit: On --version flag.
     """
     args = parse_args()
 
@@ -601,11 +490,7 @@ def main():
 
 
 def _run_macos(_args):
-    """Set up logging and launch the macOS rumps tray.
-
-    Args:
-        _args: Parsed CLI args (unused; state already applied to _AppState).
-    """
+    """Set up logging and launch macOS rumps tray."""
     if _rumps_lib is None:
         print(
             "Error: rumps is not installed. Install with:\n"
@@ -660,14 +545,7 @@ def _run_macos(_args):
 
 
 class HomeMaskFormatter(logging.Formatter):
-    """Formatter that replaces the user's home directory with ``~``.
-
-    Any occurrence of ``os.path.expanduser('~')`` in the formatted message is
-    replaced, preventing absolute user paths from being written to log files.
-    The replacement is performed after the standard formatting, which means
-    that callers may continue to use ``logging.debug('path %s', somepath)`` as
-    usual.
-    """
+    """Formatter replacing user's home directory with ~ in log messages."""
 
     def format(
         self, record: logging.LogRecord
@@ -680,19 +558,13 @@ class HomeMaskFormatter(logging.Formatter):
 
 
 def get_asset_path(*path_components):
-    """Locate asset file handling both PyInstaller and normal execution.
-
-    Searches in this order:
-    1. sys._MEIPASS/assets/... (PyInstaller bundle)
-    2. script_dir/assets/... (Release package or source dir)
-    3. Current working directory/assets/...
+    """Locate asset file in PyInstaller bundle, script_dir, or cwd.
 
     Args:
-        *path_components: Path components relative to assets/ directory.
-            Example: get_asset_path("img", "lm-studio-tray-manager.svg")
+        *path_components: Path components relative to assets/.
 
     Returns:
-        str | None: Full path to the asset file if found, None otherwise.
+        str | None: Full path if found, else None.
     """
     meipass = getattr(sys, "_MEIPASS", None)
     if meipass is not None:
@@ -716,12 +588,12 @@ def get_asset_path(*path_components):
 
 
 def _get_config_path():
-    """Return the user config file path in the home config directory."""
+    """Return config file path ~/.config/lmstudio_tray.json."""
     return os.path.expanduser("~/.config/lmstudio_tray.json")
 
 
 def _normalize_api_port(value):
-    """Normalize and validate the API port value."""
+    """Validate and return port as int (1-65535) or None if invalid."""
     try:
         port = int(value)
     except (TypeError, ValueError):
@@ -732,11 +604,7 @@ def _normalize_api_port(value):
 
 
 def load_config():
-    """Load config values for the LM Studio API endpoint.
-
-    Updates _AppState.API_HOST and _AppState.API_PORT when valid values are
-    present in the config file.
-    """
+    """Load API endpoint config from file, updating _AppState.API_HOST and API_PORT."""
     config_path = _get_config_path()
     logging.debug("Attempting to load config from %s", config_path)
     try:
@@ -777,7 +645,11 @@ def load_config():
 
 
 def save_config(api_host, api_port):
-    """Persist config values for the LM Studio API endpoint."""
+    """Save API endpoint config to file.
+
+    Raises:
+        ValueError: If api_host or api_port invalid.
+    """
     host = api_host.strip() if isinstance(api_host, str) else ""
     port = _normalize_api_port(api_port)
 
@@ -825,13 +697,16 @@ def save_config(api_host, api_port):
 
 
 def _validate_url_scheme(url):
-    """Validate that URL uses only permitted schemes (http/https).
+    """Validate URL uses http/https and return formatted base URL.
 
     Args:
-        url: URL string to validate.
+        url: URL to validate.
 
     Raises:
-        ValueError: If URL scheme is not http or https.
+        ValueError: If scheme not http/https or invalid host/port.
+
+    Returns:
+        str: Formatted URL.
     """
     parsed = urllib_parse.urlparse(url)
     if parsed.scheme not in ("http", "https"):
@@ -859,16 +734,13 @@ def _validate_url_scheme(url):
 
 
 def get_api_base_url():
-    """Return the base URL for the LM Studio API endpoint.
-
-    Constructs the URL using the configured API_HOST and API_PORT
-    from _AppState.
+    """Return base API URL from _AppState config.
 
     Returns:
-        str: Base API URL in format http://host:port
+        str: Base API URL (http://host:port).
 
     Raises:
-        ValueError: If the API host or port configuration is invalid.
+        ValueError: If config invalid.
     """
     return _validate_url_scheme(
         f"http://{_AppState.API_HOST}:{_AppState.API_PORT}"
@@ -876,22 +748,15 @@ def get_api_base_url():
 
 
 def get_api_models_url():
-    """Return the full URL for the LM Studio API models endpoint."""
+    """Return full API models endpoint URL."""
     return f"{get_api_base_url()}/v1/models"
 
 
 def get_authors():
-    """Load authors from AUTHORS file in script directory.
-
-    Reads the AUTHORS file located in _AppState.script_dir and parses
-    author names from markdown list format. If the file cannot be read
-    or contains no valid authors, a fallback list containing
-    APP_MAINTAINER is returned instead.
+    """Parse AUTHORS file from script_dir, return list or [APP_MAINTAINER] fallback.
 
     Returns:
-        list: List of author name strings extracted from the AUTHORS file.
-            If the file cannot be read or contains no valid authors,
-            returns a list containing APP_MAINTAINER as a fallback.
+        list: Author names.
     """
     authors_path = os.path.join(_AppState.script_dir, "AUTHORS")
     authors = []
@@ -918,7 +783,7 @@ def get_authors():
 
 
 def parse_version(version):
-    """Parse a version string into a comparable tuple of integers."""
+    """Parse version string to tuple of integers for comparison."""
     if not version:
         return ()
     cleaned = version.strip()
@@ -939,7 +804,7 @@ def parse_version(version):
 
 
 def is_newer_version(current, latest):
-    """Return True when latest is newer than current."""
+    """Return True if latest version > current version."""
     current_parts = parse_version(current)
     latest_parts = parse_version(latest)
     if not current_parts or not latest_parts:
@@ -948,13 +813,13 @@ def is_newer_version(current, latest):
 
 
 def _is_allowed_update_url(url):
-    """Validate update URL to prevent unsafe schemes or hosts.
+    """Return True if URL is HTTPS GitHub API repos endpoint.
 
     Args:
-        url: URL string to validate.
+        url: URL to validate.
 
     Returns:
-        bool: True when the URL uses HTTPS and GitHub API host.
+        bool: True if safe update URL.
     """
     parsed = urllib_parse.urlparse(url)
     return (
@@ -965,7 +830,7 @@ def _is_allowed_update_url(url):
 
 
 def get_latest_release_version():
-    """Fetch the latest GitHub release tag name."""
+    """Fetch latest GitHub release tag, return (tag, error_msg) tuple."""
     if not _is_allowed_update_url(LATEST_RELEASE_API_URL):
         logging.debug("Update check: invalid update URL")
         return None, "Invalid update URL"
@@ -997,7 +862,7 @@ def get_latest_release_version():
 
 
 def get_lms_cmd():
-    """Return the LM Studio CLI path if executable or resolve it from PATH."""
+    """Return LM Studio CLI path if executable, else resolve from PATH."""
     if os.path.isfile(LMS_CLI) and os.access(LMS_CLI, os.X_OK):
         return LMS_CLI
     return shutil.which("lms")
@@ -1007,13 +872,7 @@ _get_llmster_cmd_state = {"last_candidate": None, "seen_call": False}
 
 
 def get_llmster_cmd():
-    """Return llmster executable path from PATH or LM Studio install dir.
-
-    When running in debug mode this helper logs its findings so users can
-    troubleshoot missing or mis-located binaries.  To avoid filling the log
-    with identical messages the function only emits a debug statement on the
-    first invocation or when the resolved candidate changes.
-    """
+    """Return llmster path from PATH or install dir, with debug logging on changes."""
     state = _get_llmster_cmd_state
 
     llmster_cmd = shutil.which("llmster")
@@ -1067,14 +926,7 @@ def get_llmster_cmd():
 
 
 def _has_loaded_model(output: str) -> bool:
-    """Return True if ``lms ps`` output indicates a loaded model.
-
-    Some releases of the CLI print *all* available models even when none
-    are actually loaded.  Other releases explicitly say "No models are
-    currently loaded.".  We treat such outputs as *not* containing a
-    loaded model; a debug log entry is emitted so the behavior is
-    traceable.
-    """
+    """Return True if lms ps output indicates loaded model, with debug logging."""
     if not output or not output.strip():
         return False
     text = output.lower()
@@ -1088,17 +940,13 @@ def _has_loaded_model(output: str) -> bool:
 
 
 def _api_loaded_model_names(models):
-    """Return model names that are explicitly marked as loaded.
-
-    LM Studio API responses may include *available* models that are not
-    currently loaded. To avoid false positives, we only treat a model as
-    loaded when there is explicit evidence in the model object.
+    """Return model names explicitly marked as loaded from API response.
 
     Args:
-        models: Parsed ``data`` list from the API response.
+        models: Parsed data list from API.
 
     Returns:
-        list[str]: Names/ids for models explicitly marked as loaded.
+        list[str]: Model names/ids.
     """
     if not isinstance(models, list):
         return []
@@ -1134,39 +982,35 @@ def _api_loaded_model_names(models):
 
 
 def get_pkill_cmd():
-    """Return the absolute pkill path from PATH if available."""
+    """Return absolute pkill path from PATH."""
     return shutil.which("pkill")
 
 
 def get_notify_send_cmd():
-    """Return the absolute notify-send path from PATH if available."""
+    """Return absolute notify-send path from PATH."""
     return shutil.which("notify-send")
 
 
 def get_ps_cmd():
-    """Return the absolute ps path from PATH if available."""
+    """Return absolute ps path from PATH."""
     return shutil.which("ps")
 
 
 def get_pgrep_cmd():
-    """Return the absolute pgrep path from PATH if available."""
+    """Return absolute pgrep path from PATH."""
     return shutil.which("pgrep")
 
 
 def get_dpkg_cmd():
-    """Return the absolute dpkg path from PATH if available."""
+    """Return absolute dpkg path from PATH."""
     return shutil.which("dpkg")
 
 
 def check_api_models():
-    """Check if any models are loaded via LM Studio API.
-
-    Queries the configured API endpoint to check if models are loaded.
-    This is a fallback when 'lms ps' fails (e.g., desktop app running
-    without daemon).
+    """Check if models loaded via API (fallback when lms ps fails).
 
     Returns:
-        bool: True if at least one model is loaded, False otherwise.
+        bool: True if at least one model loaded.
     """
     try:
         api_url = get_api_models_url()
@@ -1195,20 +1039,16 @@ def check_api_models():
 
 
 def _run_safe_command(command):
-    """Run a pre-validated command list via subprocess.
-
-    The caller MUST ensure that ``command`` only contains trusted,
-    absolute-path executables resolved through helper functions.
+    """Run pre-validated command list (caller must ensure trusted absolute-path executable).
 
     Args:
-        command: List of strings forming the command.
+        command: Command list.
 
     Returns:
-        CompletedProcess: The completed process result.
+        CompletedProcess: Result.
 
     Raises:
-        ValueError: If command format is invalid or executable is not
-            an absolute path.
+        ValueError: If format invalid or exe not absolute.
     """
     if not isinstance(command, list) or not command:
         raise ValueError("Command must be a non-empty list")
@@ -1232,7 +1072,7 @@ def _run_safe_command(command):
 
 
 def is_llmster_running():
-    """Return True when a llmster process is currently running."""
+    """Return True if llmster process running (using pgrep or ps)."""
     pgrep_cmd = get_pgrep_cmd()
     if pgrep_cmd and os.path.isabs(pgrep_cmd):
         try:
@@ -1281,17 +1121,7 @@ def is_llmster_running():
 
 
 def _is_lm_studio_appimage_label(value):
-    """Return True when *value* identifies an LM Studio Desktop App AppImage.
-
-    Matches:
-    - LM-Studio-0.4.6-1-x64_<hash>.AppImage (official desktop app)
-    - LM Studio.AppImage (simple name)
-
-    Excludes:
-    - LM-Studio-Bench-*.AppImage (bench tool)
-    - lmstudio-tray-manager-*.AppImage (tray manager)
-    - Other similarly named tools
-    """
+    """Return True if value identifies LM Studio Desktop App AppImage (excludes bench/tray tools)."""
     if not isinstance(value, str):
         return False
 
@@ -1313,7 +1143,7 @@ def _is_lm_studio_appimage_label(value):
 
 
 def get_desktop_app_pids():
-    """Return PIDs of LM Studio desktop app root processes."""
+    """Return PIDs of LM Studio desktop app root processes (not workers/helpers)."""
     pids = []
     ps_cmd = get_ps_cmd()
     if not ps_cmd:
@@ -1384,7 +1214,7 @@ def get_desktop_app_pids():
 
 
 def kill_existing_instances():
-    """Terminate other running instances of this script."""
+    """Terminate other lmstudio_tray.py instances using pgrep/SIGTERM."""
     pgrep_cmd = get_pgrep_cmd()
     if not pgrep_cmd:
         logging.warning("pgrep not found; cannot detect existing instances")
@@ -1406,11 +1236,7 @@ def kill_existing_instances():
 
 
 class TrayIcon:
-    """Manage the GTK tray icon for LM Studio runtime monitoring.
-
-    The tray displays runtime status, provides daemon/app controls, and sends
-    desktop notifications on status transitions.
-    """
+    """GTK tray icon managing LM Studio runtime monitoring, daemon/app controls, and notifications."""
     def __init__(self):
         """Initialize tray indicator, menu, and periodic status checks."""
         gtk = _AppState.Gtk
@@ -1451,13 +1277,7 @@ class TrayIcon:
         glib.idle_add(self._maybe_start_gui)
 
     def _maybe_auto_start_daemon(self):
-        """Start llmster daemon on launch when enabled.
-
-        Always restarts the daemon (stop + start) to ensure Passkey
-        authentication is fresh and valid. This prevents "Invalid passkey"
-        errors when `lms` CLI connects to an old daemon with stale
-        authentication state.
-        """
+        """Restart daemon on launch if enabled (ensures fresh passkey for lms CLI)."""
         if not _AppState.AUTO_START_DAEMON:
             return False
 
@@ -1476,7 +1296,7 @@ class TrayIcon:
         return False
 
     def _maybe_start_gui(self):
-        """Start LM Studio GUI on launch when enabled."""
+        """Start desktop app on launch if GUI_MODE enabled."""
         if not _AppState.GUI_MODE:
             return False
 
@@ -1485,7 +1305,7 @@ class TrayIcon:
         return False
 
     def begin_action_cooldown(self, action_name, seconds=2.0):
-        """Prevent rapid double-triggering of tray actions."""
+        """Return False if within cooldown, else set cooldown and return True."""
         now = time.monotonic()
         if now < self.action_lock_until:
             remaining = self.action_lock_until - now
@@ -1500,7 +1320,7 @@ class TrayIcon:
         return True
 
     def _can_use_lms_ps(self, daemon_running, app_running):
-        """Return True when running ``lms ps`` is currently safe/useful."""
+        """Return True if safe to run lms ps (respects desktop launch grace period)."""
         if daemon_running:
             return True
         if not app_running:
@@ -1519,11 +1339,10 @@ class TrayIcon:
         return True
 
     def _schedule_menu_refresh(self, delay_seconds=2):
-        """Schedule a delayed menu refresh when GLib is available.
+        """Schedule delayed menu rebuild via GLib timeout.
 
         Args:
-            delay_seconds (int): Number of seconds to delay before
-                refreshing the menu. Defaults to 2 seconds.
+            delay_seconds (int): Delay before refresh (default 2).
         """
         glib = _AppState.GLib
         if glib is None:
@@ -1542,9 +1361,7 @@ class TrayIcon:
         glib.timeout_add_seconds(delay_seconds, _refresh_once)
 
     def build_menu(self):
-        """Build or rebuild the context menu with current status and
-        options.
-        """
+        """Build/rebuild context menu with current daemon/app status and options."""
         gtk = _AppState.Gtk
         if gtk is None:
             raise RuntimeError("GTK module is not initialized")
@@ -1644,12 +1461,10 @@ class TrayIcon:
         self.indicator.set_menu(self.menu)
 
     def get_daemon_status(self):
-        """Check if llmster headless daemon is running.
+        """Return daemon status: 'running', 'stopped', or 'not_found'.
 
         Returns:
-            str: "running" if daemon process is active,
-                 "stopped" if llmster is installed but daemon not running,
-                 "not_found" if llmster is not installed.
+            str: Status string.
         """
         try:
             llmster_cmd = get_llmster_cmd()
@@ -1666,17 +1481,10 @@ class TrayIcon:
             return "not_found"
 
     def get_desktop_app_status(self):
-        """Check if LM Studio desktop app is running.
-
-        The desktop app is started via lmstudio_autostart.sh --gui or directly,
-        and runs WITHOUT the --run-as-service flag.
-
-        This is different from the headless daemon (--run-as-service).
+        """Return desktop app status: 'running', 'stopped', or 'not_found'.
 
         Returns:
-            str: "running" if desktop app process is active,
-                 "stopped" if installed but not running,
-                 "not_found" if not installed.
+            str: Status string.
         """
 
         try:
@@ -1779,13 +1587,13 @@ class TrayIcon:
         return status
 
     def get_status_indicator(self, status):
-        """Convert status string to emoji indicator.
+        """Return emoji for status ('running' -> 🟢, 'stopped' -> 🟡, else -> 🔴).
 
         Args:
-            status: "running", "stopped", or "not_found"
+            status: Status string.
 
         Returns:
-            str: Emoji indicator (🟢 running, 🟡 stopped, 🔴 not_found)
+            str: Emoji indicator.
         """
         if status == "running":
             return "🟢"

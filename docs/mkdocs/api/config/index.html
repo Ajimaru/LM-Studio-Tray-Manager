@@ -12,6 +12,8 @@
         <meta name="author" content="Ajimaru">
       
       
+        <link rel="canonical" href="https://ajimaru.github.io/LM-Studio-Tray-Manager/api/config/">
+      
       
         <link rel="prev" href="../core/">
       
@@ -1140,36 +1142,10 @@
 
     <div class="doc doc-contents first">
 
-        <p>LM Studio Tray Icon Monitor.</p>
-<p>A system tray application that monitors the status of the LM Studio
-daemon and desktop app. It displays visual indicators and notifications when
-status changes, and supports starting/stopping daemon and desktop app as well
-as viewing status information through a context menu.</p>
-<p>On Linux the tray uses GTK3 + AppIndicator3.
-On macOS the tray uses the <code>rumps</code> library (PyObjC-based).</p>
+        <p>LM Studio Tray Icon Monitor - system tray app for monitoring LM Studio daemon and desktop app.</p>
+<p>Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
+Usage: lmstudio_tray.py [model][script_dir] [--debug][--auto-start-daemon] [--gui][--version]</p>
 
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <p>lmstudio_tray.py [model][script_dir] [options]</p>
-</details>
-
-<details class="notes" open>
-  <summary>Notes</summary>
-  <p>Command-line arguments:
-    model: Model name to monitor (optional, default: "no-model-passed").
-    script_dir: Script directory for logs and VERSION file (optional,
-        default: current working directory).
-    --debug, -d: Enable debug logging (flag).
-    --auto-start-daemon, -a: Start llmster daemon on launch (flag).
-    --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
-    --version, -v: Print version and exit (flag).
-    --help: Show help message and exit (flag).</p>
-<p>Logging is written to .logs/ in the script directory, or if that
-directory is read-only (e.g., AppImage), logs are written to
-~/.local/share/lmstudio-tray-manager/logs/.
-If the VERSION file is missing, a default version string is used.</p>
-</details>
 
 
 
@@ -1203,16 +1179,16 @@ If the VERSION file is missing, a default version string is used.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the user config file path in the home config directory.</p>
+        <p>Return config file path ~/.config/lmstudio_tray.json.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-718">718</a></span>
-<span class="normal"><a href="#__codelineno-0-719">719</a></span>
-<span class="normal"><a href="#__codelineno-0-720">720</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-718" name="__codelineno-0-718"></a><span class="k">def</span> <span class="nf">_get_config_path</span><span class="p">():</span>
-<a id="__codelineno-0-719" name="__codelineno-0-719"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the user config file path in the home config directory.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-720" name="__codelineno-0-720"></a>    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.config/lmstudio_tray.json&quot;</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-590">590</a></span>
+<span class="normal"><a href="#__codelineno-0-591">591</a></span>
+<span class="normal"><a href="#__codelineno-0-592">592</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-590" name="__codelineno-0-590"></a><span class="k">def</span> <span class="nf">_get_config_path</span><span class="p">():</span>
+<a id="__codelineno-0-591" name="__codelineno-0-591"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return config file path ~/.config/lmstudio_tray.json.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-592" name="__codelineno-0-592"></a>    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.config/lmstudio_tray.json&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1232,98 +1208,88 @@ If the VERSION file is missing, a default version string is used.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Load config values for the LM Studio API endpoint.</p>
-<p>Updates _AppState.API_HOST and _AppState.API_PORT when valid values are
-present in the config file.</p>
+        <p>Load API endpoint config from file, updating _AppState.API_HOST and API_PORT.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-734">734</a></span>
-<span class="normal"><a href="#__codelineno-0-735">735</a></span>
-<span class="normal"><a href="#__codelineno-0-736">736</a></span>
-<span class="normal"><a href="#__codelineno-0-737">737</a></span>
-<span class="normal"><a href="#__codelineno-0-738">738</a></span>
-<span class="normal"><a href="#__codelineno-0-739">739</a></span>
-<span class="normal"><a href="#__codelineno-0-740">740</a></span>
-<span class="normal"><a href="#__codelineno-0-741">741</a></span>
-<span class="normal"><a href="#__codelineno-0-742">742</a></span>
-<span class="normal"><a href="#__codelineno-0-743">743</a></span>
-<span class="normal"><a href="#__codelineno-0-744">744</a></span>
-<span class="normal"><a href="#__codelineno-0-745">745</a></span>
-<span class="normal"><a href="#__codelineno-0-746">746</a></span>
-<span class="normal"><a href="#__codelineno-0-747">747</a></span>
-<span class="normal"><a href="#__codelineno-0-748">748</a></span>
-<span class="normal"><a href="#__codelineno-0-749">749</a></span>
-<span class="normal"><a href="#__codelineno-0-750">750</a></span>
-<span class="normal"><a href="#__codelineno-0-751">751</a></span>
-<span class="normal"><a href="#__codelineno-0-752">752</a></span>
-<span class="normal"><a href="#__codelineno-0-753">753</a></span>
-<span class="normal"><a href="#__codelineno-0-754">754</a></span>
-<span class="normal"><a href="#__codelineno-0-755">755</a></span>
-<span class="normal"><a href="#__codelineno-0-756">756</a></span>
-<span class="normal"><a href="#__codelineno-0-757">757</a></span>
-<span class="normal"><a href="#__codelineno-0-758">758</a></span>
-<span class="normal"><a href="#__codelineno-0-759">759</a></span>
-<span class="normal"><a href="#__codelineno-0-760">760</a></span>
-<span class="normal"><a href="#__codelineno-0-761">761</a></span>
-<span class="normal"><a href="#__codelineno-0-762">762</a></span>
-<span class="normal"><a href="#__codelineno-0-763">763</a></span>
-<span class="normal"><a href="#__codelineno-0-764">764</a></span>
-<span class="normal"><a href="#__codelineno-0-765">765</a></span>
-<span class="normal"><a href="#__codelineno-0-766">766</a></span>
-<span class="normal"><a href="#__codelineno-0-767">767</a></span>
-<span class="normal"><a href="#__codelineno-0-768">768</a></span>
-<span class="normal"><a href="#__codelineno-0-769">769</a></span>
-<span class="normal"><a href="#__codelineno-0-770">770</a></span>
-<span class="normal"><a href="#__codelineno-0-771">771</a></span>
-<span class="normal"><a href="#__codelineno-0-772">772</a></span>
-<span class="normal"><a href="#__codelineno-0-773">773</a></span>
-<span class="normal"><a href="#__codelineno-0-774">774</a></span>
-<span class="normal"><a href="#__codelineno-0-775">775</a></span>
-<span class="normal"><a href="#__codelineno-0-776">776</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-734" name="__codelineno-0-734"></a><span class="k">def</span> <span class="nf">load_config</span><span class="p">():</span>
-<a id="__codelineno-0-735" name="__codelineno-0-735"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load config values for the LM Studio API endpoint.</span>
-<a id="__codelineno-0-736" name="__codelineno-0-736"></a>
-<a id="__codelineno-0-737" name="__codelineno-0-737"></a><span class="sd">    Updates _AppState.API_HOST and _AppState.API_PORT when valid values are</span>
-<a id="__codelineno-0-738" name="__codelineno-0-738"></a><span class="sd">    present in the config file.</span>
-<a id="__codelineno-0-739" name="__codelineno-0-739"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-740" name="__codelineno-0-740"></a>    <span class="n">config_path</span> <span class="o">=</span> <span class="n">_get_config_path</span><span class="p">()</span>
-<a id="__codelineno-0-741" name="__codelineno-0-741"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Attempting to load config from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
-<a id="__codelineno-0-742" name="__codelineno-0-742"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-743" name="__codelineno-0-743"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
-<a id="__codelineno-0-744" name="__codelineno-0-744"></a>            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
-<a id="__codelineno-0-745" name="__codelineno-0-745"></a>    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-<a id="__codelineno-0-746" name="__codelineno-0-746"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-<a id="__codelineno-0-747" name="__codelineno-0-747"></a>            <span class="s2">&quot;Config file not found at </span><span class="si">%s</span><span class="s2">, using defaults&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-748" name="__codelineno-0-748"></a>            <span class="n">config_path</span>
-<a id="__codelineno-0-749" name="__codelineno-0-749"></a>        <span class="p">)</span>
-<a id="__codelineno-0-750" name="__codelineno-0-750"></a>        <span class="k">return</span>
-<a id="__codelineno-0-751" name="__codelineno-0-751"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-<a id="__codelineno-0-752" name="__codelineno-0-752"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-<a id="__codelineno-0-753" name="__codelineno-0-753"></a>            <span class="s2">&quot;Failed to load config from </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-754" name="__codelineno-0-754"></a>            <span class="n">config_path</span><span class="p">,</span>
-<a id="__codelineno-0-755" name="__codelineno-0-755"></a>            <span class="n">exc</span>
-<a id="__codelineno-0-756" name="__codelineno-0-756"></a>        <span class="p">)</span>
-<a id="__codelineno-0-757" name="__codelineno-0-757"></a>        <span class="k">return</span>
-<a id="__codelineno-0-758" name="__codelineno-0-758"></a>
-<a id="__codelineno-0-759" name="__codelineno-0-759"></a>    <span class="n">host</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;api_host&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-<a id="__codelineno-0-760" name="__codelineno-0-760"></a>    <span class="n">port_raw</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;api_port&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-<a id="__codelineno-0-761" name="__codelineno-0-761"></a>
-<a id="__codelineno-0-762" name="__codelineno-0-762"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">host</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-<a id="__codelineno-0-763" name="__codelineno-0-763"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-764" name="__codelineno-0-764"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Loaded API host: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="p">)</span>
-<a id="__codelineno-0-765" name="__codelineno-0-765"></a>
-<a id="__codelineno-0-766" name="__codelineno-0-766"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">port_raw</span><span class="p">)</span>
-<a id="__codelineno-0-767" name="__codelineno-0-767"></a>    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-768" name="__codelineno-0-768"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span> <span class="o">=</span> <span class="n">port</span>
-<a id="__codelineno-0-769" name="__codelineno-0-769"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Loaded API port: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="p">)</span>
-<a id="__codelineno-0-770" name="__codelineno-0-770"></a>
-<a id="__codelineno-0-771" name="__codelineno-0-771"></a>    <span class="k">if</span> <span class="n">host</span> <span class="ow">or</span> <span class="n">port</span><span class="p">:</span>
-<a id="__codelineno-0-772" name="__codelineno-0-772"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-<a id="__codelineno-0-773" name="__codelineno-0-773"></a>            <span class="s2">&quot;Config loaded successfully: http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-774" name="__codelineno-0-774"></a>            <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="p">,</span>
-<a id="__codelineno-0-775" name="__codelineno-0-775"></a>            <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span>
-<a id="__codelineno-0-776" name="__codelineno-0-776"></a>        <span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-606">606</a></span>
+<span class="normal"><a href="#__codelineno-0-607">607</a></span>
+<span class="normal"><a href="#__codelineno-0-608">608</a></span>
+<span class="normal"><a href="#__codelineno-0-609">609</a></span>
+<span class="normal"><a href="#__codelineno-0-610">610</a></span>
+<span class="normal"><a href="#__codelineno-0-611">611</a></span>
+<span class="normal"><a href="#__codelineno-0-612">612</a></span>
+<span class="normal"><a href="#__codelineno-0-613">613</a></span>
+<span class="normal"><a href="#__codelineno-0-614">614</a></span>
+<span class="normal"><a href="#__codelineno-0-615">615</a></span>
+<span class="normal"><a href="#__codelineno-0-616">616</a></span>
+<span class="normal"><a href="#__codelineno-0-617">617</a></span>
+<span class="normal"><a href="#__codelineno-0-618">618</a></span>
+<span class="normal"><a href="#__codelineno-0-619">619</a></span>
+<span class="normal"><a href="#__codelineno-0-620">620</a></span>
+<span class="normal"><a href="#__codelineno-0-621">621</a></span>
+<span class="normal"><a href="#__codelineno-0-622">622</a></span>
+<span class="normal"><a href="#__codelineno-0-623">623</a></span>
+<span class="normal"><a href="#__codelineno-0-624">624</a></span>
+<span class="normal"><a href="#__codelineno-0-625">625</a></span>
+<span class="normal"><a href="#__codelineno-0-626">626</a></span>
+<span class="normal"><a href="#__codelineno-0-627">627</a></span>
+<span class="normal"><a href="#__codelineno-0-628">628</a></span>
+<span class="normal"><a href="#__codelineno-0-629">629</a></span>
+<span class="normal"><a href="#__codelineno-0-630">630</a></span>
+<span class="normal"><a href="#__codelineno-0-631">631</a></span>
+<span class="normal"><a href="#__codelineno-0-632">632</a></span>
+<span class="normal"><a href="#__codelineno-0-633">633</a></span>
+<span class="normal"><a href="#__codelineno-0-634">634</a></span>
+<span class="normal"><a href="#__codelineno-0-635">635</a></span>
+<span class="normal"><a href="#__codelineno-0-636">636</a></span>
+<span class="normal"><a href="#__codelineno-0-637">637</a></span>
+<span class="normal"><a href="#__codelineno-0-638">638</a></span>
+<span class="normal"><a href="#__codelineno-0-639">639</a></span>
+<span class="normal"><a href="#__codelineno-0-640">640</a></span>
+<span class="normal"><a href="#__codelineno-0-641">641</a></span>
+<span class="normal"><a href="#__codelineno-0-642">642</a></span>
+<span class="normal"><a href="#__codelineno-0-643">643</a></span>
+<span class="normal"><a href="#__codelineno-0-644">644</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-606" name="__codelineno-0-606"></a><span class="k">def</span> <span class="nf">load_config</span><span class="p">():</span>
+<a id="__codelineno-0-607" name="__codelineno-0-607"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load API endpoint config from file, updating _AppState.API_HOST and API_PORT.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-608" name="__codelineno-0-608"></a>    <span class="n">config_path</span> <span class="o">=</span> <span class="n">_get_config_path</span><span class="p">()</span>
+<a id="__codelineno-0-609" name="__codelineno-0-609"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Attempting to load config from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
+<a id="__codelineno-0-610" name="__codelineno-0-610"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-611" name="__codelineno-0-611"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+<a id="__codelineno-0-612" name="__codelineno-0-612"></a>            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+<a id="__codelineno-0-613" name="__codelineno-0-613"></a>    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+<a id="__codelineno-0-614" name="__codelineno-0-614"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-615" name="__codelineno-0-615"></a>            <span class="s2">&quot;Config file not found at </span><span class="si">%s</span><span class="s2">, using defaults&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-616" name="__codelineno-0-616"></a>            <span class="n">config_path</span>
+<a id="__codelineno-0-617" name="__codelineno-0-617"></a>        <span class="p">)</span>
+<a id="__codelineno-0-618" name="__codelineno-0-618"></a>        <span class="k">return</span>
+<a id="__codelineno-0-619" name="__codelineno-0-619"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+<a id="__codelineno-0-620" name="__codelineno-0-620"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+<a id="__codelineno-0-621" name="__codelineno-0-621"></a>            <span class="s2">&quot;Failed to load config from </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-622" name="__codelineno-0-622"></a>            <span class="n">config_path</span><span class="p">,</span>
+<a id="__codelineno-0-623" name="__codelineno-0-623"></a>            <span class="n">exc</span>
+<a id="__codelineno-0-624" name="__codelineno-0-624"></a>        <span class="p">)</span>
+<a id="__codelineno-0-625" name="__codelineno-0-625"></a>        <span class="k">return</span>
+<a id="__codelineno-0-626" name="__codelineno-0-626"></a>
+<a id="__codelineno-0-627" name="__codelineno-0-627"></a>    <span class="n">host</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;api_host&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-0-628" name="__codelineno-0-628"></a>    <span class="n">port_raw</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;api_port&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-0-629" name="__codelineno-0-629"></a>
+<a id="__codelineno-0-630" name="__codelineno-0-630"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">host</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+<a id="__codelineno-0-631" name="__codelineno-0-631"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-632" name="__codelineno-0-632"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Loaded API host: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="p">)</span>
+<a id="__codelineno-0-633" name="__codelineno-0-633"></a>
+<a id="__codelineno-0-634" name="__codelineno-0-634"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">port_raw</span><span class="p">)</span>
+<a id="__codelineno-0-635" name="__codelineno-0-635"></a>    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-636" name="__codelineno-0-636"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span> <span class="o">=</span> <span class="n">port</span>
+<a id="__codelineno-0-637" name="__codelineno-0-637"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Loaded API port: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="p">)</span>
+<a id="__codelineno-0-638" name="__codelineno-0-638"></a>
+<a id="__codelineno-0-639" name="__codelineno-0-639"></a>    <span class="k">if</span> <span class="n">host</span> <span class="ow">or</span> <span class="n">port</span><span class="p">:</span>
+<a id="__codelineno-0-640" name="__codelineno-0-640"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-641" name="__codelineno-0-641"></a>            <span class="s2">&quot;Config loaded successfully: http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-642" name="__codelineno-0-642"></a>            <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="p">,</span>
+<a id="__codelineno-0-643" name="__codelineno-0-643"></a>            <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span>
+<a id="__codelineno-0-644" name="__codelineno-0-644"></a>        <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1343,102 +1309,134 @@ present in the config file.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Persist config values for the LM Studio API endpoint.</p>
+        <p>Save API endpoint config to file.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RAISES</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+              <span class="doc-raises-annotation">
+                  <code><span title="ValueError">ValueError</span></code>
+              </span>
+            </td>
+            <td class="doc-raises-details">
+              <div class="doc-md-description">
+                <p>If api_host or api_port invalid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-779">779</a></span>
-<span class="normal"><a href="#__codelineno-0-780">780</a></span>
-<span class="normal"><a href="#__codelineno-0-781">781</a></span>
-<span class="normal"><a href="#__codelineno-0-782">782</a></span>
-<span class="normal"><a href="#__codelineno-0-783">783</a></span>
-<span class="normal"><a href="#__codelineno-0-784">784</a></span>
-<span class="normal"><a href="#__codelineno-0-785">785</a></span>
-<span class="normal"><a href="#__codelineno-0-786">786</a></span>
-<span class="normal"><a href="#__codelineno-0-787">787</a></span>
-<span class="normal"><a href="#__codelineno-0-788">788</a></span>
-<span class="normal"><a href="#__codelineno-0-789">789</a></span>
-<span class="normal"><a href="#__codelineno-0-790">790</a></span>
-<span class="normal"><a href="#__codelineno-0-791">791</a></span>
-<span class="normal"><a href="#__codelineno-0-792">792</a></span>
-<span class="normal"><a href="#__codelineno-0-793">793</a></span>
-<span class="normal"><a href="#__codelineno-0-794">794</a></span>
-<span class="normal"><a href="#__codelineno-0-795">795</a></span>
-<span class="normal"><a href="#__codelineno-0-796">796</a></span>
-<span class="normal"><a href="#__codelineno-0-797">797</a></span>
-<span class="normal"><a href="#__codelineno-0-798">798</a></span>
-<span class="normal"><a href="#__codelineno-0-799">799</a></span>
-<span class="normal"><a href="#__codelineno-0-800">800</a></span>
-<span class="normal"><a href="#__codelineno-0-801">801</a></span>
-<span class="normal"><a href="#__codelineno-0-802">802</a></span>
-<span class="normal"><a href="#__codelineno-0-803">803</a></span>
-<span class="normal"><a href="#__codelineno-0-804">804</a></span>
-<span class="normal"><a href="#__codelineno-0-805">805</a></span>
-<span class="normal"><a href="#__codelineno-0-806">806</a></span>
-<span class="normal"><a href="#__codelineno-0-807">807</a></span>
-<span class="normal"><a href="#__codelineno-0-808">808</a></span>
-<span class="normal"><a href="#__codelineno-0-809">809</a></span>
-<span class="normal"><a href="#__codelineno-0-810">810</a></span>
-<span class="normal"><a href="#__codelineno-0-811">811</a></span>
-<span class="normal"><a href="#__codelineno-0-812">812</a></span>
-<span class="normal"><a href="#__codelineno-0-813">813</a></span>
-<span class="normal"><a href="#__codelineno-0-814">814</a></span>
-<span class="normal"><a href="#__codelineno-0-815">815</a></span>
-<span class="normal"><a href="#__codelineno-0-816">816</a></span>
-<span class="normal"><a href="#__codelineno-0-817">817</a></span>
-<span class="normal"><a href="#__codelineno-0-818">818</a></span>
-<span class="normal"><a href="#__codelineno-0-819">819</a></span>
-<span class="normal"><a href="#__codelineno-0-820">820</a></span>
-<span class="normal"><a href="#__codelineno-0-821">821</a></span>
-<span class="normal"><a href="#__codelineno-0-822">822</a></span>
-<span class="normal"><a href="#__codelineno-0-823">823</a></span>
-<span class="normal"><a href="#__codelineno-0-824">824</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-779" name="__codelineno-0-779"></a><span class="k">def</span> <span class="nf">save_config</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="n">api_port</span><span class="p">):</span>
-<a id="__codelineno-0-780" name="__codelineno-0-780"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist config values for the LM Studio API endpoint.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-781" name="__codelineno-0-781"></a>    <span class="n">host</span> <span class="o">=</span> <span class="n">api_host</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-<a id="__codelineno-0-782" name="__codelineno-0-782"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">api_port</span><span class="p">)</span>
-<a id="__codelineno-0-783" name="__codelineno-0-783"></a>
-<a id="__codelineno-0-784" name="__codelineno-0-784"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">or</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-785" name="__codelineno-0-785"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-<a id="__codelineno-0-786" name="__codelineno-0-786"></a>            <span class="s2">&quot;Invalid config values: host=&#39;</span><span class="si">%s</span><span class="s2">&#39;, port=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-787" name="__codelineno-0-787"></a>            <span class="n">host</span><span class="p">,</span>
-<a id="__codelineno-0-788" name="__codelineno-0-788"></a>            <span class="n">api_port</span>
-<a id="__codelineno-0-789" name="__codelineno-0-789"></a>        <span class="p">)</span>
-<a id="__codelineno-0-790" name="__codelineno-0-790"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid api_host/api_port&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-791" name="__codelineno-0-791"></a>
-<a id="__codelineno-0-792" name="__codelineno-0-792"></a>    <span class="n">config_path</span> <span class="o">=</span> <span class="n">_get_config_path</span><span class="p">()</span>
-<a id="__codelineno-0-793" name="__codelineno-0-793"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-<a id="__codelineno-0-794" name="__codelineno-0-794"></a>        <span class="s2">&quot;Saving config to </span><span class="si">%s</span><span class="s2">: host=</span><span class="si">%s</span><span class="s2">, port=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-795" name="__codelineno-0-795"></a>        <span class="n">config_path</span><span class="p">,</span>
-<a id="__codelineno-0-796" name="__codelineno-0-796"></a>        <span class="n">host</span><span class="p">,</span>
-<a id="__codelineno-0-797" name="__codelineno-0-797"></a>        <span class="n">port</span>
-<a id="__codelineno-0-798" name="__codelineno-0-798"></a>    <span class="p">)</span>
-<a id="__codelineno-0-799" name="__codelineno-0-799"></a>    <span class="n">config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
-<a id="__codelineno-0-800" name="__codelineno-0-800"></a>    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-0-801" name="__codelineno-0-801"></a>    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-802" name="__codelineno-0-802"></a>        <span class="s2">&quot;api_host&quot;</span><span class="p">:</span> <span class="n">host</span><span class="p">,</span>
-<a id="__codelineno-0-803" name="__codelineno-0-803"></a>        <span class="s2">&quot;api_port&quot;</span><span class="p">:</span> <span class="n">port</span><span class="p">,</span>
-<a id="__codelineno-0-804" name="__codelineno-0-804"></a>    <span class="p">}</span>
-<a id="__codelineno-0-805" name="__codelineno-0-805"></a>    <span class="n">tmp_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config_path</span><span class="si">}</span><span class="s2">.tmp&quot;</span>
-<a id="__codelineno-0-806" name="__codelineno-0-806"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-807" name="__codelineno-0-807"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
-<a id="__codelineno-0-808" name="__codelineno-0-808"></a>            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">config_file</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<a id="__codelineno-0-809" name="__codelineno-0-809"></a>            <span class="n">config_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-<a id="__codelineno-0-810" name="__codelineno-0-810"></a>            <span class="n">os</span><span class="o">.</span><span class="n">fsync</span><span class="p">(</span><span class="n">config_file</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
-<a id="__codelineno-0-811" name="__codelineno-0-811"></a>        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
-<a id="__codelineno-0-812" name="__codelineno-0-812"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-<a id="__codelineno-0-813" name="__codelineno-0-813"></a>            <span class="s2">&quot;Config saved successfully to </span><span class="si">%s</span><span class="s2">: http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-814" name="__codelineno-0-814"></a>            <span class="n">config_path</span><span class="p">,</span>
-<a id="__codelineno-0-815" name="__codelineno-0-815"></a>            <span class="n">host</span><span class="p">,</span>
-<a id="__codelineno-0-816" name="__codelineno-0-816"></a>            <span class="n">port</span>
-<a id="__codelineno-0-817" name="__codelineno-0-817"></a>        <span class="p">)</span>
-<a id="__codelineno-0-818" name="__codelineno-0-818"></a>    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-<a id="__codelineno-0-819" name="__codelineno-0-819"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Failed to write config: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
-<a id="__codelineno-0-820" name="__codelineno-0-820"></a>        <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-821" name="__codelineno-0-821"></a>            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
-<a id="__codelineno-0-822" name="__codelineno-0-822"></a>        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-<a id="__codelineno-0-823" name="__codelineno-0-823"></a>            <span class="k">pass</span>
-<a id="__codelineno-0-824" name="__codelineno-0-824"></a>        <span class="k">raise</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-647">647</a></span>
+<span class="normal"><a href="#__codelineno-0-648">648</a></span>
+<span class="normal"><a href="#__codelineno-0-649">649</a></span>
+<span class="normal"><a href="#__codelineno-0-650">650</a></span>
+<span class="normal"><a href="#__codelineno-0-651">651</a></span>
+<span class="normal"><a href="#__codelineno-0-652">652</a></span>
+<span class="normal"><a href="#__codelineno-0-653">653</a></span>
+<span class="normal"><a href="#__codelineno-0-654">654</a></span>
+<span class="normal"><a href="#__codelineno-0-655">655</a></span>
+<span class="normal"><a href="#__codelineno-0-656">656</a></span>
+<span class="normal"><a href="#__codelineno-0-657">657</a></span>
+<span class="normal"><a href="#__codelineno-0-658">658</a></span>
+<span class="normal"><a href="#__codelineno-0-659">659</a></span>
+<span class="normal"><a href="#__codelineno-0-660">660</a></span>
+<span class="normal"><a href="#__codelineno-0-661">661</a></span>
+<span class="normal"><a href="#__codelineno-0-662">662</a></span>
+<span class="normal"><a href="#__codelineno-0-663">663</a></span>
+<span class="normal"><a href="#__codelineno-0-664">664</a></span>
+<span class="normal"><a href="#__codelineno-0-665">665</a></span>
+<span class="normal"><a href="#__codelineno-0-666">666</a></span>
+<span class="normal"><a href="#__codelineno-0-667">667</a></span>
+<span class="normal"><a href="#__codelineno-0-668">668</a></span>
+<span class="normal"><a href="#__codelineno-0-669">669</a></span>
+<span class="normal"><a href="#__codelineno-0-670">670</a></span>
+<span class="normal"><a href="#__codelineno-0-671">671</a></span>
+<span class="normal"><a href="#__codelineno-0-672">672</a></span>
+<span class="normal"><a href="#__codelineno-0-673">673</a></span>
+<span class="normal"><a href="#__codelineno-0-674">674</a></span>
+<span class="normal"><a href="#__codelineno-0-675">675</a></span>
+<span class="normal"><a href="#__codelineno-0-676">676</a></span>
+<span class="normal"><a href="#__codelineno-0-677">677</a></span>
+<span class="normal"><a href="#__codelineno-0-678">678</a></span>
+<span class="normal"><a href="#__codelineno-0-679">679</a></span>
+<span class="normal"><a href="#__codelineno-0-680">680</a></span>
+<span class="normal"><a href="#__codelineno-0-681">681</a></span>
+<span class="normal"><a href="#__codelineno-0-682">682</a></span>
+<span class="normal"><a href="#__codelineno-0-683">683</a></span>
+<span class="normal"><a href="#__codelineno-0-684">684</a></span>
+<span class="normal"><a href="#__codelineno-0-685">685</a></span>
+<span class="normal"><a href="#__codelineno-0-686">686</a></span>
+<span class="normal"><a href="#__codelineno-0-687">687</a></span>
+<span class="normal"><a href="#__codelineno-0-688">688</a></span>
+<span class="normal"><a href="#__codelineno-0-689">689</a></span>
+<span class="normal"><a href="#__codelineno-0-690">690</a></span>
+<span class="normal"><a href="#__codelineno-0-691">691</a></span>
+<span class="normal"><a href="#__codelineno-0-692">692</a></span>
+<span class="normal"><a href="#__codelineno-0-693">693</a></span>
+<span class="normal"><a href="#__codelineno-0-694">694</a></span>
+<span class="normal"><a href="#__codelineno-0-695">695</a></span>
+<span class="normal"><a href="#__codelineno-0-696">696</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-647" name="__codelineno-0-647"></a><span class="k">def</span> <span class="nf">save_config</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="n">api_port</span><span class="p">):</span>
+<a id="__codelineno-0-648" name="__codelineno-0-648"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Save API endpoint config to file.</span>
+<a id="__codelineno-0-649" name="__codelineno-0-649"></a>
+<a id="__codelineno-0-650" name="__codelineno-0-650"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-651" name="__codelineno-0-651"></a><span class="sd">        ValueError: If api_host or api_port invalid.</span>
+<a id="__codelineno-0-652" name="__codelineno-0-652"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-653" name="__codelineno-0-653"></a>    <span class="n">host</span> <span class="o">=</span> <span class="n">api_host</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+<a id="__codelineno-0-654" name="__codelineno-0-654"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">api_port</span><span class="p">)</span>
+<a id="__codelineno-0-655" name="__codelineno-0-655"></a>
+<a id="__codelineno-0-656" name="__codelineno-0-656"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">or</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-657" name="__codelineno-0-657"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+<a id="__codelineno-0-658" name="__codelineno-0-658"></a>            <span class="s2">&quot;Invalid config values: host=&#39;</span><span class="si">%s</span><span class="s2">&#39;, port=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-659" name="__codelineno-0-659"></a>            <span class="n">host</span><span class="p">,</span>
+<a id="__codelineno-0-660" name="__codelineno-0-660"></a>            <span class="n">api_port</span>
+<a id="__codelineno-0-661" name="__codelineno-0-661"></a>        <span class="p">)</span>
+<a id="__codelineno-0-662" name="__codelineno-0-662"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid api_host/api_port&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-663" name="__codelineno-0-663"></a>
+<a id="__codelineno-0-664" name="__codelineno-0-664"></a>    <span class="n">config_path</span> <span class="o">=</span> <span class="n">_get_config_path</span><span class="p">()</span>
+<a id="__codelineno-0-665" name="__codelineno-0-665"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+<a id="__codelineno-0-666" name="__codelineno-0-666"></a>        <span class="s2">&quot;Saving config to </span><span class="si">%s</span><span class="s2">: host=</span><span class="si">%s</span><span class="s2">, port=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-667" name="__codelineno-0-667"></a>        <span class="n">config_path</span><span class="p">,</span>
+<a id="__codelineno-0-668" name="__codelineno-0-668"></a>        <span class="n">host</span><span class="p">,</span>
+<a id="__codelineno-0-669" name="__codelineno-0-669"></a>        <span class="n">port</span>
+<a id="__codelineno-0-670" name="__codelineno-0-670"></a>    <span class="p">)</span>
+<a id="__codelineno-0-671" name="__codelineno-0-671"></a>    <span class="n">config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+<a id="__codelineno-0-672" name="__codelineno-0-672"></a>    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-673" name="__codelineno-0-673"></a>    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-674" name="__codelineno-0-674"></a>        <span class="s2">&quot;api_host&quot;</span><span class="p">:</span> <span class="n">host</span><span class="p">,</span>
+<a id="__codelineno-0-675" name="__codelineno-0-675"></a>        <span class="s2">&quot;api_port&quot;</span><span class="p">:</span> <span class="n">port</span><span class="p">,</span>
+<a id="__codelineno-0-676" name="__codelineno-0-676"></a>    <span class="p">}</span>
+<a id="__codelineno-0-677" name="__codelineno-0-677"></a>    <span class="n">tmp_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config_path</span><span class="si">}</span><span class="s2">.tmp&quot;</span>
+<a id="__codelineno-0-678" name="__codelineno-0-678"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-679" name="__codelineno-0-679"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+<a id="__codelineno-0-680" name="__codelineno-0-680"></a>            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">config_file</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-0-681" name="__codelineno-0-681"></a>            <span class="n">config_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+<a id="__codelineno-0-682" name="__codelineno-0-682"></a>            <span class="n">os</span><span class="o">.</span><span class="n">fsync</span><span class="p">(</span><span class="n">config_file</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
+<a id="__codelineno-0-683" name="__codelineno-0-683"></a>        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
+<a id="__codelineno-0-684" name="__codelineno-0-684"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-685" name="__codelineno-0-685"></a>            <span class="s2">&quot;Config saved successfully to </span><span class="si">%s</span><span class="s2">: http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-686" name="__codelineno-0-686"></a>            <span class="n">config_path</span><span class="p">,</span>
+<a id="__codelineno-0-687" name="__codelineno-0-687"></a>            <span class="n">host</span><span class="p">,</span>
+<a id="__codelineno-0-688" name="__codelineno-0-688"></a>            <span class="n">port</span>
+<a id="__codelineno-0-689" name="__codelineno-0-689"></a>        <span class="p">)</span>
+<a id="__codelineno-0-690" name="__codelineno-0-690"></a>    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+<a id="__codelineno-0-691" name="__codelineno-0-691"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Failed to write config: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
+<a id="__codelineno-0-692" name="__codelineno-0-692"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-693" name="__codelineno-0-693"></a>            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
+<a id="__codelineno-0-694" name="__codelineno-0-694"></a>        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+<a id="__codelineno-0-695" name="__codelineno-0-695"></a>            <span class="k">pass</span>
+<a id="__codelineno-0-696" name="__codelineno-0-696"></a>        <span class="k">raise</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1458,28 +1456,28 @@ present in the config file.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Normalize and validate the API port value.</p>
+        <p>Validate and return port as int (1-65535) or None if invalid.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-723">723</a></span>
-<span class="normal"><a href="#__codelineno-0-724">724</a></span>
-<span class="normal"><a href="#__codelineno-0-725">725</a></span>
-<span class="normal"><a href="#__codelineno-0-726">726</a></span>
-<span class="normal"><a href="#__codelineno-0-727">727</a></span>
-<span class="normal"><a href="#__codelineno-0-728">728</a></span>
-<span class="normal"><a href="#__codelineno-0-729">729</a></span>
-<span class="normal"><a href="#__codelineno-0-730">730</a></span>
-<span class="normal"><a href="#__codelineno-0-731">731</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-723" name="__codelineno-0-723"></a><span class="k">def</span> <span class="nf">_normalize_api_port</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-<a id="__codelineno-0-724" name="__codelineno-0-724"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize and validate the API port value.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-725" name="__codelineno-0-725"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-726" name="__codelineno-0-726"></a>        <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-<a id="__codelineno-0-727" name="__codelineno-0-727"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-<a id="__codelineno-0-728" name="__codelineno-0-728"></a>        <span class="k">return</span> <span class="kc">None</span>
-<a id="__codelineno-0-729" name="__codelineno-0-729"></a>    <span class="k">if</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">port</span> <span class="o">&lt;=</span> <span class="mi">65535</span><span class="p">:</span>
-<a id="__codelineno-0-730" name="__codelineno-0-730"></a>        <span class="k">return</span> <span class="n">port</span>
-<a id="__codelineno-0-731" name="__codelineno-0-731"></a>    <span class="k">return</span> <span class="kc">None</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-595">595</a></span>
+<span class="normal"><a href="#__codelineno-0-596">596</a></span>
+<span class="normal"><a href="#__codelineno-0-597">597</a></span>
+<span class="normal"><a href="#__codelineno-0-598">598</a></span>
+<span class="normal"><a href="#__codelineno-0-599">599</a></span>
+<span class="normal"><a href="#__codelineno-0-600">600</a></span>
+<span class="normal"><a href="#__codelineno-0-601">601</a></span>
+<span class="normal"><a href="#__codelineno-0-602">602</a></span>
+<span class="normal"><a href="#__codelineno-0-603">603</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-595" name="__codelineno-0-595"></a><span class="k">def</span> <span class="nf">_normalize_api_port</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<a id="__codelineno-0-596" name="__codelineno-0-596"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate and return port as int (1-65535) or None if invalid.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-597" name="__codelineno-0-597"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-598" name="__codelineno-0-598"></a>        <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<a id="__codelineno-0-599" name="__codelineno-0-599"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+<a id="__codelineno-0-600" name="__codelineno-0-600"></a>        <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-601" name="__codelineno-0-601"></a>    <span class="k">if</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">port</span> <span class="o">&lt;=</span> <span class="mi">65535</span><span class="p">:</span>
+<a id="__codelineno-0-602" name="__codelineno-0-602"></a>        <span class="k">return</span> <span class="n">port</span>
+<a id="__codelineno-0-603" name="__codelineno-0-603"></a>    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1507,36 +1505,10 @@ present in the config file.</p>
 
     <div class="doc doc-contents first">
 
-        <p>LM Studio Tray Icon Monitor.</p>
-<p>A system tray application that monitors the status of the LM Studio
-daemon and desktop app. It displays visual indicators and notifications when
-status changes, and supports starting/stopping daemon and desktop app as well
-as viewing status information through a context menu.</p>
-<p>On Linux the tray uses GTK3 + AppIndicator3.
-On macOS the tray uses the <code>rumps</code> library (PyObjC-based).</p>
+        <p>LM Studio Tray Icon Monitor - system tray app for monitoring LM Studio daemon and desktop app.</p>
+<p>Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
+Usage: lmstudio_tray.py [model][script_dir] [--debug][--auto-start-daemon] [--gui][--version]</p>
 
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <p>lmstudio_tray.py [model][script_dir] [options]</p>
-</details>
-
-<details class="notes" open>
-  <summary>Notes</summary>
-  <p>Command-line arguments:
-    model: Model name to monitor (optional, default: "no-model-passed").
-    script_dir: Script directory for logs and VERSION file (optional,
-        default: current working directory).
-    --debug, -d: Enable debug logging (flag).
-    --auto-start-daemon, -a: Start llmster daemon on launch (flag).
-    --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
-    --version, -v: Print version and exit (flag).
-    --help: Show help message and exit (flag).</p>
-<p>Logging is written to .logs/ in the script directory, or if that
-directory is read-only (e.g., AppImage), logs are written to
-~/.local/share/lmstudio-tray-manager/logs/.
-If the VERSION file is missing, a default version string is used.</p>
-</details>
 
 
 
@@ -1570,9 +1542,7 @@ If the VERSION file is missing, a default version string is used.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the base URL for the LM Studio API endpoint.</p>
-<p>Constructs the URL using the configured API_HOST and API_PORT
-from _AppState.</p>
+        <p>Return base API URL from _AppState config.</p>
 
 
 <table>
@@ -1589,7 +1559,7 @@ from _AppState.</p>
             </td>
             <td class="doc-returns-details">
               <div class="doc-md-description">
-                <p>Base API URL in format http://host:port</p>
+                <p>Base API URL (http://host:port).</p>
               </div>
             </td>
           </tr>
@@ -1613,7 +1583,7 @@ from _AppState.</p>
             </td>
             <td class="doc-raises-details">
               <div class="doc-md-description">
-                <p>If the API host or port configuration is invalid.</p>
+                <p>If config invalid.</p>
               </div>
             </td>
           </tr>
@@ -1623,35 +1593,29 @@ from _AppState.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-861">861</a></span>
-<span class="normal"><a href="#__codelineno-0-862">862</a></span>
-<span class="normal"><a href="#__codelineno-0-863">863</a></span>
-<span class="normal"><a href="#__codelineno-0-864">864</a></span>
-<span class="normal"><a href="#__codelineno-0-865">865</a></span>
-<span class="normal"><a href="#__codelineno-0-866">866</a></span>
-<span class="normal"><a href="#__codelineno-0-867">867</a></span>
-<span class="normal"><a href="#__codelineno-0-868">868</a></span>
-<span class="normal"><a href="#__codelineno-0-869">869</a></span>
-<span class="normal"><a href="#__codelineno-0-870">870</a></span>
-<span class="normal"><a href="#__codelineno-0-871">871</a></span>
-<span class="normal"><a href="#__codelineno-0-872">872</a></span>
-<span class="normal"><a href="#__codelineno-0-873">873</a></span>
-<span class="normal"><a href="#__codelineno-0-874">874</a></span>
-<span class="normal"><a href="#__codelineno-0-875">875</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-861" name="__codelineno-0-861"></a><span class="k">def</span> <span class="nf">get_api_base_url</span><span class="p">():</span>
-<a id="__codelineno-0-862" name="__codelineno-0-862"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the base URL for the LM Studio API endpoint.</span>
-<a id="__codelineno-0-863" name="__codelineno-0-863"></a>
-<a id="__codelineno-0-864" name="__codelineno-0-864"></a><span class="sd">    Constructs the URL using the configured API_HOST and API_PORT</span>
-<a id="__codelineno-0-865" name="__codelineno-0-865"></a><span class="sd">    from _AppState.</span>
-<a id="__codelineno-0-866" name="__codelineno-0-866"></a>
-<a id="__codelineno-0-867" name="__codelineno-0-867"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-868" name="__codelineno-0-868"></a><span class="sd">        str: Base API URL in format http://host:port</span>
-<a id="__codelineno-0-869" name="__codelineno-0-869"></a>
-<a id="__codelineno-0-870" name="__codelineno-0-870"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-871" name="__codelineno-0-871"></a><span class="sd">        ValueError: If the API host or port configuration is invalid.</span>
-<a id="__codelineno-0-872" name="__codelineno-0-872"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-873" name="__codelineno-0-873"></a>    <span class="k">return</span> <span class="n">_validate_url_scheme</span><span class="p">(</span>
-<a id="__codelineno-0-874" name="__codelineno-0-874"></a>        <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-875" name="__codelineno-0-875"></a>    <span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-736">736</a></span>
+<span class="normal"><a href="#__codelineno-0-737">737</a></span>
+<span class="normal"><a href="#__codelineno-0-738">738</a></span>
+<span class="normal"><a href="#__codelineno-0-739">739</a></span>
+<span class="normal"><a href="#__codelineno-0-740">740</a></span>
+<span class="normal"><a href="#__codelineno-0-741">741</a></span>
+<span class="normal"><a href="#__codelineno-0-742">742</a></span>
+<span class="normal"><a href="#__codelineno-0-743">743</a></span>
+<span class="normal"><a href="#__codelineno-0-744">744</a></span>
+<span class="normal"><a href="#__codelineno-0-745">745</a></span>
+<span class="normal"><a href="#__codelineno-0-746">746</a></span>
+<span class="normal"><a href="#__codelineno-0-747">747</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-736" name="__codelineno-0-736"></a><span class="k">def</span> <span class="nf">get_api_base_url</span><span class="p">():</span>
+<a id="__codelineno-0-737" name="__codelineno-0-737"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return base API URL from _AppState config.</span>
+<a id="__codelineno-0-738" name="__codelineno-0-738"></a>
+<a id="__codelineno-0-739" name="__codelineno-0-739"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-740" name="__codelineno-0-740"></a><span class="sd">        str: Base API URL (http://host:port).</span>
+<a id="__codelineno-0-741" name="__codelineno-0-741"></a>
+<a id="__codelineno-0-742" name="__codelineno-0-742"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-743" name="__codelineno-0-743"></a><span class="sd">        ValueError: If config invalid.</span>
+<a id="__codelineno-0-744" name="__codelineno-0-744"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-745" name="__codelineno-0-745"></a>    <span class="k">return</span> <span class="n">_validate_url_scheme</span><span class="p">(</span>
+<a id="__codelineno-0-746" name="__codelineno-0-746"></a>        <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-747" name="__codelineno-0-747"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1671,16 +1635,16 @@ from _AppState.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the full URL for the LM Studio API models endpoint.</p>
+        <p>Return full API models endpoint URL.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-878">878</a></span>
-<span class="normal"><a href="#__codelineno-0-879">879</a></span>
-<span class="normal"><a href="#__codelineno-0-880">880</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-878" name="__codelineno-0-878"></a><span class="k">def</span> <span class="nf">get_api_models_url</span><span class="p">():</span>
-<a id="__codelineno-0-879" name="__codelineno-0-879"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the full URL for the LM Studio API models endpoint.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-880" name="__codelineno-0-880"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_api_base_url</span><span class="p">()</span><span class="si">}</span><span class="s2">/v1/models&quot;</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-750">750</a></span>
+<span class="normal"><a href="#__codelineno-0-751">751</a></span>
+<span class="normal"><a href="#__codelineno-0-752">752</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-750" name="__codelineno-0-750"></a><span class="k">def</span> <span class="nf">get_api_models_url</span><span class="p">():</span>
+<a id="__codelineno-0-751" name="__codelineno-0-751"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return full API models endpoint URL.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-752" name="__codelineno-0-752"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_api_base_url</span><span class="p">()</span><span class="si">}</span><span class="s2">/v1/models&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1708,36 +1672,10 @@ from _AppState.</p>
 
     <div class="doc doc-contents first">
 
-        <p>LM Studio Tray Icon Monitor.</p>
-<p>A system tray application that monitors the status of the LM Studio
-daemon and desktop app. It displays visual indicators and notifications when
-status changes, and supports starting/stopping daemon and desktop app as well
-as viewing status information through a context menu.</p>
-<p>On Linux the tray uses GTK3 + AppIndicator3.
-On macOS the tray uses the <code>rumps</code> library (PyObjC-based).</p>
+        <p>LM Studio Tray Icon Monitor - system tray app for monitoring LM Studio daemon and desktop app.</p>
+<p>Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
+Usage: lmstudio_tray.py [model][script_dir] [--debug][--auto-start-daemon] [--gui][--version]</p>
 
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <p>lmstudio_tray.py [model][script_dir] [options]</p>
-</details>
-
-<details class="notes" open>
-  <summary>Notes</summary>
-  <p>Command-line arguments:
-    model: Model name to monitor (optional, default: "no-model-passed").
-    script_dir: Script directory for logs and VERSION file (optional,
-        default: current working directory).
-    --debug, -d: Enable debug logging (flag).
-    --auto-start-daemon, -a: Start llmster daemon on launch (flag).
-    --gui, -g: Start LM Studio GUI on launch, stops daemon first (flag).
-    --version, -v: Print version and exit (flag).
-    --help: Show help message and exit (flag).</p>
-<p>Logging is written to .logs/ in the script directory, or if that
-directory is read-only (e.g., AppImage), logs are written to
-~/.local/share/lmstudio-tray-manager/logs/.
-If the VERSION file is missing, a default version string is used.</p>
-</details>
 
 
 
@@ -1771,20 +1709,20 @@ If the VERSION file is missing, a default version string is used.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the LM Studio CLI path if executable or resolve it from PATH.</p>
+        <p>Return LM Studio CLI path if executable, else resolve from PATH.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-999"> 999</a></span>
-<span class="normal"><a href="#__codelineno-0-1000">1000</a></span>
-<span class="normal"><a href="#__codelineno-0-1001">1001</a></span>
-<span class="normal"><a href="#__codelineno-0-1002">1002</a></span>
-<span class="normal"><a href="#__codelineno-0-1003">1003</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-999" name="__codelineno-0-999"></a><span class="k">def</span> <span class="nf">get_lms_cmd</span><span class="p">():</span>
-<a id="__codelineno-0-1000" name="__codelineno-0-1000"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the LM Studio CLI path if executable or resolve it from PATH.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-1001" name="__codelineno-0-1001"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">LMS_CLI</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">LMS_CLI</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
-<a id="__codelineno-0-1002" name="__codelineno-0-1002"></a>        <span class="k">return</span> <span class="n">LMS_CLI</span>
-<a id="__codelineno-0-1003" name="__codelineno-0-1003"></a>    <span class="k">return</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;lms&quot;</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-864">864</a></span>
+<span class="normal"><a href="#__codelineno-0-865">865</a></span>
+<span class="normal"><a href="#__codelineno-0-866">866</a></span>
+<span class="normal"><a href="#__codelineno-0-867">867</a></span>
+<span class="normal"><a href="#__codelineno-0-868">868</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-864" name="__codelineno-0-864"></a><span class="k">def</span> <span class="nf">get_lms_cmd</span><span class="p">():</span>
+<a id="__codelineno-0-865" name="__codelineno-0-865"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return LM Studio CLI path if executable, else resolve from PATH.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-866" name="__codelineno-0-866"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">LMS_CLI</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">LMS_CLI</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+<a id="__codelineno-0-867" name="__codelineno-0-867"></a>        <span class="k">return</span> <span class="n">LMS_CLI</span>
+<a id="__codelineno-0-868" name="__codelineno-0-868"></a>    <span class="k">return</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;lms&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1804,130 +1742,114 @@ If the VERSION file is missing, a default version string is used.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return llmster executable path from PATH or LM Studio install dir.</p>
-<p>When running in debug mode this helper logs its findings so users can
-troubleshoot missing or mis-located binaries.  To avoid filling the log
-with identical messages the function only emits a debug statement on the
-first invocation or when the resolved candidate changes.</p>
+        <p>Return llmster path from PATH or install dir, with debug logging on changes.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1009">1009</a></span>
-<span class="normal"><a href="#__codelineno-0-1010">1010</a></span>
-<span class="normal"><a href="#__codelineno-0-1011">1011</a></span>
-<span class="normal"><a href="#__codelineno-0-1012">1012</a></span>
-<span class="normal"><a href="#__codelineno-0-1013">1013</a></span>
-<span class="normal"><a href="#__codelineno-0-1014">1014</a></span>
-<span class="normal"><a href="#__codelineno-0-1015">1015</a></span>
-<span class="normal"><a href="#__codelineno-0-1016">1016</a></span>
-<span class="normal"><a href="#__codelineno-0-1017">1017</a></span>
-<span class="normal"><a href="#__codelineno-0-1018">1018</a></span>
-<span class="normal"><a href="#__codelineno-0-1019">1019</a></span>
-<span class="normal"><a href="#__codelineno-0-1020">1020</a></span>
-<span class="normal"><a href="#__codelineno-0-1021">1021</a></span>
-<span class="normal"><a href="#__codelineno-0-1022">1022</a></span>
-<span class="normal"><a href="#__codelineno-0-1023">1023</a></span>
-<span class="normal"><a href="#__codelineno-0-1024">1024</a></span>
-<span class="normal"><a href="#__codelineno-0-1025">1025</a></span>
-<span class="normal"><a href="#__codelineno-0-1026">1026</a></span>
-<span class="normal"><a href="#__codelineno-0-1027">1027</a></span>
-<span class="normal"><a href="#__codelineno-0-1028">1028</a></span>
-<span class="normal"><a href="#__codelineno-0-1029">1029</a></span>
-<span class="normal"><a href="#__codelineno-0-1030">1030</a></span>
-<span class="normal"><a href="#__codelineno-0-1031">1031</a></span>
-<span class="normal"><a href="#__codelineno-0-1032">1032</a></span>
-<span class="normal"><a href="#__codelineno-0-1033">1033</a></span>
-<span class="normal"><a href="#__codelineno-0-1034">1034</a></span>
-<span class="normal"><a href="#__codelineno-0-1035">1035</a></span>
-<span class="normal"><a href="#__codelineno-0-1036">1036</a></span>
-<span class="normal"><a href="#__codelineno-0-1037">1037</a></span>
-<span class="normal"><a href="#__codelineno-0-1038">1038</a></span>
-<span class="normal"><a href="#__codelineno-0-1039">1039</a></span>
-<span class="normal"><a href="#__codelineno-0-1040">1040</a></span>
-<span class="normal"><a href="#__codelineno-0-1041">1041</a></span>
-<span class="normal"><a href="#__codelineno-0-1042">1042</a></span>
-<span class="normal"><a href="#__codelineno-0-1043">1043</a></span>
-<span class="normal"><a href="#__codelineno-0-1044">1044</a></span>
-<span class="normal"><a href="#__codelineno-0-1045">1045</a></span>
-<span class="normal"><a href="#__codelineno-0-1046">1046</a></span>
-<span class="normal"><a href="#__codelineno-0-1047">1047</a></span>
-<span class="normal"><a href="#__codelineno-0-1048">1048</a></span>
-<span class="normal"><a href="#__codelineno-0-1049">1049</a></span>
-<span class="normal"><a href="#__codelineno-0-1050">1050</a></span>
-<span class="normal"><a href="#__codelineno-0-1051">1051</a></span>
-<span class="normal"><a href="#__codelineno-0-1052">1052</a></span>
-<span class="normal"><a href="#__codelineno-0-1053">1053</a></span>
-<span class="normal"><a href="#__codelineno-0-1054">1054</a></span>
-<span class="normal"><a href="#__codelineno-0-1055">1055</a></span>
-<span class="normal"><a href="#__codelineno-0-1056">1056</a></span>
-<span class="normal"><a href="#__codelineno-0-1057">1057</a></span>
-<span class="normal"><a href="#__codelineno-0-1058">1058</a></span>
-<span class="normal"><a href="#__codelineno-0-1059">1059</a></span>
-<span class="normal"><a href="#__codelineno-0-1060">1060</a></span>
-<span class="normal"><a href="#__codelineno-0-1061">1061</a></span>
-<span class="normal"><a href="#__codelineno-0-1062">1062</a></span>
-<span class="normal"><a href="#__codelineno-0-1063">1063</a></span>
-<span class="normal"><a href="#__codelineno-0-1064">1064</a></span>
-<span class="normal"><a href="#__codelineno-0-1065">1065</a></span>
-<span class="normal"><a href="#__codelineno-0-1066">1066</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1009" name="__codelineno-0-1009"></a><span class="k">def</span> <span class="nf">get_llmster_cmd</span><span class="p">():</span>
-<a id="__codelineno-0-1010" name="__codelineno-0-1010"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return llmster executable path from PATH or LM Studio install dir.</span>
-<a id="__codelineno-0-1011" name="__codelineno-0-1011"></a>
-<a id="__codelineno-0-1012" name="__codelineno-0-1012"></a><span class="sd">    When running in debug mode this helper logs its findings so users can</span>
-<a id="__codelineno-0-1013" name="__codelineno-0-1013"></a><span class="sd">    troubleshoot missing or mis-located binaries.  To avoid filling the log</span>
-<a id="__codelineno-0-1014" name="__codelineno-0-1014"></a><span class="sd">    with identical messages the function only emits a debug statement on the</span>
-<a id="__codelineno-0-1015" name="__codelineno-0-1015"></a><span class="sd">    first invocation or when the resolved candidate changes.</span>
-<a id="__codelineno-0-1016" name="__codelineno-0-1016"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1017" name="__codelineno-0-1017"></a>    <span class="n">state</span> <span class="o">=</span> <span class="n">_get_llmster_cmd_state</span>
-<a id="__codelineno-0-1018" name="__codelineno-0-1018"></a>
-<a id="__codelineno-0-1019" name="__codelineno-0-1019"></a>    <span class="n">llmster_cmd</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;llmster&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1020" name="__codelineno-0-1020"></a>    <span class="k">if</span> <span class="n">llmster_cmd</span><span class="p">:</span>
-<a id="__codelineno-0-1021" name="__codelineno-0-1021"></a>        <span class="n">candidate</span> <span class="o">=</span> <span class="n">llmster_cmd</span>
-<a id="__codelineno-0-1022" name="__codelineno-0-1022"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-1023" name="__codelineno-0-1023"></a>        <span class="n">llmster_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1024" name="__codelineno-0-1024"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">llmster_root</span><span class="p">):</span>
-<a id="__codelineno-0-1025" name="__codelineno-0-1025"></a>            <span class="n">candidate</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-1026" name="__codelineno-0-1026"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-1027" name="__codelineno-0-1027"></a>            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-1028" name="__codelineno-0-1028"></a>            <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-1029" name="__codelineno-0-1029"></a>                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">llmster_root</span><span class="p">):</span>
-<a id="__codelineno-0-1030" name="__codelineno-0-1030"></a>                    <span class="n">candidate_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-<a id="__codelineno-0-1031" name="__codelineno-0-1031"></a>                        <span class="n">llmster_root</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="s2">&quot;llmster&quot;</span>
-<a id="__codelineno-0-1032" name="__codelineno-0-1032"></a>                    <span class="p">)</span>
-<a id="__codelineno-0-1033" name="__codelineno-0-1033"></a>                    <span class="k">if</span> <span class="p">(</span>
-<a id="__codelineno-0-1034" name="__codelineno-0-1034"></a>                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
-<a id="__codelineno-0-1035" name="__codelineno-0-1035"></a>                        <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">)</span>
-<a id="__codelineno-0-1036" name="__codelineno-0-1036"></a>                    <span class="p">):</span>
-<a id="__codelineno-0-1037" name="__codelineno-0-1037"></a>                        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
-<a id="__codelineno-0-1038" name="__codelineno-0-1038"></a>            <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">PermissionError</span><span class="p">):</span>
-<a id="__codelineno-0-1039" name="__codelineno-0-1039"></a>                <span class="n">candidate</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-1040" name="__codelineno-0-1040"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-1041" name="__codelineno-0-1041"></a>                <span class="n">candidate</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">candidates</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">candidates</span> <span class="k">else</span> <span class="kc">None</span>
-<a id="__codelineno-0-1042" name="__codelineno-0-1042"></a>
-<a id="__codelineno-0-1043" name="__codelineno-0-1043"></a>    <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-1044" name="__codelineno-0-1044"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;seen_call&quot;</span><span class="p">]:</span>
-<a id="__codelineno-0-1045" name="__codelineno-0-1045"></a>        <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-1046" name="__codelineno-0-1046"></a>    <span class="k">elif</span> <span class="n">candidate</span> <span class="o">!=</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;last_candidate&quot;</span><span class="p">]:</span>
-<a id="__codelineno-0-1047" name="__codelineno-0-1047"></a>        <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-1048" name="__codelineno-0-1048"></a>
-<a id="__codelineno-0-1049" name="__codelineno-0-1049"></a>    <span class="k">if</span> <span class="n">log_needed</span><span class="p">:</span>
-<a id="__codelineno-0-1050" name="__codelineno-0-1050"></a>        <span class="k">if</span> <span class="n">candidate</span><span class="p">:</span>
-<a id="__codelineno-0-1051" name="__codelineno-0-1051"></a>            <span class="k">if</span> <span class="n">llmster_cmd</span><span class="p">:</span>
-<a id="__codelineno-0-1052" name="__codelineno-0-1052"></a>                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Found llmster on PATH: </span><span class="si">%s</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-1053" name="__codelineno-0-1053"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-1054" name="__codelineno-0-1054"></a>                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Resolved llmster candidate: </span><span class="si">%s</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-1055" name="__codelineno-0-1055"></a>            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
-<a id="__codelineno-0-1056" name="__codelineno-0-1056"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-1057" name="__codelineno-0-1057"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)):</span>
-<a id="__codelineno-0-1058" name="__codelineno-0-1058"></a>                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No ~/.lmstudio/llmster directory present&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1059" name="__codelineno-0-1059"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-1060" name="__codelineno-0-1060"></a>                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-<a id="__codelineno-0-1061" name="__codelineno-0-1061"></a>                    <span class="s2">&quot;No executable llmster binaries found under </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-1062" name="__codelineno-0-1062"></a>                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1063" name="__codelineno-0-1063"></a>                <span class="p">)</span>
-<a id="__codelineno-0-1064" name="__codelineno-0-1064"></a>    <span class="n">state</span><span class="p">[</span><span class="s2">&quot;last_candidate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidate</span>
-<a id="__codelineno-0-1065" name="__codelineno-0-1065"></a>    <span class="n">state</span><span class="p">[</span><span class="s2">&quot;seen_call&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-1066" name="__codelineno-0-1066"></a>    <span class="k">return</span> <span class="n">candidate</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-874">874</a></span>
+<span class="normal"><a href="#__codelineno-0-875">875</a></span>
+<span class="normal"><a href="#__codelineno-0-876">876</a></span>
+<span class="normal"><a href="#__codelineno-0-877">877</a></span>
+<span class="normal"><a href="#__codelineno-0-878">878</a></span>
+<span class="normal"><a href="#__codelineno-0-879">879</a></span>
+<span class="normal"><a href="#__codelineno-0-880">880</a></span>
+<span class="normal"><a href="#__codelineno-0-881">881</a></span>
+<span class="normal"><a href="#__codelineno-0-882">882</a></span>
+<span class="normal"><a href="#__codelineno-0-883">883</a></span>
+<span class="normal"><a href="#__codelineno-0-884">884</a></span>
+<span class="normal"><a href="#__codelineno-0-885">885</a></span>
+<span class="normal"><a href="#__codelineno-0-886">886</a></span>
+<span class="normal"><a href="#__codelineno-0-887">887</a></span>
+<span class="normal"><a href="#__codelineno-0-888">888</a></span>
+<span class="normal"><a href="#__codelineno-0-889">889</a></span>
+<span class="normal"><a href="#__codelineno-0-890">890</a></span>
+<span class="normal"><a href="#__codelineno-0-891">891</a></span>
+<span class="normal"><a href="#__codelineno-0-892">892</a></span>
+<span class="normal"><a href="#__codelineno-0-893">893</a></span>
+<span class="normal"><a href="#__codelineno-0-894">894</a></span>
+<span class="normal"><a href="#__codelineno-0-895">895</a></span>
+<span class="normal"><a href="#__codelineno-0-896">896</a></span>
+<span class="normal"><a href="#__codelineno-0-897">897</a></span>
+<span class="normal"><a href="#__codelineno-0-898">898</a></span>
+<span class="normal"><a href="#__codelineno-0-899">899</a></span>
+<span class="normal"><a href="#__codelineno-0-900">900</a></span>
+<span class="normal"><a href="#__codelineno-0-901">901</a></span>
+<span class="normal"><a href="#__codelineno-0-902">902</a></span>
+<span class="normal"><a href="#__codelineno-0-903">903</a></span>
+<span class="normal"><a href="#__codelineno-0-904">904</a></span>
+<span class="normal"><a href="#__codelineno-0-905">905</a></span>
+<span class="normal"><a href="#__codelineno-0-906">906</a></span>
+<span class="normal"><a href="#__codelineno-0-907">907</a></span>
+<span class="normal"><a href="#__codelineno-0-908">908</a></span>
+<span class="normal"><a href="#__codelineno-0-909">909</a></span>
+<span class="normal"><a href="#__codelineno-0-910">910</a></span>
+<span class="normal"><a href="#__codelineno-0-911">911</a></span>
+<span class="normal"><a href="#__codelineno-0-912">912</a></span>
+<span class="normal"><a href="#__codelineno-0-913">913</a></span>
+<span class="normal"><a href="#__codelineno-0-914">914</a></span>
+<span class="normal"><a href="#__codelineno-0-915">915</a></span>
+<span class="normal"><a href="#__codelineno-0-916">916</a></span>
+<span class="normal"><a href="#__codelineno-0-917">917</a></span>
+<span class="normal"><a href="#__codelineno-0-918">918</a></span>
+<span class="normal"><a href="#__codelineno-0-919">919</a></span>
+<span class="normal"><a href="#__codelineno-0-920">920</a></span>
+<span class="normal"><a href="#__codelineno-0-921">921</a></span>
+<span class="normal"><a href="#__codelineno-0-922">922</a></span>
+<span class="normal"><a href="#__codelineno-0-923">923</a></span>
+<span class="normal"><a href="#__codelineno-0-924">924</a></span>
+<span class="normal"><a href="#__codelineno-0-925">925</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-874" name="__codelineno-0-874"></a><span class="k">def</span> <span class="nf">get_llmster_cmd</span><span class="p">():</span>
+<a id="__codelineno-0-875" name="__codelineno-0-875"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return llmster path from PATH or install dir, with debug logging on changes.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-876" name="__codelineno-0-876"></a>    <span class="n">state</span> <span class="o">=</span> <span class="n">_get_llmster_cmd_state</span>
+<a id="__codelineno-0-877" name="__codelineno-0-877"></a>
+<a id="__codelineno-0-878" name="__codelineno-0-878"></a>    <span class="n">llmster_cmd</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;llmster&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-879" name="__codelineno-0-879"></a>    <span class="k">if</span> <span class="n">llmster_cmd</span><span class="p">:</span>
+<a id="__codelineno-0-880" name="__codelineno-0-880"></a>        <span class="n">candidate</span> <span class="o">=</span> <span class="n">llmster_cmd</span>
+<a id="__codelineno-0-881" name="__codelineno-0-881"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-882" name="__codelineno-0-882"></a>        <span class="n">llmster_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-883" name="__codelineno-0-883"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">llmster_root</span><span class="p">):</span>
+<a id="__codelineno-0-884" name="__codelineno-0-884"></a>            <span class="n">candidate</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-885" name="__codelineno-0-885"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-886" name="__codelineno-0-886"></a>            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-887" name="__codelineno-0-887"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-888" name="__codelineno-0-888"></a>                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">llmster_root</span><span class="p">):</span>
+<a id="__codelineno-0-889" name="__codelineno-0-889"></a>                    <span class="n">candidate_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+<a id="__codelineno-0-890" name="__codelineno-0-890"></a>                        <span class="n">llmster_root</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="s2">&quot;llmster&quot;</span>
+<a id="__codelineno-0-891" name="__codelineno-0-891"></a>                    <span class="p">)</span>
+<a id="__codelineno-0-892" name="__codelineno-0-892"></a>                    <span class="k">if</span> <span class="p">(</span>
+<a id="__codelineno-0-893" name="__codelineno-0-893"></a>                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
+<a id="__codelineno-0-894" name="__codelineno-0-894"></a>                        <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">)</span>
+<a id="__codelineno-0-895" name="__codelineno-0-895"></a>                    <span class="p">):</span>
+<a id="__codelineno-0-896" name="__codelineno-0-896"></a>                        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
+<a id="__codelineno-0-897" name="__codelineno-0-897"></a>            <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">PermissionError</span><span class="p">):</span>
+<a id="__codelineno-0-898" name="__codelineno-0-898"></a>                <span class="n">candidate</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-899" name="__codelineno-0-899"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-900" name="__codelineno-0-900"></a>                <span class="n">candidate</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">candidates</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">candidates</span> <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-0-901" name="__codelineno-0-901"></a>
+<a id="__codelineno-0-902" name="__codelineno-0-902"></a>    <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-903" name="__codelineno-0-903"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;seen_call&quot;</span><span class="p">]:</span>
+<a id="__codelineno-0-904" name="__codelineno-0-904"></a>        <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-905" name="__codelineno-0-905"></a>    <span class="k">elif</span> <span class="n">candidate</span> <span class="o">!=</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;last_candidate&quot;</span><span class="p">]:</span>
+<a id="__codelineno-0-906" name="__codelineno-0-906"></a>        <span class="n">log_needed</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-907" name="__codelineno-0-907"></a>
+<a id="__codelineno-0-908" name="__codelineno-0-908"></a>    <span class="k">if</span> <span class="n">log_needed</span><span class="p">:</span>
+<a id="__codelineno-0-909" name="__codelineno-0-909"></a>        <span class="k">if</span> <span class="n">candidate</span><span class="p">:</span>
+<a id="__codelineno-0-910" name="__codelineno-0-910"></a>            <span class="k">if</span> <span class="n">llmster_cmd</span><span class="p">:</span>
+<a id="__codelineno-0-911" name="__codelineno-0-911"></a>                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Found llmster on PATH: </span><span class="si">%s</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-912" name="__codelineno-0-912"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-913" name="__codelineno-0-913"></a>                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Resolved llmster candidate: </span><span class="si">%s</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-914" name="__codelineno-0-914"></a>            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
+<a id="__codelineno-0-915" name="__codelineno-0-915"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-916" name="__codelineno-0-916"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)):</span>
+<a id="__codelineno-0-917" name="__codelineno-0-917"></a>                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No ~/.lmstudio/llmster directory present&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-918" name="__codelineno-0-918"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-919" name="__codelineno-0-919"></a>                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+<a id="__codelineno-0-920" name="__codelineno-0-920"></a>                    <span class="s2">&quot;No executable llmster binaries found under </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-921" name="__codelineno-0-921"></a>                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.lmstudio/llmster&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-922" name="__codelineno-0-922"></a>                <span class="p">)</span>
+<a id="__codelineno-0-923" name="__codelineno-0-923"></a>    <span class="n">state</span><span class="p">[</span><span class="s2">&quot;last_candidate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidate</span>
+<a id="__codelineno-0-924" name="__codelineno-0-924"></a>    <span class="n">state</span><span class="p">[</span><span class="s2">&quot;seen_call&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-925" name="__codelineno-0-925"></a>    <span class="k">return</span> <span class="n">candidate</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1947,53 +1869,34 @@ first invocation or when the resolved candidate changes.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return True if <code>lms ps</code> output indicates a loaded model.</p>
-<p>Some releases of the CLI print <em>all</em> available models even when none
-are actually loaded.  Other releases explicitly say "No models are
-currently loaded.".  We treat such outputs as <em>not</em> containing a
-loaded model; a debug log entry is emitted so the behavior is
-traceable.</p>
+        <p>Return True if lms ps output indicates loaded model, with debug logging.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1069">1069</a></span>
-<span class="normal"><a href="#__codelineno-0-1070">1070</a></span>
-<span class="normal"><a href="#__codelineno-0-1071">1071</a></span>
-<span class="normal"><a href="#__codelineno-0-1072">1072</a></span>
-<span class="normal"><a href="#__codelineno-0-1073">1073</a></span>
-<span class="normal"><a href="#__codelineno-0-1074">1074</a></span>
-<span class="normal"><a href="#__codelineno-0-1075">1075</a></span>
-<span class="normal"><a href="#__codelineno-0-1076">1076</a></span>
-<span class="normal"><a href="#__codelineno-0-1077">1077</a></span>
-<span class="normal"><a href="#__codelineno-0-1078">1078</a></span>
-<span class="normal"><a href="#__codelineno-0-1079">1079</a></span>
-<span class="normal"><a href="#__codelineno-0-1080">1080</a></span>
-<span class="normal"><a href="#__codelineno-0-1081">1081</a></span>
-<span class="normal"><a href="#__codelineno-0-1082">1082</a></span>
-<span class="normal"><a href="#__codelineno-0-1083">1083</a></span>
-<span class="normal"><a href="#__codelineno-0-1084">1084</a></span>
-<span class="normal"><a href="#__codelineno-0-1085">1085</a></span>
-<span class="normal"><a href="#__codelineno-0-1086">1086</a></span>
-<span class="normal"><a href="#__codelineno-0-1087">1087</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1069" name="__codelineno-0-1069"></a><span class="k">def</span> <span class="nf">_has_loaded_model</span><span class="p">(</span><span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-1070" name="__codelineno-0-1070"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if ``lms ps`` output indicates a loaded model.</span>
-<a id="__codelineno-0-1071" name="__codelineno-0-1071"></a>
-<a id="__codelineno-0-1072" name="__codelineno-0-1072"></a><span class="sd">    Some releases of the CLI print *all* available models even when none</span>
-<a id="__codelineno-0-1073" name="__codelineno-0-1073"></a><span class="sd">    are actually loaded.  Other releases explicitly say &quot;No models are</span>
-<a id="__codelineno-0-1074" name="__codelineno-0-1074"></a><span class="sd">    currently loaded.&quot;.  We treat such outputs as *not* containing a</span>
-<a id="__codelineno-0-1075" name="__codelineno-0-1075"></a><span class="sd">    loaded model; a debug log entry is emitted so the behavior is</span>
-<a id="__codelineno-0-1076" name="__codelineno-0-1076"></a><span class="sd">    traceable.</span>
-<a id="__codelineno-0-1077" name="__codelineno-0-1077"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1078" name="__codelineno-0-1078"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-<a id="__codelineno-0-1079" name="__codelineno-0-1079"></a>        <span class="k">return</span> <span class="kc">False</span>
-<a id="__codelineno-0-1080" name="__codelineno-0-1080"></a>    <span class="n">text</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-<a id="__codelineno-0-1081" name="__codelineno-0-1081"></a>    <span class="k">if</span> <span class="s2">&quot;no models&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
-<a id="__codelineno-0-1082" name="__codelineno-0-1082"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output explicitly reports no models&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1083" name="__codelineno-0-1083"></a>        <span class="k">return</span> <span class="kc">False</span>
-<a id="__codelineno-0-1084" name="__codelineno-0-1084"></a>    <span class="k">if</span> <span class="s2">&quot;available&quot;</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">and</span> <span class="s2">&quot;loaded&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
-<a id="__codelineno-0-1085" name="__codelineno-0-1085"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output contains only available models, ignoring&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1086" name="__codelineno-0-1086"></a>        <span class="k">return</span> <span class="kc">False</span>
-<a id="__codelineno-0-1087" name="__codelineno-0-1087"></a>    <span class="k">return</span> <span class="kc">True</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-928">928</a></span>
+<span class="normal"><a href="#__codelineno-0-929">929</a></span>
+<span class="normal"><a href="#__codelineno-0-930">930</a></span>
+<span class="normal"><a href="#__codelineno-0-931">931</a></span>
+<span class="normal"><a href="#__codelineno-0-932">932</a></span>
+<span class="normal"><a href="#__codelineno-0-933">933</a></span>
+<span class="normal"><a href="#__codelineno-0-934">934</a></span>
+<span class="normal"><a href="#__codelineno-0-935">935</a></span>
+<span class="normal"><a href="#__codelineno-0-936">936</a></span>
+<span class="normal"><a href="#__codelineno-0-937">937</a></span>
+<span class="normal"><a href="#__codelineno-0-938">938</a></span>
+<span class="normal"><a href="#__codelineno-0-939">939</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-928" name="__codelineno-0-928"></a><span class="k">def</span> <span class="nf">_has_loaded_model</span><span class="p">(</span><span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-929" name="__codelineno-0-929"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if lms ps output indicates loaded model, with debug logging.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-930" name="__codelineno-0-930"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+<a id="__codelineno-0-931" name="__codelineno-0-931"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-932" name="__codelineno-0-932"></a>    <span class="n">text</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<a id="__codelineno-0-933" name="__codelineno-0-933"></a>    <span class="k">if</span> <span class="s2">&quot;no models&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+<a id="__codelineno-0-934" name="__codelineno-0-934"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output explicitly reports no models&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-935" name="__codelineno-0-935"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-936" name="__codelineno-0-936"></a>    <span class="k">if</span> <span class="s2">&quot;available&quot;</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">and</span> <span class="s2">&quot;loaded&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+<a id="__codelineno-0-937" name="__codelineno-0-937"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output contains only available models, ignoring&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-938" name="__codelineno-0-938"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-939" name="__codelineno-0-939"></a>    <span class="k">return</span> <span class="kc">True</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

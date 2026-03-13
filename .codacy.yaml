@@ -1,2 +1,4 @@
 exclude_paths:
   - ".venv/**"
+  - "docs/**"
+  - "docs_src/**"
