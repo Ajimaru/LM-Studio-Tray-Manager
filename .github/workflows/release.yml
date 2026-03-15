@@ -29,10 +29,10 @@ jobs:
             exit 1
           fi
 
-      - name: Build release artifacts using Docker (Dockerfile.release)
+      - name: Build release artifacts using Docker (tools/Dockerfile.release)
         run: |
           set -euo pipefail
-          docker build -f Dockerfile.release -t lmstudio-release:latest .
+          docker build -f tools/Dockerfile.release -t lmstudio-release:latest .
 
           # Extract artifacts from Docker image
           CONTAINER_ID=$(docker create lmstudio-release:latest)

@@ -195,7 +195,7 @@
                 <li><code>setup.sh</code> - One-time setup script to create Python virtual environment (see <a href="../README.md" target="_blank" rel="noopener">README.md</a>)</li>
                 <li><code>lmstudio_autostart.sh</code> - Bash script for automated daemon startup and model loading</li>
                 <li><code>lmstudio_tray.py</code> - Python script for system tray monitoring</li>
-                <li><code>build.sh</code> - Build script for a standalone tray binary (PyInstaller); now checks for a C compiler and zlib development library, offering to install missing build tools automatically</li>
+                <li><code>tools/build.sh</code> - Build script for a standalone tray binary (PyInstaller); now checks for a C compiler and zlib development library, offering to install missing build tools automatically</li>
             </ul>
             <p>The <code>lmstudio_autostart.sh</code> script ensures the LM Studio daemon is running, waits for the API, optionally loads a model, and starts the tray monitor. When <code>dist/lmstudio-tray-manager</code> exists, the autostart script prefers the binary and forwards flags. The <code>lmstudio_tray.py</code> script provides a system tray icon for real-time monitoring and quick actions.</p>
             <p><strong>All log files are written to the <code>.logs/</code> directory</strong> for easy access and cleanup.</p>
@@ -445,11 +445,11 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
         <section id="flow-diagrams">
             <h2>Flow Diagrams</h2>
 
-            <h3>build_macos.sh - macOS Build Process</h3>
+            <h3>tools/build_macos.sh - macOS Build Process</h3>
             <p>Build a native macOS .app bundle locally on your Mac for testing or distribution.</p>
             <div class="mermaid">
                 graph TD
-                    A["<b>build_macos.sh</b><br/>START"] --> B["Check Python 3<br/>installed"]
+                    A["<b>tools/build_macos.sh</b><br/>START"] --> B["Check Python 3<br/>installed"]
                     B --> No1{Python found?}
                     No1 -->|No| Err1["❌ ERROR<br/>Install Python 3.12"]
                     Err1 --> EXIT1["<b>END</b>"]

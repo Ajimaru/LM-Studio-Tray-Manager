@@ -32,14 +32,15 @@ jobs:
 
       # also check auxiliary Python modules
       - name: Python syntax check (build_binary)
-        run: python -m py_compile build_binary.py
+        run: python -m py_compile tools/build_binary.py
 
       # verify shell script syntax
       - name: Bash syntax check
         run: |
           bash -n lmstudio_autostart.sh
           bash -n setup.sh
-          bash -n build.sh
+          bash -n tools/build.sh
+          bash -n tools/build_macos.sh
 
       # install shellcheck if not available
       - name: Install shellcheck
@@ -51,7 +52,7 @@ jobs:
 
       # lint the shell scripts
       - name: Shellcheck
-        run: shellcheck lmstudio_autostart.sh setup.sh build.sh
+        run: shellcheck lmstudio_autostart.sh setup.sh tools/build.sh tools/build_macos.sh
 
       # try to run the build script to make sure the binary can be produced
       # only run this if every previous step in the job succeeded (shellcheck,
@@ -60,7 +61,7 @@ jobs:
       - name: Build binary
         if: ${{ success() }}
         run: |
-          bash build.sh
+          bash tools/build.sh
           test -f dist/lmstudio-tray-manager
 
       # exercise the generated executable to ensure it starts and returns 0

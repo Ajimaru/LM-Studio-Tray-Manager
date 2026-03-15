@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """PyInstaller build script for LM Studio Tray Manager.
 
-Creates standalone binary with Python code, resources, GTK3/GObject modules, and optional GdkPixbuf loaders.
-System GTK3/GObject/gi libraries must be provided by target environment at runtime.
+Creates standalone binary with Python code, resources,
+GTK3/GObject modules, and optional GdkPixbuf loaders.
+System GTK3/GObject/gi libraries must be provided by the
+target environment at runtime.
 """
 
 import glob
@@ -15,8 +17,13 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 
+def get_project_root() -> Path:
+    """Return the repository root for this script."""
+    return Path(__file__).resolve().parent.parent
+
+
 def validate_pkg_config_path(path):
-    """Validate pkg-config path is absolute, safe, and contains no injection vectors.
+    """Validate pkg-config path is absolute, safe, and free of injections.
 
     Args:
         path: pkg-config executable path.
@@ -45,7 +52,8 @@ def get_gdk_pixbuf_loaders():
     """Find and return GdkPixbuf loaders dir and cache file.
 
     Returns:
-        tuple[str | None, str | None]: (loaders_dir, cache_file) or (None, None) on error.
+        tuple[str | None, str | None]:
+            (loaders_dir, cache_file) or (None, None) on error.
     """
     pkg_config_path = shutil.which("pkg-config")
     if not pkg_config_path:
@@ -98,7 +106,7 @@ def check_dependencies():
         print("✓ PyInstaller is installed")
         return
 
-    base_dir = Path(__file__).parent.resolve()
+    base_dir = get_project_root()
     req_file = base_dir / "requirements-build.txt"
     req_file_resolved = req_file.resolve()
     if not req_file.is_file():
@@ -156,7 +164,7 @@ def get_data_files():
     """
     data_files = []
     seen = set()
-    base_dir = Path(__file__).parent.resolve()
+    base_dir = get_project_root()
 
     def add_data_file(source, destination):
         """Add a data file entry if not already present."""
@@ -184,7 +192,8 @@ def get_data_files():
 def validate_pyinstaller_cmd(cmd):
     """Validate PyInstaller command list for safety before execution.
 
-    Ensures trusted prefix, string args, no null bytes, valid data flags, and no path traversal.
+    Ensures trusted prefix, string args, no null bytes,
+    valid data flags, and no path traversal.
 
     Args:
         cmd: Command list to validate.
@@ -289,7 +298,7 @@ def build_binary():
     else:
         print("⚠ Building without GdkPixbuf loaders - icons may not work!\n")
 
-    cmd.append("lmstudio_tray.py")
+    cmd.append(str(get_project_root() / "lmstudio_tray.py"))
 
     print("Running PyInstaller with options:")
     print(shlex.join(cmd))

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build macOS .app bundle locally for testing
-# Usage: ./build_macos.sh [--clean]
+# Usage: ./tools/build_macos.sh [--clean]
 #
 # This script creates an unsigned .app bundle for local testing.
 # Code Signing will be added later for distribution.
@@ -15,11 +15,13 @@ NC='\033[0m' # No Color
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 VENV_DIR="${PROJECT_ROOT}/venv_macos"
 BUILD_DIR="${PROJECT_ROOT}/build"
 DIST_DIR="${PROJECT_ROOT}/dist"
 RELEASE_DIR="${PROJECT_ROOT}/release"
+
+cd "$PROJECT_ROOT"
 
 handle_clean_flag() {
     if [[ "${1:-}" == "--clean" ]]; then

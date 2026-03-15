@@ -64,7 +64,7 @@ The AppImage release is the **most portable and recommended option** for Linux:
 - ✅ No setup script or system dependencies needed
 - ✅ Just `chmod +x` and run
 
-**Build method:** `Dockerfile.release` (Docker-based, recommended)
+**Build method:** `tools/Dockerfile.release` (Docker-based, recommended)
 
 ### Binary (Build locally)
 
@@ -87,7 +87,7 @@ Native macOS application bundle built with PyInstaller:
 - ✅ Works on macOS 12+
 - Optional: Code Sign + Notarize for Gatekeeper approval
 
-**Build method:** `./build_macos.sh` (local) or GitHub Actions `build-macos` job (CI/CD)
+**Build method:** `./tools/build_macos.sh` (local) or GitHub Actions `build-macos` job (CI/CD)
 
 ## Quick Start
 
@@ -96,7 +96,7 @@ Native macOS application bundle built with PyInstaller:
 For a fully portable AppImage with all dependencies bundled:
 
 ```bash
-docker build -f Dockerfile.release -t lmstudio-release:latest .
+docker build -f tools/Dockerfile.release -t lmstudio-release:latest .
 ```
 
 This produces a 34 MB AppImage with:
@@ -111,8 +111,8 @@ This produces a 34 MB AppImage with:
 ### Automated Binary Build (Local)
 
 ```bash
-chmod +x build.sh
-./build.sh
+chmod +x tools/build.sh
+./tools/build.sh
 ```
 
 This will:
@@ -129,8 +129,8 @@ This will:
 For building a native macOS .app bundle on your Mac:
 
 ```bash
-chmod +x build_macos.sh
-./build_macos.sh
+chmod +x tools/build_macos.sh
+./tools/build_macos.sh
 ```
 
 This will:
@@ -161,7 +161,7 @@ open dist/LM-Studio-Tray-Manager.app --args --auto-start-daemon
 **Clean build:**
 
 ```bash
-./build_macos.sh --clean
+./tools/build_macos.sh --clean
 ```
 
 ### Manual Binary Build
@@ -171,7 +171,7 @@ open dist/LM-Studio-Tray-Manager.app --args --auto-start-daemon
 pip install -r requirements-build.txt
 
 # Build using Python script
-python3 build_binary.py
+python3 tools/build_binary.py
 
 # Or build using spec file
 pyinstaller lmstudio-tray-manager.spec
@@ -182,7 +182,7 @@ pyinstaller lmstudio-tray-manager.spec
 For Windows/macOS developers without native Linux, use Docker:
 
 ```bash
-docker build -f Dockerfile.release -t lmstudio-release:latest .
+docker build -f tools/Dockerfile.release -t lmstudio-release:latest .
 docker create --name release-temp lmstudio-release:latest
 docker cp release-temp:/app/dist dist/
 docker rm release-temp
@@ -211,7 +211,7 @@ sudo dnf install python3-pip binutils @development-tools zlib-devel
 sudo pacman -S python-pip binutils base-devel zlib
 ```
 
-The `build.sh` helper script now checks for a working compiler; if none is
+The `tools/build.sh` helper script now checks for a working compiler; if none is
 found it will prompt you and (optionally) attempt to install the necessary
 packages before continuing.
 
@@ -232,11 +232,11 @@ pip install -r requirements-build.txt
 
 ### Method 1: Shell Script (Easiest)
 
-The `build.sh` script automates the entire process with optimization:
+The `tools/build.sh` script automates the entire process with optimization:
 
 ```bash
-chmod +x build.sh
-./build.sh
+chmod +x tools/build.sh
+./tools/build.sh
 ```
 
 **Output:**
@@ -246,15 +246,15 @@ chmod +x build.sh
 
 Notes:
 
-- `build.sh` creates a `venv` automatically when missing.
+- `tools/build.sh` creates a `venv` automatically when missing.
 - The venv uses `--system-site-packages` so `gi` bindings are available.
 
 ### Method 2: Python Script
 
-The `build_binary.py` script provides programmatic build control:
+The `tools/build_binary.py` script provides programmatic build control:
 
 ```bash
-python3 build_binary.py
+python3 tools/build_binary.py
 ```
 
 **Features:**
@@ -287,7 +287,7 @@ pyinstaller lmstudio-tray-manager.spec
 
 ### Build Script
 
-The `build_macos.sh` script is the easiest way to build for macOS:
+The `tools/build_macos.sh` script is the easiest way to build for macOS:
 
 **Features:**
 
@@ -545,8 +545,8 @@ The AppImage is the **standard Linux application format** - truly portable acros
 #### Option 1: Docker (Recommended)
 
 ```bash
-# Build AppImage using Dockerfile.release
-docker build -f Dockerfile.release -t lmstudio-release:latest .
+# Build AppImage using tools/Dockerfile.release
+docker build -f tools/Dockerfile.release -t lmstudio-release:latest .
 
 # Extract artifacts
 CONTAINER_ID=$(docker create lmstudio-release:latest)
@@ -559,7 +559,7 @@ ls -lh dist/*.AppImage
 
 #### Option 2: GitHub Actions (Automatic)
 
-The `release.yml` workflow automatically builds AppImage using `Dockerfile.release` when you push a version tag:
+The `release.yml` workflow automatically builds AppImage using `tools/Dockerfile.release` when you push a version tag:
 
 ```bash
 git tag v0.6.1
