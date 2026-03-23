@@ -5616,7 +5616,7 @@ class DummyRumpsModule(ModuleType):
     _quit_called = False
 
     @staticmethod
-    def notification(title="", subtitle="", message="", sound=False):
+    def notification(title="", subtitle="", message="", _sound=False):
         """Record a notification call."""
         DummyRumpsModule._notifications.append(
             (title, subtitle, message)
@@ -7308,6 +7308,8 @@ def test_macos_tray_icon_init_gui_mode(macos_module, monkeypatch):
 
         def __init__(self, target=None, daemon=True, name=""):
             """Initialize thread with target and name."""
+            self.target = target
+            self.daemon = daemon
             self.name = name
 
         def start(self):

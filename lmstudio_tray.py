@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""LM Studio Tray Icon Monitor - system tray app for monitoring LM Studio daemon and desktop app.
+"""LM Studio Tray Icon Monitor.
 
+System tray app for monitoring LM Studio daemon and desktop app.
 Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
 Usage:
     lmstudio_tray.py [model] [script_dir] [--debug]
@@ -42,7 +43,7 @@ DEFAULT_APP_VERSION = "dev"
 
 
 def load_version_from_dir(base_dir):
-    """Load version from VERSION file in base_dir, or DEFAULT_APP_VERSION if missing.
+    """Load version from VERSION file in base_dir, or default if missing.
 
     Args:
         base_dir (str): Directory containing VERSION file.
@@ -173,7 +174,9 @@ class _AppState:
 
     @classmethod
     def apply_cli_args(cls, args: argparse.Namespace) -> None:
-        """Apply parsed CLI args to app state, converting script_dir to absolute path.
+        """Apply parsed CLI args to app state.
+
+        Converts script_dir to absolute path.
 
         Args:
             args (argparse.Namespace): Parsed CLI arguments.
@@ -268,7 +271,10 @@ LATEST_RELEASE_API_URL = (
 
 
 def _ensure_gsettings_schema():
-    """Set GSETTINGS_SCHEMA_DIR if not set and schemas exist (prevents PyInstaller crashes)."""
+    """Set GSETTINGS_SCHEMA_DIR if not set and schemas exist.
+
+    Prevents PyInstaller crashes.
+    """
     if "GSETTINGS_SCHEMA_DIR" in os.environ:
         return
 
@@ -279,7 +285,10 @@ def _ensure_gsettings_schema():
 
 
 def _copy_to_clipboard(url: str) -> None:
-    """Open URL in default browser (historically copied to clipboard, remains test-patchable)."""
+    """Open URL in default browser.
+
+    Historically copied to clipboard, remains test-patchable.
+    """
     try:
         webbrowser.open(url)
     except (OSError, ValueError):
@@ -325,7 +334,9 @@ LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 
 def get_app_version():
-    """Load app version from VERSION file in script_dir, fallback to DEFAULT_APP_VERSION.
+    """Load app version from VERSION file in script_dir.
+
+    Falls back to DEFAULT_APP_VERSION.
 
     Returns:
         str: Version string.
@@ -334,7 +345,7 @@ def get_app_version():
 
 
 def main():
-    """Parse CLI args, load dependencies, configure logging, and start tray application.
+    """Parse CLI args, load dependencies, configure logging, and start app.
 
     Raises:
         SystemExit: On --version flag.
@@ -606,7 +617,10 @@ def _normalize_api_port(value):
 
 
 def load_config():
-    """Load API endpoint config from file, updating _AppState.API_HOST and API_PORT."""
+    """Load API endpoint config from file.
+
+    Updates _AppState.API_HOST and API_PORT.
+    """
     config_path = _get_config_path()
     logging.debug("Attempting to load config from %s", config_path)
     try:
@@ -755,7 +769,9 @@ def get_api_models_url():
 
 
 def get_authors():
-    """Parse AUTHORS file from script_dir, return list or [APP_MAINTAINER] fallback.
+    """Parse AUTHORS file from script_dir.
+
+    Returns list or [APP_MAINTAINER] fallback.
 
     Returns:
         list: Author names.
@@ -874,7 +890,10 @@ _get_llmster_cmd_state = {"last_candidate": None, "seen_call": False}
 
 
 def get_llmster_cmd():
-    """Return llmster path from PATH or install dir, with debug logging on changes."""
+    """Return llmster path from PATH or install dir.
+
+    Includes debug logging on changes.
+    """
     state = _get_llmster_cmd_state
 
     llmster_cmd = shutil.which("llmster")
@@ -928,7 +947,10 @@ def get_llmster_cmd():
 
 
 def _has_loaded_model(output: str) -> bool:
-    """Return True if lms ps output indicates loaded model, with debug logging."""
+    """Return True if lms ps output indicates loaded model.
+
+    Includes debug logging.
+    """
     if not output or not output.strip():
         return False
     text = output.lower()
@@ -1041,7 +1063,9 @@ def check_api_models():
 
 
 def _run_safe_command(command):
-    """Run pre-validated command list (caller must ensure trusted absolute-path executable).
+    """Run pre-validated command list.
+
+    Caller must ensure trusted absolute-path executable.
 
     Args:
         command: Command list.
@@ -1123,7 +1147,10 @@ def is_llmster_running():
 
 
 def _is_lm_studio_appimage_label(value):
-    """Return True if value identifies LM Studio Desktop App AppImage (excludes bench/tray tools)."""
+    """Return True if value identifies LM Studio Desktop App AppImage.
+
+    Excludes bench/tray tools.
+    """
     if not isinstance(value, str):
         return False
 
@@ -1145,7 +1172,10 @@ def _is_lm_studio_appimage_label(value):
 
 
 def get_desktop_app_pids():
-    """Return PIDs of LM Studio desktop app root processes (not workers/helpers)."""
+    """Return PIDs of LM Studio desktop app root processes.
+
+    Excludes workers/helpers.
+    """
     pids = []
     ps_cmd = get_ps_cmd()
     if not ps_cmd:
@@ -1238,7 +1268,10 @@ def kill_existing_instances():
 
 
 class TrayIcon:
-    """GTK tray icon managing LM Studio runtime monitoring, daemon/app controls, and notifications."""
+    """GTK tray icon for LM Studio runtime monitoring and controls.
+
+    Manages daemon/app controls and notifications.
+    """
     def __init__(self):
         """Initialize tray indicator, menu, and periodic status checks."""
         gtk = _AppState.Gtk
@@ -1279,7 +1312,10 @@ class TrayIcon:
         glib.idle_add(self._maybe_start_gui)
 
     def _maybe_auto_start_daemon(self):
-        """Restart daemon on launch if enabled (ensures fresh passkey for lms CLI)."""
+        """Restart daemon on launch if enabled.
+
+        Ensures fresh passkey for lms CLI.
+        """
         if not _AppState.AUTO_START_DAEMON:
             return False
 
@@ -1307,7 +1343,8 @@ class TrayIcon:
         return False
 
     def begin_action_cooldown(self, action_name, seconds=2.0):
-        """Return False if within cooldown, else set cooldown and return True."""
+        """Return False if within cooldown, else set cooldown and return True.
+        """
         now = time.monotonic()
         if now < self.action_lock_until:
             remaining = self.action_lock_until - now
@@ -1322,7 +1359,10 @@ class TrayIcon:
         return True
 
     def _can_use_lms_ps(self, daemon_running, app_running):
-        """Return True if safe to run lms ps (respects desktop launch grace period)."""
+        """Return True if safe to run lms ps.
+
+        Respects desktop launch grace period.
+        """
         if daemon_running:
             return True
         if not app_running:
@@ -1363,7 +1403,8 @@ class TrayIcon:
         glib.timeout_add_seconds(delay_seconds, _refresh_once)
 
     def build_menu(self):
-        """Build/rebuild context menu with current daemon/app status and options."""
+        """Build/rebuild context menu with current status and options.
+        """
         gtk = _AppState.Gtk
         if gtk is None:
             raise RuntimeError("GTK module is not initialized")
@@ -1608,8 +1649,8 @@ class TrayIcon:
     def _run_validated_command(command):
         """Run a pre-validated command list via subprocess.
 
-        The caller MUST ensure that ``command`` only contains trusted,
-        absolute-path executables resolved through ``get_lms_cmd``,
+        The caller MUST ensure that ``command`` contains trusted,
+        absolute-path executables from ``get_lms_cmd``,
         ``get_llmster_cmd`` or equivalent helpers.
 
         Args:
@@ -3104,24 +3145,24 @@ class MacOSTrayIcon(_RumpsBase):
             if os.path.isdir(loc):
                 detection = f"app:{loc}"
                 if (
-                    not self._seen_desktop_call
-                    or detection != self._last_desktop_detection
+                    not self._desktop_detection["seen_call"]
+                    or detection != self._desktop_detection["last_detection"]
                 ):
                     logging.debug(
                         "Detected LM Studio.app at %s", loc
                     )
-                    self._last_desktop_detection = detection
-                    self._seen_desktop_call = True
+                    self._desktop_detection["last_detection"] = detection
+                    self._desktop_detection["seen_call"] = True
                 return "stopped"
 
         detection = "none"
         if (
-            not self._seen_desktop_call
-            or detection != self._last_desktop_detection
+            not self._desktop_detection["seen_call"]
+            or detection != self._desktop_detection["last_detection"]
         ):
             logging.debug("No LM Studio desktop app found")
-            self._last_desktop_detection = detection
-            self._seen_desktop_call = True
+            self._desktop_detection["last_detection"] = detection
+            self._desktop_detection["seen_call"] = True
         return "not_found"
 
     def get_status_indicator(self, status):
@@ -3157,12 +3198,20 @@ class MacOSTrayIcon(_RumpsBase):
             return
 
         try:
-            rumps_lib.notification(
-                title=title,
-                subtitle="",
-                message=message,
-                sound=False,
-            )
+            try:
+                rumps_lib.notification(
+                    title=title,
+                    subtitle="",
+                    message=message,
+                    sound=False,
+                )
+            except TypeError:
+                rumps_lib.notification(
+                    title=title,
+                    subtitle="",
+                    message=message,
+                    _sound=False,
+                )
         except (AttributeError, OSError, RuntimeError, TypeError) as exc:
             logging.debug("Notification failed: %s", exc)
 
@@ -3820,19 +3869,19 @@ class MacOSTrayIcon(_RumpsBase):
             bool: ``True`` when an update notification was sent.
         """
         if _AppState.APP_VERSION == DEFAULT_APP_VERSION:
-            self.update_status = "Dev build"
+            self._update_info["status"] = "Dev build"
             logging.debug("Update check skipped: dev build")
             return False
 
         latest, error = get_latest_release_version()
-        self.last_update_error = error
+        self._update_info["last_error"] = error
         if not latest:
-            self.update_status = "Unknown"
+            self._update_info["status"] = "Unknown"
             logging.debug("Update check failed: %s", error)
             return False
 
-        self.latest_update_version = latest
-        self.last_update_error = None
+        self._update_info["latest_version"] = latest
+        self._update_info["last_error"] = None
 
         newer = is_newer_version(_AppState.APP_VERSION, latest)
         current_parts = parse_version(_AppState.APP_VERSION)
@@ -3844,24 +3893,24 @@ class MacOSTrayIcon(_RumpsBase):
         )
 
         if newer:
-            self.update_status = "Update available"
+            self._update_info["status"] = "Update available"
         elif is_ahead:
-            self.update_status = "Ahead of release"
+            self._update_info["status"] = "Ahead of release"
         else:
-            self.update_status = "Up to date"
+            self._update_info["status"] = "Up to date"
 
         logging.debug(
             "Update check: %s (latest %s)",
-            self.update_status,
+            self._update_info["status"],
             latest,
         )
 
         if not newer:
             return False
-        if self.last_update_version == latest:
+        if self._update_info["last_version"] == latest:
             return False
 
-        self.last_update_version = latest
+        self._update_info["last_version"] = latest
         url = get_release_url(latest)
         self._notify(
             "Update Available",
@@ -3880,9 +3929,9 @@ class MacOSTrayIcon(_RumpsBase):
         notified = self.check_updates()
         if notified:
             return
-        status = self.update_status or "Unknown"
-        latest = self.latest_update_version
-        error = self.last_update_error
+        status = self._update_info["status"] or "Unknown"
+        latest = self._update_info["latest_version"]
+        error = self._update_info["last_error"]
         if status == "Update available" and latest:
             url = get_release_url(latest)
             msg = (
