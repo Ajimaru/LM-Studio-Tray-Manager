@@ -3070,10 +3070,20 @@ class MacOSTrayIcon(_RumpsBase):
         self.lms_ps_resume_at = 0.0
         self._seen_desktop_call = False
         self._last_desktop_detection = None
+        self._desktop_detection = {
+            "seen_call": False,
+            "last_detection": None,
+        }
         self.last_update_version = None
         self.update_status = "Unknown"
         self.latest_update_version = None
         self.last_update_error = None
+        self._update_info = {
+            "status": "Unknown",
+            "last_error": None,
+            "latest_version": None,
+            "last_version": None,
+        }
         self.title = "⚠️"
         self.build_menu()
 
@@ -3153,6 +3163,7 @@ class MacOSTrayIcon(_RumpsBase):
                     )
                     self._desktop_detection["last_detection"] = detection
                     self._desktop_detection["seen_call"] = True
+                    self._seen_desktop_call = True
                 return "stopped"
 
         detection = "none"
@@ -3163,6 +3174,7 @@ class MacOSTrayIcon(_RumpsBase):
             logging.debug("No LM Studio desktop app found")
             self._desktop_detection["last_detection"] = detection
             self._desktop_detection["seen_call"] = True
+            self._seen_desktop_call = True
         return "not_found"
 
     def get_status_indicator(self, status):
@@ -3870,18 +3882,23 @@ class MacOSTrayIcon(_RumpsBase):
         """
         if _AppState.APP_VERSION == DEFAULT_APP_VERSION:
             self._update_info["status"] = "Dev build"
+            self.update_status = "Dev build"
             logging.debug("Update check skipped: dev build")
             return False
 
         latest, error = get_latest_release_version()
         self._update_info["last_error"] = error
+        self.last_update_error = error
         if not latest:
             self._update_info["status"] = "Unknown"
+            self.update_status = "Unknown"
             logging.debug("Update check failed: %s", error)
             return False
 
         self._update_info["latest_version"] = latest
+        self.latest_update_version = latest
         self._update_info["last_error"] = None
+        self.last_update_error = None
 
         newer = is_newer_version(_AppState.APP_VERSION, latest)
         current_parts = parse_version(_AppState.APP_VERSION)
@@ -3894,10 +3911,13 @@ class MacOSTrayIcon(_RumpsBase):
 
         if newer:
             self._update_info["status"] = "Update available"
+            self.update_status = "Update available"
         elif is_ahead:
             self._update_info["status"] = "Ahead of release"
+            self.update_status = "Ahead of release"
         else:
             self._update_info["status"] = "Up to date"
+            self.update_status = "Up to date"
 
         logging.debug(
             "Update check: %s (latest %s)",
@@ -3911,6 +3931,7 @@ class MacOSTrayIcon(_RumpsBase):
             return False
 
         self._update_info["last_version"] = latest
+        self.last_update_version = latest
         url = get_release_url(latest)
         self._notify(
             "Update Available",
@@ -3929,9 +3950,9 @@ class MacOSTrayIcon(_RumpsBase):
         notified = self.check_updates()
         if notified:
             return
-        status = self._update_info["status"] or "Unknown"
-        latest = self._update_info["latest_version"]
-        error = self._update_info["last_error"]
+        status = self.update_status or "Unknown"
+        latest = self.latest_update_version
+        error = self.last_update_error
         if status == "Update available" and latest:
             url = get_release_url(latest)
             msg = (

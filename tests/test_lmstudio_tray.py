@@ -5709,10 +5709,20 @@ def _make_macos_tray(module):
     tray.lms_ps_resume_at = 0.0
     _call_member(tray, "__setattr__", "_seen_desktop_call", False)
     _call_member(tray, "__setattr__", "_last_desktop_detection", None)
+    _call_member(tray, "__setattr__", "_desktop_detection", {
+        "seen_call": False,
+        "last_detection": None,
+    })
     tray.last_update_version = None
     tray.update_status = "Unknown"
     tray.latest_update_version = None
     tray.last_update_error = None
+    _call_member(tray, "__setattr__", "_update_info", {
+        "status": "Unknown",
+        "last_error": None,
+        "latest_version": None,
+        "last_version": None,
+    })
     tray.build_menu = lambda: None
     return tray
 
