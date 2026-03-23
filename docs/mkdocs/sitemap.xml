@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/config/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/core/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/lmstudio_tray/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/tray/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/updates/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+</urlset>

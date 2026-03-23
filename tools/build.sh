@@ -5,12 +5,13 @@
 set -e  # Exit on error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
 # === Logging configuration ===
 # Allow LOGFILE env override (e.g. for tests that must not write to the repo)
 if [ -z "${LOGFILE:-}" ]; then
-    LOGS_DIR="$SCRIPT_DIR/.logs"
+    LOGS_DIR="$PROJECT_ROOT/.logs"
     mkdir -p "$LOGS_DIR"
     LOGFILE="$LOGS_DIR/build.log"
 else
@@ -225,7 +226,7 @@ if ! "$VENV_PYTHON" -m PyInstaller --version &> /dev/null; then
     echo -e "${YELLOW}Installing PyInstaller in venv...${NC}"
     "$VENV_PYTHON" -m pip install --upgrade pip
     # Use --require-hashes to enforce integrity verification
-    "$VENV_PYTHON" -m pip install --require-hashes -r "$SCRIPT_DIR/requirements-build.txt"
+    "$VENV_PYTHON" -m pip install --require-hashes -r "$PROJECT_ROOT/requirements-build.txt"
 
 fi
 
@@ -238,7 +239,7 @@ fi
 # Run PyInstaller build
 echo
 echo "Running PyInstaller build..."
-"$VENV_PYTHON" build_binary.py
+"$VENV_PYTHON" "$SCRIPT_DIR/build_binary.py"
 
 # Check if binary was created
 BINARY_PATH="dist/lmstudio-tray-manager"

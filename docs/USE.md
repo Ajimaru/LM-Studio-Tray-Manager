@@ -473,7 +473,7 @@ The tray manager creates four log files:
 | `.logs/lmstudio_autostart.log` | Daemon startup events | `lmstudio_autostart.sh` (Source/Binary releases) |
 | `.logs/lmstudio_tray.log` | Tray monitor activity (Binary/Source) | `lmstudio_tray.py` (Source) |
 | `~/.local/share/lmstudio-tray-manager/logs/lmstudio_tray.log` | Tray monitor activity (AppImage) | AppImage release |
-| `.logs/build.log` | Build process details | `build.sh` or `build_binary.py` |
+| `.logs/build.log` | Build process details | `tools/build.sh` or `tools/build_binary.py` |
 
 **Log Format Examples:**
 
