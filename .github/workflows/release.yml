@@ -115,7 +115,11 @@ jobs:
           
           # Create checksum
           cd "$RELEASE_DIR"
-          sha256sum "${ARCHIVE_NAME}" > "SHA256SUMS-macos.txt"
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "${ARCHIVE_NAME}" > "SHA256SUMS-macos.txt"
+          else
+            shasum -a 256 "${ARCHIVE_NAME}" > "SHA256SUMS-macos.txt"
+          fi
           cat "SHA256SUMS-macos.txt"
 
       - name: Upload macOS artifacts
