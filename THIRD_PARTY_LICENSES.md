@@ -38,11 +38,11 @@ These packages are used to create the standalone binary via PyInstaller.
   - Website: <https://pypi.org/project/altgraph/>
   - License: MIT License
 
-- **pyinstaller-hooks-contrib 2026.1**
+- **pyinstaller-hooks-contrib 2026.3**
   - Website: <https://github.com/pyinstaller/pyinstaller-hooks-contrib>
   - License: GPL-2.0-or-later OR Apache-2.0
 
-- **setuptools 82.0.0**
+- **setuptools 82.0.1**
   - Website: <https://github.com/pypa/setuptools>
   - License: MIT License
 
