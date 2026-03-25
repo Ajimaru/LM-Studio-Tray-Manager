@@ -110,6 +110,7 @@ jobs:
           # Install dependencies
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install --require-hashes -r requirements-build.txt
+          python3 -m pip install rumps
           
           # Build with PyInstaller
           python3 -m PyInstaller \
