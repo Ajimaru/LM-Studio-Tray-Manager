@@ -73,7 +73,6 @@ install_dependencies() {
     
     python3 -m pip install --upgrade pip setuptools wheel --quiet
     python3 -m pip install --require-hashes -r requirements-build.txt --quiet
-    python3 -m pip install rumps --quiet
     
     echo -e "${GREEN}✅ Dependencies installed${NC}"
 }
