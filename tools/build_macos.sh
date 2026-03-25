@@ -33,14 +33,23 @@ handle_clean_flag() {
 
 check_python() {
     echo -e "${BLUE}📋 Checking Python installation...${NC}"
-    
+
     if ! command -v python3 &> /dev/null; then
         echo -e "${RED}❌ Python 3 not found${NC}"
-        echo "Install Python 3.12 from https://www.python.org/downloads/"
+        echo "Install Python 3.12+ from https://www.python.org/downloads/"
         exit 1
     fi
-    
+
     PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+    PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
+    PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
+
+    if [[ "$PYTHON_MAJOR" -lt 3 ]] || [[ "$PYTHON_MAJOR" -eq 3 && "$PYTHON_MINOR" -lt 12 ]]; then
+        echo -e "${RED}❌ Python 3.12+ required, found $PYTHON_VERSION${NC}"
+        echo "Install Python 3.12+ from https://www.python.org/downloads/"
+        exit 1
+    fi
+
     echo -e "${GREEN}✅ Python $PYTHON_VERSION found${NC}"
 }
 
@@ -79,34 +88,40 @@ install_dependencies() {
 
 build_pyinstaller() {
     echo -e "${BLUE}🔨 Building with PyInstaller...${NC}"
-    
-    python3 -m PyInstaller \
-        --onedir \
-        --name=LM-Studio-Tray-Manager \
-        --clean \
-        --osx-bundle-identifier=com.lmstudio.tray-manager \
-        --add-data VERSION:. \
-        --add-data AUTHORS:. \
-        --add-data assets:assets \
-        --icon=assets/img/lm-studio-tray-manager.icns 2>/dev/null || \
-    python3 -m PyInstaller \
-        --onedir \
-        --name=LM-Studio-Tray-Manager \
-        --clean \
-        --osx-bundle-identifier=com.lmstudio.tray-manager \
-        --add-data VERSION:. \
-        --add-data AUTHORS:. \
-        --add-data assets:assets \
-        lmstudio_tray.py
-    
+
+    # Check if icon exists and build accordingly
+    if [[ -f "assets/img/lm-studio-tray-manager.icns" ]]; then
+        python3 -m PyInstaller \
+            --onedir \
+            --name=LM-Studio-Tray-Manager \
+            --clean \
+            --osx-bundle-identifier=com.lmstudio.tray-manager \
+            --add-data VERSION:. \
+            --add-data AUTHORS:. \
+            --add-data assets:assets \
+            --icon=assets/img/lm-studio-tray-manager.icns \
+            lmstudio_tray.py
+    else
+        echo -e "${BLUE}⚠️  Icon file not found, building without icon${NC}"
+        python3 -m PyInstaller \
+            --onedir \
+            --name=LM-Studio-Tray-Manager \
+            --clean \
+            --osx-bundle-identifier=com.lmstudio.tray-manager \
+            --add-data VERSION:. \
+            --add-data AUTHORS:. \
+            --add-data assets:assets \
+            lmstudio_tray.py
+    fi
+
     APP_PATH="$DIST_DIR/LM-Studio-Tray-Manager.app"
     BINARY_PATH="$APP_PATH/Contents/MacOS/LM-Studio-Tray-Manager"
-    
+
     if [[ ! -f "$BINARY_PATH" ]]; then
         echo -e "${RED}❌ PyInstaller build failed${NC}"
         exit 1
     fi
-    
+
     echo -e "${GREEN}✅ .app bundle created${NC}"
     ls -lh "$BINARY_PATH"
 }
