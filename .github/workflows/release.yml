@@ -109,8 +109,9 @@ jobs:
           
           # Install dependencies
           python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install --require-hashes -r requirements-build.txt
-          python3 -m pip install rumps
+          python3 -m pip install --require-hashes \
+            -r requirements-build.txt \
+            -r requirements-macos.txt
           
           # Build with PyInstaller
           python3 -m PyInstaller \
