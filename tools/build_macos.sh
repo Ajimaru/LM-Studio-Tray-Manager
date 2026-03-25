@@ -72,7 +72,7 @@ install_dependencies() {
     echo -e "${BLUE}📥 Installing build dependencies...${NC}"
     
     python3 -m pip install --upgrade pip setuptools wheel --quiet
-    python3 -m pip install -r requirements-build.txt --quiet
+    python3 -m pip install --require-hashes -r requirements-build.txt --quiet
     python3 -m pip install rumps --quiet
     
     echo -e "${GREEN}✅ Dependencies installed${NC}"
@@ -143,7 +143,11 @@ create_release_archive() {
         LM-Studio-Tray-Manager.app
     
     cd "$RELEASE_DIR"
-    sha256sum "$ARCHIVE_NAME" > "SHA256SUMS-macos.txt"
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$ARCHIVE_NAME" > "SHA256SUMS-macos.txt"
+    else
+        shasum -a 256 "$ARCHIVE_NAME" > "SHA256SUMS-macos.txt"
+    fi
     
     echo -e "${GREEN}✅ Release archive created${NC}"
     echo ""
