@@ -31,3 +31,4 @@ htmlcov/
 .codacy/
 .vscode/
 .continue/
+.claude/

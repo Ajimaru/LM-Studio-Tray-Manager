@@ -1,0 +1,47 @@
+# pip-audit scans Python dependencies for known vulnerabilities via the OSV database.
+# Runs daily, on push/PR to main when requirements files change, and on demand.
+name: pip-audit
+
+on:
+  schedule:
+    # runs every day at 07:00 UTC
+    - cron: '0 7 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'requirements*.txt'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'requirements*.txt'
+  # allow manual invocation from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-24.04
+
+    steps:
+      # fetch repository to access requirements files
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # prepare Python 3.12 environment required by the project
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # audit all requirements files against the OSV vulnerability database
+      - name: Run pip-audit
+        uses: pypa/gh-action-pip-audit@v1.1.0
+        with:
+          vulnerability-service: osv
+          summary: true
+          inputs: >-
+            requirements.txt
+            requirements-docs.txt
+            requirements-build.txt
