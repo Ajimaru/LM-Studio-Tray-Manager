@@ -26,7 +26,7 @@ pyinstaller==6.19.0 \
 altgraph==0.17.5 \
     --hash=sha256:f3a22400bce1b0c701683820ac4f3b159cd301acab067c51c653e06961600597
 
-# pyinstaller-hooks-contrib 2025.2 (source: pyinstaller_hooks_contrib-2025.2-py3-none-any.whl)
+# pyinstaller-hooks-contrib 2026.3 (source: pyinstaller_hooks_contrib-2026.3-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
 pyinstaller-hooks-contrib==2026.3 \
     --hash=sha256:5ecd1068ad262afecadf07556279d2be52ca93a88b049fae17f1a2eb2969254a \
