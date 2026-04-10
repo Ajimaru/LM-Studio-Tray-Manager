@@ -338,4 +338,4 @@ MIT License - See [LICENSE](LICENSE) file for details
 [![Stars](https://img.shields.io/github/stars/Ajimaru/LM-Studio-Tray-Manager?style=social)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/stargazers)
 [![Forks](https://img.shields.io/github/forks/Ajimaru/LM-Studio-Tray-Manager?style=social)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/network/members)
 [![Watchers](https://img.shields.io/github/watchers/Ajimaru/LM-Studio-Tray-Manager?style=social)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/watchers)
-[![Made with Love in 🇪🇺](https://img.shields.io/badge/Made_with_❤️_in_🇪🇺-gray.svg)](https://europa.eu/)
+[![Made with Love in 🇪🇺](https://img.shields.io/badge/Made_with_❤️_in_🇪🇺-gray.svg)](https://european-union.europa.eu/)

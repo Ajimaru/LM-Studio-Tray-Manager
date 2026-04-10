@@ -3,7 +3,10 @@ description: Code standards and best practices for LM-Studio-Tray-Manager
 applyTo: '**'
 ---
 
+# Code Standards
+
 **Python Best Practices:**
+
 - Follow PEP 8 style guidelines strictly
 - Use type hints for all function parameters and return values
 - Prefer f-strings for string formatting over older methods
@@ -14,6 +17,7 @@ applyTo: '**'
 ## Code Style: Clean Code
 
 **Clean Code Principles:**
+
 - Write self-documenting code with meaningful names
 - Keep functions small and focused on a single responsibility
 - Avoid deep nesting and complex conditional statements
@@ -24,6 +28,7 @@ applyTo: '**'
 ## Testing: PyTest
 
 **Testing Guidelines:**
+
 - Write comprehensive unit tests for all business logic
 - Follow the AAA pattern: Arrange, Act, Assert
 - Maintain good test coverage (aim for 80%+ for critical paths)
