@@ -1,10 +1,15 @@
-# Ensure shell scripts always use LF line endings
-*.sh text eol=lf
+# Normalize all text files in the repository
+* text=auto
 
-# Common text files
+# Keep Unix-style line endings for source/docs/scripts
+*.sh text eol=lf
 *.py text eol=lf
-*.md text
-*.txt text
+*.md text eol=lf
+*.txt text eol=lf
+
+# Keep Windows script line endings if such files are added later
+*.bat text eol=crlf
+*.cmd text eol=crlf
 
 # Prevent Git from altering binary files
 *.png binary
