@@ -2131,13 +2131,13 @@ def test_start_desktop_app_force_stops_daemon_before_launch(
         lambda p: p == "/usr/bin",
     )
 
-    popen_calls = []
+    spawn_calls = []
 
-    def mock_popen(*_a, **_k):
-        popen_calls.append(True)
-        return DummyProcess(pid=12345)
+    def mock_spawnv(mode, path, args):
+        spawn_calls.append((mode, path, args))
+        return 12345
 
-    monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+    monkeypatch.setattr(tray_module.os, "spawnv", mock_spawnv)
     monkeypatch.setattr(
         tray_module,
         "get_notify_send_cmd",
@@ -2153,7 +2153,7 @@ def test_start_desktop_app_force_stops_daemon_before_launch(
     tray.start_desktop_app(None)
 
     assert force_calls  # nosec B101
-    assert popen_calls  # nosec B101
+    assert spawn_calls  # nosec B101
     assert daemon_state["running"] is False  # nosec B101
 
 
@@ -2184,16 +2184,21 @@ def test_start_desktop_app_appimage_found_and_started(
 
     monkeypatch.setattr(tray_module.subprocess, "run", fake_run)
 
-    popen_args = []
+    spawn_calls = []
 
-    def mock_popen(args, **_k):
-        popen_args.append(args)
-        return DummyProcess(pid=123)
-    monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+    def mock_spawnv(mode, path, args):
+        spawn_calls.append((mode, path, args))
+        return 123
+
+    monkeypatch.setattr(tray_module.os, "spawnv", mock_spawnv)
 
     tray.start_desktop_app(None)
-    assert popen_args, "expected Popen to be invoked"
-    assert any("--no-sandbox" in arg for call in popen_args for arg in call)
+    assert spawn_calls, "expected spawnv to be invoked"
+    assert any(
+        "--no-sandbox" in arg
+        for _mode, _path, call in spawn_calls
+        for arg in call
+    )
 
 
 def test_start_desktop_app_prefers_lmstudio_appimage(
@@ -3797,8 +3802,8 @@ def test_start_desktop_app_not_found_path(tray_module, monkeypatch):
     tray.start_desktop_app(None)
 
 
-def test_start_desktop_app_popen_failure(tray_module, monkeypatch):
-    """Handle Popen failure when launching desktop app."""
+def test_start_desktop_app_spawnv_failure(tray_module, monkeypatch):
+    """Handle spawnv failure when launching desktop app."""
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
@@ -3827,8 +3832,8 @@ def test_start_desktop_app_popen_failure(tray_module, monkeypatch):
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
     monkeypatch.setattr(
-        tray_module.subprocess,
-        "Popen",
+        tray_module.os,
+        "spawnv",
         lambda *_a, **_k: (_ for _ in ()).throw(OSError("fail")),
     )
 

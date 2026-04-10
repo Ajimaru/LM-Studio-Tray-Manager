@@ -2216,7 +2216,6 @@ class TrayIcon:
                     raise ValueError("App path must be a string")
 
                 safe_paths = [
-                    _AppState.script_dir,
                     os.path.expanduser("~/Apps"),
                     os.path.expanduser("~/LM_Studio"),
                     os.path.expanduser("~/Applications"),
