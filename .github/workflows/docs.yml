@@ -64,11 +64,16 @@ jobs:
 
       - name: Verify MkDocs output is up to date
         run: |
-          # Fail if 'mkdocs build' modified any tracked files under docs/mkdocs
-          if ! git diff --quiet -- docs/mkdocs; then
+          # Fail if mkdocs build changed tracked docs output, excluding sitemap
+          # files whose <lastmod> values are time-dependent in CI.
+          if ! git diff --quiet -- docs/mkdocs \
+            ':(exclude)docs/mkdocs/sitemap.xml' \
+            ':(exclude)docs/mkdocs/sitemap.xml.gz'; then
             echo "ERROR: 'mkdocs build' produced changes in 'docs/mkdocs'."
             echo "Please run 'mkdocs build' locally and commit the updated files."
-            git diff -- docs/mkdocs
+            git diff -- docs/mkdocs \
+              ':(exclude)docs/mkdocs/sitemap.xml' \
+              ':(exclude)docs/mkdocs/sitemap.xml.gz'
             exit 1
           fi
 

@@ -35,13 +35,22 @@ jobs:
         with:
           python-version: '3.12'
 
-      # audit all requirements files against the OSV vulnerability database
-      - name: Run pip-audit
-        uses: pypa/gh-action-pip-audit@v1.1.0
+      # audit hash-free runtime/docs requirements against the OSV database
+      - name: Run pip-audit (runtime and docs)
+        uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
         with:
           vulnerability-service: osv
           summary: true
           inputs: >-
             requirements.txt
             requirements-docs.txt
+
+      # audit hash-pinned build requirements in strict hash mode
+      - name: Run pip-audit (build requirements, hash-locked)
+        uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
+        with:
+          vulnerability-service: osv
+          summary: true
+          require-hashes: true
+          inputs: >-
             requirements-build.txt
