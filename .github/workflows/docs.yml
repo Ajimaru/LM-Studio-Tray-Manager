@@ -32,7 +32,7 @@ jobs:
 
       # run markdown linter against README and docs directory
       - name: Markdown lint
-        uses: DavidAnson/markdownlint-cli2-action@07035fd053f7be764496c0f8d8f9f41f98305101 # v22.0.0
+        uses: DavidAnson/markdownlint-cli2-action@v22.0.0 # node20-compatible; avoid node24 until supported by runners
         with:
           globs: |
             README.md
