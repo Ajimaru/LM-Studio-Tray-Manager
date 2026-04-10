@@ -2223,13 +2223,13 @@ def test_start_desktop_app_prefers_lmstudio_appimage(
 
     monkeypatch.setattr(tray_module.subprocess, "run", fake_run)
 
-    popen_calls = []
+    spawn_calls = []
 
-    def mock_popen(args, **_k):
-        popen_calls.append(args)
-        return DummyProcess(pid=123)
+    def mock_spawnv(mode, path, args):
+        spawn_calls.append((mode, path, args))
+        return 123
 
-    monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+    monkeypatch.setattr(tray_module.os, "spawnv", mock_spawnv)
     monkeypatch.setattr(
         tray_module.os.path,
         "isdir",
@@ -2249,15 +2249,15 @@ def test_start_desktop_app_prefers_lmstudio_appimage(
     tray.start_desktop_app(None)
     assert any(
         "lm-studio" in arg.lower()
-        for call in popen_calls
+        for _mode, _path, call in spawn_calls
         for arg in call
     )
     assert not any(
         "other" in arg.lower()
-        for call in popen_calls
+        for _mode, _path, call in spawn_calls
         for arg in call
     )
-    assert any("--no-sandbox" in call for call in popen_calls)
+    assert any("--no-sandbox" in call for _mode, _path, call in spawn_calls)
 
 
 def test_start_desktop_app_deb_path_appimage(
@@ -2267,13 +2267,13 @@ def test_start_desktop_app_deb_path_appimage(
     tray = _make_tray_instance(tray_module)
     app_dir = tmp_path / "Apps"
     app_dir.mkdir()
-    popen_calls = []
+    spawn_calls = []
 
-    def mock_popen(args, **_kwargs):
-        popen_calls.append(args)
-        return DummyProcess(pid=12345)
+    def mock_spawnv(mode, path, args):
+        spawn_calls.append((mode, path, args))
+        return 12345
 
-    monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+    monkeypatch.setattr(tray_module.os, "spawnv", mock_spawnv)
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
     monkeypatch.setattr(tray_module, "is_llmster_running", lambda: False)
@@ -2310,8 +2310,12 @@ def test_start_desktop_app_deb_path_appimage(
     dummy_app.chmod(0o755)
 
     tray.start_desktop_app(None)
-    assert popen_calls  # nosec B101
-    assert any("--no-sandbox" in arg for call in popen_calls for arg in call)
+    assert spawn_calls  # nosec B101
+    assert any(
+        "--no-sandbox" in arg
+        for _mode, _path, call in spawn_calls
+        for arg in call
+    )
 
 
 def test_start_desktop_app_deb_path(tray_module, monkeypatch):
@@ -2343,13 +2347,13 @@ def test_start_desktop_app_deb_path(tray_module, monkeypatch):
         return path == "/usr/bin"
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
-    popen_calls = []
+    spawn_calls = []
 
-    def mock_popen(*_a, **_k):
-        popen_calls.append(True)
-        return DummyProcess(pid=12345)
+    def mock_spawnv(mode, path, args):
+        spawn_calls.append((mode, path, args))
+        return 12345
 
-    monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+    monkeypatch.setattr(tray_module.os, "spawnv", mock_spawnv)
 
     notifications = []
 
@@ -2361,11 +2365,11 @@ def test_start_desktop_app_deb_path(tray_module, monkeypatch):
 
     tray.start_desktop_app(None)
     assert len(notifications) > 0  # nosec B101
-    assert popen_calls  # nosec B101
+    assert spawn_calls  # nosec B101
 
 
-def test_start_desktop_app_popen_kwargs(tray_module, monkeypatch):
-    """Test Popen is called with start_new_session and DEVNULL streams."""
+def test_start_desktop_app_spawnv_args(tray_module, monkeypatch):
+    """Test spawnv is called with P_NOWAIT, path, and command list."""
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
@@ -2393,13 +2397,19 @@ def test_start_desktop_app_popen_kwargs(tray_module, monkeypatch):
         return path == "/usr/bin"
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
-    captured_kwargs = {}
+    captured_call = {}
 
-    def mock_popen(_args, **kwargs):
-        captured_kwargs.update(kwargs)
-        return DummyProcess(pid=12345)
+    def mock_spawnv(mode, path, args):
+        captured_call.update(
+            {
+                "mode": mode,
+                "path": path,
+                "args": args,
+            }
+        )
+        return 12345
 
-    monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+    monkeypatch.setattr(tray_module.os, "spawnv", mock_spawnv)
 
     notifications = []
 
@@ -2410,20 +2420,13 @@ def test_start_desktop_app_popen_kwargs(tray_module, monkeypatch):
     monkeypatch.setattr(tray, "_run_validated_command", capture_notify)
 
     tray.start_desktop_app(None)
-    assert captured_kwargs.get("start_new_session") is True  # nosec B101
-    assert (  # nosec B101
-        captured_kwargs.get("stdin") == subprocess.DEVNULL
-    )
-    assert (  # nosec B101
-        captured_kwargs.get("stdout") == subprocess.DEVNULL
-    )
-    assert (  # nosec B101
-        captured_kwargs.get("stderr") == subprocess.DEVNULL
-    )
+    assert captured_call.get("mode") == tray_module.os.P_NOWAIT  # nosec B101
+    assert captured_call.get("path") == "/usr/bin/lm-studio"  # nosec B101
+    assert captured_call.get("args") == ["/usr/bin/lm-studio"]  # nosec B101
 
 
-def test_start_desktop_app_popen_oserror(tray_module, monkeypatch):
-    """Test OSError handling when Popen fails to launch the app."""
+def test_start_desktop_app_spawnv_oserror(tray_module, monkeypatch):
+    """Test OSError handling when spawnv fails to launch the app."""
     tray = _make_tray_instance(tray_module)
     monkeypatch.setattr(tray, "begin_action_cooldown", lambda _x: True)
     monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/usr/bin/lms")
@@ -2452,9 +2455,10 @@ def test_start_desktop_app_popen_oserror(tray_module, monkeypatch):
 
     monkeypatch.setattr(tray_module.os.path, "isdir", is_safe_dir)
 
-    def mock_popen(*_a, **_k):
+    def mock_spawnv(*_a, **_k):
         raise OSError("Permission denied")
-    monkeypatch.setattr(tray_module.subprocess, "Popen", mock_popen)
+
+    monkeypatch.setattr(tray_module.os, "spawnv", mock_spawnv)
     notifications = []
 
     def capture_notify(cmd):

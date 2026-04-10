@@ -2255,13 +2255,7 @@ class TrayIcon:
                         f"Executable must be absolute path: {cmd[0]}"
                     )
 
-                subprocess.Popen(  # nosec B603
-                    cmd,
-                    stdin=subprocess.DEVNULL,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    start_new_session=True,
-                )
+                os.spawnv(os.P_NOWAIT, cmd[0], cmd)
 
                 self.lms_ps_resume_at = time.monotonic() + 12.0
 
