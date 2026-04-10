@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""LM Studio Tray Icon Monitor.
+"""
+LM Studio Tray Icon Monitor.
 
 System tray app for monitoring LM Studio daemon and desktop app.
 Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
@@ -43,7 +44,8 @@ DEFAULT_APP_VERSION = "dev"
 
 
 def load_version_from_dir(base_dir):
-    """Load version from VERSION file in base_dir, or default if missing.
+    """
+    Load version from VERSION file in base_dir, or default if missing.
 
     Args:
         base_dir (str): Directory containing VERSION file.
@@ -63,7 +65,8 @@ def load_version_from_dir(base_dir):
 
 
 def _get_default_script_dir():
-    """Get script directory or current directory if unavailable.
+    """
+    Get script directory or current directory if unavailable.
 
     Returns:
         str: Absolute path to script directory.
@@ -75,7 +78,8 @@ def _get_default_script_dir():
 
 
 def _get_writable_logs_dir(base_script_dir):
-    """Get writable logs directory, fallback to ~/.local/share if needed.
+    """
+    Get writable logs directory, fallback to ~/.local/share if needed.
 
     Args:
         base_script_dir (str): Script directory to check.
@@ -101,7 +105,8 @@ def _get_writable_logs_dir(base_script_dir):
 
 
 def parse_args():
-    """Parse command-line arguments and return namespace.
+    """
+    Parse command-line arguments and return namespace.
 
     Returns:
         argparse.Namespace: Parsed arguments.
@@ -157,7 +162,8 @@ def parse_args():
 
 
 class _AppState:
-    """Mutable application state shared across the module."""
+    """
+    Mutable application state shared across the module."""
 
     MODEL: str = "no-model-passed"
     script_dir: str = _get_default_script_dir()
@@ -174,7 +180,8 @@ class _AppState:
 
     @classmethod
     def apply_cli_args(cls, args: argparse.Namespace) -> None:
-        """Apply parsed CLI args to app state.
+        """
+        Apply parsed CLI args to app state.
 
         Converts script_dir to absolute path.
 
@@ -214,7 +221,8 @@ def sync_app_state_for_tests(
     api_host_val: Optional[str] = None,
     api_port_val: Optional[int] = None,
 ) -> None:
-    """Sync test mocks with _AppState and module-level variables."""
+    """
+    Sync test mocks with _AppState and module-level variables."""
 
     if gtk_mod is not None:
         _AppState.Gtk = gtk_mod
@@ -271,7 +279,8 @@ LATEST_RELEASE_API_URL = (
 
 
 def _ensure_gsettings_schema():
-    """Set GSETTINGS_SCHEMA_DIR if not set and schemas exist.
+    """
+    Set GSETTINGS_SCHEMA_DIR if not set and schemas exist.
 
     Prevents PyInstaller crashes.
     """
@@ -285,7 +294,8 @@ def _ensure_gsettings_schema():
 
 
 def _copy_to_clipboard(url: str) -> None:
-    """Open URL in default browser.
+    """
+    Open URL in default browser.
 
     Historically copied to clipboard, remains test-patchable.
     """
@@ -296,7 +306,8 @@ def _copy_to_clipboard(url: str) -> None:
 
 
 def _activate_link(url: str) -> bool:
-    """Open link from GTK dialog and return True on success.
+    """
+    Open link from GTK dialog and return True on success.
 
     Args:
         url (str): URL from activate-link signal.
@@ -312,7 +323,8 @@ def _activate_link(url: str) -> bool:
 
 
 def get_release_url(tag: Optional[str] = None) -> str:
-    """Return GitHub release URL for specified tag or latest release.
+    """
+    Return GitHub release URL for specified tag or latest release.
 
     Args:
         tag (str, optional): Release tag name (e.g. "v1.2.3").
@@ -334,7 +346,8 @@ LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 
 def get_app_version():
-    """Load app version from VERSION file in script_dir.
+    """
+    Load app version from VERSION file in script_dir.
 
     Falls back to DEFAULT_APP_VERSION.
 
@@ -345,7 +358,8 @@ def get_app_version():
 
 
 def main():
-    """Parse CLI args, load dependencies, configure logging, and start app.
+    """
+    Parse CLI args, load dependencies, configure logging, and start app.
 
     Raises:
         SystemExit: On --version flag.
@@ -617,7 +631,8 @@ def _normalize_api_port(value):
 
 
 def load_config():
-    """Load API endpoint config from file.
+    """
+    Load API endpoint config from file.
 
     Updates _AppState.API_HOST and API_PORT.
     """
@@ -2201,6 +2216,7 @@ class TrayIcon:
                     raise ValueError("App path must be a string")
 
                 safe_paths = [
+                    _AppState.script_dir,
                     os.path.expanduser("~/Apps"),
                     os.path.expanduser("~/LM_Studio"),
                     os.path.expanduser("~/Applications"),
@@ -2239,7 +2255,13 @@ class TrayIcon:
                         f"Executable must be absolute path: {cmd[0]}"
                     )
 
-                os.spawnv(os.P_NOWAIT, cmd[0], cmd)
+                subprocess.Popen(  # nosec B603
+                    cmd,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
 
                 self.lms_ps_resume_at = time.monotonic() + 12.0
 
