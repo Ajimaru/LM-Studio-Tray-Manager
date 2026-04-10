@@ -1596,10 +1596,10 @@
 <span class="normal"><a href="#__codelineno-0-567">567</a></span>
 <span class="normal"><a href="#__codelineno-0-568">568</a></span>
 <span class="normal"><a href="#__codelineno-0-569">569</a></span>
-<span class="normal"><a href="#__codelineno-0-570">570</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-560" name="__codelineno-0-560"></a><span class="k">class</span> <span class="nc">HomeMaskFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-570">570</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-560" name="__codelineno-0-560"></a><span class="k">class</span><span class="w"> </span><span class="nc">HomeMaskFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
 <a id="__codelineno-0-561" name="__codelineno-0-561"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Formatter replacing user&#39;s home directory with ~ in log messages.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-562" name="__codelineno-0-562"></a>
-<a id="__codelineno-0-563" name="__codelineno-0-563"></a>    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span>
+<a id="__codelineno-0-563" name="__codelineno-0-563"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span>
 <a id="__codelineno-0-564" name="__codelineno-0-564"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span>
 <a id="__codelineno-0-565" name="__codelineno-0-565"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pragma: no cover - simple</span>
 <a id="__codelineno-0-566" name="__codelineno-0-566"></a>        <span class="n">s</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
@@ -1717,7 +1717,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-71">71</a></span>
 <span class="normal"><a href="#__codelineno-0-72">72</a></span>
 <span class="normal"><a href="#__codelineno-0-73">73</a></span>
-<span class="normal"><a href="#__codelineno-0-74">74</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="k">def</span> <span class="nf">_get_default_script_dir</span><span class="p">():</span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_default_script_dir</span><span class="p">():</span>
 <a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get script directory or current directory if unavailable.</span>
 <a id="__codelineno-0-67" name="__codelineno-0-67"></a>
 <a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">    Returns:</span>
@@ -1824,7 +1824,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
 <span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
 <span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
-<span class="normal"><a href="#__codelineno-0-100">100</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="k">def</span> <span class="nf">_get_writable_logs_dir</span><span class="p">(</span><span class="n">base_script_dir</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-100">100</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_writable_logs_dir</span><span class="p">(</span><span class="n">base_script_dir</span><span class="p">):</span>
 <a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get writable logs directory, fallback to ~/.local/share if needed.</span>
 <a id="__codelineno-0-79" name="__codelineno-0-79"></a>
 <a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    Args:</span>
@@ -1948,7 +1948,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-597">597</a></span>
 <span class="normal"><a href="#__codelineno-0-598">598</a></span>
 <span class="normal"><a href="#__codelineno-0-599">599</a></span>
-<span class="normal"><a href="#__codelineno-0-600">600</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-573" name="__codelineno-0-573"></a><span class="k">def</span> <span class="nf">get_asset_path</span><span class="p">(</span><span class="o">*</span><span class="n">path_components</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-600">600</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-573" name="__codelineno-0-573"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_asset_path</span><span class="p">(</span><span class="o">*</span><span class="n">path_components</span><span class="p">):</span>
 <a id="__codelineno-0-574" name="__codelineno-0-574"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Locate asset file in PyInstaller bundle, script_dir, or cwd.</span>
 <a id="__codelineno-0-575" name="__codelineno-0-575"></a>
 <a id="__codelineno-0-576" name="__codelineno-0-576"></a><span class="sd">    Args:</span>
@@ -2055,7 +2055,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-292">292</a></span>
 <span class="normal"><a href="#__codelineno-0-293">293</a></span>
 <span class="normal"><a href="#__codelineno-0-294">294</a></span>
-<span class="normal"><a href="#__codelineno-0-295">295</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="k">def</span> <span class="nf">_copy_to_clipboard</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="k">def</span><span class="w"> </span><span class="nf">_copy_to_clipboard</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Open URL in default browser.</span>
 <a id="__codelineno-0-289" name="__codelineno-0-289"></a>
 <a id="__codelineno-0-290" name="__codelineno-0-290"></a><span class="sd">    Historically copied to clipboard, remains test-patchable.</span>
@@ -2157,7 +2157,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-308">308</a></span>
 <span class="normal"><a href="#__codelineno-0-309">309</a></span>
 <span class="normal"><a href="#__codelineno-0-310">310</a></span>
-<span class="normal"><a href="#__codelineno-0-311">311</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="k">def</span> <span class="nf">_activate_link</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-311">311</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="k">def</span><span class="w"> </span><span class="nf">_activate_link</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Open link from GTK dialog and return True on success.</span>
 <a id="__codelineno-0-300" name="__codelineno-0-300"></a>
 <a id="__codelineno-0-301" name="__codelineno-0-301"></a><span class="sd">    Args:</span>
@@ -2299,7 +2299,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-746">746</a></span>
 <span class="normal"><a href="#__codelineno-0-747">747</a></span>
 <span class="normal"><a href="#__codelineno-0-748">748</a></span>
-<span class="normal"><a href="#__codelineno-0-749">749</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-715" name="__codelineno-0-715"></a><span class="k">def</span> <span class="nf">_validate_url_scheme</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-749">749</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-715" name="__codelineno-0-715"></a><span class="k">def</span><span class="w"> </span><span class="nf">_validate_url_scheme</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
 <a id="__codelineno-0-716" name="__codelineno-0-716"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate URL uses http/https and return formatted base URL.</span>
 <a id="__codelineno-0-717" name="__codelineno-0-717"></a>
 <a id="__codelineno-0-718" name="__codelineno-0-718"></a><span class="sd">    Args:</span>
@@ -2418,7 +2418,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-844">844</a></span>
 <span class="normal"><a href="#__codelineno-0-845">845</a></span>
 <span class="normal"><a href="#__codelineno-0-846">846</a></span>
-<span class="normal"><a href="#__codelineno-0-847">847</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-833" name="__codelineno-0-833"></a><span class="k">def</span> <span class="nf">_is_allowed_update_url</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-847">847</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-833" name="__codelineno-0-833"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_allowed_update_url</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
 <a id="__codelineno-0-834" name="__codelineno-0-834"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if URL is HTTPS GitHub API repos endpoint.</span>
 <a id="__codelineno-0-835" name="__codelineno-0-835"></a>
 <a id="__codelineno-0-836" name="__codelineno-0-836"></a><span class="sd">    Args:</span>
@@ -2529,7 +2529,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-323">323</a></span>
 <span class="normal"><a href="#__codelineno-0-324">324</a></span>
 <span class="normal"><a href="#__codelineno-0-325">325</a></span>
-<span class="normal"><a href="#__codelineno-0-326">326</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="k">def</span> <span class="nf">get_release_url</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-326">326</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_release_url</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return GitHub release URL for specified tag or latest release.</span>
 <a id="__codelineno-0-316" name="__codelineno-0-316"></a>
 <a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">    Args:</span>
@@ -2624,7 +2624,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-199">199</a></span>
 <span class="normal"><a href="#__codelineno-0-200">200</a></span>
 <span class="normal"><a href="#__codelineno-0-201">201</a></span>
-<span class="normal"><a href="#__codelineno-0-202">202</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-159" name="__codelineno-0-159"></a><span class="k">class</span> <span class="nc">_AppState</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-202">202</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-159" name="__codelineno-0-159"></a><span class="k">class</span><span class="w"> </span><span class="nc">_AppState</span><span class="p">:</span>
 <a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutable application state shared across the module.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-161" name="__codelineno-0-161"></a>
 <a id="__codelineno-0-162" name="__codelineno-0-162"></a>    <span class="n">MODEL</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;no-model-passed&quot;</span>
@@ -2641,7 +2641,7 @@ Usage:
 <a id="__codelineno-0-173" name="__codelineno-0-173"></a>    <span class="n">GdkPixbuf</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <a id="__codelineno-0-174" name="__codelineno-0-174"></a>
 <a id="__codelineno-0-175" name="__codelineno-0-175"></a>    <span class="nd">@classmethod</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a>    <span class="k">def</span> <span class="nf">apply_cli_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-176" name="__codelineno-0-176"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">apply_cli_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply parsed CLI args to app state.</span>
 <a id="__codelineno-0-178" name="__codelineno-0-178"></a>
 <a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="sd">        Converts script_dir to absolute path.</span>
@@ -2656,7 +2656,7 @@ Usage:
 <a id="__codelineno-0-188" name="__codelineno-0-188"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">auto_start_daemon</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span>
 <a id="__codelineno-0-189" name="__codelineno-0-189"></a>
 <a id="__codelineno-0-190" name="__codelineno-0-190"></a>    <span class="nd">@classmethod</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="k">def</span> <span class="nf">set_gtk_modules</span><span class="p">(</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_gtk_modules</span><span class="p">(</span>
 <a id="__codelineno-0-192" name="__codelineno-0-192"></a>        <span class="bp">cls</span><span class="p">,</span>
 <a id="__codelineno-0-193" name="__codelineno-0-193"></a>        <span class="n">gtk_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
 <a id="__codelineno-0-194" name="__codelineno-0-194"></a>        <span class="n">glib_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
@@ -3024,7 +3024,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-186">186</a></span>
 <span class="normal"><a href="#__codelineno-0-187">187</a></span>
 <span class="normal"><a href="#__codelineno-0-188">188</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-175" name="__codelineno-0-175"></a><span class="nd">@classmethod</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="k">def</span> <span class="nf">apply_cli_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply_cli_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply parsed CLI args to app state.</span>
 <a id="__codelineno-0-178" name="__codelineno-0-178"></a>
 <a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="sd">    Converts script_dir to absolute path.</span>
@@ -3078,7 +3078,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-200">200</a></span>
 <span class="normal"><a href="#__codelineno-0-201">201</a></span>
 <span class="normal"><a href="#__codelineno-0-202">202</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="nd">@classmethod</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="k">def</span> <span class="nf">set_gtk_modules</span><span class="p">(</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="k">def</span><span class="w"> </span><span class="nf">set_gtk_modules</span><span class="p">(</span>
 <a id="__codelineno-0-192" name="__codelineno-0-192"></a>    <span class="bp">cls</span><span class="p">,</span>
 <a id="__codelineno-0-193" name="__codelineno-0-193"></a>    <span class="n">gtk_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
 <a id="__codelineno-0-194" name="__codelineno-0-194"></a>    <span class="n">glib_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
@@ -3197,7 +3197,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-240">240</a></span>
 <span class="normal"><a href="#__codelineno-0-241">241</a></span>
 <span class="normal"><a href="#__codelineno-0-242">242</a></span>
-<span class="normal"><a href="#__codelineno-0-243">243</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="k">def</span> <span class="nf">sync_app_state_for_tests</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-243">243</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="k">def</span><span class="w"> </span><span class="nf">sync_app_state_for_tests</span><span class="p">(</span>
 <a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="n">gtk_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="n">glib_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-208" name="__codelineno-0-208"></a>    <span class="n">app_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

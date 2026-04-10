@@ -1187,7 +1187,7 @@ Usage:
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-603">603</a></span>
 <span class="normal"><a href="#__codelineno-0-604">604</a></span>
-<span class="normal"><a href="#__codelineno-0-605">605</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-603" name="__codelineno-0-603"></a><span class="k">def</span> <span class="nf">_get_config_path</span><span class="p">():</span>
+<span class="normal"><a href="#__codelineno-0-605">605</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-603" name="__codelineno-0-603"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_config_path</span><span class="p">():</span>
 <a id="__codelineno-0-604" name="__codelineno-0-604"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return config file path ~/.config/lmstudio_tray.json.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-605" name="__codelineno-0-605"></a>    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.config/lmstudio_tray.json&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -1256,7 +1256,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-657">657</a></span>
 <span class="normal"><a href="#__codelineno-0-658">658</a></span>
 <span class="normal"><a href="#__codelineno-0-659">659</a></span>
-<span class="normal"><a href="#__codelineno-0-660">660</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-619" name="__codelineno-0-619"></a><span class="k">def</span> <span class="nf">load_config</span><span class="p">():</span>
+<span class="normal"><a href="#__codelineno-0-660">660</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-619" name="__codelineno-0-619"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">():</span>
 <a id="__codelineno-0-620" name="__codelineno-0-620"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load API endpoint config from file.</span>
 <a id="__codelineno-0-621" name="__codelineno-0-621"></a>
 <a id="__codelineno-0-622" name="__codelineno-0-622"></a><span class="sd">    Updates _AppState.API_HOST and API_PORT.</span>
@@ -1395,7 +1395,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-709">709</a></span>
 <span class="normal"><a href="#__codelineno-0-710">710</a></span>
 <span class="normal"><a href="#__codelineno-0-711">711</a></span>
-<span class="normal"><a href="#__codelineno-0-712">712</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-663" name="__codelineno-0-663"></a><span class="k">def</span> <span class="nf">save_config</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="n">api_port</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-712">712</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-663" name="__codelineno-0-663"></a><span class="k">def</span><span class="w"> </span><span class="nf">save_config</span><span class="p">(</span><span class="n">api_host</span><span class="p">,</span> <span class="n">api_port</span><span class="p">):</span>
 <a id="__codelineno-0-664" name="__codelineno-0-664"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Save API endpoint config to file.</span>
 <a id="__codelineno-0-665" name="__codelineno-0-665"></a>
 <a id="__codelineno-0-666" name="__codelineno-0-666"></a><span class="sd">    Raises:</span>
@@ -1477,7 +1477,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-613">613</a></span>
 <span class="normal"><a href="#__codelineno-0-614">614</a></span>
 <span class="normal"><a href="#__codelineno-0-615">615</a></span>
-<span class="normal"><a href="#__codelineno-0-616">616</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-608" name="__codelineno-0-608"></a><span class="k">def</span> <span class="nf">_normalize_api_port</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-616">616</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-608" name="__codelineno-0-608"></a><span class="k">def</span><span class="w"> </span><span class="nf">_normalize_api_port</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
 <a id="__codelineno-0-609" name="__codelineno-0-609"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate and return port as int (1-65535) or None if invalid.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-610" name="__codelineno-0-610"></a>    <span class="k">try</span><span class="p">:</span>
 <a id="__codelineno-0-611" name="__codelineno-0-611"></a>        <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -1613,7 +1613,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-760">760</a></span>
 <span class="normal"><a href="#__codelineno-0-761">761</a></span>
 <span class="normal"><a href="#__codelineno-0-762">762</a></span>
-<span class="normal"><a href="#__codelineno-0-763">763</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-752" name="__codelineno-0-752"></a><span class="k">def</span> <span class="nf">get_api_base_url</span><span class="p">():</span>
+<span class="normal"><a href="#__codelineno-0-763">763</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-752" name="__codelineno-0-752"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_api_base_url</span><span class="p">():</span>
 <a id="__codelineno-0-753" name="__codelineno-0-753"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return base API URL from _AppState config.</span>
 <a id="__codelineno-0-754" name="__codelineno-0-754"></a>
 <a id="__codelineno-0-755" name="__codelineno-0-755"></a><span class="sd">    Returns:</span>
@@ -1651,7 +1651,7 @@ Usage:
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-766">766</a></span>
 <span class="normal"><a href="#__codelineno-0-767">767</a></span>
-<span class="normal"><a href="#__codelineno-0-768">768</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-766" name="__codelineno-0-766"></a><span class="k">def</span> <span class="nf">get_api_models_url</span><span class="p">():</span>
+<span class="normal"><a href="#__codelineno-0-768">768</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-766" name="__codelineno-0-766"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_api_models_url</span><span class="p">():</span>
 <a id="__codelineno-0-767" name="__codelineno-0-767"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return full API models endpoint URL.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-768" name="__codelineno-0-768"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_api_base_url</span><span class="p">()</span><span class="si">}</span><span class="s2">/v1/models&quot;</span>
 </code></pre></div></td></tr></table></div>
@@ -1728,7 +1728,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-883">883</a></span>
 <span class="normal"><a href="#__codelineno-0-884">884</a></span>
 <span class="normal"><a href="#__codelineno-0-885">885</a></span>
-<span class="normal"><a href="#__codelineno-0-886">886</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-882" name="__codelineno-0-882"></a><span class="k">def</span> <span class="nf">get_lms_cmd</span><span class="p">():</span>
+<span class="normal"><a href="#__codelineno-0-886">886</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-882" name="__codelineno-0-882"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_lms_cmd</span><span class="p">():</span>
 <a id="__codelineno-0-883" name="__codelineno-0-883"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return LM Studio CLI path if executable, else resolve from PATH.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-884" name="__codelineno-0-884"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">LMS_CLI</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">LMS_CLI</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
 <a id="__codelineno-0-885" name="__codelineno-0-885"></a>        <span class="k">return</span> <span class="n">LMS_CLI</span>
@@ -1812,7 +1812,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-943">943</a></span>
 <span class="normal"><a href="#__codelineno-0-944">944</a></span>
 <span class="normal"><a href="#__codelineno-0-945">945</a></span>
-<span class="normal"><a href="#__codelineno-0-946">946</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-892" name="__codelineno-0-892"></a><span class="k">def</span> <span class="nf">get_llmster_cmd</span><span class="p">():</span>
+<span class="normal"><a href="#__codelineno-0-946">946</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-892" name="__codelineno-0-892"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_llmster_cmd</span><span class="p">():</span>
 <a id="__codelineno-0-893" name="__codelineno-0-893"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return llmster path from PATH or install dir.</span>
 <a id="__codelineno-0-894" name="__codelineno-0-894"></a>
 <a id="__codelineno-0-895" name="__codelineno-0-895"></a><span class="sd">    Includes debug logging on changes.</span>
@@ -1906,7 +1906,7 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-960">960</a></span>
 <span class="normal"><a href="#__codelineno-0-961">961</a></span>
 <span class="normal"><a href="#__codelineno-0-962">962</a></span>
-<span class="normal"><a href="#__codelineno-0-963">963</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-949" name="__codelineno-0-949"></a><span class="k">def</span> <span class="nf">_has_loaded_model</span><span class="p">(</span><span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-963">963</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-949" name="__codelineno-0-949"></a><span class="k">def</span><span class="w"> </span><span class="nf">_has_loaded_model</span><span class="p">(</span><span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <a id="__codelineno-0-950" name="__codelineno-0-950"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if lms ps output indicates loaded model.</span>
 <a id="__codelineno-0-951" name="__codelineno-0-951"></a>
 <a id="__codelineno-0-952" name="__codelineno-0-952"></a><span class="sd">    Includes debug logging.</span>

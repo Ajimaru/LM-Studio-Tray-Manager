@@ -18,4 +18,4 @@ mkdocs-material==9.7.5
 mkdocstrings[python]==0.29.1
 
 # Keep syntax-highlighting stable for mkdocstrings source blocks.
-Pygments==2.18.0
+Pygments==2.20.0
