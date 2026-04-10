@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Setup script for LM-Studio-Tray-Manager
 # Checks for LM Studio daemon, desktop app, and sets up Python venv
-# Linux only
+# Supports Linux and macOS
 
 set -e
 
@@ -114,8 +114,12 @@ ask_yes_no() {
     done
 }
 
-if [[ "$OSTYPE" != "linux"* ]]; then
-    print_error "This script only works on Linux"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    IS_MACOS=true
+elif [[ "$OSTYPE" == "linux"* ]]; then
+    IS_MACOS=false
+else
+    print_error "This script only works on Linux and macOS (detected: $OSTYPE)"
     exit 1
 fi
 
@@ -189,108 +193,187 @@ log_output "INFO" "Step 2: Checking for LM Studio desktop app"
 FOUND_PKG=false
 APP_INSTALLED=false
 
-if dpkg -l | grep -q lm-studio; then
-    print_step "LM Studio desktop app found (deb package)"
-    log_output "INFO" "LM Studio desktop app installed via deb package"
-    APP_INSTALLED=true
-    FOUND_PKG=true
-elif command -v rpm >/dev/null 2>&1 && rpm -q lm-studio >/dev/null 2>&1; then
-    print_step "LM Studio desktop app found (rpm package)"
-    log_output "INFO" "LM Studio desktop app installed via rpm package"
-    APP_INSTALLED=true
-    FOUND_PKG=true
-elif command -v pacman >/dev/null 2>&1 && pacman -Qi lm-studio >/dev/null 2>&1; then
-    print_step "LM Studio desktop app found (pacman package)"
-    log_output "INFO" "LM Studio desktop app installed via pacman"
-    APP_INSTALLED=true
-    FOUND_PKG=true
-fi
-
-log_output "DEBUG" "Searching for AppImage in common locations"
-for appimage_path in "$SCRIPT_DIR" "$HOME/LM_Studio" "$HOME/Applications" "$HOME/.local/bin" "$HOME/Apps" "/opt/lm-studio"; do
-    if [ -d "$appimage_path" ]; then
-        for appimage_file in "$appimage_path"/*.AppImage "$appimage_path"/LM-Studio* "$appimage_path"/LM\ Studio*; do
-            if [ -f "$appimage_file" ]; then
-                print_step "LM Studio desktop app found (AppImage)"
-                log_output "INFO" "LM Studio desktop app found (AppImage) at: $appimage_file"
-                APP_INSTALLED=true
-                APPIMAGE_PATH="$appimage_path"
-                break 2
-            fi
-        done
+if [ "$IS_MACOS" = true ]; then
+    # macOS: look for LM Studio.app bundle
+    for _app_loc in "/Applications/LM Studio.app" \
+                    "$HOME/Applications/LM Studio.app"; do
+        if [ -d "$_app_loc" ]; then
+            print_step "LM Studio desktop app found (macOS .app bundle)"
+            log_output "INFO" \
+                "LM Studio desktop app found at: $_app_loc"
+            APP_INSTALLED=true
+            FOUND_PKG=true
+            break
+        fi
+    done
+else
+    if dpkg -l 2>/dev/null | grep -q lm-studio; then
+        print_step "LM Studio desktop app found (deb package)"
+        log_output "INFO" "LM Studio desktop app installed via deb package"
+        APP_INSTALLED=true
+        FOUND_PKG=true
+    elif command -v rpm >/dev/null 2>&1 && rpm -q lm-studio >/dev/null 2>&1; then
+        print_step "LM Studio desktop app found (rpm package)"
+        log_output "INFO" "LM Studio desktop app installed via rpm package"
+        APP_INSTALLED=true
+        FOUND_PKG=true
+    elif command -v pacman >/dev/null 2>&1 && pacman -Qi lm-studio >/dev/null 2>&1; then
+        print_step "LM Studio desktop app found (pacman package)"
+        log_output "INFO" "LM Studio desktop app installed via pacman"
+        APP_INSTALLED=true
+        FOUND_PKG=true
     fi
-done
+
+    log_output "DEBUG" "Searching for AppImage in common locations"
+    for appimage_path in "$SCRIPT_DIR" "$HOME/LM_Studio" \
+                         "$HOME/Applications" "$HOME/.local/bin" \
+                         "$HOME/Apps" "/opt/lm-studio"; do
+        if [ -d "$appimage_path" ]; then
+            for appimage_file in \
+                "$appimage_path"/*.AppImage \
+                "$appimage_path"/LM-Studio* \
+                "$appimage_path"/LM\ Studio*; do
+                if [ -f "$appimage_file" ]; then
+                    print_step "LM Studio desktop app found (AppImage)"
+                    log_output "INFO" \
+"LM Studio desktop app found (AppImage) at: $appimage_file"
+                    APP_INSTALLED=true
+                    APPIMAGE_PATH="$appimage_path"
+                    break 2
+                fi
+            done
+        fi
+    done
+fi
 
 if [ "$APP_INSTALLED" = false ]; then
     print_warning "LM Studio desktop app not found"
     log_output "WARN" \
-"LM Studio desktop app not found (checked native packages and AppImage locations)"
+"LM Studio desktop app not found"
     echo ""
     print_info "The desktop app is required for the --gui option."
-    print_info "Choose installation method:"
-    print_info "  1) Download installer/package from lmstudio.ai"
-    print_info "  2) Use AppImage (manual download)"
-    print_info "  3) Skip (can be installed later)"
-    echo ""
-    if [ "$DRY_RUN" = "1" ]; then
-        print_info "[DRY-RUN] Would prompt for desktop app installation method"
-        print_warning "Desktop app missing; --gui option would not work until installed"
-        log_output "INFO" "DRY-RUN: Would prompt user for desktop app installation method"
-        app_choice=3
-    else
-        read -p "Choose option [1-3]: " -r app_choice
-        log_output "INFO" "User selected desktop app installation option: $app_choice"
-    fi
-
-    case "$app_choice" in
-        1)
-            log_output "INFO" "User chose to download LM Studio installer"
-            echo "Opening LM Studio download page..."
-            if [ "$DRY_RUN" = "1" ]; then
-                print_info "[DRY-RUN] Would open https://lmstudio.ai/download"
-            elif command -v xdg-open >/dev/null 2>&1; then
-                log_output "INFO" "Opening download page with xdg-open"
-                xdg-open "https://lmstudio.ai/download" &
-            elif command -v firefox >/dev/null 2>&1; then
-                log_output "INFO" "Opening download page with firefox"
-                firefox "https://lmstudio.ai/download" &
-            else
-                log_output "INFO" "No browser launcher found, displaying URL"
-                echo "Please visit: https://lmstudio.ai/download"
-            fi
+    if [ "$IS_MACOS" = true ]; then
+        print_info "Choose installation method:"
+        print_info "  1) Download from lmstudio.ai (installs to /Applications)"
+        print_info "  2) Skip (can be installed later)"
+        echo ""
+        if [ "$DRY_RUN" = "1" ]; then
+            print_info \
+                "[DRY-RUN] Would prompt for desktop app installation method"
             print_warning \
+                "Desktop app missing; --gui option would not work until installed"
+            log_output "INFO" \
+                "DRY-RUN: Would prompt user for desktop app installation method"
+            app_choice=2
+        else
+            read -p "Choose option [1-2]: " -r app_choice
+            log_output "INFO" \
+                "User selected desktop app option: $app_choice"
+        fi
+        case "$app_choice" in
+            1)
+                log_output "INFO" "User chose to download LM Studio"
+                echo "Opening LM Studio download page..."
+                if [ "$DRY_RUN" = "1" ]; then
+                    print_info \
+                        "[DRY-RUN] Would open https://lmstudio.ai/download"
+                else
+                    open "https://lmstudio.ai/download" 2>/dev/null \
+                        || echo "Please visit: https://lmstudio.ai/download"
+                    log_output "INFO" "Opened download page"
+                fi
+                print_warning \
+"Download and install LM Studio, then run this script again"
+                log_output "WARN" "Setup paused - waiting for LM Studio"
+                ;;
+            2)
+                log_output "INFO" "Desktop app installation skipped"
+                print_warning \
+"Desktop app skipped. The --gui option won't work until installed."
+                ;;
+            *)
+                log_output "ERROR" "Invalid option: $app_choice"
+                print_error "Invalid option"
+                ;;
+        esac
+    else
+        print_info "Choose installation method:"
+        print_info "  1) Download installer/package from lmstudio.ai"
+        print_info "  2) Use AppImage (manual download)"
+        print_info "  3) Skip (can be installed later)"
+        echo ""
+        if [ "$DRY_RUN" = "1" ]; then
+            print_info \
+                "[DRY-RUN] Would prompt for desktop app installation method"
+            print_warning \
+                "Desktop app missing; --gui option would not work until installed"
+            log_output "INFO" \
+                "DRY-RUN: Would prompt user for desktop app installation method"
+            app_choice=3
+        else
+            read -p "Choose option [1-3]: " -r app_choice
+            log_output "INFO" \
+                "User selected desktop app installation option: $app_choice"
+        fi
+
+        case "$app_choice" in
+            1)
+                log_output "INFO" "User chose to download LM Studio installer"
+                echo "Opening LM Studio download page..."
+                if [ "$DRY_RUN" = "1" ]; then
+                    print_info \
+                        "[DRY-RUN] Would open https://lmstudio.ai/download"
+                elif command -v xdg-open >/dev/null 2>&1; then
+                    log_output "INFO" "Opening download page with xdg-open"
+                    xdg-open "https://lmstudio.ai/download" &
+                elif command -v firefox >/dev/null 2>&1; then
+                    log_output "INFO" "Opening download page with firefox"
+                    firefox "https://lmstudio.ai/download" &
+                else
+                    log_output "INFO" "No browser launcher found, displaying URL"
+                    echo "Please visit: https://lmstudio.ai/download"
+                fi
+                print_warning \
 "Download and install LM Studio for your distro, then run this script again"
-            log_output "WARN" "Setup paused - waiting for LM Studio installation"
-            ;;
-        2)
-            log_output "INFO" "User chose AppImage installation"
-            print_info "Enter path to AppImage file (or directory containing it): "
-            read -r appimage_input
-            log_output "INFO" "User provided AppImage path: $appimage_input"
-            if [ -f "$appimage_input" ]; then
-                APPIMAGE_PATH="$appimage_input"
-                print_step "AppImage path set to: $APPIMAGE_PATH"
-                log_output "INFO" "AppImage file validated: $APPIMAGE_PATH"
-                APP_INSTALLED=true
-            elif [ -d "$appimage_input" ]; then
-                APPIMAGE_PATH="$appimage_input"
-                print_step "AppImage directory set to: $APPIMAGE_PATH"
-                log_output "INFO" "AppImage directory validated: $APPIMAGE_PATH"
-                APP_INSTALLED=true
-            else
-                print_error "Invalid path: $appimage_input"
-                log_output "ERROR" "Invalid AppImage path provided: $appimage_input"
-            fi
-            ;;
-        3)
-            log_output "INFO" "Desktop app installation skipped by user"
-            print_warning "Desktop app installation skipped. The --gui option won't work until you install it."
-            ;;
-        *)
-            log_output "ERROR" "Invalid desktop app installation option: $app_choice"
-            print_error "Invalid option"
-            ;;
-    esac
+                log_output "WARN" "Setup paused - waiting for LM Studio"
+                ;;
+            2)
+                log_output "INFO" "User chose AppImage installation"
+                print_info \
+"Enter path to AppImage file (or directory containing it): "
+                read -r appimage_input
+                log_output "INFO" \
+                    "User provided AppImage path: $appimage_input"
+                if [ -f "$appimage_input" ]; then
+                    APPIMAGE_PATH="$appimage_input"
+                    print_step "AppImage path set to: $APPIMAGE_PATH"
+                    log_output "INFO" \
+                        "AppImage file validated: $APPIMAGE_PATH"
+                    APP_INSTALLED=true
+                elif [ -d "$appimage_input" ]; then
+                    APPIMAGE_PATH="$appimage_input"
+                    print_step "AppImage directory set to: $APPIMAGE_PATH"
+                    log_output "INFO" \
+                        "AppImage directory validated: $APPIMAGE_PATH"
+                    APP_INSTALLED=true
+                else
+                    print_error "Invalid path: $appimage_input"
+                    log_output "ERROR" \
+                        "Invalid AppImage path provided: $appimage_input"
+                fi
+                ;;
+            3)
+                log_output "INFO" "Desktop app installation skipped by user"
+                print_warning \
+"Desktop app skipped. The --gui option won't work until installed."
+                ;;
+            *)
+                log_output "ERROR" \
+                    "Invalid desktop app installation option: $app_choice"
+                print_error "Invalid option"
+                ;;
+        esac
+    fi
 fi
 
 if [ "$APP_INSTALLED" = true ]; then
@@ -415,7 +498,9 @@ else
 fi
 
 # ============================================================================
-# 4. Check GTK3/GObject typelibs (required by both binary and Python releases)
+# 4. Check tray dependencies
+#    - macOS: check for rumps Python package
+#    - Linux: check GTK3/GObject typelibs
 # ============================================================================
 
 check_gtk_typelibs() {
@@ -445,138 +530,287 @@ PYCODE
     return 0
 }
 
+check_rumps() {
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - <<'PYCODE' >/dev/null 2>&1
+import rumps  # noqa: F401
+PYCODE
+        return $?
+    fi
+    return 1
+}
 
-echo -e "\n${BLUE}Step 4: Checking GTK3/GObject typelibs${NC}"
-log_output "INFO" "Step 4: Checking for GTK3/GObject typelibs"
+if [ "$IS_MACOS" = true ]; then
+    echo -e "\n${BLUE}Step 4: Checking rumps (macOS tray library)${NC}"
+    log_output "INFO" "Step 4: Checking for rumps Python package (macOS)"
 
-if [ "$APPIMAGE_RELEASE" = true ]; then
-    print_step "Skipped (AppImage bundles its own GTK3 runtime)"
-    log_output "INFO" \
-        "Step 4: Skipped GTK3 check (AppImage release bundles its own GTK3)"
-elif check_gtk_typelibs; then
-    print_step "GTK3/GObject typelibs already available"
-    log_output "INFO" "GTK3/GObject typelibs detected"
-else
-    print_warning "GTK3/GObject typelibs not found"
-    log_output "WARN" "GTK3/GObject typelibs missing"
-    echo ""
-    print_info "The application requires GTK3/GObject typelibs (gir1.2-gtk-3.0),"
-    print_info "an AppIndicator3 typelib (gir1.2-ayatanaappindicator3-0.1 or the"
-    print_info "equivalent package for your distribution), and the Python3 GObject"
-    print_info "bindings package (python3-gi)."
-    if [ "$DRY_RUN" = "1" ]; then
-        print_info "[DRY-RUN] Would install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 python3-gi"
-        log_output "INFO" "DRY-RUN: GTK typelibs and python3-gi installation skipped"
+    if [ "$BINARY_RELEASE" = true ]; then
+        print_step "Skipped (binary release bundles its own dependencies)"
+        log_output "INFO" "Step 4: Skipped rumps check (binary release)"
+    elif check_rumps; then
+        print_step "rumps is already installed"
+        log_output "INFO" "rumps Python package detected"
     else
-        if ask_yes_no "Install required GTK3, AppIndicator, and python3-gi packages now?"; then
-            log_output "INFO" "User chose to install GTK3 typelibs and python3-gi"
-            echo "Updating package manager..."
-            log_output "INFO" "Running apt update"
-            sudo apt update
-            echo "Installing GTK3, AppIndicator typelibs, and python3-gi..."
-            log_output "INFO" "Installing packages: gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 python3-gi"
-            if sudo apt install -y gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 python3-gi; then
-                print_step "GTK3 typelibs and python3-gi installed successfully"
-                log_output "INFO" "GTK3 typelibs and python3-gi installed successfully"
+        print_warning "rumps not found"
+        log_output "WARN" "rumps Python package missing"
+        echo ""
+        print_info "The macOS tray backend requires the 'rumps' Python package."
+        if [ "$DRY_RUN" = "1" ]; then
+            print_info "[DRY-RUN] Would install: pip install rumps"
+            log_output "INFO" "DRY-RUN: Would install rumps via pip"
+        else
+            if ask_yes_no "Install rumps now (pip install rumps)?"; then
+                log_output "INFO" "User chose to install rumps"
+                if pip3 install rumps; then
+                    print_step "rumps installed successfully"
+                    log_output "INFO" "rumps installed successfully"
+                else
+                    print_error "Failed to install rumps"
+                    log_output "ERROR" "pip install rumps failed"
+                    exit 1
+                fi
             else
-                print_error "Failed to install GTK3 typelibs"
-                log_output "ERROR" "GTK3 typelibs installation failed"
+                log_output "ERROR" \
+                    "User declined rumps installation - setup cancelled"
+                print_error "rumps is required on macOS. Setup cancelled."
                 exit 1
             fi
+        fi
+    fi
+else
+    echo -e "\n${BLUE}Step 4: Checking GTK3/GObject typelibs${NC}"
+    log_output "INFO" "Step 4: Checking for GTK3/GObject typelibs"
+
+    if [ "$APPIMAGE_RELEASE" = true ]; then
+        print_step "Skipped (AppImage bundles its own GTK3 runtime)"
+        log_output "INFO" \
+            "Step 4: Skipped GTK3 check (AppImage release)"
+    elif check_gtk_typelibs; then
+        print_step "GTK3/GObject typelibs already available"
+        log_output "INFO" "GTK3/GObject typelibs detected"
+    else
+        print_warning "GTK3/GObject typelibs not found"
+        log_output "WARN" "GTK3/GObject typelibs missing"
+        echo ""
+        print_info \
+"The application requires GTK3/GObject typelibs (gir1.2-gtk-3.0),"
+        print_info \
+"an AppIndicator3 typelib (gir1.2-ayatanaappindicator3-0.1 or the"
+        print_info \
+"equivalent package for your distribution), and the Python3 GObject"
+        print_info "bindings package (python3-gi)."
+        if [ "$DRY_RUN" = "1" ]; then
+            print_info \
+"[DRY-RUN] Would install gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 python3-gi"
+            log_output "INFO" \
+                "DRY-RUN: GTK typelibs and python3-gi installation skipped"
         else
-            log_output "ERROR" \
+            if ask_yes_no \
+"Install required GTK3, AppIndicator, and python3-gi packages now?"; then
+                log_output "INFO" \
+                    "User chose to install GTK3 typelibs and python3-gi"
+                echo "Updating package manager..."
+                log_output "INFO" "Running apt update"
+                sudo apt update
+                echo "Installing GTK3, AppIndicator typelibs, and python3-gi..."
+                log_output "INFO" \
+"Installing: gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 python3-gi"
+                if sudo apt install -y \
+                    gir1.2-gtk-3.0 \
+                    gir1.2-ayatanaappindicator3-0.1 \
+                    python3-gi; then
+                    print_step \
+                        "GTK3 typelibs and python3-gi installed successfully"
+                    log_output "INFO" \
+                        "GTK3 typelibs and python3-gi installed successfully"
+                else
+                    print_error "Failed to install GTK3 typelibs"
+                    log_output "ERROR" "GTK3 typelibs installation failed"
+                    exit 1
+                fi
+            else
+                log_output "ERROR" \
 "User declined GTK3 typelibs installation - setup cancelled"
-            print_error "GTK3/GObject libraries are required. Setup cancelled."
-            exit 1
+                print_error \
+                    "GTK3/GObject libraries are required. Setup cancelled."
+                exit 1
+            fi
         fi
     fi
 fi
 
 # ============================================================================
-# 5. Check Python + PyGObject compatibility (only for Python package releases)
+# 5. Check Python compatibility (Python package releases only)
 # ============================================================================
 if [ "$BINARY_RELEASE" = false ]; then
-    echo -e "\n${BLUE}Step 5: Checking Python + PyGObject compatibility${NC}"
-    log_output "INFO" "Step 5: Looking for Python interpreter with working gi"
+    if [ "$IS_MACOS" = true ]; then
+        echo -e "\n${BLUE}Step 5: Checking Python + rumps compatibility${NC}"
+        log_output "INFO" "Step 5: Looking for Python with working rumps (macOS)"
 
-    PYTHON_PATH=""
-    for candidate in \
-        python3 \
-        python3.13 python3.12 python3.11 python3.10 \
-        python3.9 python3.8
-    do
-        if ! command -v "$candidate" >/dev/null 2>&1; then
-            continue
-        fi
-
-        CANDIDATE_PATH=$(command -v "$candidate")
-        if "$CANDIDATE_PATH" - <<'PYCODE' >/dev/null 2>&1
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk  # noqa: F401
+        PYTHON_PATH=""
+        for candidate in \
+            python3 \
+            python3.13 python3.12 python3.11 python3.10 \
+            python3.9 python3.8
+        do
+            if ! command -v "$candidate" >/dev/null 2>&1; then
+                continue
+            fi
+            CANDIDATE_PATH=$(command -v "$candidate")
+            if "$CANDIDATE_PATH" - <<'PYCODE' >/dev/null 2>&1
+import rumps  # noqa: F401
 PYCODE
-        then
-            PYTHON_PATH="$CANDIDATE_PATH"
-            break
-        fi
-    done
+            then
+                PYTHON_PATH="$CANDIDATE_PATH"
+                break
+            fi
+        done
 
-    if [ -n "$PYTHON_PATH" ]; then
-        PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
-        print_step "Compatible Python interpreter found"
-        echo "   $PYTHON_VERSION"
-        echo "   Path: $PYTHON_PATH"
-        log_output "INFO" "Compatible interpreter: $PYTHON_VERSION ($PYTHON_PATH)"
-    else
-        print_warning "No Python interpreter with working PyGObject found"
-        log_output "WARN" "No interpreter with successful gi import"
-        echo ""
-        print_info "No installed Python on this system can currently import gi."
-        print_info "The setup needs a Python interpreter with GTK3/PyGObject support."
-
-        if [ "$DRY_RUN" = "1" ]; then
-            print_info "[DRY-RUN] Would install: python3 python3-venv python3-gi"
-            print_info "[DRY-RUN] Would then re-check gi import with python3"
-            log_output "INFO" "DRY-RUN: Would install python3/python3-venv/python3-gi"
+        if [ -n "$PYTHON_PATH" ]; then
+            PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
+            print_step "Compatible Python interpreter found"
+            echo "   $PYTHON_VERSION"
+            echo "   Path: $PYTHON_PATH"
+            log_output "INFO" \
+                "Compatible interpreter: $PYTHON_VERSION ($PYTHON_PATH)"
         else
-            if ask_yes_no "Install python3, python3-venv and python3-gi now?"; then
-                log_output "INFO" "User accepted Python + PyGObject installation"
-                echo "Updating package manager..."
-                log_output "INFO" "Running apt update"
-                sudo apt update
-                echo "Installing python3, python3-venv and python3-gi..."
-                log_output "INFO" "Installing packages: python3 python3-venv python3-gi"
-                if ! sudo apt install -y python3 python3-venv python3-gi; then
-                    print_error "Failed to install Python/PyGObject packages"
-                    log_output "ERROR" "apt install failed for python3 python3-venv python3-gi"
+            print_warning "No Python with working rumps found"
+            log_output "WARN" "No interpreter with successful rumps import"
+            echo ""
+            print_info \
+                "No installed Python can import rumps."
+            print_info \
+                "The setup needs a Python interpreter with rumps installed."
+
+            if [ "$DRY_RUN" = "1" ]; then
+                print_info \
+                    "[DRY-RUN] Would install: pip3 install rumps"
+                log_output "INFO" \
+                    "DRY-RUN: Would install rumps for Python"
+            else
+                if ask_yes_no "Install rumps now (pip3 install rumps)?"; then
+                    log_output "INFO" "User accepted rumps installation"
+                    if pip3 install rumps; then
+                        PYTHON_PATH=$(command -v python3)
+                        PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
+                        print_step "rumps installed"
+                        echo "   $PYTHON_VERSION"
+                        echo "   Path: $PYTHON_PATH"
+                        log_output "INFO" \
+"rumps installed, using: $PYTHON_VERSION ($PYTHON_PATH)"
+                    else
+                        print_error "Failed to install rumps"
+                        log_output "ERROR" "pip3 install rumps failed"
+                        exit 1
+                    fi
+                else
+                    print_error "rumps is required on macOS. Setup cancelled."
+                    log_output "ERROR" \
+                        "User declined rumps installation"
                     exit 1
                 fi
+            fi
+        fi
+    else
+        echo -e "\n${BLUE}Step 5: Checking Python + PyGObject compatibility${NC}"
+        log_output "INFO" "Step 5: Looking for Python interpreter with working gi"
 
-                if command -v python3 >/dev/null 2>&1 && \
-                   python3 - <<'PYCODE' >/dev/null 2>&1
+        PYTHON_PATH=""
+        for candidate in \
+            python3 \
+            python3.13 python3.12 python3.11 python3.10 \
+            python3.9 python3.8
+        do
+            if ! command -v "$candidate" >/dev/null 2>&1; then
+                continue
+            fi
+
+            CANDIDATE_PATH=$(command -v "$candidate")
+            if "$CANDIDATE_PATH" - <<'PYCODE' >/dev/null 2>&1
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa: F401
 PYCODE
-                then
-                    PYTHON_PATH=$(command -v python3)
-                    PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
-                    print_step "Compatible Python interpreter installed"
-                    echo "   $PYTHON_VERSION"
-                    echo "   Path: $PYTHON_PATH"
-                    log_output "INFO" "Interpreter installed and validated: $PYTHON_VERSION ($PYTHON_PATH)"
+            then
+                PYTHON_PATH="$CANDIDATE_PATH"
+                break
+            fi
+        done
+
+        if [ -n "$PYTHON_PATH" ]; then
+            PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
+            print_step "Compatible Python interpreter found"
+            echo "   $PYTHON_VERSION"
+            echo "   Path: $PYTHON_PATH"
+            log_output "INFO" \
+                "Compatible interpreter: $PYTHON_VERSION ($PYTHON_PATH)"
+        else
+            print_warning "No Python interpreter with working PyGObject found"
+            log_output "WARN" "No interpreter with successful gi import"
+            echo ""
+            print_info \
+                "No installed Python on this system can currently import gi."
+            print_info \
+                "The setup needs a Python interpreter with GTK3/PyGObject support."
+
+            if [ "$DRY_RUN" = "1" ]; then
+                print_info \
+                    "[DRY-RUN] Would install: python3 python3-venv python3-gi"
+                print_info \
+                    "[DRY-RUN] Would then re-check gi import with python3"
+                log_output "INFO" \
+                    "DRY-RUN: Would install python3/python3-venv/python3-gi"
+            else
+                if ask_yes_no \
+"Install python3, python3-venv and python3-gi now?"; then
+                    log_output "INFO" \
+                        "User accepted Python + PyGObject installation"
+                    echo "Updating package manager..."
+                    log_output "INFO" "Running apt update"
+                    sudo apt update
+                    echo "Installing python3, python3-venv and python3-gi..."
+                    log_output "INFO" \
+"Installing packages: python3 python3-venv python3-gi"
+                    if ! sudo apt install -y python3 python3-venv python3-gi; then
+                        print_error "Failed to install Python/PyGObject packages"
+                        log_output "ERROR" \
+"apt install failed for python3 python3-venv python3-gi"
+                        exit 1
+                    fi
+
+                    if command -v python3 >/dev/null 2>&1 && \
+                       python3 - <<'PYCODE' >/dev/null 2>&1
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk  # noqa: F401
+PYCODE
+                    then
+                        PYTHON_PATH=$(command -v python3)
+                        PYTHON_VERSION=$("$PYTHON_PATH" --version 2>&1)
+                        print_step "Compatible Python interpreter installed"
+                        echo "   $PYTHON_VERSION"
+                        echo "   Path: $PYTHON_PATH"
+                        log_output "INFO" \
+"Interpreter installed and validated: $PYTHON_VERSION ($PYTHON_PATH)"
+                    else
+                        print_error \
+                            "python3 was installed, but gi import still fails"
+                        print_info \
+"Use binary release or install matching PyGObject packages"
+                        print_info \
+"for one local Python interpreter, then run setup again."
+                        log_output "ERROR" "Post-install gi validation failed"
+                        exit 1
+                    fi
                 else
-                    print_error "python3 was installed, but gi import still fails"
-                    print_info "Use binary release or install matching PyGObject packages"
-                    print_info "for one local Python interpreter, then run setup again."
-                    log_output "ERROR" "Post-install gi validation failed"
+                    print_error \
+"A Python interpreter with working PyGObject is required."
+                    print_info \
+                        "Alternatively, use the binary release without Python setup."
+                    log_output "ERROR" \
+                        "User declined Python/PyGObject installation"
                     exit 1
                 fi
-            else
-                print_error "A Python interpreter with working PyGObject is required."
-                print_info "Alternatively, use the binary release without Python setup."
-                log_output "ERROR" "User declined Python/PyGObject installation"
-                exit 1
             fi
         fi
     fi
@@ -594,9 +828,16 @@ if [ "$BINARY_RELEASE" = false ]; then
             print_info "[DRY-RUN] Would remove existing venv: $VENV_DIR"
             log_output "INFO" "DRY-RUN: Would remove existing venv at $VENV_DIR"
         fi
-        print_info "[DRY-RUN] Would create venv: ${PYTHON_PATH:-python3} -m venv --system-site-packages $VENV_DIR"
-        print_info "[DRY-RUN] Would upgrade pip/setuptools in venv"
-        log_output "INFO" "DRY-RUN: Would create venv and upgrade pip/setuptools"
+        if [ "$IS_MACOS" = true ]; then
+            print_info \
+"[DRY-RUN] Would create venv: ${PYTHON_PATH:-python3} -m venv $VENV_DIR"
+            print_info "[DRY-RUN] Would install rumps into venv"
+        else
+            print_info \
+"[DRY-RUN] Would create venv: ${PYTHON_PATH:-python3} -m venv --system-site-packages $VENV_DIR"
+            print_info "[DRY-RUN] Would upgrade pip/setuptools in venv"
+        fi
+        log_output "INFO" "DRY-RUN: Would create venv and install dependencies"
         print_step "Dry-run: venv step simulated"
     else
         if [ -d "$VENV_DIR" ]; then
@@ -605,8 +846,10 @@ if [ "$BINARY_RELEASE" = false ]; then
 
             case "$VENV_DIR" in
                 ""|"/"|"."|".." )
-                    print_error "Refusing to remove unsafe venv path: '$VENV_DIR'"
-                    log_output "ERROR" "Unsafe venv path detected: '$VENV_DIR' - refusing to remove"
+                    print_error \
+                        "Refusing to remove unsafe venv path: '$VENV_DIR'"
+                    log_output "ERROR" \
+"Unsafe venv path detected: '$VENV_DIR' - refusing to remove"
                     exit 1
                     ;;
             esac
@@ -616,8 +859,10 @@ if [ "$BINARY_RELEASE" = false ]; then
             log_output "DEBUG" "Venv absolute path: $VENV_ABS"
             log_output "DEBUG" "Script absolute path: $SCRIPT_ABS"
             if [ -z "$VENV_ABS" ]; then
-                print_error "Cannot resolve venv path '$VENV_DIR' (symlink or permission issue)"
-                log_output "ERROR" "Failed to resolve absolute path for venv '$VENV_DIR'"
+                print_error \
+"Cannot resolve venv path '$VENV_DIR' (symlink or permission issue)"
+                log_output "ERROR" \
+"Failed to resolve absolute path for venv '$VENV_DIR'"
                 exit 1
             fi
             case "$VENV_ABS" in
@@ -633,40 +878,102 @@ if [ "$BINARY_RELEASE" = false ]; then
             esac
         fi
 
-        echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
-        log_output "INFO" "Creating Python venv at $VENV_DIR with system-site-packages"
-        if "${PYTHON_PATH:-python3}" -m venv --system-site-packages "$VENV_DIR"; then
-            print_step "Virtual environment created"
-            log_output "INFO" "Virtual environment created successfully at $VENV_DIR"
-        else
-            print_error "Failed to create virtual environment"
-            log_output "ERROR" "Failed to create venv at $VENV_DIR"
-            exit 1
-        fi
+        if [ "$IS_MACOS" = true ]; then
+            echo "Creating venv (macOS / rumps)..."
+            log_output "INFO" \
+                "Creating Python venv at $VENV_DIR (macOS, no system-site-packages)"
+            if "${PYTHON_PATH:-python3}" -m venv "$VENV_DIR"; then
+                print_step "Virtual environment created"
+                log_output "INFO" \
+                    "Virtual environment created successfully at $VENV_DIR"
+            else
+                print_error "Failed to create virtual environment"
+                log_output "ERROR" "Failed to create venv at $VENV_DIR"
+                exit 1
+            fi
 
-        print_info "Upgrading pip and setuptools..."
-        log_output "INFO" "Upgrading pip and setuptools in venv"
-        if "$VENV_DIR/bin/python3" -m pip install --upgrade pip setuptools >/dev/null 2>&1; then
-            print_step "pip and setuptools upgraded"
-            pip_version=$("$VENV_DIR/bin/python3" -m pip --version 2>&1)
-            log_output "INFO" "pip and setuptools upgraded successfully - $pip_version"
-        else
-            print_warning "Could not upgrade pip/setuptools (may continue anyway)"
-            log_output "WARN" "Failed to upgrade pip/setuptools - continuing anyway"
-        fi
+            print_info "Upgrading pip and setuptools..."
+            log_output "INFO" "Upgrading pip and setuptools in venv"
+            if "$VENV_DIR/bin/python3" -m pip install \
+                --upgrade pip setuptools >/dev/null 2>&1; then
+                print_step "pip and setuptools upgraded"
+                pip_version=$("$VENV_DIR/bin/python3" -m pip --version 2>&1)
+                log_output "INFO" \
+                    "pip and setuptools upgraded - $pip_version"
+            else
+                print_warning \
+                    "Could not upgrade pip/setuptools (may continue anyway)"
+                log_output "WARN" \
+                    "Failed to upgrade pip/setuptools - continuing anyway"
+            fi
 
-        if "$VENV_DIR/bin/python3" - <<'PYCODE' >/dev/null 2>&1
+            print_info "Installing rumps into venv..."
+            log_output "INFO" "Installing rumps into venv"
+            if "$VENV_DIR/bin/python3" -m pip install rumps \
+                >/dev/null 2>&1; then
+                print_step "rumps installed in venv"
+                log_output "INFO" "rumps installed in venv"
+            else
+                print_error "Failed to install rumps in venv"
+                log_output "ERROR" "pip install rumps in venv failed"
+                exit 1
+            fi
+
+            if "$VENV_DIR/bin/python3" - <<'PYCODE' >/dev/null 2>&1
+import rumps  # noqa: F401
+PYCODE
+            then
+                print_step "Verified: rumps import works in venv"
+                log_output "INFO" "rumps import test succeeded in venv"
+            else
+                print_error "rumps import fails in venv"
+                log_output "ERROR" "rumps import test failed in venv"
+                exit 1
+            fi
+        else
+            echo "Creating venv with system site-packages (for PyGObject/GTK3)..."
+            log_output "INFO" \
+                "Creating Python venv at $VENV_DIR with system-site-packages"
+            if "${PYTHON_PATH:-python3}" -m venv \
+                --system-site-packages "$VENV_DIR"; then
+                print_step "Virtual environment created"
+                log_output "INFO" \
+                    "Virtual environment created successfully at $VENV_DIR"
+            else
+                print_error "Failed to create virtual environment"
+                log_output "ERROR" "Failed to create venv at $VENV_DIR"
+                exit 1
+            fi
+
+            print_info "Upgrading pip and setuptools..."
+            log_output "INFO" "Upgrading pip and setuptools in venv"
+            if "$VENV_DIR/bin/python3" -m pip install \
+                --upgrade pip setuptools >/dev/null 2>&1; then
+                print_step "pip and setuptools upgraded"
+                pip_version=$("$VENV_DIR/bin/python3" -m pip --version 2>&1)
+                log_output "INFO" \
+                    "pip and setuptools upgraded - $pip_version"
+            else
+                print_warning \
+                    "Could not upgrade pip/setuptools (may continue anyway)"
+                log_output "WARN" \
+                    "Failed to upgrade pip/setuptools - continuing anyway"
+            fi
+
+            if "$VENV_DIR/bin/python3" - <<'PYCODE' >/dev/null 2>&1
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa: F401
 PYCODE
-        then
-            print_step "Verified: gi import works in venv"
-            log_output "INFO" "gi import test succeeded in venv"
-        else
-            print_error "gi import fails in venv despite compatible system interpreter"
-            log_output "ERROR" "gi import test failed in venv"
-            exit 1
+            then
+                print_step "Verified: gi import works in venv"
+                log_output "INFO" "gi import test succeeded in venv"
+            else
+                print_error \
+"gi import fails in venv despite compatible system interpreter"
+                log_output "ERROR" "gi import test failed in venv"
+                exit 1
+            fi
         fi
     fi
 else
@@ -728,15 +1035,36 @@ elif [ "$BINARY_RELEASE" = true ]; then
     print_info "  5. View all options:"
     print_info "     ./lmstudio-tray-manager --help"
 else
-    log_output "INFO" "Source release detected - showing Python usage instructions"
-    print_info "  1. Run the automation script:"
-    print_info "     ./lmstudio_autostart.sh"
-    print_info "     (If dist/lmstudio-tray-manager exists, it is used automatically)"
-    print_info ""
-    print_info "  2. Or use with specific options:"
-    print_info "     ./lmstudio_autostart.sh --model qwen2.5:7b-instruct"
-    print_info "     ./lmstudio_autostart.sh --list-models"
-    print_info "     ./lmstudio_autostart.sh --debug"
+    if [ "$IS_MACOS" = true ]; then
+        log_output "INFO" \
+            "macOS source release - showing Python/rumps usage instructions"
+        print_info "  🍎 macOS – Python source release"
+        print_info ""
+        print_info "  Activate the venv and run the tray monitor:"
+        print_info \
+"     source venv/bin/activate"
+        print_info \
+"     python3 lmstudio_tray.py --auto-start-daemon"
+        print_info ""
+        print_info "  Or use with specific options:"
+        print_info \
+"     python3 lmstudio_tray.py --gui"
+        print_info \
+"     python3 lmstudio_tray.py --debug"
+    else
+        log_output "INFO" \
+            "Source release detected - showing Python usage instructions"
+        print_info "  1. Run the automation script:"
+        print_info "     ./lmstudio_autostart.sh"
+        print_info \
+"     (If dist/lmstudio-tray-manager exists, it is used automatically)"
+        print_info ""
+        print_info "  2. Or use with specific options:"
+        print_info \
+"     ./lmstudio_autostart.sh --model qwen2.5:7b-instruct"
+        print_info "     ./lmstudio_autostart.sh --list-models"
+        print_info "     ./lmstudio_autostart.sh --debug"
+    fi
 fi
 
 print_info ""

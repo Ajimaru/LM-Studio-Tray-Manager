@@ -1,0 +1,8 @@
+exclude_paths:
+  - ".venv/**"
+  - "docs/**"
+  - "docs_src/**"
+  - ".github/instructions/**"
+  - "lmstudio_tray.py"
+  - "tools/build_binary.py"
+  - "tests/test_build_binary.py"

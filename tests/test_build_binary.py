@@ -1,4 +1,4 @@
-"""Tests for build_binary.py helpers and build flow."""
+"""Tests for tools/build_binary.py helpers and build flow."""
 
 from types import SimpleNamespace
 import importlib.util
@@ -12,8 +12,8 @@ import pytest
 def _load_build_binary_module():
     """Load and return the build_binary module from the repository root.
 
-    Attempts to import the file build_binary.py located one directory
-    above this test package and returns the loaded module object.
+    Attempts to import the file tools/build_binary.py from the repository
+    root and returns the loaded module object.
 
     Returns:
         module: The imported `build_binary` module object.
@@ -23,7 +23,9 @@ def _load_build_binary_module():
             and the module cannot be loaded.
     """
     module_name = "build_binary"
-    module_path = Path(__file__).resolve().parents[1] / "build_binary.py"
+    module_path = (
+        Path(__file__).resolve().parents[1] / "tools" / "build_binary.py"
+    )
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:
         raise RuntimeError(
@@ -827,7 +829,7 @@ def test_build_binary_symlink_chain_deduplication(
 
 
 def test_build_script_compiler_prompt(tmp_path):
-    """Ensure build.sh prompts and exits when compiler is missing.
+    """Ensure tools/build.sh prompts and exits when compiler is missing.
 
     The script should detect missing `gcc`/`clang` and ask the user if they
     want the build tools installed.  Declining causes an immediate exit with
@@ -845,7 +847,7 @@ def test_build_script_compiler_prompt(tmp_path):
     env["PATH"] = str(fakebin) + os.pathsep + env.get("PATH", "")
     env["LOGFILE"] = str(tmp_path / "build.log")
 
-    script_path = Path(__file__).resolve().parents[1] / "build.sh"
+    script_path = Path(__file__).resolve().parents[1] / "tools" / "build.sh"
     proc = subprocess.run(
         [str(script_path)],
         cwd=str(script_path.parent),
@@ -889,7 +891,7 @@ exec /usr/bin/{name} "$@"
     env["PATH"] = str(fakebin) + os.pathsep + env.get("PATH", "")
     env["LOGFILE"] = str(tmp_path / "build.log")
 
-    script_path = Path(__file__).resolve().parents[1] / "build.sh"
+    script_path = Path(__file__).resolve().parents[1] / "tools" / "build.sh"
     proc = subprocess.run(
         [str(script_path)],
         cwd=str(script_path.parent),
