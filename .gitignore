@@ -24,6 +24,7 @@ build/
 release/
 coverage.xml
 htmlcov/
+venv_macos/
 
 #Ignore AI rules
 .github/instructions/codacy.instructions.md

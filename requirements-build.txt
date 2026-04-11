@@ -31,6 +31,11 @@ pyinstaller==6.19.0 \
 altgraph==0.17.5 \
     --hash=sha256:f3a22400bce1b0c701683820ac4f3b159cd301acab067c51c653e06961600597
 
+# macholib 1.16.4 (source: macholib-1.16.4-py2.py3-none-any.whl)
+# Transitive dependency used by PyInstaller on macOS
+macholib==1.16.4 \
+    --hash=sha256:da1a3fa8266e30f0ce7e97c6a54eefaae8edd1e5f86f3eb8b95457cae90265ea
+
 # pyinstaller-hooks-contrib 2026.3 (source: pyinstaller_hooks_contrib-2026.3-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
 pyinstaller-hooks-contrib==2026.3 \

@@ -29,7 +29,7 @@ This document describes how to build standalone releases of LM Studio Tray Manag
     - [Build Script](#build-script)
     - [Local Testing](#local-testing)
     - [Release Artifacts](#release-artifacts)
-    - [Code Signing (Optional)](#code-signing-optional)
+    - [Code Signing and Notarization](#code-signing-and-notarization)
   - [Optimization](#optimization)
     - [Size Reduction](#size-reduction)
     - [Expected Sizes](#expected-sizes)
@@ -133,19 +133,36 @@ chmod +x tools/build_macos.sh
 ./tools/build_macos.sh
 ```
 
+For a signed build:
+
+```bash
+./tools/build_macos.sh --clean --sign-identity "Developer ID Application: Your Name (TEAMID)"
+```
+
+For a signed and notarized build using a stored notarytool profile:
+
+```bash
+./tools/build_macos.sh \
+  --clean \
+  --sign-identity "Developer ID Application: Your Name (TEAMID)" \
+  --notary-profile AC_NOTARY
+```
+
 This will:
 
 1. Check for Python 3 and Xcode Command Line Tools
-2. Create a Python venv with rumps (macOS tray library)
+2. Render a high-resolution ICNS icon from the SVG asset when available
+3. Create a Python venv with rumps (macOS tray library)
 3. Install all build dependencies
-4. Build with PyInstaller for macOS (.onedir format)
-5. Bundle application resources
-6. Create a .tar.gz release archive with checksums
+4. Build a native Apple Silicon `.app` bundle with PyInstaller
+5. Bundle application resources and menu bar metadata
+6. Optionally code sign and notarize the app
+7. Create a `.tar.gz` release archive with checksums
 
 **Output:**
 
 - **App bundle:** `dist/LM-Studio-Tray-Manager.app`
-- **Release archive:** `release/lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz`
+- **Release archive:** `release/lmstudio-tray-manager-vX.Y.Z-macos-{unsigned|signed|notarized}.tar.gz`
 - **Checksums:** `release/SHA256SUMS-macos.txt`
 
 **Test the app:**
@@ -292,12 +309,15 @@ The `tools/build_macos.sh` script is the easiest way to build for macOS:
 **Features:**
 
 - Automatic Python 3 and Xcode Command Line Tools detection
+- Uses macOS Quick Look to rasterize the SVG icon into a 1024px master image
 - Creates isolated venv with rumps library
 - PyInstaller with macOS-specific options:
-  - `--onedir` format (better for bundling resources)
+  - `--windowed --onedir` to emit a real `.app` bundle
+  - `--target-architecture=arm64` for Apple Silicon
   - Bundle identifier: `com.lmstudio.tray-manager`
-  - Automatic icon detection from `assets/img/`
+  - Automatic ICNS generation from `assets/img/lm-studio-tray-manager.svg`
 - Resource bundling (setup.sh, README.md, LICENSE, assets)
+- Optional code signing and notarization in the same build flow
 - Automatic .tar.gz archive creation with checksums
 
 ### Local Testing
@@ -333,29 +353,52 @@ After building, release artifacts are created in the `release/` directory:
 
 These can be distributed directly or uploaded to GitHub Releases.
 
-### Code Signing (Optional)
+### Code Signing and Notarization
 
-For distribution beyond testing, code signing is recommended:
+For distribution beyond testing, sign the `.app` and notarize it.
 
 1. **Obtain Developer ID Certificate**
    - Enroll in [Apple Developer Program](https://developer.apple.com/programs/)
    - Create a Developer ID Application certificate
 
-2. **Sign the .app bundle**
+Store notarization credentials once:
 
-   ```bash
-   codesign --force --deep --options runtime \
-     --sign "Developer ID Application: Your Name (TEAM1234567)" \
-     dist/LM-Studio-Tray-Manager.app
-   ```
+```bash
+xcrun notarytool store-credentials AC_NOTARY \
+  --apple-id "you@example.com" \
+  --team-id "TEAM1234567" \
+  --password "app-specific-password"
+```
 
-3. **Notarize for Gatekeeper**
+2. **Build, sign, and notarize in one command**
 
-   ```bash
-   xcrun notarytool submit lmstudio-tray-manager-vX.Y.Z-macos.zip \
-     --keychain-profile "AC_NOTARY" \
-     --wait
-   ```
+```bash
+./tools/build_macos.sh \
+  --clean \
+  --sign-identity "Developer ID Application: Your Name (TEAM1234567)" \
+  --notary-profile AC_NOTARY
+```
+
+3. **Verify the stapled result**
+
+```bash
+xcrun stapler validate dist/LM-Studio-Tray-Manager.app
+```
+
+### GitHub Actions macOS Release
+
+The `build-macos` job in `.github/workflows/release.yml` now calls `tools/build_macos.sh` directly.
+
+If the following secrets are present, the workflow imports your Developer ID certificate, signs the bundle, stores notarytool credentials, notarizes the build, and uploads a notarized archive:
+
+- `MACOS_CERTIFICATE_BASE64`
+- `MACOS_CERTIFICATE_PASSWORD`
+- `MACOS_KEYCHAIN_PASSWORD` (optional)
+- `APPLE_ID`
+- `APPLE_TEAM_ID`
+- `APPLE_APP_PASSWORD`
+
+If those secrets are not configured, the same workflow still produces an unsigned macOS archive for testing.
 
 See [macOS Code Signing Guide](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution) for detailed instructions.
 
