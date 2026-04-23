@@ -50,5 +50,6 @@ setuptools==82.0.1 \
 
 # packaging 26.0 (source: packaging-26.0-py3-none-any.whl)
 # Required by PyInstaller (>=22.0)
-packaging==26.0 \
-    --hash=sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529
+packaging==26.1 \
+    --hash=sha256:5d9c0669c6285e491e0ced2eee587eaf67b670d94a19e94e3984a481aba6802f \
+    --hash=sha256:f042152b681c4bfac5cae2742a55e103d27ab2ec0f3d88037136b6bfe7c9c5de
