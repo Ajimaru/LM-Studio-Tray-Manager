@@ -2254,7 +2254,7 @@ class TrayIcon:
                         f"Executable must be absolute path: {cmd[0]}"
                     )
 
-                os.spawnv(os.P_NOWAIT, cmd[0], cmd)
+                os.spawnv(os.P_NOWAIT, cmd[0], cmd)  # nosec B606
 
                 self.lms_ps_resume_at = time.monotonic() + 12.0
 
