@@ -78,6 +78,10 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Guides:
+      - Setup: guides/setup.md
+      - Usage: guides/use.md
+      - Build: guides/build.md
   - API Reference:
       - Main Module: api/lmstudio_tray.md
       - Core Functions: api/core.md

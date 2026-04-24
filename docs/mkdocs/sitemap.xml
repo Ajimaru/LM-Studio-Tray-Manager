@@ -2,26 +2,38 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <lastmod>2026-04-24</lastmod>
     </url>
     <url>
          <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/config/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <lastmod>2026-04-24</lastmod>
     </url>
     <url>
          <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/core/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <lastmod>2026-04-24</lastmod>
     </url>
     <url>
          <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/lmstudio_tray/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <lastmod>2026-04-24</lastmod>
     </url>
     <url>
          <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/tray/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <lastmod>2026-04-24</lastmod>
     </url>
     <url>
          <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/api/updates/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <lastmod>2026-04-24</lastmod>
+    </url>
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/guides/build/</loc>
+         <lastmod>2026-04-24</lastmod>
+    </url>
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/guides/setup/</loc>
+         <lastmod>2026-04-24</lastmod>
+    </url>
+    <url>
+         <loc>https://ajimaru.github.io/LM-Studio-Tray-Manager/guides/use/</loc>
+         <lastmod>2026-04-24</lastmod>
     </url>
 </urlset>
