@@ -1,0 +1,2551 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python API documentation for LM Studio Tray Manager">
+      
+      
+        <meta name="author" content="Ajimaru">
+      
+      
+        <link rel="canonical" href="https://ajimaru.github.io/LM-Studio-Tray-Manager/guides/use/">
+      
+      
+        <link rel="prev" href="../setup/">
+      
+      
+        <link rel="next" href="../build/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Usage - LM Studio Tray Manager - Python API Reference</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#using-lm-studio-tray-manager" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LM Studio Tray Manager - Python API Reference" class="md-header__button md-logo" aria-label="LM Studio Tray Manager - Python API Reference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LM Studio Tray Manager - Python API Reference
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ajimaru/LM-Studio-Tray-Manager
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../setup/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/lmstudio_tray/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LM Studio Tray Manager - Python API Reference" class="md-nav__button md-logo" aria-label="LM Studio Tray Manager - Python API Reference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    LM Studio Tray Manager - Python API Reference
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ajimaru/LM-Studio-Tray-Manager
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appimage-release-recommended-for-most-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage Release (Recommended for most users)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-package-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Package Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running the Application
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running the Application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appimage-release-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage Release (Running)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-release-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary Release (Running)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-package-release-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Package Release (Running)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autostart-on-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autostart on Login
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-line-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command-Line Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Command-Line Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Syntax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#positional-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positional Arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-tray-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Tray Interface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="System Tray Interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#status-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status Indicators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#left-click-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Left-Click Menu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#menu-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Menu Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#desktop-app-launch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop App Launch
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Desktop App Launch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-start-desktop-app-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How "Start Desktop App" Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-start-lm-studio-daemon-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How "Start LM Studio Daemon" Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conflict-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conflict Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Model Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interactive-model-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Model Selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autoload-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autoload Models
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Autoload Models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-via-lm-studio-cli-quick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Via LM Studio CLI (Quick)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-via-lm-studio-gui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Via LM Studio GUI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-via-daemon-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Via Daemon Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring-and-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring and Logs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring and Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Errors &amp; Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gsettings-schema-crash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GSettings Schema Crash
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-logs-in-real-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Logs in Real-Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#understanding-log-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Understanding Log Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#daemon-not-starting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daemon Not Starting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket-authentication-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket Authentication Error
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#desktop-app-wont-launch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop App Won't Launch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tray-icon-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tray Icon Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-cpu-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High CPU Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/lmstudio_tray/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/tray/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Tray
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appimage-release-recommended-for-most-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage Release (Recommended for most users)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-package-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Package Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running the Application
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running the Application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appimage-release-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage Release (Running)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-release-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary Release (Running)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-package-release-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Package Release (Running)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autostart-on-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autostart on Login
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-line-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command-Line Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Command-Line Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Syntax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#positional-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positional Arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-tray-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Tray Interface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="System Tray Interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#status-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status Indicators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#left-click-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Left-Click Menu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#menu-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Menu Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#desktop-app-launch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop App Launch
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Desktop App Launch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-start-desktop-app-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How "Start Desktop App" Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-start-lm-studio-daemon-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How "Start LM Studio Daemon" Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conflict-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conflict Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Model Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interactive-model-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Model Selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autoload-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autoload Models
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Autoload Models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-via-lm-studio-cli-quick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Via LM Studio CLI (Quick)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-via-lm-studio-gui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Via LM Studio GUI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-via-daemon-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Via Daemon Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring-and-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring and Logs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring and Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors &amp; Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Errors &amp; Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gsettings-schema-crash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GSettings Schema Crash
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-logs-in-real-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Logs in Real-Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#understanding-log-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Understanding Log Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#daemon-not-starting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daemon Not Starting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket-authentication-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket Authentication Error
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#desktop-app-wont-launch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop App Won't Launch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tray-icon-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tray Icon Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-cpu-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High CPU Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="using-lm-studio-tray-manager">Using LM Studio Tray Manager<a class="headerlink" href="#using-lm-studio-tray-manager" title="Permanent link">&para;</a></h1>
+<p>This guide covers how to use the LM Studio Tray Manager application after setup.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#using-lm-studio-tray-manager">Using LM Studio Tray Manager</a></li>
+<li><a href="#table-of-contents">Table of Contents</a></li>
+<li><a href="#quick-start">Quick Start</a><ul>
+<li><a href="#appimage-release-recommended-for-most-users">AppImage Release (Recommended for most users)</a></li>
+<li><a href="#binary-release">Binary Release</a></li>
+<li><a href="#python-package-release">Python Package Release</a></li>
+</ul>
+</li>
+<li><a href="#running-the-application">Running the Application</a><ul>
+<li><a href="#appimage-release-running">AppImage Release (Running)</a></li>
+<li><a href="#binary-release-running">Binary Release (Running)</a></li>
+<li><a href="#python-package-release-running">Python Package Release (Running)</a></li>
+<li><a href="#autostart-on-login">Autostart on Login</a></li>
+</ul>
+</li>
+<li><a href="#command-line-options">Command-Line Options</a><ul>
+<li><a href="#usage-syntax">Usage Syntax</a></li>
+<li><a href="#positional-arguments">Positional Arguments</a></li>
+<li><a href="#available-options">Available Options</a></li>
+<li><a href="#example-usage">Example Usage</a></li>
+</ul>
+</li>
+<li><a href="#system-tray-interface">System Tray Interface</a><ul>
+<li><a href="#status-indicators">Status Indicators</a></li>
+<li><a href="#left-click-menu">Left-Click Menu</a></li>
+<li><a href="#menu-options">Menu Options</a></li>
+</ul>
+</li>
+<li><a href="#desktop-app-launch">Desktop App Launch</a><ul>
+<li><a href="#how-start-desktop-app-works">How "Start Desktop App" Works</a></li>
+<li><a href="#how-start-lm-studio-daemon-works">How "Start LM Studio Daemon" Works</a></li>
+<li><a href="#conflict-handling">Conflict Handling</a></li>
+</ul>
+</li>
+<li><a href="#model-management">Model Management</a><ul>
+<li><a href="#interactive-model-selection">Interactive Model Selection</a></li>
+<li><a href="#autoload-models">Autoload Models</a></li>
+<li><a href="#option-1-via-lm-studio-cli-quick">Option 1: Via LM Studio CLI (Quick)</a></li>
+<li><a href="#option-2-via-lm-studio-gui">Option 2: Via LM Studio GUI</a></li>
+<li><a href="#option-3-via-daemon-configuration-file">Option 3: Via Daemon Configuration File</a></li>
+</ul>
+</li>
+<li><a href="#monitoring-and-logs">Monitoring and Logs</a></li>
+<li><a href="#common-errors-troubleshooting">Common Errors \&amp; Troubleshooting</a><ul>
+<li><a href="#gsettings-schema-crash">GSettings Schema Crash</a></li>
+<li><a href="#view-logs-in-real-time">View Logs in Real-Time</a></li>
+<li><a href="#understanding-log-files">Understanding Log Files</a></li>
+<li><a href="#debug-mode">Debug Mode</a></li>
+</ul>
+</li>
+<li><a href="#troubleshooting">Troubleshooting</a><ul>
+<li><a href="#daemon-not-starting">Daemon Not Starting</a></li>
+<li><a href="#websocket-authentication-error">WebSocket Authentication Error</a></li>
+<li><a href="#desktop-app-wont-launch">Desktop App Won't Launch</a></li>
+<li><a href="#tray-icon-issues">Tray Icon Issues</a></li>
+<li><a href="#high-cpu-usage">High CPU Usage</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="appimage-release-recommended-for-most-users">AppImage Release (Recommended for most users)<a class="headerlink" href="#appimage-release-recommended-for-most-users" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Make executable (if needed)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>chmod<span class="w"> </span>+x<span class="w"> </span>./lmstudio-tray-manager-*.AppImage
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Run directly with daemon autostart</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>./lmstudio-tray-manager-*.AppImage<span class="w"> </span>--auto-start-daemon
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Or without autostart</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>./lmstudio-tray-manager-*.AppImage
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Monitor logs (in another terminal)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>tail<span class="w"> </span>-f<span class="w"> </span>~/.local/share/lmstudio-tray-manager/logs/lmstudio_tray.log
+</code></pre></div>
+<p><strong>Why AppImage?</strong></p>
+<ul>
+<li>✓ Self-contained (no setup.sh needed)</li>
+<li>✓ All GTK3 dependencies bundled</li>
+<li>✓ Works on any Linux distribution</li>
+<li>✓ No Python venv required</li>
+</ul>
+<h3 id="binary-release">Binary Release<a class="headerlink" href="#binary-release" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Make executable (if needed)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>chmod<span class="w"> </span>+x<span class="w"> </span>./lmstudio-tray-manager
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Run with daemon autostart</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>./lmstudio-tray-manager<span class="w"> </span>--auto-start-daemon
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Monitor logs (in another terminal)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+</code></pre></div>
+<h3 id="python-package-release">Python Package Release<a class="headerlink" href="#python-package-release" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Make autostart script executable (if needed)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>chmod<span class="w"> </span>+x<span class="w"> </span>./lmstudio_autostart.sh
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Run the autostart script</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>./lmstudio_autostart.sh
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Or manually in the foreground</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nb">source</span><span class="w"> </span>./venv/bin/activate
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>python3<span class="w"> </span>./lmstudio_tray.py
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Monitor logs (in another terminal)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>tail<span class="w"> </span>-f<span class="w"> </span>./logs/lmstudio_autostart.log
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>tail<span class="w"> </span>-f<span class="w"> </span>./logs/lmstudio_tray.log
+</code></pre></div>
+<h2 id="running-the-application">Running the Application<a class="headerlink" href="#running-the-application" title="Permanent link">&para;</a></h2>
+<h3 id="appimage-release-running">AppImage Release (Running)<a class="headerlink" href="#appimage-release-running" title="Permanent link">&para;</a></h3>
+<p>The AppImage is fully self-contained and can be run directly without any setup:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Basic run (no autostart)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./lmstudio-tray-manager-*.AppImage
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># With daemon autostart</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>./lmstudio-tray-manager-*.AppImage<span class="w"> </span>--auto-start-daemon
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># With GUI mode</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>./lmstudio-tray-manager-*.AppImage<span class="w"> </span>--gui
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Run in background</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>./lmstudio-tray-manager-*.AppImage<span class="w"> </span>--auto-start-daemon<span class="w"> </span><span class="p">&amp;</span>
+</code></pre></div>
+<p><strong>Note:</strong> The AppImage bundles all GTK3/GObject dependencies, so no <code>setup.sh</code> is required. Just make it executable and run it. The only external requirement is that you have LM Studio daemon installed.</p>
+<p>AppImage logs are stored in: <code>~/.local/share/lmstudio-tray-manager/logs/</code></p>
+<h3 id="binary-release-running">Binary Release (Running)<a class="headerlink" href="#binary-release-running" title="Permanent link">&para;</a></h3>
+<p>The binary is self-contained and includes all dependencies:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Basic run (no autostart)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./lmstudio-tray-manager
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># With daemon autostart</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>./lmstudio-tray-manager<span class="w"> </span>--auto-start-daemon
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># With GUI mode</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>./lmstudio-tray-manager<span class="w"> </span>--gui
+</code></pre></div>
+<h3 id="python-package-release-running">Python Package Release (Running)<a class="headerlink" href="#python-package-release-running" title="Permanent link">&para;</a></h3>
+<p>Run via the convenience script:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Starts daemon with tray monitor</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./lmstudio_autostart.sh
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># With interactive model selection</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>./lmstudio_autostart.sh<span class="w"> </span>-L
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># With debug output</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>./lmstudio_autostart.sh<span class="w"> </span>--debug
+</code></pre></div>
+<p>Or run directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">source</span><span class="w"> </span>./venv/bin/activate
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>python3<span class="w"> </span>./lmstudio_tray.py<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<h3 id="autostart-on-login">Autostart on Login<a class="headerlink" href="#autostart-on-login" title="Permanent link">&para;</a></h3>
+<p>For automatic startup on login, create a desktop entry:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.config/autostart/
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>~/.config/autostart/lmstudio-daemon.desktop<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s">[Desktop Entry]</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s">Type=Application</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s">Name=LM Studio Daemon</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s">Exec=/full/path/to/your/lmstudio_autostart.sh</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="s">X-GNOME-Autostart-enabled=true</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="s">Hidden=false</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="s">EOF</span>
+</code></pre></div>
+<p><strong>Important:</strong> Replace <code>/full/path/to/your/lmstudio_autostart.sh</code> with the absolute path to your installed script:</p>
+<ul>
+<li>If you installed to your home directory: run <code>pwd</code> in your LM-Studio-Tray-Manager directory to get the full path, then append <code>/lmstudio_autostart.sh</code></li>
+<li>To find the script location quickly: <code>which lmstudio_autostart.sh</code> or check your <a href="../setup/">setup.md</a> installation section for default locations</li>
+</ul>
+<p>Then enable autostart in your desktop environment settings.</p>
+<h2 id="command-line-options">Command-Line Options<a class="headerlink" href="#command-line-options" title="Permanent link">&para;</a></h2>
+<h3 id="usage-syntax">Usage Syntax<a class="headerlink" href="#usage-syntax" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>lmstudio-tray-manager<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>model<span class="o">]</span><span class="w"> </span><span class="o">[</span>script_dir<span class="o">]</span>
+</code></pre></div>
+<h3 id="positional-arguments">Positional Arguments<a class="headerlink" href="#positional-arguments" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>model<span class="w">               </span>Model<span class="w"> </span>name<span class="w"> </span>to<span class="w"> </span>monitor<span class="w"> </span><span class="o">(</span>optional<span class="o">)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>script_dir<span class="w">          </span>Script<span class="w"> </span>directory<span class="w"> </span><span class="k">for</span><span class="w"> </span>logs<span class="w"> </span>and<span class="w"> </span>VERSION<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>optional<span class="o">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">                    </span>If<span class="w"> </span>a<span class="w"> </span>relative<span class="w"> </span>path<span class="w"> </span>is<span class="w"> </span>provided,<span class="w"> </span>it<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>resolved<span class="w"> </span>to
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">                    </span>an<span class="w"> </span>absolute<span class="w"> </span>path.<span class="w"> </span>Defaults<span class="w"> </span>to<span class="w"> </span>current<span class="w"> </span>working<span class="w"> </span>directory.
+</code></pre></div>
+<h3 id="available-options">Available Options<a class="headerlink" href="#available-options" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>-h,<span class="w"> </span>--help<span class="w">              </span>Show<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>-v,<span class="w"> </span>--version<span class="w">           </span>Show<span class="w"> </span>version<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>-d,<span class="w"> </span>--debug<span class="w">             </span>Run<span class="w"> </span><span class="k">in</span><span class="w"> </span>debug<span class="w"> </span>mode<span class="w"> </span>with<span class="w"> </span>verbose<span class="w"> </span>output
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>-g,<span class="w"> </span>--gui<span class="w">               </span>Start<span class="w"> </span>with<span class="w"> </span>desktop<span class="w"> </span>GUI<span class="w"> </span>mode<span class="w"> </span><span class="o">(</span>stops<span class="w"> </span>daemon<span class="w"> </span>first<span class="o">)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>-a,<span class="w"> </span>--auto-start-daemon<span class="w"> </span>Start<span class="w"> </span>daemon<span class="w"> </span>automatically<span class="w"> </span>on<span class="w"> </span>launch
+</code></pre></div>
+<h3 id="example-usage">Example Usage<a class="headerlink" href="#example-usage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Show help</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>./lmstudio-tray-manager<span class="w"> </span>--help
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Show version</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>./lmstudio-tray-manager<span class="w"> </span>--version
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>./lmstudio-tray-manager<span class="w"> </span>-v
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1"># Run with debug output</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>./lmstudio-tray-manager<span class="w"> </span>--debug
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>./lmstudio-tray-manager<span class="w"> </span>-d
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="c1"># Launch GUI mode (if desktop app installed)</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>./lmstudio-tray-manager<span class="w"> </span>--gui
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>./lmstudio-tray-manager<span class="w"> </span>-g
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="c1"># Start daemon and monitor in tray</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>./lmstudio-tray-manager<span class="w"> </span>--auto-start-daemon
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>./lmstudio-tray-manager<span class="w"> </span>-a
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="c1"># Combine flags (short forms)</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>./lmstudio-tray-manager<span class="w"> </span>-d<span class="w"> </span>-a<span class="w">    </span><span class="c1"># debug + auto-start daemon</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>./lmstudio-tray-manager<span class="w"> </span>-dg<span class="w">      </span><span class="c1"># debug + gui</span>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="c1"># With model name and custom log directory</span>
+<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>./lmstudio-tray-manager<span class="w"> </span><span class="s2">&quot;my-model-name&quot;</span><span class="w"> </span><span class="s2">&quot;/path/to/logs&quot;</span>
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a><span class="c1"># Model name with auto-start and debug</span>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a>./lmstudio-tray-manager<span class="w"> </span>-da<span class="w"> </span><span class="s2">&quot;llama-model&quot;</span>
+</code></pre></div>
+<h2 id="system-tray-interface">System Tray Interface<a class="headerlink" href="#system-tray-interface" title="Permanent link">&para;</a></h2>
+<p>The application displays a system tray icon with status indicators and a context menu.</p>
+<h3 id="status-indicators">Status Indicators<a class="headerlink" href="#status-indicators" title="Permanent link">&para;</a></h3>
+<p>The tray icon changes based on application status:</p>
+<table>
+<thead>
+<tr>
+<th>Icon</th>
+<th>Meaning</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>❌</td>
+<td>Fail</td>
+<td>Daemon and desktop app both not installed</td>
+</tr>
+<tr>
+<td>⚠️</td>
+<td>Warn</td>
+<td>Neither daemon nor desktop app is running</td>
+</tr>
+<tr>
+<td>ℹ️</td>
+<td>Info</td>
+<td>Daemon or desktop app running, but no model loaded</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>OK</td>
+<td>A model is loaded and ready</td>
+</tr>
+</tbody>
+</table>
+<h3 id="left-click-menu">Left-Click Menu<a class="headerlink" href="#left-click-menu" title="Permanent link">&para;</a></h3>
+<p>Left-click on the tray icon to open the context menu with available options.</p>
+<h3 id="menu-options">Menu Options<a class="headerlink" href="#menu-options" title="Permanent link">&para;</a></h3>
+<p>The menu shows the following options (availability depends on current state):</p>
+<ul>
+<li><strong>Start Daemon (Headless)</strong> - Starts the headless daemon (stops desktop app first if running)</li>
+<li><strong>Stop Daemon</strong> - Stops the running daemon</li>
+<li><strong>Start Desktop App</strong> - Launches the GUI (stops daemon first)</li>
+<li><strong>Stop Desktop App</strong> - Closes the desktop app</li>
+<li><strong>Show Status</strong> - Manually refresh and display the tray status</li>
+<li><strong>Options</strong> - Submenu containing:</li>
+<li><strong>Configuration</strong> - Access application settings</li>
+<li><strong>Check for updates</strong> - Check GitHub for new releases</li>
+<li><strong>About</strong> - Display application information</li>
+<li><strong>Quit Tray</strong> - Exit the tray manager</li>
+</ul>
+<p>Each option is <strong>context-aware</strong>: unavailable actions are grayed out.</p>
+<h2 id="desktop-app-launch">Desktop App Launch<a class="headerlink" href="#desktop-app-launch" title="Permanent link">&para;</a></h2>
+<h3 id="how-start-desktop-app-works">How "Start Desktop App" Works<a class="headerlink" href="#how-start-desktop-app-works" title="Permanent link">&para;</a></h3>
+<p>When you click "Start Desktop App":</p>
+<ol>
+<li><strong>Priority 1</strong>: Looks for installed <code>.deb</code> package</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Quick check: Look for executable in PATH</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>which<span class="w"> </span>lm-studio
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Alternative: Check installed Debian packages (if which returns nothing)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>dpkg<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lm-studio
+</code></pre></div>
+<ol>
+<li><strong>Priority 2</strong>: Searches for AppImage in common locations:</li>
+<li>Script directory (<code>.</code>)</li>
+<li><code>~/Apps</code></li>
+<li><code>~/LM_Studio</code></li>
+<li><code>$SCRIPT_DIR</code></li>
+<li><code>~/.local/bin</code></li>
+<li>
+<p><code>/opt/lm-studio</code></p>
+</li>
+<li>
+<p><strong>Auto-detection</strong>: Recognizes both standard and versioned formats:</p>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>LM-Studio.AppImage
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>LM-Studio-0.4.3-*.AppImage
+</code></pre></div>
+<ol>
+<li><strong>On Launch</strong>:</li>
+<li>Stops daemon first (if running)</li>
+<li>Launches GUI application</li>
+<li>Automatically appends <code>--no-sandbox</code> when an AppImage is detected; this
+     avoids the common SUID sandbox error for Chromium-based AppImages
+     (see issue #62).</li>
+<li>Recognises AppImage processes so the tray icon updates from red after
+     the GUI starts</li>
+<li>Shows desktop notification on success or error</li>
+<li>Logs all actions to <code>.logs/lmstudio_tray.log</code></li>
+<li>All of the above logic is executed in a background thread; the tray
+     menu remains responsive and clicks are not blocked while the desktop
+     app is launching.</li>
+</ol>
+<h3 id="how-start-lm-studio-daemon-works">How "Start LM Studio Daemon" Works<a class="headerlink" href="#how-start-lm-studio-daemon-works" title="Permanent link">&para;</a></h3>
+<p>When you click "Start LM Studio Daemon":</p>
+<ol>
+<li><strong>Tries CLI commands</strong> in order:</li>
+<li><code>lms daemon up</code> (preferred LM Studio CLI wrapper)</li>
+<li><code>llmster daemon start</code> (direct daemon command)</li>
+</ol>
+<p>If the primary commands fail, also tries: <code>lms up</code>, <code>lms start</code>, <code>llmster up</code>, <code>llmster start</code></p>
+<ol>
+<li><strong>Conflict handling</strong>:</li>
+<li>Stops desktop app first (if running)</li>
+<li>
+<p>Then starts the daemon. The daemon start sequence runs in a
+     background thread so the tray menu remains usable while the
+     service spins up.</p>
+</li>
+<li>
+<p><strong>Verification</strong>:</p>
+</li>
+<li>Confirms daemon started successfully</li>
+<li>Monitors daemon process</li>
+</ol>
+<h3 id="conflict-handling">Conflict Handling<a class="headerlink" href="#conflict-handling" title="Permanent link">&para;</a></h3>
+<p>The tray manager prevents conflicts between daemon and desktop app:</p>
+<ul>
+<li><strong>Starting daemon</strong>: Automatically stops desktop app first</li>
+<li><strong>Starting desktop app</strong>: Automatically stops daemon first</li>
+<li><strong>Status updates</strong>: Reflects current state of both processes</li>
+<li><strong>Notifications</strong>: Informs user of any state changes</li>
+</ul>
+<h2 id="model-management">Model Management<a class="headerlink" href="#model-management" title="Permanent link">&para;</a></h2>
+<h3 id="interactive-model-selection">Interactive Model Selection<a class="headerlink" href="#interactive-model-selection" title="Permanent link">&para;</a></h3>
+<p>If you have multiple models, you can select which one to load:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Interactive selection + daemon autostart</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>./lmstudio_autostart.sh<span class="w"> </span>-L
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Set selection timeout (default 30 seconds)</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_SELECT_TIMEOUT</span><span class="o">=</span><span class="m">60</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>./lmstudio_autostart.sh<span class="w"> </span>-L
+</code></pre></div>
+<p>The script will:</p>
+<ol>
+<li>List available models</li>
+<li>Prompt you to select one</li>
+<li>Load the selected model in daemon mode</li>
+<li>Start the system tray monitor</li>
+</ol>
+<h3 id="autoload-models">Autoload Models<a class="headerlink" href="#autoload-models" title="Permanent link">&para;</a></h3>
+<p>To automatically load a specific model on startup, configure a default model using one of these methods:</p>
+<h4 id="option-1-via-lm-studio-cli-quick">Option 1: Via LM Studio CLI (Quick)<a class="headerlink" href="#option-1-via-lm-studio-cli-quick" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># List available models to find the exact name/ID</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>lms<span class="w"> </span>ls
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Load a specific model into the daemon</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>lms<span class="w"> </span>load<span class="w"> </span>&lt;model-name-or-id&gt;
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Verify it&#39;s set</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>lms<span class="w"> </span>ps
+</code></pre></div>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>lms<span class="w"> </span>load<span class="w"> </span><span class="s2">&quot;meta-llama/llama-2-7b-hf&quot;</span>
+</code></pre></div>
+<h4 id="option-2-via-lm-studio-gui">Option 2: Via LM Studio GUI<a class="headerlink" href="#option-2-via-lm-studio-gui" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Start the desktop app: <code>./lmstudio_autostart.sh --gui</code></li>
+<li>Select your desired model in the GUI</li>
+<li>The model will persist as default</li>
+</ol>
+<h4 id="option-3-via-daemon-configuration-file">Option 3: Via Daemon Configuration File<a class="headerlink" href="#option-3-via-daemon-configuration-file" title="Permanent link">&para;</a></h4>
+<p>The LM Studio daemon stores its configuration in <code>~/.lmstudio/config.json</code>. You can manually edit this file and set the default model key to <code>"default_model": "&lt;model-id&gt;"</code>.</p>
+<p>Example configuration snippet (add the <code>"default_model"</code> key to your existing config file, don't replace the entire file):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="p">{</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">&quot;default_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;meta-llama/llama-2-7b-hf&quot;</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Note</strong>: After setting a default model with any method, the next time the daemon starts (via <code>lmstudio_autostart.sh</code> or <code>lms daemon up</code>), it will automatically load your configured model.</p>
+<h2 id="monitoring-and-logs">Monitoring and Logs<a class="headerlink" href="#monitoring-and-logs" title="Permanent link">&para;</a></h2>
+<h3 id="common-errors-troubleshooting">Common Errors &amp; Troubleshooting<a class="headerlink" href="#common-errors-troubleshooting" title="Permanent link">&para;</a></h3>
+<h4 id="gsettings-schema-crash">GSettings Schema Crash<a class="headerlink" href="#gsettings-schema-crash" title="Permanent link">&para;</a></h4>
+<p>If you run the binary and immediately see a GLib-GIO-ERROR about a missing
+<code>antialiasing</code> key, the underlying GTK library failed to locate the
+GSettings schemas.  The tray manager attempts to set
+<code>GSETTINGS_SCHEMA_DIR</code> automatically, but in some minimal chroot or
+AppImage environments that directory may not be mounted.  The quick fixes
+are:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>gsettings-desktop-schemas
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nv">GSETTINGS_SCHEMA_DIR</span><span class="o">=</span>/usr/share/glib-2.0/schemas<span class="w"> </span>./lmstudio-tray-manager
+</code></pre></div>
+<p>This error is only relevant for the standalone binary; the Python package
+version inherits whatever environment your shell already provides.</p>
+<h3 id="view-logs-in-real-time">View Logs in Real-Time<a class="headerlink" href="#view-logs-in-real-time" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Watch tray monitor logs</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Watch daemon startup logs</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Watch all logs simultaneously</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/*.log
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="c1"># In separate terminals for combined view</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="c1"># Terminal 1:</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="c1"># Terminal 2:</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+</code></pre></div>
+<h3 id="understanding-log-files">Understanding Log Files<a class="headerlink" href="#understanding-log-files" title="Permanent link">&para;</a></h3>
+<p>The tray manager creates four log files:</p>
+<table>
+<thead>
+<tr>
+<th>Log File</th>
+<th>Purpose</th>
+<th>Created By</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.logs/setup.log</code></td>
+<td>Installation history</td>
+<td><code>setup.sh</code> (Source/Binary releases)</td>
+</tr>
+<tr>
+<td><code>.logs/lmstudio_autostart.log</code></td>
+<td>Daemon startup events</td>
+<td><code>lmstudio_autostart.sh</code> (Source/Binary releases)</td>
+</tr>
+<tr>
+<td><code>.logs/lmstudio_tray.log</code></td>
+<td>Tray monitor activity (Binary/Source)</td>
+<td><code>lmstudio_tray.py</code> (Source)</td>
+</tr>
+<tr>
+<td><code>~/.local/share/lmstudio-tray-manager/logs/lmstudio_tray.log</code></td>
+<td>Tray monitor activity (AppImage)</td>
+<td>AppImage release</td>
+</tr>
+<tr>
+<td><code>.logs/build.log</code></td>
+<td>Build process details</td>
+<td><code>tools/build.sh</code> or <code>tools/build_binary.py</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Log Format Examples:</strong></p>
+<p>Setup log:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>LM-Studio-Tray-Manager<span class="w"> </span>Setup<span class="w"> </span>---
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>OK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span>found
+</code></pre></div>
+<p>Autostart log:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>🚀<span class="w"> </span>Starting<span class="w"> </span>llmster<span class="w"> </span>headless<span class="w"> </span>daemon...
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>✅<span class="w"> </span>llmster<span class="w"> </span>started.
+</code></pre></div>
+<p>Tray log:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18,988<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Tray<span class="w"> </span>script<span class="w"> </span>started
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:19,123<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Status<span class="w"> </span>change:<span class="w"> </span>WARN<span class="w"> </span>-&gt;<span class="w"> </span>INFO
+</code></pre></div>
+<p>Build log:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">22</span>:00:00<span class="o">]</span><span class="w"> </span><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Starting<span class="w"> </span>build<span class="w"> </span>process...
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">22</span>:01:30<span class="o">]</span><span class="w"> </span><span class="o">[</span>OK<span class="o">]</span><span class="w"> </span>Build<span class="w"> </span>completed<span class="w"> </span>successfully.
+</code></pre></div>
+<p>Each log file is <strong>recreated</strong> when the script starts, ensuring fresh logs for each run.</p>
+<h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">&para;</a></h3>
+<p>Enable debug mode for verbose output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Via command line</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>./lmstudio-tray-manager<span class="w"> </span>--debug
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Via environment variable</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_DEBUG</span><span class="o">=</span><span class="m">1</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>./lmstudio_autostart.sh
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="c1"># View debug output</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+</code></pre></div>
+<p>Debug mode shows:</p>
+<ul>
+<li>Detailed process state changes</li>
+<li>API communication logs</li>
+<li>Model loading information</li>
+<li>System tray icon changes</li>
+<li>Error stack traces</li>
+<li><strong>Environment sanitization details</strong> - Lists specific variables cleaned
+  before tray launch (e.g., <code>GTK_PATH</code>, <code>GSETTINGS_SCHEMA_DIR</code>,
+  <code>LD_LIBRARY_PATH</code>)</li>
+</ul>
+<p><strong>Example debug output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="m">2026</span>-03-01<span class="w"> </span><span class="m">14</span>:30:15<span class="w"> </span>ℹ️<span class="w">  </span>Sanitizing<span class="w"> </span>runtime<span class="w"> </span>environment<span class="w"> </span><span class="k">for</span><span class="w"> </span>tray<span class="w"> </span>launch<span class="w"> </span><span class="o">(</span>Snap/GTK/Python<span class="w"> </span>loader<span class="w"> </span>vars<span class="o">)</span>.
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="m">2026</span>-03-01<span class="w"> </span><span class="m">14</span>:30:15<span class="w"> </span>🐛<span class="w"> </span>Debug:<span class="w"> </span>sanitized<span class="w"> </span>vars:<span class="w"> </span>GTK_PATH<span class="w"> </span>GSETTINGS_SCHEMA_DIR<span class="w"> </span>LD_LIBRARY_PATH<span class="o">(</span>filtered:/snap/*<span class="o">)</span>
+</code></pre></div>
+<p>The sanitization prevents crashes when launching from Snap-packaged
+applications (like VSCode) that inject incompatible library paths. See
+<a href="../setup/#runtime-environment-sanitization">setup.md</a> for details.</p>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="daemon-not-starting">Daemon Not Starting<a class="headerlink" href="#daemon-not-starting" title="Permanent link">&para;</a></h3>
+<p><strong>Problem</strong>: Daemon fails to start or exits immediately</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>Check if LM Studio daemon is installed:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>lms<span class="w"> </span>--version
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>llmster<span class="w"> </span>--version
+</code></pre></div>
+<ol>
+<li>Check logs for errors:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+</code></pre></div>
+<ol>
+<li>Try starting daemon manually:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>lms<span class="w"> </span>start
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>lms<span class="w"> </span>ps<span class="w">  </span><span class="c1"># Check if running</span>
+</code></pre></div>
+<ol>
+<li>Enable debug mode:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>./lmstudio-tray-manager<span class="w"> </span>--debug
+</code></pre></div>
+<h3 id="websocket-authentication-error">WebSocket Authentication Error<a class="headerlink" href="#websocket-authentication-error" title="Permanent link">&para;</a></h3>
+<p><strong>Problem</strong>: Error message <code>Invalid passkey for lms CLI client</code> appears</p>
+<p><strong>Cause</strong>: Stale daemon processes with outdated authentication tokens</p>
+<p><strong>Automatic Handling</strong>: The script automatically:</p>
+<ul>
+<li>Cleans up old daemon processes on startup</li>
+<li>Clears stale authentication tokens</li>
+<li>Restarts the daemon fresh</li>
+</ul>
+<p><strong>Manual Solutions</strong> (if automatic cleanup fails):</p>
+<ol>
+<li>Kill all LM Studio daemon processes:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;lms&quot;</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;llmster&quot;</span>
+</code></pre></div>
+<ol>
+<li>Clear authentication tokens:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Remove token files (location may vary by LM Studio version)</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>rm<span class="w"> </span>-f<span class="w"> </span>~/.lmstudio/auth_token
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>rm<span class="w"> </span>-f<span class="w"> </span>~/.config/lm-studio/auth_token
+</code></pre></div>
+<ol>
+<li>Restart the tray manager:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>./lmstudio_autostart.sh
+</code></pre></div>
+<ol>
+<li>Verify daemon is running with fresh authentication:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>lms<span class="w"> </span>ps
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="c1"># Should show no authentication errors</span>
+</code></pre></div>
+<h3 id="desktop-app-wont-launch">Desktop App Won't Launch<a class="headerlink" href="#desktop-app-wont-launch" title="Permanent link">&para;</a></h3>
+<p><strong>Problem</strong>: "Start Desktop App" button doesn't work</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>Verify desktop app is installed:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Check for .deb installation</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>which<span class="w"> </span>lm-studio
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>dpkg<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lm-studio
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="c1"># Check for AppImage</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>find<span class="w"> </span>~<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;LM-Studio*.AppImage&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null
+</code></pre></div>
+<ol>
+<li>Check tray logs:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;desktop&quot;</span><span class="w"> </span>.logs/lmstudio_tray.log
+</code></pre></div>
+<ol>
+<li>Disable daemon first (they conflict):</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>lms<span class="w"> </span>stop
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="c1"># Then try starting desktop app via tray menu</span>
+</code></pre></div>
+<ol>
+<li>Manually launch:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># If AppImage</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>~/LM_Studio/LM-Studio.AppImage
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="c1"># If .deb installed</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>lm-studio
+</code></pre></div>
+<h3 id="tray-icon-issues">Tray Icon Issues<a class="headerlink" href="#tray-icon-issues" title="Permanent link">&para;</a></h3>
+<p><strong>Problem</strong>: Tray icon doesn't appear despite app running</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>Verify app is running:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>pgrep<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lmstudio
+</code></pre></div>
+<ol>
+<li>Check for GTK3 issues:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>./venv/bin/python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import gi; gi.require_version(&#39;Gtk&#39;, &#39;3.0&#39;); from gi.repository import Gtk; print(&#39;GTK3 OK&#39;)&quot;</span>
+</code></pre></div>
+<ol>
+<li>Install missing GTK packages.  The tray uses
+   the AppIndicator3 API which is provided by the
+   <code>gir1.2-ayatanaappindicator3-0.1</code> package on Debian/Ubuntu-based
+   systems; some distributions expose the API simply as
+   <code>AppIndicator3</code>.  The code will now automatically fall back to the
+   alternate namespace if necessary, but you still need the GIR
+   typelib installed.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>gir1.2-gtk-3.0<span class="w"> </span>gir1.2-ayatanaappindicator3-0.1
+</code></pre></div>
+<ol>
+<li>Check logs:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|icon\|tray&quot;</span><span class="w"> </span>.logs/lmstudio_tray.log
+</code></pre></div>
+<ol>
+<li>Try debug mode:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>./lmstudio-tray-manager<span class="w"> </span>--debug<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>debug.log
+</code></pre></div>
+<h3 id="high-cpu-usage">High CPU Usage<a class="headerlink" href="#high-cpu-usage" title="Permanent link">&para;</a></h3>
+<p><strong>Problem</strong>: Application consuming excessive CPU</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>Check what's running:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>top<span class="w"> </span>-p<span class="w"> </span><span class="k">$(</span>pgrep<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py<span class="k">)</span>
+</code></pre></div>
+<ol>
+<li>Check for stuck processes:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lmstudio
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>lms<span class="w"> </span>ps
+</code></pre></div>
+<ol>
+<li>Stop and restart:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>pkill<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>sleep<span class="w"> </span><span class="m">2</span>
+<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>./lmstudio_autostart.sh
+</code></pre></div>
+<ol>
+<li>Check logs for errors:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>tail<span class="w"> </span>-100<span class="w"> </span>.logs/lmstudio_tray.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error&quot;</span>
+</code></pre></div>
+<ol>
+<li>Monitor in real-time:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="s1">&#39;ps aux | grep lmstudio&#39;</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

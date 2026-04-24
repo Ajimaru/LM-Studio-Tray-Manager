@@ -33,14 +33,13 @@ To use LM Studio Tray Manager, you can either:
 1. **Binary Release**: Download and run the standalone binary
 2. **Python Source**: Install dependencies and run from source
 
-See the [main documentation](../index.html) for setup instructions.
+See the [project landing page](https://ajimaru.github.io/LM-Studio-Tray-Manager/) for the full docs hub.
 
 ## Related Documentation
 
-- [Main Documentation](../index.html) - Project overview and getting started guide
-- [Setup Guide](../SETUP.md) - Complete setup instructions
-- [Usage Guide](../USE.md) - Application usage and CLI options
-- [Build Guide](../BUILD.md) - Building from source
+- [Setup Guide](guides/setup.md) - Complete setup instructions
+- [Usage Guide](guides/use.md) - Application usage and CLI options
+- [Build Guide](guides/build.md) - Building from source
 
 ## API Reference Quick Links
 
