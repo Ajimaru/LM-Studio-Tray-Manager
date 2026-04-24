@@ -2479,6 +2479,20 @@ class TrayIcon:
         dialog.run()
         dialog.destroy()
 
+    def _drain_gtk_events(self, gtk_module):
+        """Drain pending GTK events when the API is available.
+
+        Some test doubles for Gtk do not provide events_pending/
+        main_iteration_do. Guarding these calls keeps dialog cleanup
+        behavior in production while remaining test-friendly.
+        """
+        events_pending = getattr(gtk_module, "events_pending", None)
+        main_iteration_do = getattr(gtk_module, "main_iteration_do", None)
+        if not callable(events_pending) or not callable(main_iteration_do):
+            return
+        while events_pending():
+            main_iteration_do(False)
+
     def show_about_dialog(self, _widget):
         """Show application information in a GTK dialog."""
         gtk = _AppState.Gtk
@@ -2622,8 +2636,7 @@ class TrayIcon:
         dialog.set_modal(True)
         dialog.run()
         dialog.destroy()
-        while gtk.events_pending():
-            gtk.main_iteration_do(False)
+        self._drain_gtk_events(gtk)
 
     def show_config_dialog(self, _widget):
         """Show configuration dialog for LM Studio API endpoint."""
@@ -2700,14 +2713,12 @@ class TrayIcon:
                     )
                     error_dialog.run()
                     error_dialog.destroy()
-                    while gtk.events_pending():
-                        gtk.main_iteration_do(False)
+                    self._drain_gtk_events(gtk)
             else:
                 logging.warning("Invalid API host/port; config not saved")
 
         dialog.destroy()
-        while gtk.events_pending():
-            gtk.main_iteration_do(False)
+        self._drain_gtk_events(gtk)
 
     def get_version_label(self):
         """Return version text with update status for the About dialog.
