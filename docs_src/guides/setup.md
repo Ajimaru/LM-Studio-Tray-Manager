@@ -44,7 +44,7 @@ For other installation types (binary, Python source), `setup.sh` automates confi
   - [Table of Contents](#table-of-contents)
   - [What setup.sh Does](#what-setupsh-does)
   - [Installation Types](#installation-types)
-    - [AppImage Release (Simplest) - Fully Self-Contained](#appimage-release-simplest---fully-self-contained)
+    - [AppImage Release (Simplest): Fully Self-Contained](#appimage-release-simplest-fully-self-contained)
     - [Binary Release](#binary-release)
     - [Python Package Release](#python-package-release)
   - [Quick Start](#quick-start)
@@ -75,7 +75,7 @@ For other installation types (binary, Python source), `setup.sh` automates confi
   - [Compatibility Notes](#compatibility-notes)
   - [macOS Installation](#macos-installation)
     - [Requirements](#requirements)
-    - [Quick start](#quick-start-1)
+    - [Quick start (macOS)](#quick-start-macos)
     - [Using setup.sh on macOS](#using-setupsh-on-macos)
     - [Notifications](#notifications)
     - [Desktop app detection](#desktop-app-detection)
@@ -128,7 +128,7 @@ The setup script automatically detects your installation type and configures acc
 
 The setup script automatically detects your installation type:
 
-### AppImage Release (Simplest) - Fully Self-Contained
+### AppImage Release (Simplest): Fully Self-Contained
 
 **Detection:** Script finds a `lmstudio-tray-manager*.AppImage` file in the
 script directory
@@ -623,7 +623,7 @@ The tray manager supports macOS natively using the
 - LM Studio daemon (`lms` CLI from [lmstudio.ai](https://lmstudio.ai/))
 - LM Studio desktop app (optional, for `--gui` mode)
 
-### Quick start
+### Quick start (macOS)
 
 ```bash
 # Install the macOS tray dependency

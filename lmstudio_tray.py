@@ -5,8 +5,10 @@ LM Studio Tray Icon Monitor.
 System tray app for monitoring LM Studio daemon and desktop app.
 Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
 Usage:
+    ```text
     lmstudio_tray.py [model] [script_dir] [--debug]
     [--auto-start-daemon] [--gui] [--version]
+    ```
 """
 
 import argparse
@@ -21,7 +23,7 @@ import threading
 import importlib
 import json
 import webbrowser
-from typing import Optional
+from typing import Callable, Optional
 from types import ModuleType
 from urllib import request as urllib_request
 from urllib import error as urllib_error
@@ -43,7 +45,7 @@ _RumpsBase = _rumps_lib.App if _rumps_lib is not None else object
 DEFAULT_APP_VERSION = "dev"
 
 
-def load_version_from_dir(base_dir):
+def load_version_from_dir(base_dir: str) -> str:
     """
     Load version from VERSION file in base_dir, or default if missing.
 
@@ -64,7 +66,7 @@ def load_version_from_dir(base_dir):
     return DEFAULT_APP_VERSION
 
 
-def _get_default_script_dir():
+def _get_default_script_dir() -> str:
     """
     Get script directory or current directory if unavailable.
 
@@ -77,7 +79,7 @@ def _get_default_script_dir():
         return os.getcwd()
 
 
-def _get_writable_logs_dir(base_script_dir):
+def _get_writable_logs_dir(base_script_dir: str) -> str:
     """
     Get writable logs directory, fallback to ~/.local/share if needed.
 
@@ -104,7 +106,7 @@ def _get_writable_logs_dir(base_script_dir):
         return writable_logs
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """
     Parse command-line arguments and return namespace.
 
@@ -345,7 +347,7 @@ def get_release_url(tag: Optional[str] = None) -> str:
 LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 
-def get_app_version():
+def get_app_version() -> str:
     """
     Load app version from VERSION file in script_dir.
 
@@ -357,7 +359,7 @@ def get_app_version():
     return load_version_from_dir(_AppState.script_dir)
 
 
-def main():
+def main() -> None:
     """
     Parse CLI args, load dependencies, configure logging, and start app.
 
@@ -584,7 +586,7 @@ class HomeMaskFormatter(logging.Formatter):
         return s
 
 
-def get_asset_path(*path_components):
+def get_asset_path(*path_components: str) -> Optional[str]:
     """Locate asset file in PyInstaller bundle, script_dir, or cwd.
 
     Args:
@@ -614,12 +616,12 @@ def get_asset_path(*path_components):
     return None
 
 
-def _get_config_path():
+def _get_config_path() -> str:
     """Return config file path ~/.config/lmstudio_tray.json."""
     return os.path.expanduser("~/.config/lmstudio_tray.json")
 
 
-def _normalize_api_port(value):
+def _normalize_api_port(value: object) -> Optional[int]:
     """Validate and return port as int (1-65535) or None if invalid."""
     try:
         port = int(value)
@@ -630,7 +632,7 @@ def _normalize_api_port(value):
     return None
 
 
-def load_config():
+def load_config() -> None:
     """
     Load API endpoint config from file.
 
@@ -675,7 +677,7 @@ def load_config():
         )
 
 
-def save_config(api_host, api_port):
+def save_config(api_host: str, api_port: int) -> None:
     """Save API endpoint config to file.
 
     Raises:
@@ -727,7 +729,7 @@ def save_config(api_host, api_port):
         raise
 
 
-def _validate_url_scheme(url):
+def _validate_url_scheme(url: str) -> str:
     """Validate URL uses http/https and return formatted base URL.
 
     Args:
@@ -764,7 +766,7 @@ def _validate_url_scheme(url):
     return f"http://{host}:{port}"
 
 
-def get_api_base_url():
+def get_api_base_url() -> str:
     """Return base API URL from _AppState config.
 
     Returns:
@@ -778,12 +780,12 @@ def get_api_base_url():
     )
 
 
-def get_api_models_url():
+def get_api_models_url() -> str:
     """Return full API models endpoint URL."""
     return f"{get_api_base_url()}/v1/models"
 
 
-def get_authors():
+def get_authors() -> list[str]:
     """Parse AUTHORS file from script_dir.
 
     Returns list or [APP_MAINTAINER] fallback.
@@ -815,7 +817,7 @@ def get_authors():
     return authors if authors else [APP_MAINTAINER]
 
 
-def parse_version(version):
+def parse_version(version: Optional[str]) -> tuple[int, ...]:
     """Parse version string to tuple of integers for comparison."""
     if not version:
         return ()
@@ -836,7 +838,7 @@ def parse_version(version):
     return tuple(parts)
 
 
-def is_newer_version(current, latest):
+def is_newer_version(current: Optional[str], latest: Optional[str]) -> bool:
     """Return True if latest version > current version."""
     current_parts = parse_version(current)
     latest_parts = parse_version(latest)
@@ -845,7 +847,7 @@ def is_newer_version(current, latest):
     return latest_parts > current_parts
 
 
-def _is_allowed_update_url(url):
+def _is_allowed_update_url(url: str) -> bool:
     """Return True if URL is HTTPS GitHub API repos endpoint.
 
     Args:
@@ -862,7 +864,7 @@ def _is_allowed_update_url(url):
     )
 
 
-def get_latest_release_version():
+def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
     """Fetch latest GitHub release tag, return (tag, error_msg) tuple."""
     if not _is_allowed_update_url(LATEST_RELEASE_API_URL):
         logging.debug("Update check: invalid update URL")
@@ -894,7 +896,7 @@ def get_latest_release_version():
         return None, "Network or parse error"
 
 
-def get_lms_cmd():
+def get_lms_cmd() -> Optional[str]:
     """Return LM Studio CLI path if executable, else resolve from PATH."""
     if os.path.isfile(LMS_CLI) and os.access(LMS_CLI, os.X_OK):
         return LMS_CLI
@@ -904,7 +906,7 @@ def get_lms_cmd():
 _get_llmster_cmd_state = {"last_candidate": None, "seen_call": False}
 
 
-def get_llmster_cmd():
+def get_llmster_cmd() -> Optional[str]:
     """Return llmster path from PATH or install dir.
 
     Includes debug logging on changes.
@@ -978,7 +980,7 @@ def _has_loaded_model(output: str) -> bool:
     return True
 
 
-def _api_loaded_model_names(models):
+def _api_loaded_model_names(models: object) -> list[str]:
     """Return model names explicitly marked as loaded from API response.
 
     Args:
@@ -1020,32 +1022,32 @@ def _api_loaded_model_names(models):
     return loaded_names
 
 
-def get_pkill_cmd():
+def get_pkill_cmd() -> Optional[str]:
     """Return absolute pkill path from PATH."""
     return shutil.which("pkill")
 
 
-def get_notify_send_cmd():
+def get_notify_send_cmd() -> Optional[str]:
     """Return absolute notify-send path from PATH."""
     return shutil.which("notify-send")
 
 
-def get_ps_cmd():
+def get_ps_cmd() -> Optional[str]:
     """Return absolute ps path from PATH."""
     return shutil.which("ps")
 
 
-def get_pgrep_cmd():
+def get_pgrep_cmd() -> Optional[str]:
     """Return absolute pgrep path from PATH."""
     return shutil.which("pgrep")
 
 
-def get_dpkg_cmd():
+def get_dpkg_cmd() -> Optional[str]:
     """Return absolute dpkg path from PATH."""
     return shutil.which("dpkg")
 
 
-def check_api_models():
+def check_api_models() -> bool:
     """Check if models loaded via API (fallback when lms ps fails).
 
     Returns:
@@ -1077,7 +1079,7 @@ def check_api_models():
         return False
 
 
-def _run_safe_command(command):
+def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
     """Run pre-validated command list.
 
     Caller must ensure trusted absolute-path executable.
@@ -1112,7 +1114,7 @@ def _run_safe_command(command):
     )
 
 
-def is_llmster_running():
+def is_llmster_running() -> bool:
     """Return True if llmster process running (using pgrep or ps)."""
     pgrep_cmd = get_pgrep_cmd()
     if pgrep_cmd and os.path.isabs(pgrep_cmd):
@@ -1518,7 +1520,7 @@ class TrayIcon:
         self.menu.show_all()
         self.indicator.set_menu(self.menu)
 
-    def get_daemon_status(self):
+    def get_daemon_status(self) -> str:
         """Return daemon status: 'running', 'stopped', or 'not_found'.
 
         Returns:
@@ -1538,7 +1540,7 @@ class TrayIcon:
         ):
             return "not_found"
 
-    def get_desktop_app_status(self):
+    def get_desktop_app_status(self) -> str:
         """Return desktop app status: 'running', 'stopped', or 'not_found'.
 
         Returns:
@@ -1644,7 +1646,7 @@ class TrayIcon:
 
         return status
 
-    def get_status_indicator(self, status):
+    def get_status_indicator(self, status: str) -> str:
         """Return emoji for status ('running' -> 🟢, 'stopped' -> 🟡, else -> 🔴).
 
         Args:
@@ -1661,7 +1663,9 @@ class TrayIcon:
             return "🔴"
 
     @staticmethod
-    def _run_validated_command(command):
+    def _run_validated_command(
+        command: list[str],
+    ) -> subprocess.CompletedProcess[str]:
         """Run a pre-validated command list via subprocess.
 
         The caller MUST ensure that ``command`` contains trusted,
@@ -1692,7 +1696,11 @@ class TrayIcon:
                 command[2] = f"ℹ️ {command[2]}"
         return _run_safe_command(command)
 
-    def _run_daemon_attempts(self, attempts, stop_when):
+    def _run_daemon_attempts(
+        self,
+        attempts: list[list[str]],
+        stop_when: Callable[[subprocess.CompletedProcess[str]], bool],
+    ) -> Optional[subprocess.CompletedProcess[str]]:
         """Run daemon command attempts until a condition is met.
 
         Args:
@@ -1728,7 +1736,7 @@ class TrayIcon:
                 break
         return result
 
-    def _build_daemon_attempts(self, action):
+    def _build_daemon_attempts(self, action: str) -> list[list[str]]:
         """Build ordered daemon CLI attempts for one action.
 
         Args:
@@ -1782,7 +1790,7 @@ class TrayIcon:
 
         return attempts
 
-    def _force_stop_llmster(self):
+    def _force_stop_llmster(self) -> None:
         """Force-stop llmster with SIGTERM then SIGKILL escalation."""
         pkill_cmd = get_pkill_cmd()
         if not pkill_cmd:
@@ -1826,7 +1834,9 @@ class TrayIcon:
                     break
                 time.sleep(0.25)
 
-    def _stop_llmster_best_effort(self):
+    def _stop_llmster_best_effort(
+        self,
+    ) -> tuple[bool, Optional[subprocess.CompletedProcess[str]]]:
         """Stop llmster with graceful attempts and force-stop fallback.
 
         Always calls force-stop to handle race conditions where pgrep
@@ -1847,7 +1857,9 @@ class TrayIcon:
 
         return (not is_llmster_running(), result)
 
-    def _stop_daemon_with_notification(self):
+    def _stop_daemon_with_notification(
+        self,
+    ) -> tuple[bool, Optional[subprocess.CompletedProcess[str]]]:
         """Stop daemon and show notification on success/failure.
 
         Single source of truth for daemon-stop logic with user notifications.
@@ -1906,7 +1918,7 @@ class TrayIcon:
 
         return (stopped, result)
 
-    def _stop_desktop_app_processes(self):
+    def _stop_desktop_app_processes(self) -> bool:
         """Stop LM Studio desktop processes using TERM, then KILL.
 
         Returns:
@@ -1940,7 +1952,7 @@ class TrayIcon:
 
         return self.get_desktop_app_status() != "running"
 
-    def start_daemon(self, _widget):
+    def start_daemon(self, _widget: object) -> None:
         """Start the headless daemon.
 
         Stops the desktop app first if needed, then tries daemon start
@@ -2027,7 +2039,7 @@ class TrayIcon:
                 )
             self.build_menu()
 
-    def stop_daemon(self, _widget):
+    def stop_daemon(self, _widget: object) -> None:
         """Stop the headless daemon.
 
         Uses _stop_daemon_with_notification() for consistent stop logic
@@ -2052,7 +2064,7 @@ class TrayIcon:
                 )
             self.build_menu()
 
-    def start_desktop_app(self, _widget):
+    def start_desktop_app(self, _widget: object) -> None:
         """Start the LM Studio desktop app.
 
         All blocking logic runs in a background thread so the tray
@@ -2071,7 +2083,7 @@ class TrayIcon:
         )
         app_thread.start()
 
-    def _start_desktop_app_body(self):
+    def _start_desktop_app_body(self) -> None:
         """Background thread body for start_desktop_app.
 
         Stops the daemon first using _stop_daemon_with_notification(),
@@ -2299,7 +2311,7 @@ class TrayIcon:
                     ]
                 )
 
-    def stop_desktop_app(self, _widget):
+    def stop_desktop_app(self, _widget: object) -> None:
         """Stop the LM Studio desktop app process.
 
         Useful when the window closes to tray but the process remains active.
@@ -2720,7 +2732,7 @@ class TrayIcon:
         dialog.destroy()
         self._drain_gtk_events(gtk)
 
-    def get_version_label(self):
+    def get_version_label(self) -> str:
         """Return version text with update status for the About dialog.
 
         The version string is deliberately kept free of URLs; when an update
@@ -2735,17 +2747,22 @@ class TrayIcon:
             status = f"Update available: {self.latest_update_version}"
         return f"{_AppState.APP_VERSION} ({status})"
 
-    def _check_updates_tick(self):
+    def _check_updates_tick(self) -> bool:
         """Run the update check for scheduled timers."""
         self.check_updates()
         return True
 
-    def _initial_update_check(self):
+    def _initial_update_check(self) -> bool:
         """Run a single update check shortly after startup."""
         self.check_updates()
         return False
 
-    def _format_update_check_message(self, status, latest, error):
+    def _format_update_check_message(
+        self,
+        status: str,
+        latest: Optional[str],
+        error: Optional[str],
+    ) -> str:
         """Build the update check notification message."""
         if status == "Update available" and latest:
             url = get_release_url(latest)
@@ -2769,7 +2786,7 @@ class TrayIcon:
         detail = f" ({error})" if error else ""
         return "Unable to check for updates." + detail
 
-    def manual_check_updates(self, _widget):
+    def manual_check_updates(self, _widget: object) -> None:
         """Run update check on demand and notify about the result."""
         notified = self.check_updates()
         notify_cmd = get_notify_send_cmd()
@@ -2783,7 +2800,7 @@ class TrayIcon:
 
         self._run_validated_command([notify_cmd, "Update Check", message])
 
-    def check_updates(self):
+    def check_updates(self) -> bool:
         """Check GitHub for a newer release and notify the user.
 
         Returns:
@@ -2844,7 +2861,7 @@ class TrayIcon:
             return True
         return False
 
-    def check_model(self):
+    def check_model(self) -> bool:
         """Check LM Studio runtime/model status and update tray icon.
 
         The ``_has_loaded_model`` helper is used to interpret the output of
@@ -3081,7 +3098,7 @@ class MacOSTrayIcon(_RumpsBase):
         os.path.expanduser("~/Applications/LM Studio.app"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the macOS tray icon and start monitoring timers."""
         if _rumps_lib is None:
             raise RuntimeError(
@@ -3142,7 +3159,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Status helpers
     # ------------------------------------------------------------------
 
-    def get_daemon_status(self):
+    def get_daemon_status(self) -> str:
         """Check if llmster headless daemon is running.
 
         Returns:
@@ -3162,7 +3179,7 @@ class MacOSTrayIcon(_RumpsBase):
         ):
             return "not_found"
 
-    def get_desktop_app_status(self):
+    def get_desktop_app_status(self) -> str:
         """Check if LM Studio desktop app is running or installed (macOS).
 
         Returns:
@@ -3200,7 +3217,7 @@ class MacOSTrayIcon(_RumpsBase):
             self._seen_desktop_call = True
         return "not_found"
 
-    def get_status_indicator(self, status):
+    def get_status_indicator(self, status: str) -> str:
         """Return an emoji indicator for a status string.
 
         Args:
@@ -3220,7 +3237,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Notification
     # ------------------------------------------------------------------
 
-    def _notify(self, title, message):
+    def _notify(self, title: str, message: str) -> None:
         """Send a macOS notification via rumps.
 
         Args:
@@ -3254,7 +3271,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Menu building
     # ------------------------------------------------------------------
 
-    def build_menu(self):
+    def build_menu(self) -> None:
         """Rebuild the macOS menu-bar menu with current status."""
         rumps_lib = _rumps_lib
         if rumps_lib is None:
@@ -3354,20 +3371,20 @@ class MacOSTrayIcon(_RumpsBase):
     # Timer callbacks
     # ------------------------------------------------------------------
 
-    def _check_model_tick(self, _sender):
+    def _check_model_tick(self, _sender: object) -> None:
         """Periodic timer callback that runs check_model."""
         self.check_model()
 
-    def _update_check_tick(self, _sender):
+    def _update_check_tick(self, _sender: object) -> None:
         """Periodic timer callback that runs check_updates."""
         self.check_updates()
 
-    def _initial_update_check_once(self, sender):
+    def _initial_update_check_once(self, sender: object) -> None:
         """One-shot timer: run update check then stop the timer."""
         self.check_updates()
         sender.stop()
 
-    def _schedule_menu_refresh(self, delay_seconds=2):
+    def _schedule_menu_refresh(self, delay_seconds: float = 2) -> None:
         """Schedule a delayed menu rebuild using a background thread.
 
         Args:
@@ -3384,7 +3401,9 @@ class MacOSTrayIcon(_RumpsBase):
     # Action cooldown
     # ------------------------------------------------------------------
 
-    def begin_action_cooldown(self, action_name, seconds=2.0):
+    def begin_action_cooldown(
+        self, action_name: str, seconds: float = 2.0
+    ) -> bool:
         """Prevent rapid double-triggering of tray actions.
 
         Args:
@@ -3410,7 +3429,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Status / model check
     # ------------------------------------------------------------------
 
-    def check_model(self):
+    def check_model(self) -> bool:
         """Check LM Studio status and update the menu-bar title emoji.
 
         Updates the menu-bar title according to the FAIL/WARN/INFO/OK
@@ -3526,7 +3545,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Daemon control helpers
     # ------------------------------------------------------------------
 
-    def _build_daemon_attempts(self, action):
+    def _build_daemon_attempts(self, action: str) -> list[list[str]]:
         """Return ordered CLI command lists for daemon start or stop.
 
         Args:
@@ -3570,7 +3589,7 @@ class MacOSTrayIcon(_RumpsBase):
                 ])
         return attempts
 
-    def _force_stop_llmster(self):
+    def _force_stop_llmster(self) -> None:
         """Force-kill llmster with SIGTERM then SIGKILL escalation."""
         pkill_cmd = get_pkill_cmd()
         if not pkill_cmd or not os.path.isabs(pkill_cmd):
@@ -3601,7 +3620,9 @@ class MacOSTrayIcon(_RumpsBase):
                     break
                 time.sleep(0.25)
 
-    def _stop_daemon_with_notification(self):
+    def _stop_daemon_with_notification(
+        self,
+    ) -> tuple[bool, Optional[subprocess.CompletedProcess[str]]]:
         """Stop daemon and send a macOS notification on result.
 
         Returns:
@@ -3647,7 +3668,7 @@ class MacOSTrayIcon(_RumpsBase):
 
         return (stopped, result)
 
-    def _stop_desktop_app_processes(self):
+    def _stop_desktop_app_processes(self) -> bool:
         """Stop LM Studio desktop processes via SIGTERM then SIGKILL.
 
         Returns:
@@ -3680,7 +3701,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Daemon start / stop
     # ------------------------------------------------------------------
 
-    def start_daemon(self, _sender):
+    def start_daemon(self, _sender: object) -> None:
         """Start the llmster headless daemon (menu-bar callback).
 
         Args:
@@ -3694,7 +3715,7 @@ class MacOSTrayIcon(_RumpsBase):
             name="macos-start-daemon",
         ).start()
 
-    def _start_daemon_body(self):
+    def _start_daemon_body(self) -> None:
         """Background thread body for :meth:`start_daemon`."""
         if self.get_desktop_app_status() == "running":
             if not self._stop_desktop_app_processes():
@@ -3727,7 +3748,7 @@ class MacOSTrayIcon(_RumpsBase):
         self._notify("Error", "Daemon start failed")
         self.build_menu()
 
-    def stop_daemon(self, _sender):
+    def stop_daemon(self, _sender: object) -> None:
         """Stop the llmster headless daemon (menu-bar callback).
 
         Args:
@@ -3741,7 +3762,7 @@ class MacOSTrayIcon(_RumpsBase):
             name="macos-stop-daemon",
         ).start()
 
-    def _stop_daemon_body(self):
+    def _stop_daemon_body(self) -> None:
         """Background thread body for :meth:`stop_daemon`."""
         try:
             self._stop_daemon_with_notification()
@@ -3756,7 +3777,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Desktop app start / stop
     # ------------------------------------------------------------------
 
-    def start_desktop_app(self, _sender):
+    def start_desktop_app(self, _sender: object) -> None:
         """Start LM Studio desktop app (menu-bar callback).
 
         Args:
@@ -3770,7 +3791,7 @@ class MacOSTrayIcon(_RumpsBase):
             name="macos-start-app",
         ).start()
 
-    def _start_desktop_app_body(self):
+    def _start_desktop_app_body(self) -> None:
         """Background thread body for :meth:`start_desktop_app` (macOS).
 
         Stops the daemon first, then launches LM Studio via the system
@@ -3819,7 +3840,7 @@ class MacOSTrayIcon(_RumpsBase):
         )
         self.build_menu()
 
-    def stop_desktop_app(self, _sender):
+    def stop_desktop_app(self, _sender: object) -> None:
         """Stop LM Studio desktop app (menu-bar callback).
 
         Args:
@@ -3846,7 +3867,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Dialogs
     # ------------------------------------------------------------------
 
-    def show_status_dialog(self, sender):
+    def show_status_dialog(self, sender: object) -> None:
         """Show a rumps alert with the current LM Studio CLI status.
 
         Args:
@@ -3871,7 +3892,7 @@ class MacOSTrayIcon(_RumpsBase):
             return
         rumps_lib.alert(title="LM Studio Status", message=text)
 
-    def show_about_dialog(self, sender):
+    def show_about_dialog(self, sender: object) -> None:
         """Show basic application information in a rumps alert.
 
         Args:
@@ -3897,7 +3918,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Update check
     # ------------------------------------------------------------------
 
-    def check_updates(self):
+    def check_updates(self) -> bool:
         """Check GitHub for a newer release and notify if found.
 
         Returns:
@@ -3963,7 +3984,7 @@ class MacOSTrayIcon(_RumpsBase):
         )
         return True
 
-    def manual_check_updates(self, _sender):
+    def manual_check_updates(self, _sender: object) -> None:
         """Run an on-demand update check and show result via alert.
 
         Args:
@@ -4005,7 +4026,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Auto-start helpers
     # ------------------------------------------------------------------
 
-    def _maybe_auto_start_daemon(self):
+    def _maybe_auto_start_daemon(self) -> None:
         """Start daemon at launch when --auto-start-daemon is set."""
         logging.info(
             "Auto-starting daemon (--auto-start-daemon) "
@@ -4018,7 +4039,7 @@ class MacOSTrayIcon(_RumpsBase):
         self.action_lock_until = 0.0
         self.start_daemon(None)
 
-    def _maybe_start_gui(self):
+    def _maybe_start_gui(self) -> None:
         """Start the desktop app at launch when --gui is set."""
         logging.info("Auto-starting GUI (--gui)")
         self.start_desktop_app(None)
@@ -4027,7 +4048,7 @@ class MacOSTrayIcon(_RumpsBase):
     # Quit
     # ------------------------------------------------------------------
 
-    def quit_app(self, _sender):
+    def quit_app(self, _sender: object) -> None:
         """Quit the tray application (menu-bar callback).
 
         Args:
