@@ -9,7 +9,7 @@
 #   rumps>=0.4.0   — install with: pip install rumps
 
 # PyInstaller 6.19.0 (source: pyinstaller-6.19.0.tar.gz)
-pyinstaller==6.19.0
+pyinstaller==6.20.0
 
 # altgraph 0.17.5 (source: altgraph-0.17.5-py2.py3-none-any.whl)
 # Transitive dependency used by PyInstaller
