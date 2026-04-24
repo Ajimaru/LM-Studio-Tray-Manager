@@ -2622,6 +2622,8 @@ class TrayIcon:
         dialog.set_modal(True)
         dialog.run()
         dialog.destroy()
+        while gtk.events_pending():
+            gtk.main_iteration_do(False)
 
     def show_config_dialog(self, _widget):
         """Show configuration dialog for LM Studio API endpoint."""
@@ -2698,10 +2700,14 @@ class TrayIcon:
                     )
                     error_dialog.run()
                     error_dialog.destroy()
+                    while gtk.events_pending():
+                        gtk.main_iteration_do(False)
             else:
                 logging.warning("Invalid API host/port; config not saved")
 
         dialog.destroy()
+        while gtk.events_pending():
+            gtk.main_iteration_do(False)
 
     def get_version_label(self):
         """Return version text with update status for the About dialog.
