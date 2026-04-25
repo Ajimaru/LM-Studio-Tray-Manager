@@ -324,10 +324,11 @@ create_release_archive() {
         -C "$DIST_DIR" \
         LM-Studio-Tray-Manager.app
 
+    # Write checksums with relative filenames for portable verification.
     if command -v sha256sum >/dev/null 2>&1; then
-        sha256sum "$RELEASE_DIR/$ARCHIVE_NAME" > "$RELEASE_DIR/SHA256SUMS-macos.txt"
+        (cd "$RELEASE_DIR" && sha256sum "$ARCHIVE_NAME" > "SHA256SUMS-macos.txt")
     else
-        shasum -a 256 "$RELEASE_DIR/$ARCHIVE_NAME" > "$RELEASE_DIR/SHA256SUMS-macos.txt"
+        (cd "$RELEASE_DIR" && shasum -a 256 "$ARCHIVE_NAME" > "SHA256SUMS-macos.txt")
     fi
 
     echo -e "${GREEN}✅ Release archive created${NC}"

@@ -153,11 +153,11 @@ This will:
 1. Check for Python 3 and Xcode Command Line Tools
 2. Render a high-resolution ICNS icon from the SVG asset when available
 3. Create a Python venv with rumps (macOS tray library)
-3. Install all build dependencies
-4. Build a native Apple Silicon `.app` bundle with PyInstaller
-5. Bundle application resources and menu bar metadata
-6. Optionally code sign and notarize the app
-7. Create a `.tar.gz` release archive with checksums
+4. Install all build dependencies
+5. Build a native Apple Silicon `.app` bundle with PyInstaller
+6. Bundle application resources and menu bar metadata
+7. Optionally code sign and notarize the app
+8. Create a `.tar.gz` release archive with checksums
 
 **Output:**
 
