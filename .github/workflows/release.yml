@@ -118,8 +118,15 @@ jobs:
           CERT_PATH="$RUNNER_TEMP/developer-id.p12"
           KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
 
-          echo "$MACOS_CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
+          CERT_PATH="$CERT_PATH" python - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
 
+          certificate_base64 = os.environ["MACOS_CERTIFICATE_BASE64"]
+          certificate_path = Path(os.environ["CERT_PATH"])
+          certificate_path.write_bytes(base64.b64decode(certificate_base64))
+          PY
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
