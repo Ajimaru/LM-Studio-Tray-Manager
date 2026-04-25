@@ -243,10 +243,10 @@ configure_app_bundle() {
         /usr/libexec/PlistBuddy -c "Set :LSUIElement true" "$plist_path"
     /usr/libexec/PlistBuddy -c "Add :NSHighResolutionCapable bool true" "$plist_path" 2>/dev/null || \
         /usr/libexec/PlistBuddy -c "Set :NSHighResolutionCapable true" "$plist_path"
-    /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string LM Studio Tray Manager" "$plist_path" 2>/dev/null || \
-        /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName LM Studio Tray Manager" "$plist_path"
-    /usr/libexec/PlistBuddy -c "Add :CFBundleName string LM Studio Tray Manager" "$plist_path" 2>/dev/null || \
-        /usr/libexec/PlistBuddy -c "Set :CFBundleName LM Studio Tray Manager" "$plist_path"
+    /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string \"LM Studio Tray Manager\"" "$plist_path" 2>/dev/null || \
+        /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName \"LM Studio Tray Manager\"" "$plist_path"
+    /usr/libexec/PlistBuddy -c "Add :CFBundleName string \"LM Studio Tray Manager\"" "$plist_path" 2>/dev/null || \
+        /usr/libexec/PlistBuddy -c "Set :CFBundleName \"LM Studio Tray Manager\"" "$plist_path"
 
     echo -e "${GREEN}✅ App bundle configured${NC}"
 }
