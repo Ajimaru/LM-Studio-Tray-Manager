@@ -6,13 +6,13 @@
 # Install with: pip install -r requirements-docs.txt
 
 # Pin the docs toolchain so CI reproduces the committed HTML byte-for-byte.
-# The checked-in pages were generated with mkdocs 1.6.1 and mkdocs-material 9.7.5.
+# The checked-in pages were generated with mkdocs 1.6.1 and mkdocs-material 9.7.6.
 
 # MkDocs static site generator
 mkdocs==1.6.1
 
 # Material theme for MkDocs
-mkdocs-material==9.7.5
+mkdocs-material==9.7.6
 
 # Python docstring parsing plugin for MkDocs
 mkdocstrings[python]==1.0.4

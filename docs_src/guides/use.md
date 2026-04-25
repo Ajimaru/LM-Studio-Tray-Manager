@@ -35,7 +35,7 @@ This guide covers how to use the LM Studio Tray Manager application after setup.
       - [Option 2: Via LM Studio GUI](#option-2-via-lm-studio-gui)
       - [Option 3: Via Daemon Configuration File](#option-3-via-daemon-configuration-file)
   - [Monitoring and Logs](#monitoring-and-logs)
-   - [Common Errors \& Troubleshooting](#common-errors-troubleshooting)
+    - [Common Errors and Troubleshooting](#common-errors-and-troubleshooting)
       - [GSettings Schema Crash](#gsettings-schema-crash)
     - [View Logs in Real-Time](#view-logs-in-real-time)
     - [Understanding Log Files](#understanding-log-files)
@@ -424,7 +424,7 @@ Example configuration snippet (add the `"default_model"` key to your existing co
 
 ## Monitoring and Logs
 
-### Common Errors & Troubleshooting
+### Common Errors and Troubleshooting
 
 #### GSettings Schema Crash
 

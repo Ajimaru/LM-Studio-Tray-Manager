@@ -9,7 +9,7 @@
 #   rumps>=0.4.0   — install with: pip install rumps
 
 # PyInstaller 6.19.0 (source: pyinstaller-6.19.0.tar.gz)
-pyinstaller==6.19.0
+pyinstaller==6.20.0
 
 # altgraph 0.17.5 (source: altgraph-0.17.5-py2.py3-none-any.whl)
 # Transitive dependency used by PyInstaller
@@ -17,7 +17,7 @@ altgraph==0.17.5
 
 # pyinstaller-hooks-contrib 2026.1 (source: pyinstaller_hooks_contrib-2026.1-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
-pyinstaller-hooks-contrib==2026.3
+pyinstaller-hooks-contrib==2026.4
 
 # setuptools 82.0.0 (source: setuptools-82.0.0-py3-none-any.whl)
 # Required by PyInstaller (>=42.0.0)
@@ -25,4 +25,4 @@ setuptools==82.0.1
 
 # packaging 26.0 (source: packaging-26.0-py3-none-any.whl)
 # Required by PyInstaller (>=22.0)
-packaging==26.0
+packaging==26.1

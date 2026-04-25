@@ -163,7 +163,9 @@ This setup script:
 
 **Download:**
 
-- `lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz` (or signed release)
+- `lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz`
+- `lmstudio-tray-manager-vX.Y.Z-macos-signed.tar.gz`
+- `lmstudio-tray-manager-vX.Y.Z-macos-notarized.tar.gz`
 
 **Extract and run:**
 
@@ -185,7 +187,11 @@ open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
 - `lms ps` (check LM Studio daemon)
 - Click menu bar icon to see tray menu
 
-**Note:** The unsigned .app works for testing. For distribution, code signing is recommended.
+**Note:**
+
+- `macos-unsigned` is for local testing.
+- `macos-signed` is signed but may still show Gatekeeper prompts.
+- `macos-notarized` is the preferred release artifact for external macOS users.
 
 </details>
 <!-- markdownlint-enable MD033 -->

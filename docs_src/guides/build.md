@@ -9,7 +9,7 @@ This document describes how to build standalone releases of LM Studio Tray Manag
 - [Building Binary Distribution](#building-binary-distribution)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
-    - [AppImage (Recommended) - Fully Portable](#appimage-recommended-fully-portable)
+    - [AppImage (Recommended): Fully Portable](#appimage-recommended-fully-portable)
     - [Binary (Build locally)](#binary-build-locally)
     - [macOS .app Bundle](#macos-app-bundle)
   - [Quick Start](#quick-start)
@@ -43,7 +43,7 @@ This document describes how to build standalone releases of LM Studio Tray Manag
     - [Large Binary Size](#large-binary-size)
   - [Alternative Approaches](#alternative-approaches)
     - [Nuitka](#nuitka)
-    - [AppImage (Recommended) - Fully Portable Release](#appimage-recommended-fully-portable-release)
+    - [AppImage (Recommended): Fully Portable Release](#appimage-recommended-fully-portable-release)
       - [Option 1: Docker (Recommended)](#option-1-docker-recommended)
       - [Option 2: GitHub Actions (Automatic)](#option-2-github-actions-automatic)
     - [Rust Rewrite](#rust-rewrite)
@@ -54,7 +54,7 @@ This document describes how to build standalone releases of LM Studio Tray Manag
 
 The project offers multiple build approaches with different portability levels:
 
-### AppImage (Recommended) - Fully Portable
+### AppImage (Recommended): Fully Portable
 
 The AppImage release is the **most portable and recommended option** for Linux:
 
@@ -551,7 +551,7 @@ For smaller binaries or different requirements, consider:
 - Faster startup time
 - More complex build process
 
-### AppImage (Recommended) - Fully Portable Release
+### AppImage (Recommended): Fully Portable Release
 
 **What is it?**
 

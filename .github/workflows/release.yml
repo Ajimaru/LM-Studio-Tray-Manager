@@ -71,7 +71,7 @@ jobs:
           ls -lh "$APPIMAGE" "$SOURCE_TAR" "$BINARY_TAR" | awk '{print $9, "("$5")"}'
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: ${{ github.ref_name }}
           generate_release_notes: true
@@ -83,6 +83,8 @@ jobs:
   build-macos:
     runs-on: macos-latest
     needs: build-and-release
+    env:
+      NOTARY_PROFILE: LMSTUDIO_TRAY_NOTARY
 
     steps:
       - name: Checkout tag
@@ -90,79 +92,105 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v5
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
-      - name: Build macOS .app bundle (unsigned)
+      - name: Import Developer ID certificate
+        id: import-cert
+        env:
+          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.MACOS_KEYCHAIN_PASSWORD }}
         run: |
           set -euo pipefail
-          
-          # Get version from VERSION file
-          VERSION=$(cat VERSION)
-          echo "Building version: ${VERSION}"
-          
-          # Create virtual environment
-          python3 -m venv venv
-          source venv/bin/activate
-          
-          # Install dependencies
-          python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install --require-hashes \
-            -r requirements-build.txt \
-            -r requirements-macos.txt
-          
-          # Build with PyInstaller
-          python3 -m PyInstaller \
-            --onedir \
-            --name=LM-Studio-Tray-Manager \
-            --clean \
-            --osx-bundle-identifier=com.lmstudio.tray-manager \
-            --add-data VERSION:. \
-            --add-data AUTHORS:. \
-            --add-data assets:assets \
-            lmstudio_tray.py
-          
-          echo "✅ .app bundle created"
-          ls -lh dist/LM-Studio-Tray-Manager.app/Contents/MacOS/LM-Studio-Tray-Manager
 
-      - name: Create macOS release artifacts
-        run: |
-          set -euo pipefail
-          
-          VERSION=$(cat VERSION)
-          RELEASE_DIR="release"
-          mkdir -p "$RELEASE_DIR"
-          
-          # Copy additional files to app bundle Resources
-          APP_RESOURCES="dist/LM-Studio-Tray-Manager.app/Contents/Resources"
-          cp -v setup.sh "$APP_RESOURCES/"
-          cp -v lmstudio_autostart.sh "$APP_RESOURCES/"
-          cp -v README.md "$APP_RESOURCES/"
-          cp -v LICENSE "$APP_RESOURCES/"
-          cp -v AUTHORS "$APP_RESOURCES/"
-          
-          # Create archive
-          ARCHIVE_NAME="lmstudio-tray-manager-${VERSION}-macos-unsigned.tar.gz"
-          tar -czf "$RELEASE_DIR/${ARCHIVE_NAME}" -C dist LM-Studio-Tray-Manager.app
-          
-          echo "✅ macOS release archive created"
-          ls -lh "$RELEASE_DIR/${ARCHIVE_NAME}"
-          
-          # Create checksum
-          cd "$RELEASE_DIR"
-          if command -v sha256sum >/dev/null 2>&1; then
-            sha256sum "${ARCHIVE_NAME}" > "SHA256SUMS-macos.txt"
-          else
-            shasum -a 256 "${ARCHIVE_NAME}" > "SHA256SUMS-macos.txt"
+          if [[ -z "${MACOS_CERTIFICATE_BASE64:-}" || -z "${MACOS_CERTIFICATE_PASSWORD:-}" ]]; then
+            echo "sign_identity=" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          cat "SHA256SUMS-macos.txt"
+
+          if [[ -z "${KEYCHAIN_PASSWORD:-}" ]]; then
+            KEYCHAIN_PASSWORD="${GITHUB_RUN_ID}"
+          fi
+
+          CERT_PATH="$RUNNER_TEMP/developer-id.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          CERT_PATH="$CERT_PATH" python - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
+
+          certificate_base64 = os.environ["MACOS_CERTIFICATE_BASE64"]
+          certificate_path = Path(os.environ["CERT_PATH"])
+          certificate_path.write_bytes(base64.b64decode(certificate_base64))
+          PY
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          security default-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          SIGN_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | awk -F '"' '/Developer ID Application/ {print $2; exit}')
+          if [[ -z "$SIGN_IDENTITY" ]]; then
+            echo "❌ Developer ID Application identity not found"
+            exit 1
+          fi
+
+          echo "sign_identity=$SIGN_IDENTITY" >> "$GITHUB_OUTPUT"
+
+      - name: Store notarization credentials
+        id: notary
+        env:
+          SIGN_IDENTITY: ${{ steps.import-cert.outputs.sign_identity }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          NOTARY_PROFILE: ${{ env.NOTARY_PROFILE }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SIGN_IDENTITY:-}" || -z "${APPLE_ID:-}" || -z "${APPLE_TEAM_ID:-}" || -z "${APPLE_APP_PASSWORD:-}" ]]; then
+            echo "profile_ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          xcrun notarytool store-credentials "$NOTARY_PROFILE" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD"
+          echo "profile_ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build macOS release artifacts
+        env:
+          SIGN_IDENTITY: ${{ steps.import-cert.outputs.sign_identity }}
+          NOTARY_PROFILE: ${{ env.NOTARY_PROFILE }}
+          NOTARY_READY: ${{ steps.notary.outputs.profile_ready }}
+        run: |
+          set -euo pipefail
+
+          chmod +x tools/build_macos.sh
+          build_args=(--clean)
+
+          if [[ -n "${SIGN_IDENTITY:-}" ]]; then
+            build_args+=(--sign-identity "$SIGN_IDENTITY")
+          fi
+
+          if [[ "${NOTARY_READY:-}" == "true" ]]; then
+            build_args+=(--notary-profile "$NOTARY_PROFILE")
+          fi
+
+          ./tools/build_macos.sh "${build_args[@]}"
 
       - name: Upload macOS artifacts
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: ${{ github.ref_name }}
+          generate_release_notes: false
           files: |
-            release/lmstudio-tray-manager-*-macos-unsigned.tar.gz
+            release/lmstudio-tray-manager-*-macos-*.tar.gz
             release/SHA256SUMS-macos.txt
