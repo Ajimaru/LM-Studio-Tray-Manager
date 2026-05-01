@@ -25,4 +25,4 @@ setuptools==82.0.1
 
 # packaging 26.0 (source: packaging-26.0-py3-none-any.whl)
 # Required by PyInstaller (>=22.0)
-packaging==26.1
+packaging==26.2
