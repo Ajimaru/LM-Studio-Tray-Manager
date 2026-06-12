@@ -38,9 +38,9 @@ macholib==1.16.4 \
 
 # pyinstaller-hooks-contrib 2026.4 (source: pyinstaller_hooks_contrib-2026.4-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
-pyinstaller-hooks-contrib==2026.5 \
-    --hash=sha256:ea1535783fbdac4626351709e83f3ea80b681d3a4745763ebb407b5e27342eb9 \
-    --hash=sha256:f066dfca8f7c45ff6336c9cf9fe25b4e48bfeb322a1aa24faaedfb8a8d1b0b08
+pyinstaller-hooks-contrib==2026.6 \
+    --hash=sha256:bef5002c32f4f50bd55b005da12cff64eca8783e7eaf86a06a62410164bab725 \
+    --hash=sha256:fd13b8ac126b35361175edacd41a0d97080b75dd5f4b594ecefefff969509dd3
 
 # setuptools 82.0.1 (source: setuptools-82.0.1-py3-none-any.whl)
 # Required by PyInstaller (>=42.0.0)
