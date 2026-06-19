@@ -27,7 +27,7 @@ jobs:
     steps:
       # fetch repository to access requirements files
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # prepare Python 3.12 environment required by the project
       - name: Set up Python 3.12

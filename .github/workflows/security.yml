@@ -19,7 +19,7 @@ jobs:
     steps:
       # fetch repository to runner
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # prepare CodeQL with Python support
       - name: Initialize CodeQL
@@ -41,7 +41,7 @@ jobs:
     steps:
       # clone full history, required by gitleaks
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

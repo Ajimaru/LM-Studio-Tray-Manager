@@ -28,7 +28,7 @@ jobs:
     steps:
       # pull repository code for linting
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # run markdown linter against README and docs directory
       - name: Markdown lint
