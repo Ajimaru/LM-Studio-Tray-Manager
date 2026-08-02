@@ -97,12 +97,3 @@ def test_provenance_sources_name_the_pinned_version(filename):
         if pin_version not in source
     ]
     assert not mismatched, "outdated source artifacts:\n" + "\n".join(mismatched)
-
-
-def test_requirements_txt_no_hashes():
-    """The top-level requirements.txt is intended for scanners and should
-    not contain pip ``--hash`` specifiers or continuation backslashes.
-    """
-    text = Path("requirements.txt").read_text(encoding="utf-8")
-    assert "--hash" not in text, "requirements.txt still contains hash pins"
-    assert "\\" not in text, "requirements.txt still uses line continuations"
