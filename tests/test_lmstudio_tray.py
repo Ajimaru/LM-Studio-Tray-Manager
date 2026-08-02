@@ -7566,3 +7566,61 @@ def test_macos_build_daemon_attempts_llmster(macos_module, monkeypatch):
         a[0] == "/usr/local/bin/llmster" for a in start_attempts
     )  # nosec B101
     assert len(stop_attempts) > 0  # nosec B101
+
+
+LMS_PS_HEADER = (
+    "IDENTIFIER                MODEL                     STATUS      "
+    "SIZE      CONTEXT   DEVICE    TTL"
+)
+LMS_PS_ROW = (
+    "mistral-7b-instruct-v0.3  mistral-7b-instruct-v0.3  GENERATING  "
+    "4.13 GB   8192      Local     1h / 1h"
+)
+
+
+def test_format_lms_ps_output_lists_columns_vertically(tray_module):
+    """Each column of a row becomes its own short line."""
+    formatted = tray_module._format_lms_ps_output(
+        f"{LMS_PS_HEADER}\n{LMS_PS_ROW}\n"
+    )
+    lines = formatted.splitlines()
+    assert lines[0] == "IDENTIFIER: mistral-7b-instruct-v0.3"  # nosec B101
+    assert "STATUS:     GENERATING" in lines  # nosec B101
+    # Values containing single spaces must survive the split.
+    assert "SIZE:       4.13 GB" in lines  # nosec B101
+    assert "TTL:        1h / 1h" in lines  # nosec B101
+    # Short lines are the whole point: no wrapping in the dialog.
+    assert max(len(line) for line in lines) < 60  # nosec B101
+
+
+def test_format_lms_ps_output_separates_models_by_blank_line(tray_module):
+    """Two loaded models are rendered as two blocks."""
+    second_row = (
+        "qwen2.5-coder-14b         qwen2.5-coder-14b         LOADED      "
+        "8.99 GB   32768     Local     -"
+    )
+    formatted = tray_module._format_lms_ps_output(
+        f"{LMS_PS_HEADER}\n{LMS_PS_ROW}\n{second_row}\n"
+    )
+    blocks = formatted.split("\n\n")
+    assert len(blocks) == 2  # nosec B101
+    assert "qwen2.5-coder-14b" in blocks[1]  # nosec B101
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "No models loaded or error.",
+        "IDENTIFIER  MODEL\ntoo-few-columns",
+        "",
+    ],
+)
+def test_format_lms_ps_output_falls_back_to_raw_text(tray_module, raw):
+    """Unexpected output is passed through untouched rather than mangled."""
+    assert tray_module._format_lms_ps_output(raw) == raw  # nosec B101
+
+
+def test_escape_markup_escapes_pango_special_characters(tray_module):
+    """An ampersand in a model name must not break the markup."""
+    escaped = tray_module._escape_markup("a & b <tag>")
+    assert escaped == "a &amp; b &lt;tag&gt;"  # nosec B101

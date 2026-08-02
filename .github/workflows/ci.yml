@@ -18,11 +18,11 @@ jobs:
     steps:
       # check out repository code
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # prepare Python environment for later checks
       - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -92,11 +92,11 @@ jobs:
     steps:
       # checkout the repo for tests
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # set up same Python version
       - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -115,7 +115,7 @@ jobs:
       # send coverage report to Codecov
       - name: Upload coverage to Codecov
         if: ${{ matrix.run-coverage && github.repository == 'Ajimaru/LM-Studio-Tray-Manager' }}
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
           files: coverage.xml
           flags: unittests

@@ -29,6 +29,9 @@ permissions:
 
 jobs:
   codacy-security-scan:
+    # CODACY_PROJECT_TOKEN only exists in the upstream repository, so this job
+    # is skipped in forks instead of failing on every push.
+    if: ${{ github.repository == 'Ajimaru/LM-Studio-Tray-Manager' }}
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # required by upload-sarif step
@@ -37,7 +40,7 @@ jobs:
     steps:
       # Checkout the repository to the GitHub Actions runner
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
       - name: Run Codacy Analysis CLI
