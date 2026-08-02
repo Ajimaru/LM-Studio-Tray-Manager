@@ -5,8 +5,13 @@
 #
 # Hash-locked variants are maintained separately in requirements-build.txt.
 #
-# macOS runtime dependency (not needed for the Linux binary build):
+# macOS runtime dependencies (not needed for the Linux binary build):
 #   rumps>=0.4.0   — install with: pip install rumps
+#
+# rumps pulls in pyobjc-core and pyobjc-framework-Cocoa transitively. The tray
+# relies on them directly (Foundation.NSObject / NSThread) to marshal AppKit
+# work onto the main thread; without them menu rebuilds fall back to running
+# in-place, which is what crashed the app and wedged the WindowServer.
 
 # PyInstaller 6.21.0 (source: pyinstaller-6.21.0.tar.gz)
 pyinstaller==6.21.0
