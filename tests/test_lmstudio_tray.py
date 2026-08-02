@@ -7624,3 +7624,339 @@ def test_escape_markup_escapes_pango_special_characters(tray_module):
     """An ampersand in a model name must not break the markup."""
     escaped = tray_module._escape_markup("a & b <tag>")
     assert escaped == "a &amp; b &lt;tag&gt;"  # nosec B101
+
+
+# ----------------------------------------------------------------------
+# Main-thread marshalling (AppKit safety)
+# ----------------------------------------------------------------------
+
+
+def test_is_main_thread_true_without_pyobjc(tray_module, monkeypatch):
+    """Without PyObjC there is no AppKit constraint, so report main thread."""
+    monkeypatch.setattr(tray_module, "NSThread", None)
+    assert tray_module.is_main_thread() is True  # nosec B101
+
+
+def test_is_main_thread_delegates_to_nsthread(tray_module, monkeypatch):
+    """is_main_thread mirrors NSThread.isMainThread()."""
+    monkeypatch.setattr(
+        tray_module,
+        "NSThread",
+        SimpleNamespace(isMainThread=lambda: False),
+    )
+    assert tray_module.is_main_thread() is False  # nosec B101
+
+    monkeypatch.setattr(
+        tray_module,
+        "NSThread",
+        SimpleNamespace(isMainThread=lambda: True),
+    )
+    assert tray_module.is_main_thread() is True  # nosec B101
+
+
+def test_run_on_main_thread_without_dispatcher(tray_module, monkeypatch):
+    """Return False so the caller knows it must run the work itself."""
+    monkeypatch.setattr(tray_module, "_main_thread_dispatcher", None)
+    calls = []
+    assert (  # nosec B101
+        tray_module.run_on_main_thread(lambda: calls.append(1)) is False
+    )
+    assert calls == []  # nosec B101
+
+
+def test_run_on_main_thread_dispatches_via_selector(
+    tray_module, monkeypatch
+):
+    """The callable is handed to performSelectorOnMainThread_."""
+    recorded = {}
+
+    def _perform(selector, obj, wait):
+        recorded["selector"] = selector
+        recorded["obj"] = obj
+        recorded["wait"] = wait
+
+    monkeypatch.setattr(
+        tray_module,
+        "_main_thread_dispatcher",
+        SimpleNamespace(
+            performSelectorOnMainThread_withObject_waitUntilDone_=_perform
+        ),
+    )
+
+    def _work():
+        return None
+
+    assert tray_module.run_on_main_thread(_work) is True  # nosec B101
+    assert recorded["selector"] == "runCallable:"  # nosec B101
+    assert recorded["obj"] is _work  # nosec B101
+    assert recorded["wait"] is False  # nosec B101
+
+
+def test_run_on_main_thread_wait_flag_forwarded(tray_module, monkeypatch):
+    """wait=True is passed through to waitUntilDone."""
+    recorded = {}
+    monkeypatch.setattr(
+        tray_module,
+        "_main_thread_dispatcher",
+        SimpleNamespace(
+            performSelectorOnMainThread_withObject_waitUntilDone_=(
+                lambda _s, _o, wait: recorded.update(wait=wait)
+            )
+        ),
+    )
+    tray_module.run_on_main_thread(lambda: None, wait=True)
+    assert recorded["wait"] is True  # nosec B101
+
+
+def test_macos_build_menu_marshals_off_main_thread(
+    macos_module, monkeypatch
+):
+    """build_menu defers to the main thread instead of touching NSMenu."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_main_thread", lambda: False)
+
+    dispatched = []
+    monkeypatch.setattr(
+        macos_module,
+        "run_on_main_thread",
+        lambda fn, wait=False: (dispatched.append(fn), True)[1],
+    )
+    impl_calls = []
+    monkeypatch.setattr(
+        tray, "_build_menu_impl", lambda: impl_calls.append(1)
+    )
+
+    macos_module.MacOSTrayIcon.build_menu(tray)
+
+    assert len(dispatched) == 1  # nosec B101
+    assert impl_calls == []  # nosec B101
+
+    dispatched[0]()
+    assert impl_calls == [1]  # nosec B101
+
+
+def test_macos_build_menu_runs_inline_on_main_thread(
+    macos_module, monkeypatch
+):
+    """On the main thread the menu is rebuilt directly."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_main_thread", lambda: True)
+    impl_calls = []
+    monkeypatch.setattr(
+        tray, "_build_menu_impl", lambda: impl_calls.append(1)
+    )
+
+    macos_module.MacOSTrayIcon.build_menu(tray)
+    assert impl_calls == [1]  # nosec B101
+
+
+def test_macos_build_menu_runs_inline_without_dispatcher(
+    macos_module, monkeypatch
+):
+    """If dispatching is impossible the work still happens."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_main_thread", lambda: False)
+    monkeypatch.setattr(
+        macos_module, "run_on_main_thread", lambda _fn, wait=False: False
+    )
+    impl_calls = []
+    monkeypatch.setattr(
+        tray, "_build_menu_impl", lambda: impl_calls.append(1)
+    )
+
+    macos_module.MacOSTrayIcon.build_menu(tray)
+    assert impl_calls == [1]  # nosec B101
+
+
+def test_macos_notify_marshals_off_main_thread(macos_module, monkeypatch):
+    """_notify defers to the main thread rather than calling AppKit."""
+    DummyRumpsModule.reset()
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_main_thread", lambda: False)
+
+    dispatched = []
+    monkeypatch.setattr(
+        macos_module,
+        "run_on_main_thread",
+        lambda fn, wait=False: (dispatched.append(fn), True)[1],
+    )
+
+    macos_module.MacOSTrayIcon._notify(tray, "T", "M")
+    assert DummyRumpsModule.get_notifications() == []  # nosec B101
+    assert len(dispatched) == 1  # nosec B101
+
+    monkeypatch.setattr(macos_module, "is_main_thread", lambda: True)
+    dispatched[0]()
+    notifications = DummyRumpsModule.get_notifications()
+    assert len(notifications) == 1  # nosec B101
+    assert notifications[0][0] == "T"  # nosec B101
+
+
+def test_macos_title_setter_marshals_off_main_thread(
+    macos_module, monkeypatch
+):
+    """Assigning .title from a worker thread is marshalled, not applied."""
+    tray = _make_macos_tray(macos_module)
+
+    applied = []
+
+    class _Base:
+        """Stand-in base exposing title as a real property."""
+
+        @property
+        def title(self):
+            """Return the recorded title."""
+            return applied[-1] if applied else None
+
+        @title.setter
+        def title(self, value):
+            """Record the applied title."""
+            applied.append(value)
+
+    monkeypatch.setattr(
+        type(tray), "_base_title", _Base.__dict__["title"], raising=False
+    )
+    monkeypatch.setattr(macos_module, "is_main_thread", lambda: False)
+
+    dispatched = []
+    monkeypatch.setattr(
+        macos_module,
+        "run_on_main_thread",
+        lambda fn, wait=False: (dispatched.append(fn), True)[1],
+    )
+
+    tray.title = "🔥"
+    assert applied == []  # nosec B101
+    assert len(dispatched) == 1  # nosec B101
+
+    dispatched[0]()
+    assert applied == ["🔥"]  # nosec B101
+
+
+def test_macos_title_roundtrip_without_property_base(macos_module):
+    """With a plain-attribute base the title still reads back."""
+    tray = _make_macos_tray(macos_module)
+    tray.title = "✅"
+    assert tray.title == "✅"  # nosec B101
+
+
+def _read_tray_log(tmp_path):
+    """Return the tray log file contents written by _run_macos.
+
+    _run_macos calls logging.basicConfig(force=True), which drops caplog's
+    handler, so assertions read the log file the app actually writes.
+
+    Args:
+        tmp_path: Base directory used as the script dir.
+
+    Returns:
+        str: Log contents, or "" when no log file was produced.
+    """
+    matches = list(Path(tmp_path).rglob("lmstudio_tray.log"))
+    if not matches:
+        return ""
+    return matches[0].read_text(encoding="utf-8")
+
+
+def test_run_macos_warns_when_pyobjc_missing(
+    macos_module, monkeypatch, tmp_path
+):
+    """Startup logs a warning when the main-thread dispatcher is absent.
+
+    Without it AppKit work runs in place, which is the crash this guards
+    against - so the reason must be visible in the log.
+    """
+    class FakeTimer:
+        """Stub timer class for testing."""
+
+        def __init__(self, *_a):
+            """Initialize fake timer (unused args)."""
+
+        def start(self):
+            """No-op timer start."""
+
+    rumps_lib = _call_member(
+        macos_module, "__getattribute__", "_rumps_lib"
+    )
+    monkeypatch.setattr(rumps_lib, "Timer", FakeTimer)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(macos_module.MacOSTrayIcon, "_APP_LOCATIONS", [])
+    monkeypatch.setattr(
+        macos_module, "kill_existing_instances", lambda: None
+    )
+    monkeypatch.setattr(
+        macos_module, "get_app_version", lambda: "v1.0.0"
+    )
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    monkeypatch.setattr(app_state, "script_dir", str(tmp_path))
+    monkeypatch.setattr(macos_module, "_main_thread_dispatcher", None)
+
+    original_run = macos_module.MacOSTrayIcon.run
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "run", lambda _self: None
+    )
+    try:
+        _call_member(
+            macos_module,
+            "_run_macos",
+            SimpleNamespace(auto_start_daemon=False, gui=False),
+        )
+    finally:
+        monkeypatch.setattr(
+            macos_module.MacOSTrayIcon, "run", original_run
+        )
+        logging.shutdown()
+
+    assert "PyObjC" in _read_tray_log(tmp_path)  # nosec B101
+
+
+def test_run_macos_silent_when_dispatcher_present(
+    macos_module, monkeypatch, tmp_path
+):
+    """No PyObjC warning when the dispatcher is available."""
+    class FakeTimer:
+        """Stub timer class for testing."""
+
+        def __init__(self, *_a):
+            """Initialize fake timer (unused args)."""
+
+        def start(self):
+            """No-op timer start."""
+
+    rumps_lib = _call_member(
+        macos_module, "__getattribute__", "_rumps_lib"
+    )
+    monkeypatch.setattr(rumps_lib, "Timer", FakeTimer)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_desktop_app_pids", lambda: [])
+    monkeypatch.setattr(macos_module.MacOSTrayIcon, "_APP_LOCATIONS", [])
+    monkeypatch.setattr(
+        macos_module, "kill_existing_instances", lambda: None
+    )
+    monkeypatch.setattr(
+        macos_module, "get_app_version", lambda: "v1.0.0"
+    )
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    monkeypatch.setattr(app_state, "script_dir", str(tmp_path))
+    monkeypatch.setattr(
+        macos_module, "_main_thread_dispatcher", object()
+    )
+
+    original_run = macos_module.MacOSTrayIcon.run
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon, "run", lambda _self: None
+    )
+    try:
+        _call_member(
+            macos_module,
+            "_run_macos",
+            SimpleNamespace(auto_start_daemon=False, gui=False),
+        )
+    finally:
+        monkeypatch.setattr(
+            macos_module.MacOSTrayIcon, "run", original_run
+        )
+        logging.shutdown()
+
+    assert "PyObjC" not in _read_tray_log(tmp_path)  # nosec B101

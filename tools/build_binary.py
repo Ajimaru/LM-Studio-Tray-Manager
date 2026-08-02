@@ -133,11 +133,31 @@ def check_dependencies():
 
 
 def get_hidden_imports():
-    """Return list of GTK3/GObject hidden imports for PyInstaller.
+    """Return hidden imports for PyInstaller for the current platform.
+
+    On macOS the tray needs rumps plus PyObjC's Foundation bindings, which
+    it uses to marshal AppKit calls onto the main thread.
+
+    Note:
+        The macOS branch is currently unreachable in practice. Release builds
+        for macOS go through ``tools/build_macos.sh``, which invokes
+        PyInstaller directly, and this module only ever runs on Linux (via
+        ``tools/Dockerfile.release`` and ``tools/build.sh``). PyInstaller's
+        static analysis already picks up Foundation and objc from the source
+        imports, so the branch is a safety net for a future switch to this
+        module rather than something the shipped bundle depends on.
 
     Returns:
         list[str]: Hidden import module names.
     """
+    if sys.platform == "darwin":
+        return [
+            "rumps",
+            "objc",
+            "Foundation",
+            "AppKit",
+        ]
+
     return [
         "gi",
         "gi.repository",

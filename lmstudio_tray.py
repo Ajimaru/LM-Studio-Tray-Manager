@@ -40,10 +40,96 @@ try:
 except ImportError:
     _rumps_lib = None
 
+try:
+    from Foundation import NSObject, NSThread
+except ImportError:
+    NSObject = None
+    NSThread = None
+
 IS_MACOS = sys.platform == "darwin"
 _RumpsBase = _rumps_lib.App if _rumps_lib is not None else object
 
 DEFAULT_APP_VERSION = "dev"
+
+
+def _make_main_thread_dispatcher():
+    """Build the Objective-C shim used to hop work onto the main thread.
+
+    An Objective-C class name may only be registered once per process, so a
+    re-import of this module reuses the existing registration instead of
+    defining a second class (which the runtime rejects outright).
+
+    Returns:
+        The dispatcher instance, or ``None`` when PyObjC is unavailable.
+    """
+    if NSObject is None:
+        return None
+
+    import objc  # pylint: disable=import-outside-toplevel
+
+    class_name = "LMSTrayMainThreadDispatcher"
+    try:
+        dispatcher_cls = objc.lookUpClass(class_name)
+    except objc.nosuchclass_error:
+        class LMSTrayMainThreadDispatcher(NSObject):
+            """Invokes a Python callable on the AppKit main thread.
+
+            AppKit is main-thread-only. Mutating menus or windows from a
+            worker thread trips an AppKit assertion (SIGTRAP) and can leave
+            shared WindowServer state wedged, which takes Finder and Dock
+            down with it.
+            """
+
+            def runCallable_(self, callable_obj) -> None:
+                """Run the wrapped callable, logging any error it raises.
+
+                Args:
+                    callable_obj: Zero-argument callable to invoke.
+                """
+                try:
+                    callable_obj()
+                except Exception:  # pylint: disable=broad-except
+                    logging.exception("Main-thread callable raised")
+
+        dispatcher_cls = LMSTrayMainThreadDispatcher
+
+    return dispatcher_cls.alloc().init()
+
+
+_main_thread_dispatcher = _make_main_thread_dispatcher()
+
+
+def is_main_thread() -> bool:
+    """Return True when running on the AppKit main thread.
+
+    Returns:
+        bool: ``True`` on the main thread, or when PyObjC is unavailable
+        (non-macOS platforms have no AppKit constraint to satisfy).
+    """
+    if NSThread is None:
+        return True
+    return bool(NSThread.isMainThread())
+
+
+def run_on_main_thread(func: Callable[[], None], wait: bool = False) -> bool:
+    """Marshal ``func`` onto the AppKit main thread.
+
+    Args:
+        func: Zero-argument callable performing the AppKit work.
+        wait: Block until the callable has run.
+
+    Returns:
+        bool: ``True`` when the call was dispatched to the main thread,
+        ``False`` when no dispatcher is available and the caller must run
+        ``func`` itself.
+    """
+    if _main_thread_dispatcher is None:
+        return False
+    dispatcher = _main_thread_dispatcher
+    dispatcher.performSelectorOnMainThread_withObject_waitUntilDone_(
+        "runCallable:", func, wait
+    )
+    return True
 
 
 def load_version_from_dir(base_dir: str) -> str:
@@ -570,6 +656,13 @@ def _run_macos(_args):
 
     kill_existing_instances()
     logging.info("Tray script started (macOS / rumps)")
+
+    if _main_thread_dispatcher is None:
+        logging.warning(
+            "PyObjC (Foundation) unavailable: AppKit calls will run on "
+            "whichever thread triggers them. Menu rebuilds from background "
+            "threads may crash the app. Install with: pip install rumps"
+        )
 
     MacOSTrayIcon().run()
 
@@ -3351,6 +3444,42 @@ class MacOSTrayIcon(_RumpsBase):
     # Notification
     # ------------------------------------------------------------------
 
+    _base_title = getattr(_RumpsBase, "title", None)
+
+    @property
+    def title(self):
+        """Menu-bar title text.
+
+        Returns:
+            The current status-item title.
+        """
+        if not isinstance(type(self)._base_title, property):
+            return self.__dict__.get("_title")
+        return type(self)._base_title.fget(self)
+
+    @title.setter
+    def title(self, value) -> None:
+        """Set the menu-bar title from any thread.
+
+        The status item is an AppKit object, so the assignment is
+        marshalled onto the main thread when called from a worker.
+
+        Args:
+            value: New title text.
+        """
+        base = type(self)._base_title
+        if not isinstance(base, property):
+            self.__dict__["_title"] = value
+            return
+
+        def _apply() -> None:
+            base.fset(self, value)
+
+        if not is_main_thread():
+            if run_on_main_thread(_apply):
+                return
+        _apply()
+
     def _notify(self, title: str, message: str) -> None:
         """Send a macOS notification via rumps.
 
@@ -3362,6 +3491,10 @@ class MacOSTrayIcon(_RumpsBase):
         if rumps_lib is None:
             logging.debug("Notification skipped: rumps is not installed")
             return
+
+        if not is_main_thread():
+            if run_on_main_thread(lambda: self._notify(title, message)):
+                return
 
         try:
             try:
@@ -3386,7 +3519,19 @@ class MacOSTrayIcon(_RumpsBase):
     # ------------------------------------------------------------------
 
     def build_menu(self) -> None:
-        """Rebuild the macOS menu-bar menu with current status."""
+        """Rebuild the macOS menu-bar menu with current status.
+
+        Safe to call from any thread: the actual AppKit mutation is
+        marshalled onto the main thread, since touching ``NSMenu`` from a
+        worker thread crashes the app and can wedge the WindowServer.
+        """
+        if not is_main_thread():
+            if run_on_main_thread(self._build_menu_impl):
+                return
+        self._build_menu_impl()
+
+    def _build_menu_impl(self) -> None:
+        """Rebuild the menu. Must run on the main thread."""
         rumps_lib = _rumps_lib
         if rumps_lib is None:
             raise RuntimeError("rumps is not installed")
