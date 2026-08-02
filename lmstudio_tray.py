@@ -23,6 +23,7 @@ import threading
 import importlib
 import json
 import re
+import socket
 import webbrowser
 from typing import Callable, Optional
 from types import ModuleType
@@ -726,6 +727,55 @@ def _normalize_api_port(value: object) -> Optional[int]:
     return None
 
 
+def parse_host_port(value: str) -> Optional[tuple[str, int]]:
+    """Parse a ``host:port`` string into its parts.
+
+    Used by the macOS configuration prompt, which offers a single text field
+    rather than the separate host and port entries the GTK dialog has.
+    Accepts bare IPv6 addresses in brackets (``[::1]:1234``) and tolerates a
+    leading scheme so a pasted URL still works.
+
+    Args:
+        value: Text entered by the user.
+
+    Returns:
+        tuple[str, int] | None: ``(host, port)`` when both parts are valid,
+        otherwise ``None``.
+    """
+    if not isinstance(value, str):
+        return None
+
+    text = value.strip()
+    if not text:
+        return None
+
+    for scheme in ("http://", "https://"):
+        if text.lower().startswith(scheme):
+            text = text[len(scheme):]
+            break
+    text = text.split("/", 1)[0].strip()
+
+    if text.startswith("["):
+        closing = text.find("]")
+        if closing == -1:
+            return None
+        host = text[1:closing].strip()
+        remainder = text[closing + 1:].strip()
+        if not remainder.startswith(":"):
+            return None
+        port_text = remainder[1:]
+    else:
+        if text.count(":") != 1:
+            return None
+        host, port_text = text.split(":", 1)
+        host = host.strip()
+
+    port = _normalize_api_port(port_text.strip())
+    if not host or port is None:
+        return None
+    return (host, port)
+
+
 def load_config() -> None:
     """
     Load API endpoint config from file.
@@ -877,6 +927,74 @@ def get_api_base_url() -> str:
 def get_api_models_url() -> str:
     """Return full API models endpoint URL."""
     return f"{get_api_base_url()}/v1/models"
+
+
+_LOCAL_HOST_NAMES = frozenset(
+    {
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "0.0.0.0",  # nosec B104 - compared against, never bound
+        "",
+    }
+)
+
+
+def _get_local_addresses() -> set[str]:
+    """Return addresses that refer to this machine.
+
+    Includes the loopback names plus every address the host resolves to, so
+    that entering a machine's own LAN address (rather than ``localhost``)
+    is still recognised as local.
+
+    Returns:
+        set[str]: Lower-cased host names and IP addresses.
+    """
+    addresses = set(_LOCAL_HOST_NAMES)
+    try:
+        hostname = socket.gethostname()
+    except OSError:
+        return addresses
+
+    addresses.add(hostname.lower())
+    short_name = hostname.split(".", 1)[0].lower()
+    addresses.add(short_name)
+    addresses.add(f"{short_name}.local")
+
+    for candidate in (hostname, f"{short_name}.local"):
+        try:
+            infos = socket.getaddrinfo(candidate, None)
+        except (OSError, UnicodeError):
+            continue
+        for info in infos:
+            address = info[4][0]
+            if isinstance(address, str):
+                addresses.add(address.split("%", 1)[0].lower())
+
+    return addresses
+
+
+def is_remote_endpoint() -> bool:
+    """Return True when the configured API host is not this machine.
+
+    Process-based detection (``pgrep llmster``, scanning for LM Studio.app)
+    only describes the local machine. When the user points the tray at
+    another host, that detection is meaningless and status has to come from
+    the HTTP API instead.
+
+    A machine's own LAN address counts as local: entering ``192.168.1.136``
+    on the box that actually serves it is not a remote setup.
+
+    Returns:
+        bool: ``True`` when the endpoint refers to a different host.
+    """
+    host = (_AppState.API_HOST or "").strip().lower()
+    if host.startswith("[") and host.endswith("]"):
+        host = host[1:-1].strip()
+    host = host.split("%", 1)[0]
+    if not host:
+        return False
+    return host not in _get_local_addresses()
 
 
 def get_authors() -> list[str]:
@@ -1191,6 +1309,43 @@ def _api_loaded_model_names(models: object) -> list[str]:
         loaded_names.append(str(model_name))
 
     return loaded_names
+
+
+def check_api_reachable() -> tuple[bool, bool]:
+    """Query the API, separating reachability from model state.
+
+    ``check_api_models`` collapses "unreachable" and "no model loaded" into
+    a single ``False``. For a remote endpoint those mean very different
+    things, so this variant reports them separately.
+
+    Returns:
+        tuple[bool, bool]: ``(reachable, has_loaded_model)``.
+    """
+    try:
+        api_url = get_api_models_url()
+        _validate_url_scheme(api_url)
+        req = urllib_request.Request(
+            api_url,
+            headers={"User-Agent": "lmstudio-tray-manager"},
+        )
+        with urllib_request.urlopen(req, timeout=3) as response:  # nosec B310
+            payload = response.read()
+            data = json.loads(payload.decode("utf-8"))
+    except (
+        urllib_error.HTTPError,
+        urllib_error.URLError,
+        OSError,
+        ValueError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ) as exc:
+        logging.debug("Remote API not reachable: %s", exc)
+        return (False, False)
+
+    if not isinstance(data, dict):
+        return (True, False)
+    models = data.get("data", [])
+    return (True, len(_api_loaded_model_names(models)) > 0)
 
 
 def get_pkill_cmd() -> Optional[str]:
@@ -3530,11 +3685,85 @@ class MacOSTrayIcon(_RumpsBase):
                 return
         self._build_menu_impl()
 
+    def _build_options_menu(self, rumps_lib):
+        """Return the shared Options submenu.
+
+        Args:
+            rumps_lib: The rumps module.
+
+        Returns:
+            The populated Options menu item.
+        """
+        options = rumps_lib.MenuItem("Options")
+        options.add(
+            rumps_lib.MenuItem(
+                "Configuration",
+                callback=self.show_config_dialog,
+            )
+        )
+        options.add(
+            rumps_lib.MenuItem(
+                "Check for Updates",
+                callback=self.manual_check_updates,
+            )
+        )
+        options.add(
+            rumps_lib.MenuItem(
+                "About",
+                callback=self.show_about_dialog,
+            )
+        )
+        return options
+
+    def _build_remote_menu_items(self, rumps_lib) -> list:
+        """Return menu entries for a remote endpoint.
+
+        Start/stop actions operate on local processes, so they are omitted
+        here rather than offered as controls that cannot work.
+
+        Args:
+            rumps_lib: The rumps module.
+
+        Returns:
+            list: Menu items describing the remote endpoint.
+        """
+        endpoint = f"{_AppState.API_HOST}:{_AppState.API_PORT}"
+        if self.last_status == "OK":
+            indicator, state = "🟢", "Model loaded"
+        elif self.last_status == "INFO":
+            indicator, state = "🟡", "No model loaded"
+        else:
+            indicator, state = "🔴", "Unreachable"
+
+        return [
+            rumps_lib.MenuItem(f"{indicator} Remote: {endpoint}"),
+            rumps_lib.MenuItem(f"  → {state}"),
+        ]
+
     def _build_menu_impl(self) -> None:
         """Rebuild the menu. Must run on the main thread."""
         rumps_lib = _rumps_lib
         if rumps_lib is None:
             raise RuntimeError("rumps is not installed")
+
+        if is_remote_endpoint():
+            items = self._build_remote_menu_items(rumps_lib)
+            items.append(None)
+            items.append(
+                rumps_lib.MenuItem(
+                    "Show Status",
+                    callback=self.show_status_dialog,
+                )
+            )
+            items.append(self._build_options_menu(rumps_lib))
+            items.append(None)
+            items.append(
+                rumps_lib.MenuItem("Quit Tray", callback=self.quit_app)
+            )
+            self.menu.clear()
+            self.menu.update(items)
+            return
+
         daemon_status = self.get_daemon_status()
         app_status = self.get_desktop_app_status()
         d_ind = self.get_status_indicator(daemon_status)
@@ -3599,20 +3828,7 @@ class MacOSTrayIcon(_RumpsBase):
             )
         )
 
-        options = rumps_lib.MenuItem("Options")
-        options.add(
-            rumps_lib.MenuItem(
-                "Check for Updates",
-                callback=self.manual_check_updates,
-            )
-        )
-        options.add(
-            rumps_lib.MenuItem(
-                "About",
-                callback=self.show_about_dialog,
-            )
-        )
-        items.append(options)
+        items.append(self._build_options_menu(rumps_lib))
 
         items.append(None)
 
@@ -3688,6 +3904,75 @@ class MacOSTrayIcon(_RumpsBase):
     # Status / model check
     # ------------------------------------------------------------------
 
+    def _check_remote_status(self) -> tuple[str, str]:
+        """Determine status for a remote endpoint via the HTTP API.
+
+        Local process detection says nothing about another machine, so the
+        API is the only signal available here.
+
+        Returns:
+            tuple[str, str]: ``(status, reason)`` where status is one of
+            ``"OK"``, ``"INFO"`` or ``"WARN"``.
+        """
+        reachable, has_model = check_api_reachable()
+        if not reachable:
+            self.title = "⚠️"
+            return ("WARN", "remote endpoint unreachable")
+        if has_model:
+            self.title = "✅"
+            return ("OK", "remote API reported models loaded")
+        self.title = "ℹ️"
+        return ("INFO", "remote API reachable, no model loaded")
+
+    def _finish_status_check(
+        self, current_status: Optional[str], reason: str
+    ) -> None:
+        """Emit transition notifications and refresh the menu.
+
+        Args:
+            current_status: Newly determined status, or ``None``.
+            reason: Human-readable explanation used for logging.
+        """
+        if (
+            self.last_status != current_status
+            and self.last_status is not None
+        ):
+            logging.debug(
+                "Status change: %s -> %s (%s)",
+                self.last_status,
+                current_status,
+                reason,
+            )
+            remote = is_remote_endpoint()
+            if current_status == "OK":
+                self._notify("LM Studio", "✅ A model is loaded")
+            elif current_status == "INFO":
+                self._notify(
+                    "LM Studio",
+                    "ℹ️ Runtime active, no model loaded",
+                )
+            elif current_status == "WARN":
+                self._notify(
+                    "LM Studio",
+                    "⚠️ Remote endpoint is unreachable"
+                    if remote
+                    else "⚠️ Neither daemon nor desktop app is running",
+                )
+            elif current_status == "FAIL":
+                self._notify(
+                    "LM Studio",
+                    "❌ Daemon and desktop app are not installed",
+                )
+            logging.info(
+                "Status change: %s -> %s",
+                self.last_status,
+                current_status,
+            )
+            self.build_menu()
+
+        self.last_status = current_status
+        self.build_menu()
+
     def check_model(self) -> bool:
         """Check LM Studio status and update the menu-bar title emoji.
 
@@ -3702,6 +3987,12 @@ class MacOSTrayIcon(_RumpsBase):
             lms_cmd = get_lms_cmd()
             current_status = None
             reason = ""
+
+            if is_remote_endpoint():
+                current_status, reason = self._check_remote_status()
+                self._finish_status_check(current_status, reason)
+                return True
+
             daemon_status = self.get_daemon_status()
             app_status = self.get_desktop_app_status()
 
@@ -3755,42 +4046,7 @@ class MacOSTrayIcon(_RumpsBase):
                     reason = "running, no model via API"
                     self.title = "ℹ️"
 
-            if (
-                self.last_status != current_status
-                and self.last_status is not None
-            ):
-                logging.debug(
-                    "Status change: %s -> %s (%s)",
-                    self.last_status,
-                    current_status,
-                    reason,
-                )
-                if current_status == "OK":
-                    self._notify("LM Studio", "✅ A model is loaded")
-                elif current_status == "INFO":
-                    self._notify(
-                        "LM Studio",
-                        "ℹ️ Runtime active, no model loaded",
-                    )
-                elif current_status == "WARN":
-                    self._notify(
-                        "LM Studio",
-                        "⚠️ Neither daemon nor desktop app is running",
-                    )
-                elif current_status == "FAIL":
-                    self._notify(
-                        "LM Studio",
-                        "❌ Daemon and desktop app are not installed",
-                    )
-                logging.info(
-                    "Status change: %s -> %s",
-                    self.last_status,
-                    current_status,
-                )
-                self.build_menu()
-
-            self.last_status = current_status
-            self.build_menu()
+            self._finish_status_check(current_status, reason)
 
         except subprocess.TimeoutExpired:
             logging.debug("Timeout in status check (keeping status)")
@@ -4126,6 +4382,47 @@ class MacOSTrayIcon(_RumpsBase):
     # Dialogs
     # ------------------------------------------------------------------
 
+    def _collect_status_text(self) -> str:
+        """Return status text without starting anything.
+
+        ``lms ps`` is not a read-only command: with no service running it
+        prints "Waking up LM Studio service..." and boots LM Studio. It is
+        therefore only invoked when something is already running locally.
+
+        Returns:
+            str: Human-readable status description.
+        """
+        endpoint = f"{_AppState.API_HOST}:{_AppState.API_PORT}"
+
+        if is_remote_endpoint():
+            reachable, has_model = check_api_reachable()
+            if not reachable:
+                return f"Remote endpoint {endpoint} is not reachable."
+            if not has_model:
+                return f"Connected to {endpoint}.\nNo model is loaded."
+            return f"Connected to {endpoint}.\nA model is loaded."
+
+        daemon_running = self.get_daemon_status() == "running"
+        app_running = self.get_desktop_app_status() == "running"
+        if not (daemon_running or app_running):
+            return (
+                "Neither the daemon nor the desktop app is running.\n"
+                "Start one of them to query the model status."
+            )
+
+        lms_cmd = get_lms_cmd()
+        if not lms_cmd:
+            return "LM Studio CLI (lms) not found."
+
+        try:
+            result = _run_safe_command([lms_cmd, "ps"])
+        except (OSError, subprocess.SubprocessError) as exc:
+            return f"Error running lms ps: {exc}"
+
+        if result.returncode == 0 and result.stdout.strip():
+            return _format_lms_ps_output(result.stdout.strip())
+        return "No model loaded (lms ps returned no output)."
+
     def show_status_dialog(self, sender: object) -> None:
         """Show a rumps alert with the current LM Studio CLI status.
 
@@ -4133,23 +4430,77 @@ class MacOSTrayIcon(_RumpsBase):
             sender: rumps sender object (unused).
         """
         _ = sender
-        text = "No models loaded or error."
-        lms_cmd = get_lms_cmd()
-        if lms_cmd:
-            try:
-                result = _run_safe_command([lms_cmd, "ps"])
-                if result.returncode == 0 and result.stdout.strip():
-                    text = _format_lms_ps_output(result.stdout.strip())
-                else:
-                    text = "No model loaded (lms ps returned no output)."
-            except (OSError, subprocess.SubprocessError) as e:
-                text = f"Error running lms ps: {e}"
+        text = self._collect_status_text()
 
         rumps_lib = _rumps_lib
         if rumps_lib is None:
             logging.error("rumps is not installed; cannot show status dialog")
             return
         rumps_lib.alert(title="LM Studio Status", message=text)
+
+    def show_config_dialog(self, sender: object) -> None:
+        """Prompt for the LM Studio API endpoint and persist it.
+
+        The GTK backend offers separate host and port fields; rumps windows
+        only carry a single text field, so the endpoint is entered as
+        ``host:port``.
+
+        Args:
+            sender: rumps sender object (unused).
+        """
+        _ = sender
+        rumps_lib = _rumps_lib
+        if rumps_lib is None:
+            logging.error("rumps is not installed; cannot show config dialog")
+            return
+
+        current = f"{_AppState.API_HOST}:{_AppState.API_PORT}"
+        window = rumps_lib.Window(
+            title="Configuration",
+            message=(
+                "LM Studio API endpoint to monitor.\n"
+                "Enter as host:port (for example localhost:1234)."
+            ),
+            default_text=current,
+            ok="Save",
+            cancel="Cancel",
+            dimensions=(260, 24),
+        )
+
+        response = window.run()
+        if not response.clicked:
+            return
+
+        parsed = parse_host_port(response.text)
+        if parsed is None:
+            logging.warning(
+                "Rejected invalid API endpoint input: %r", response.text
+            )
+            rumps_lib.alert(
+                title="Configuration",
+                message=(
+                    "Could not read that endpoint.\n"
+                    "Expected host:port, for example localhost:1234."
+                ),
+            )
+            return
+
+        host, port = parsed
+        try:
+            save_config(host, port)
+        except (OSError, ValueError) as exc:
+            logging.error("Failed to save configuration: %s", exc)
+            rumps_lib.alert(
+                title="Configuration",
+                message=f"Could not save the configuration:\n{exc}",
+            )
+            return
+
+        _AppState.API_HOST = host
+        _AppState.API_PORT = port
+        logging.info("Updated API endpoint to http://%s:%s", host, port)
+        self._notify("Configuration", f"API endpoint set to {host}:{port}")
+        self.build_menu()
 
     def show_about_dialog(self, sender: object) -> None:
         """Show basic application information in a rumps alert.
