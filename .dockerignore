@@ -1,0 +1,42 @@
+# Keep the release build context minimal and reproducible.
+#
+# tools/Dockerfile.release does "COPY . .", so anything left in here ends up
+# in the image. Local virtualenvs are the dangerous case: the build creates
+# its own "venv" in step 1, and a host venv copied on top carries symlinks
+# pointing at an interpreter that does not exist inside the container. CI
+# never hits this because it builds from a fresh checkout -- these rules make
+# a local build behave the same way.
+
+# Version control
+.git
+.gitattributes
+.gitignore
+
+# Virtualenvs (recreated inside the image)
+venv
+.venv
+.venv-docs
+
+# Build outputs and caches
+build
+dist
+release
+AppDir
+.build-cache
+.logs
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+
+# Test and tooling caches
+.pytest_cache
+.coverage
+coverage.xml
+htmlcov
+.codacy
+
+# Editor and agent directories
+.claude
+.vscode
+.idea

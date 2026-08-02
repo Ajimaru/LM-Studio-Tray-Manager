@@ -58,34 +58,17 @@ COPY --chown=builder:builder . .
 USER builder
 
 # Step 1: Build the PyInstaller binary
+#
+# The PyInstaller invocation lives in tools/build_binary.py, which is also what
+# tools/build.sh uses. Keeping the flags in one place means the release build
+# and a local build cannot drift apart.
 RUN echo "=== Building PyInstaller binary ===" \
     && bash -c 'set -e; \
     python3.12 -m venv --system-site-packages venv; \
     source venv/bin/activate; \
     python3.12 -m pip install --upgrade pip setuptools wheel; \
     python3.12 -m pip install -r requirements-build.txt; \
-    python3.12 -m PyInstaller \
-      --onefile \
-      --name=lmstudio-tray-manager \
-      --clean \
-      --hidden-import gi \
-      --hidden-import gi.repository \
-      --hidden-import gi.repository.Gtk \
-      --hidden-import gi.repository.GLib \
-      --hidden-import gi.repository.GObject \
-      --hidden-import gi.repository.Gio \
-      --hidden-import gi.repository.Gdk \
-      --hidden-import gi.repository.GdkPixbuf \
-      --hidden-import gi.repository.Pango \
-      --hidden-import gi.repository.PangoCairo \
-      --hidden-import gi.repository.AyatanaAppIndicator3 \
-      --hidden-import gi.repository.AppIndicator3 \
-      --hidden-import gi.repository.cairo \
-      --hidden-import cairo \
-      --add-data VERSION:. \
-      --add-data AUTHORS:. \
-      --add-data assets:assets \
-      lmstudio_tray.py; \
+    python3.12 tools/build_binary.py; \
     ls -lh dist/lmstudio-tray-manager; \
     file dist/lmstudio-tray-manager'
 
