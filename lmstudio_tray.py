@@ -22,6 +22,7 @@ import shutil
 import threading
 import importlib
 import json
+import re
 import webbrowser
 from typing import Callable, Optional
 from types import ModuleType
@@ -978,6 +979,83 @@ def _has_loaded_model(output: str) -> bool:
         logging.debug("lms ps output contains only available models, ignoring")
         return False
     return True
+
+
+def _escape_markup(text: str) -> str:
+    """Escape the characters Pango markup treats specially.
+
+    Model identifiers are attacker-controlled only in the sense that they
+    come from whatever the user loaded, but an ampersand in a name is enough
+    to make Pango reject the whole markup string and drop the text.
+
+    Args:
+        text: Plain text to embed in markup.
+
+    Returns:
+        str: Text safe to place inside a markup element.
+    """
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+def _format_lms_ps_output(output: str) -> str:
+    """Reformat the ``lms ps`` table as one labelled block per model.
+
+    ``lms ps`` prints a wide table whose width grows with the model name. In
+    a GTK dialog that single long row gets wrapped at arbitrary points, so
+    values end up on the line of the next column and the output becomes hard
+    to read. Listing each column on its own line keeps the lines short
+    enough that no wrapping happens.
+
+    Args:
+        output: Raw stdout of ``lms ps``.
+
+    Returns:
+        str: Reformatted text, or the unchanged input when it does not look
+        like the expected table.
+    """
+    lines = [line for line in output.splitlines() if line.strip()]
+
+    header_index = None
+    for index, line in enumerate(lines):
+        if "IDENTIFIER" in line:
+            header_index = index
+            break
+
+    if header_index is None:
+        return output
+
+    # Columns are padded apart with runs of spaces; single spaces occur
+    # inside values such as "4.13 GB" or "1h / 1h" and must be preserved.
+    columns = re.split(r"\s{2,}", lines[header_index].strip())
+    rows = lines[header_index + 1:]
+    if len(columns) < 2 or not rows:
+        return output
+
+    parsed_rows = []
+    for row in rows:
+        values = re.split(r"\s{2,}", row.strip())
+        if len(values) != len(columns):
+            logging.debug(
+                "lms ps row does not match header columns, keeping raw output"
+            )
+            return output
+        parsed_rows.append(values)
+
+    label_width = max(len(column) for column in columns)
+    blocks = []
+    for values in parsed_rows:
+        blocks.append(
+            "\n".join(
+                f"{column + ':':<{label_width + 1}} {value}"
+                for column, value in zip(columns, values)
+            )
+        )
+
+    return "\n\n".join(blocks)
 
 
 def _api_loaded_model_names(models: object) -> list[str]:
@@ -2458,7 +2536,7 @@ class TrayIcon:
                 result = _run_safe_command([lms_cmd, "ps"])
                 if result.returncode == 0:
                     if _has_loaded_model(result.stdout):
-                        text = result.stdout.strip()
+                        text = _format_lms_ps_output(result.stdout.strip())
                     else:
                         text = "No models loaded or error."
                 else:
@@ -2488,8 +2566,44 @@ class TrayIcon:
             text="LM Studio Status"
         )
         dialog.format_secondary_text(text)
+        self._apply_status_dialog_style(dialog)
         dialog.run()
         dialog.destroy()
+
+    @staticmethod
+    def _apply_status_dialog_style(dialog) -> None:
+        """Render the status text monospaced and unwrapped.
+
+        The labelled blocks only line up in a fixed-width font, and letting
+        GTK wrap them would reintroduce the very problem the formatting
+        avoids. Every step is optional: test doubles for Gtk do not
+        implement the message-area API, and a missing widget must not stop
+        the dialog from being shown.
+        """
+        get_message_area = getattr(dialog, "get_message_area", None)
+        if not callable(get_message_area):
+            return
+
+        try:
+            message_area = get_message_area()
+            children = message_area.get_children()
+        except (AttributeError, TypeError):
+            return
+
+        # The secondary label is the last child of the message area.
+        for label in children[1:]:
+            for setter, value in (
+                ("set_line_wrap", False),
+                ("set_selectable", True),
+            ):
+                method = getattr(label, setter, None)
+                if callable(method):
+                    method(value)
+
+            set_markup = getattr(label, "set_markup", None)
+            get_text = getattr(label, "get_text", None)
+            if callable(set_markup) and callable(get_text):
+                set_markup(f"<tt>{_escape_markup(get_text())}</tt>")
 
     def _drain_gtk_events(self, gtk_module):
         """Drain pending GTK events when the API is available.
@@ -3880,7 +3994,7 @@ class MacOSTrayIcon(_RumpsBase):
             try:
                 result = _run_safe_command([lms_cmd, "ps"])
                 if result.returncode == 0 and result.stdout.strip():
-                    text = result.stdout.strip()
+                    text = _format_lms_ps_output(result.stdout.strip())
                 else:
                     text = "No model loaded (lms ps returned no output)."
             except (OSError, subprocess.SubprocessError) as e:
