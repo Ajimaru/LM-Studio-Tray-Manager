@@ -166,11 +166,26 @@ generate_icon() {
     mkdir -p "$ICON_RENDER_DIR" "$ICONSET_DIR"
 
     if [[ -f "$ICON_VECTOR_SOURCE" ]]; then
-        local rendered_icon
-        rendered_icon="$ICON_RENDER_DIR/$(basename "$ICON_VECTOR_SOURCE").png"
-        qlmanage -t -s 1024 -o "$ICON_RENDER_DIR" "$ICON_VECTOR_SOURCE" >/dev/null 2>&1
+        # qlmanage -s N caps the preview size, it does not scale the artwork
+        # up. The source SVG declares width/height of 64, so QuickLook draws
+        # it at 64px in the corner of a 1024px canvas and leaves the rest
+        # transparent - which is exactly what a tiny top-left icon in Finder
+        # looks like. Render from a copy that declares the target size so the
+        # vector is rasterised at full resolution instead.
+        local scaled_svg rendered_icon
+        scaled_svg="$ICON_RENDER_DIR/icon-1024.svg"
+        sed -E \
+            -e '1,/<svg/ s/(<svg[^>]*[[:space:]])width="[^"]*"/\1width="1024"/' \
+            -e '1,/<svg/ s/(<svg[^>]*[[:space:]])height="[^"]*"/\1height="1024"/' \
+            "$ICON_VECTOR_SOURCE" > "$scaled_svg"
+
+        rendered_icon="$ICON_RENDER_DIR/$(basename "$scaled_svg").png"
+        qlmanage -t -s 1024 -o "$ICON_RENDER_DIR" "$scaled_svg" >/dev/null 2>&1
         if [[ -f "$rendered_icon" ]]; then
-            cp "$rendered_icon" "$ICON_MASTER_PNG"
+            # Normalise to an exact 1024x1024 square regardless of what
+            # QuickLook produced.
+            sips -z 1024 1024 "$rendered_icon" \
+                --out "$ICON_MASTER_PNG" >/dev/null 2>&1
         fi
     fi
 
