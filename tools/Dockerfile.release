@@ -166,9 +166,21 @@ RUN bash -c 'set -e; \
     printf "exec \"\${APPDIR}/usr/bin/lmstudio-tray-manager\" \"\" \"\${APPDIR}\" \"\$@\"\n" >> "${APPDIR}/AppRun"; \
     chmod +x "${APPDIR}/AppRun"; \
     \
-    printf "[Desktop Entry]\nName=LM Studio Tray Manager\nExec=lmstudio-tray-manager\nIcon=lmstudio-tray-manager\nType=Application\nCategories=Utility;\n" > "${APPDIR}/lmstudio-tray-manager.desktop"; \
-    [[ -f assets/img/lm-studio-tray-manager.png ]] && \
+    printf "[Desktop Entry]\nName=LM Studio Tray Manager\nComment=Monitor and control LM Studio from the system tray\nExec=lmstudio-tray-manager\nIcon=lmstudio-tray-manager\nType=Application\nCategories=Utility;\nTerminal=false\nStartupNotify=true\n" > "${APPDIR}/lmstudio-tray-manager.desktop"; \
+    \
+    echo "Installing icons and desktop entry into usr/share..."; \
+    mkdir -p "${APPDIR}/usr/share/applications" \
+             "${APPDIR}/usr/share/icons/hicolor/64x64/apps" \
+             "${APPDIR}/usr/share/icons/hicolor/scalable/apps"; \
+    cp "${APPDIR}/lmstudio-tray-manager.desktop" "${APPDIR}/usr/share/applications/"; \
+    \
+    echo "Icons go under usr/share/icons/hicolor so desktop integrators deploy them..."; \
+    [[ -f assets/img/lm-studio-tray-manager.png ]] && { \
       cp assets/img/lm-studio-tray-manager.png "${APPDIR}/lmstudio-tray-manager.png"; \
+      cp assets/img/lm-studio-tray-manager.png "${APPDIR}/usr/share/icons/hicolor/64x64/apps/lmstudio-tray-manager.png"; \
+    }; \
+    { [[ -f assets/img/lm-studio-tray-manager.svg ]] && \
+      cp assets/img/lm-studio-tray-manager.svg "${APPDIR}/usr/share/icons/hicolor/scalable/apps/lmstudio-tray-manager.svg"; } || true; \
     \
     echo "Building AppImage..."; \
     ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 /usr/local/bin/appimagetool "${APPDIR}" "release/${APPIMAGE_NAME}"; \
