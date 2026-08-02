@@ -22,7 +22,11 @@ chmod +x lmstudio-tray-manager-*.AppImage
 # 1. Extract the .app bundle:
 tar -xzf lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz
 
-# 2. Open in Finder or launch from terminal:
+# 2. Unsigned builds only: clear the Gatekeeper quarantine flag.
+#    Without this macOS reports the app as damaged instead of unsigned.
+xattr -cr ./LM-Studio-Tray-Manager.app
+
+# 3. Open in Finder or launch from terminal:
 open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
 ```
 

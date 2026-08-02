@@ -18,11 +18,17 @@ The application stores configuration at `~/.config/lmstudio_tray.json`.
 
 ## API Configuration
 
+`is_remote_endpoint` decides whether status comes from local process
+detection or from the HTTP API; a host's own addresses count as local.
+
 ::: lmstudio_tray
     options:
       members:
         - get_api_base_url
         - get_api_models_url
+        - parse_host_port
+        - is_remote_endpoint
+        - check_api_reachable
 
 ## LM Studio Commands
 

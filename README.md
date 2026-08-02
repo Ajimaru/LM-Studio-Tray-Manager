@@ -181,6 +181,15 @@ open ./LM-Studio-Tray-Manager.app
 open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
 ```
 
+**If macOS says the app is damaged:**
+
+Unsigned builds are quarantined by Gatekeeper, which reports them as
+damaged rather than unsigned. Clear the attribute once:
+
+```bash
+xattr -cr ./LM-Studio-Tray-Manager.app
+```
+
 **Verify:**
 
 - Menu bar icon appears in the top-right corner

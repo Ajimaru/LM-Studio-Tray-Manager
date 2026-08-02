@@ -283,6 +283,31 @@ The menu shows the following options (availability depends on current state):
 
 Each option is **context-aware**: unavailable actions are grayed out.
 
+### Monitoring a Remote Host
+
+Set **Options → Configuration** to a host other than this machine (for
+example `192.168.1.136:1234`) and the tray monitors that endpoint over the
+LM Studio HTTP API instead of local processes.
+
+In this mode the menu shows the endpoint and its state, and the start/stop
+entries are hidden - those act on local processes and cannot reach another
+machine:
+
+```text
+🟢 Remote: 192.168.1.136:1234
+  → Model loaded
+```
+
+The indicator is green when a model is loaded, yellow when the endpoint
+answers without one, and red when it is unreachable.
+
+A machine's own address still counts as local, so entering a host's own LAN
+IP on that host keeps the normal local menu. Point the setting back at
+`localhost` to restore local control.
+
+On macOS the endpoint is entered as a single `host:port` field; the GTK
+dialog on Linux has separate host and port entries.
+
 ## Desktop App Launch
 
 ### How "Start Desktop App" Works

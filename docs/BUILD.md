@@ -83,6 +83,8 @@ Native macOS application bundle built with PyInstaller:
 - ✅ Self-contained .app directory structure
 - ✅ Includes Python 3.12 runtime and all dependencies
 - ✅ Bundles rumps library (macOS tray integration)
+- ✅ Bundles PyObjC (`objc`, `Foundation`), used to run AppKit calls on the
+  main thread - without it menu updates from worker threads crash the app
 - ✅ ~50-80 MB uncompressed, ~30 MB as tar.gz
 - ✅ Works on macOS 12+
 - Optional: Code Sign + Notarize for Gatekeeper approval
