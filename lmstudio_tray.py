@@ -437,13 +437,24 @@ LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
 
 def get_app_version() -> str:
     """
-    Load app version from VERSION file in script_dir.
+    Load app version from the bundled VERSION file.
+
+    In a PyInstaller bundle the executable sits in ``Contents/MacOS`` while
+    the data files are unpacked elsewhere, so ``script_dir`` alone finds no
+    VERSION and the app would report itself as a dev build - which also
+    disables update checks.
 
     Falls back to DEFAULT_APP_VERSION.
 
     Returns:
         str: Version string.
     """
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass is not None:
+        version = load_version_from_dir(meipass)
+        if version != DEFAULT_APP_VERSION:
+            return version
+
     return load_version_from_dir(_AppState.script_dir)
 
 
@@ -478,7 +489,7 @@ def main() -> None:
         )
 
     if args.version:
-        print(load_version_from_dir(_AppState.script_dir))
+        print(get_app_version())
         sys.exit(0)
 
     if IS_MACOS:
@@ -929,6 +940,21 @@ def get_api_models_url() -> str:
     return f"{get_api_base_url()}/v1/models"
 
 
+def get_native_api_models_url() -> str:
+    """Return LM Studio's own models endpoint URL.
+
+    ``/v1/models`` is the OpenAI-compatible listing and reports only ``id``,
+    ``object`` and ``owned_by`` - it cannot distinguish an available model
+    from a loaded one. LM Studio's native ``/api/v0/models`` adds a
+    ``state`` field (``loaded`` / ``not-loaded``), which is what the tray
+    needs to report whether a model is actually active.
+
+    Returns:
+        str: Native models endpoint URL.
+    """
+    return f"{get_api_base_url()}/api/v0/models"
+
+
 _LOCAL_HOST_NAMES = frozenset(
     {
         "localhost",
@@ -1311,6 +1337,51 @@ def _api_loaded_model_names(models: object) -> list[str]:
     return loaded_names
 
 
+def query_api_models() -> tuple[bool, list[str]]:
+    """Query the API for reachability and the names of loaded models.
+
+    The native endpoint is tried first because it is the only one that
+    reports load state; ``/v1/models`` is the fallback for LM Studio builds
+    that do not serve ``/api/v0``.
+
+    Returns:
+        tuple[bool, list[str]]: ``(reachable, loaded_model_names)``.
+    """
+    reachable = False
+
+    for url_func in (get_native_api_models_url, get_api_models_url):
+        try:
+            api_url = url_func()
+            _validate_url_scheme(api_url)
+            req = urllib_request.Request(
+                api_url,
+                headers={"User-Agent": "lmstudio-tray-manager"},
+            )
+            with urllib_request.urlopen(  # nosec B310
+                req, timeout=3
+            ) as response:
+                payload = response.read()
+                data = json.loads(payload.decode("utf-8"))
+        except (
+            urllib_error.HTTPError,
+            urllib_error.URLError,
+            OSError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            logging.debug("API endpoint %s failed: %s", url_func.__name__, exc)
+            continue
+
+        reachable = True
+        if isinstance(data, dict):
+            names = _api_loaded_model_names(data.get("data", []))
+            if names:
+                return (True, names)
+
+    return (reachable, [])
+
+
 def check_api_reachable() -> tuple[bool, bool]:
     """Query the API, separating reachability from model state.
 
@@ -1321,31 +1392,8 @@ def check_api_reachable() -> tuple[bool, bool]:
     Returns:
         tuple[bool, bool]: ``(reachable, has_loaded_model)``.
     """
-    try:
-        api_url = get_api_models_url()
-        _validate_url_scheme(api_url)
-        req = urllib_request.Request(
-            api_url,
-            headers={"User-Agent": "lmstudio-tray-manager"},
-        )
-        with urllib_request.urlopen(req, timeout=3) as response:  # nosec B310
-            payload = response.read()
-            data = json.loads(payload.decode("utf-8"))
-    except (
-        urllib_error.HTTPError,
-        urllib_error.URLError,
-        OSError,
-        ValueError,
-        UnicodeDecodeError,
-        json.JSONDecodeError,
-    ) as exc:
-        logging.debug("Remote API not reachable: %s", exc)
-        return (False, False)
-
-    if not isinstance(data, dict):
-        return (True, False)
-    models = data.get("data", [])
-    return (True, len(_api_loaded_model_names(models)) > 0)
+    reachable, names = query_api_models()
+    return (reachable, bool(names))
 
 
 def get_pkill_cmd() -> Optional[str]:
@@ -1373,36 +1421,46 @@ def get_dpkg_cmd() -> Optional[str]:
     return shutil.which("dpkg")
 
 
+def get_api_loaded_models() -> list[str]:
+    """Return names of models the API reports as loaded.
+
+    Returns:
+        list[str]: Loaded model names, empty when none or unreachable.
+    """
+    _, names = query_api_models()
+    return names
+
+
+def _shorten_model_name(name: str, limit: int = 28) -> str:
+    """Shorten a model id so it fits a menu bar entry.
+
+    Model ids can be long (``qwen/qwen3-coder-30b-a3b-instruct``). The
+    publisher prefix is dropped first since the model name carries the
+    useful part; anything still too long is truncated.
+
+    Args:
+        name: Model identifier.
+        limit: Maximum length of the result.
+
+    Returns:
+        str: Display name no longer than ``limit``.
+    """
+    text = str(name).strip()
+    if len(text) > limit and "/" in text:
+        text = text.rsplit("/", 1)[-1]
+    if len(text) > limit:
+        text = text[: limit - 1].rstrip() + "…"
+    return text
+
+
 def check_api_models() -> bool:
     """Check if models loaded via API (fallback when lms ps fails).
 
     Returns:
         bool: True if at least one model loaded.
     """
-    try:
-        api_url = get_api_models_url()
-        _validate_url_scheme(api_url)
-        req = urllib_request.Request(
-            api_url,
-            headers={"User-Agent": "lmstudio-tray-manager"},
-        )
-        with urllib_request.urlopen(req, timeout=2) as response:  # nosec B310
-            payload = response.read()
-            data = json.loads(payload.decode("utf-8"))
-            if not isinstance(data, dict):
-                return False
-            models = data.get("data", [])
-            loaded_models = _api_loaded_model_names(models)
-            return len(loaded_models) > 0
-    except (
-        urllib_error.HTTPError,
-        urllib_error.URLError,
-        OSError,
-        ValueError,
-        UnicodeDecodeError,
-        json.JSONDecodeError,
-    ):
-        return False
+    _, has_loaded_model = check_api_reachable()
+    return has_loaded_model
 
 
 def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -3470,6 +3528,7 @@ class MacOSTrayIcon(_RumpsBase):
         self.last_status = None
         self.action_lock_until = 0.0
         self.lms_ps_resume_at = 0.0
+        self.remote_loaded_models: list[str] = []
         self._seen_desktop_call = False
         self._last_desktop_detection = None
         self._desktop_detection = {
@@ -3728,17 +3787,31 @@ class MacOSTrayIcon(_RumpsBase):
             list: Menu items describing the remote endpoint.
         """
         endpoint = f"{_AppState.API_HOST}:{_AppState.API_PORT}"
+        names = getattr(self, "remote_loaded_models", []) or []
+
         if self.last_status == "OK":
-            indicator, state = "🟢", "Model loaded"
+            indicator = "🟢"
+            if len(names) == 1:
+                state = f"{_shorten_model_name(names[0])} loaded"
+            elif len(names) > 1:
+                state = f"{len(names)} models loaded"
+            else:
+                state = "Model loaded"
         elif self.last_status == "INFO":
             indicator, state = "🟡", "No model loaded"
         else:
             indicator, state = "🔴", "Unreachable"
 
-        return [
+        items = [
             rumps_lib.MenuItem(f"{indicator} Remote: {endpoint}"),
             rumps_lib.MenuItem(f"  → {state}"),
         ]
+        if len(names) > 1:
+            items.extend(
+                rumps_lib.MenuItem(f"     • {_shorten_model_name(name)}")
+                for name in names
+            )
+        return items
 
     def _build_menu_impl(self) -> None:
         """Rebuild the menu. Must run on the main thread."""
@@ -3914,11 +3987,14 @@ class MacOSTrayIcon(_RumpsBase):
             tuple[str, str]: ``(status, reason)`` where status is one of
             ``"OK"``, ``"INFO"`` or ``"WARN"``.
         """
-        reachable, has_model = check_api_reachable()
+        reachable, names = query_api_models()
+        # Cached so the menu can name the model without re-querying on
+        # every rebuild.
+        self.remote_loaded_models = names
         if not reachable:
             self.title = "⚠️"
             return ("WARN", "remote endpoint unreachable")
-        if has_model:
+        if names:
             self.title = "✅"
             return ("OK", "remote API reported models loaded")
         self.title = "ℹ️"
@@ -4400,7 +4476,12 @@ class MacOSTrayIcon(_RumpsBase):
                 return f"Remote endpoint {endpoint} is not reachable."
             if not has_model:
                 return f"Connected to {endpoint}.\nNo model is loaded."
-            return f"Connected to {endpoint}.\nA model is loaded."
+            names = get_api_loaded_models()
+            if not names:
+                return f"Connected to {endpoint}.\nA model is loaded."
+            listed = "\n".join(f"  • {name}" for name in names)
+            label = "Loaded model" if len(names) == 1 else "Loaded models"
+            return f"Connected to {endpoint}.\n\n{label}:\n{listed}"
 
         daemon_running = self.get_daemon_status() == "running"
         app_running = self.get_desktop_app_status() == "running"
@@ -4509,9 +4590,12 @@ class MacOSTrayIcon(_RumpsBase):
             sender: rumps sender object (unused).
         """
         _ = sender
+        # APP_VERSION already carries its own "v" prefix when it comes from
+        # the VERSION file, and is the bare word "dev" otherwise - so no
+        # prefix is added here.
         msg = (
             f"LM Studio Tray Manager "
-            f"v{_AppState.APP_VERSION}\n"
+            f"{_AppState.APP_VERSION}\n"
             f"Maintainer: {APP_MAINTAINER}\n"
             f"{APP_REPOSITORY}\n"
             f"\n"

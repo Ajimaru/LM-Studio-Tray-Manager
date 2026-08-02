@@ -8354,7 +8354,7 @@ def test_macos_remote_status_maps_api_result(macos_module, monkeypatch):
     tray = _make_macos_tray(macos_module)
 
     monkeypatch.setattr(
-        macos_module, "check_api_reachable", lambda: (True, True)
+        macos_module, "query_api_models", lambda: (True, ["m1"])
     )
     assert macos_module.MacOSTrayIcon._check_remote_status(tray) == (
         "OK",
@@ -8362,13 +8362,13 @@ def test_macos_remote_status_maps_api_result(macos_module, monkeypatch):
     )  # nosec B101
 
     monkeypatch.setattr(
-        macos_module, "check_api_reachable", lambda: (True, False)
+        macos_module, "query_api_models", lambda: (True, [])
     )
     status, _ = macos_module.MacOSTrayIcon._check_remote_status(tray)
     assert status == "INFO"  # nosec B101
 
     monkeypatch.setattr(
-        macos_module, "check_api_reachable", lambda: (False, False)
+        macos_module, "query_api_models", lambda: (False, [])
     )
     status, _ = macos_module.MacOSTrayIcon._check_remote_status(tray)
     assert status == "WARN"  # nosec B101
@@ -8381,7 +8381,7 @@ def test_macos_check_model_skips_process_probe_when_remote(
     tray = _make_macos_tray(macos_module)
     monkeypatch.setattr(macos_module, "is_remote_endpoint", lambda: True)
     monkeypatch.setattr(
-        macos_module, "check_api_reachable", lambda: (True, True)
+        macos_module, "query_api_models", lambda: (True, ["m1"])
     )
     monkeypatch.setattr(tray, "build_menu", lambda: None)
 
@@ -8447,12 +8447,16 @@ def test_macos_status_text_does_not_wake_service(macos_module, monkeypatch):
 
 
 def test_macos_status_text_uses_api_when_remote(macos_module, monkeypatch):
-    """Remote status text comes from the API without touching the CLI."""
+    """Remote status text comes from the API without touching the CLI.
+
+    Falls back to a generic message when the names cannot be resolved.
+    """
     tray = _make_macos_tray(macos_module)
     monkeypatch.setattr(macos_module, "is_remote_endpoint", lambda: True)
     monkeypatch.setattr(
         macos_module, "check_api_reachable", lambda: (True, True)
     )
+    monkeypatch.setattr(macos_module, "get_api_loaded_models", list)
     app_state = _call_member(macos_module, "__getattribute__", "_AppState")
     monkeypatch.setattr(app_state, "API_HOST", "192.168.1.136")
     monkeypatch.setattr(app_state, "API_PORT", 1234)
@@ -8466,3 +8470,345 @@ def test_macos_status_text_uses_api_when_remote(macos_module, monkeypatch):
     assert called == []  # nosec B101
     assert "192.168.1.136:1234" in text  # nosec B101
     assert "A model is loaded" in text  # nosec B101
+
+
+# ----------------------------------------------------------------------
+# Native /api/v0/models endpoint (load state)
+# ----------------------------------------------------------------------
+
+
+def _fake_urlopen_by_url(responses):
+    """Build a urlopen stub dispatching on URL.
+
+    Args:
+        responses: Mapping of URL substring to payload bytes, or to an
+            exception instance to raise.
+
+    Returns:
+        Callable usable as a urlopen replacement.
+    """
+    class FakeResponse:
+        """Minimal urlopen context manager."""
+
+        def __init__(self, payload):
+            """Store payload."""
+            self.payload = payload
+
+        def __enter__(self):
+            """Enter context."""
+            return self
+
+        def __exit__(self, *_a):
+            """Exit context."""
+            return False
+
+        def read(self):
+            """Return payload."""
+            return self.payload
+
+    def _urlopen(req, *_a, **_k):
+        """Return the payload registered for the requested URL."""
+        url = req.full_url if hasattr(req, "full_url") else str(req)
+        for fragment, payload in responses.items():
+            if fragment in url:
+                if isinstance(payload, Exception):
+                    raise payload
+                return FakeResponse(payload)
+        raise OSError(f"unexpected url: {url}")
+
+    return _urlopen
+
+
+def test_native_models_url_uses_api_v0(tray_module):
+    """The native endpoint is /api/v0/models."""
+    tray_module._AppState.API_HOST = "192.168.1.136"
+    tray_module._AppState.API_PORT = 1234
+    assert tray_module.get_native_api_models_url() == (  # nosec B101
+        "http://192.168.1.136:1234/api/v0/models"
+    )
+
+
+def test_check_api_reachable_reads_state_from_native_endpoint(
+    tray_module, monkeypatch
+):
+    """A model marked "loaded" by /api/v0/models is reported as loaded.
+
+    /v1/models only carries id/object/owned_by, so load state has to come
+    from LM Studio's own endpoint.
+    """
+    native = (
+        b'{"data": [{"id": "qwen/qwen3.5-9b", "state": "loaded"},'
+        b' {"id": "qwen3-8b", "state": "not-loaded"}]}'
+    )
+    openai = b'{"data": [{"id": "qwen/qwen3.5-9b", "object": "model"}]}'
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        _fake_urlopen_by_url({"/api/v0/models": native, "/v1/models": openai}),
+    )
+    assert tray_module.check_api_reachable() == (True, True)  # nosec B101
+    assert tray_module.get_api_loaded_models() == [  # nosec B101
+        "qwen/qwen3.5-9b"
+    ]
+
+
+def test_check_api_reachable_ignores_not_loaded_models(
+    tray_module, monkeypatch
+):
+    """Available-but-idle models must not count as loaded."""
+    native = b'{"data": [{"id": "a", "state": "not-loaded"}]}'
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        _fake_urlopen_by_url({"/api/v0/models": native, "/v1/models": native}),
+    )
+    assert tray_module.check_api_reachable() == (True, False)  # nosec B101
+
+
+def test_check_api_reachable_falls_back_to_v1(tray_module, monkeypatch):
+    """Older builds without /api/v0 still report reachability."""
+    openai = b'{"data": [{"id": "a", "object": "model"}]}'
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        _fake_urlopen_by_url(
+            {
+                "/api/v0/models": OSError("404"),
+                "/v1/models": openai,
+            }
+        ),
+    )
+    assert tray_module.check_api_reachable() == (True, False)  # nosec B101
+
+
+def test_check_api_reachable_unreachable_when_both_fail(
+    tray_module, monkeypatch
+):
+    """Both endpoints failing means the host is unreachable."""
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        _fake_urlopen_by_url(
+            {
+                "/api/v0/models": OSError("refused"),
+                "/v1/models": OSError("refused"),
+            }
+        ),
+    )
+    assert tray_module.check_api_reachable() == (False, False)  # nosec B101
+
+
+def test_macos_status_text_lists_loaded_model_names(
+    macos_module, monkeypatch
+):
+    """The remote status dialog names the loaded models."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_remote_endpoint", lambda: True)
+    monkeypatch.setattr(
+        macos_module, "check_api_reachable", lambda: (True, True)
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "get_api_loaded_models",
+        lambda: ["qwen/qwen3.5-9b"],
+    )
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    monkeypatch.setattr(app_state, "API_HOST", "192.168.1.136")
+    monkeypatch.setattr(app_state, "API_PORT", 1234)
+
+    text = macos_module.MacOSTrayIcon._collect_status_text(tray)
+    assert "qwen/qwen3.5-9b" in text  # nosec B101
+    assert "Loaded model:" in text  # nosec B101
+
+
+# ----------------------------------------------------------------------
+# Loaded model name in the remote menu
+# ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("qwen/qwen3.5-9b", "qwen/qwen3.5-9b"),
+        ("lfm2-1.2b", "lfm2-1.2b"),
+        ("qwen/qwen3-coder-30b-a3b-instruct", "qwen3-coder-30b-a3b-instruct"),
+        ("x" * 40, "x" * 27 + "…"),
+    ],
+)
+def test_shorten_model_name(tray_module, raw, expected):
+    """Long ids drop the publisher prefix, then truncate."""
+    assert tray_module._shorten_model_name(raw) == expected  # nosec B101
+
+
+def test_macos_remote_menu_names_single_loaded_model(
+    macos_module, monkeypatch
+):
+    """The menu names the loaded model rather than saying "Model loaded"."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_remote_endpoint", lambda: True)
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    monkeypatch.setattr(app_state, "API_HOST", "192.168.1.136")
+    monkeypatch.setattr(app_state, "API_PORT", 1234)
+    tray.last_status = "OK"
+    tray.remote_loaded_models = ["qwen/qwen3.5-9b"]
+
+    macos_module.MacOSTrayIcon._build_menu_impl(tray)
+
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("qwen/qwen3.5-9b loaded" in t for t in titles)  # nosec B101
+
+
+def test_macos_remote_menu_counts_multiple_models(macos_module, monkeypatch):
+    """With several models the header counts them and each is listed."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_remote_endpoint", lambda: True)
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    monkeypatch.setattr(app_state, "API_HOST", "192.168.1.136")
+    monkeypatch.setattr(app_state, "API_PORT", 1234)
+    tray.last_status = "OK"
+    tray.remote_loaded_models = ["qwen3-8b", "lfm2-1.2b"]
+
+    macos_module.MacOSTrayIcon._build_menu_impl(tray)
+
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    joined = " ".join(titles)
+    assert "2 models loaded" in joined  # nosec B101
+    assert "qwen3-8b" in joined  # nosec B101
+    assert "lfm2-1.2b" in joined  # nosec B101
+
+
+def test_macos_remote_menu_without_names_stays_generic(
+    macos_module, monkeypatch
+):
+    """No cached names means the generic label, not a broken entry."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_remote_endpoint", lambda: True)
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    monkeypatch.setattr(app_state, "API_HOST", "192.168.1.136")
+    monkeypatch.setattr(app_state, "API_PORT", 1234)
+    tray.last_status = "OK"
+    tray.remote_loaded_models = []
+
+    macos_module.MacOSTrayIcon._build_menu_impl(tray)
+
+    titles = [
+        i.title for i in tray.menu if isinstance(i, DummyRumpsMenuItem)
+    ]
+    assert any("Model loaded" in t for t in titles)  # nosec B101
+
+
+def test_macos_remote_status_caches_model_names(macos_module, monkeypatch):
+    """The status check stores names so the menu need not re-query."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module,
+        "query_api_models",
+        lambda: (True, ["qwen/qwen3.5-9b"]),
+    )
+
+    status, _ = macos_module.MacOSTrayIcon._check_remote_status(tray)
+    assert status == "OK"  # nosec B101
+    assert tray.remote_loaded_models == ["qwen/qwen3.5-9b"]  # nosec B101
+
+
+def test_query_api_models_returns_names(tray_module, monkeypatch):
+    """query_api_models reports reachability together with the names."""
+    native = b'{"data": [{"id": "m1", "state": "loaded"}]}'
+    monkeypatch.setattr(
+        tray_module.urllib_request,
+        "urlopen",
+        _fake_urlopen_by_url({"/api/v0/models": native, "/v1/models": native}),
+    )
+    assert tray_module.query_api_models() == (True, ["m1"])  # nosec B101
+
+
+# ----------------------------------------------------------------------
+# Version lookup inside a PyInstaller bundle
+# ----------------------------------------------------------------------
+
+
+def test_get_app_version_reads_from_meipass(
+    tray_module, monkeypatch, tmp_path
+):
+    """In a bundle the VERSION file lives beside the unpacked data.
+
+    The executable sits in Contents/MacOS, so script_dir alone finds no
+    VERSION and the app would report itself as a dev build - which also
+    silently disables update checks.
+    """
+    bundle_dir = tmp_path / "meipass"
+    bundle_dir.mkdir()
+    (bundle_dir / "VERSION").write_text("v9.9.9", encoding="utf-8")
+
+    empty_dir = tmp_path / "macos"
+    empty_dir.mkdir()
+
+    monkeypatch.setattr(
+        tray_module._AppState, "script_dir", str(empty_dir)
+    )
+    monkeypatch.setattr(tray_module.sys, "_MEIPASS", str(bundle_dir),
+                        raising=False)
+
+    assert tray_module.get_app_version() == "v9.9.9"  # nosec B101
+
+
+def test_get_app_version_prefers_script_dir_without_meipass(
+    tray_module, monkeypatch, tmp_path
+):
+    """Outside a bundle the script directory is still authoritative."""
+    monkeypatch.delattr(tray_module.sys, "_MEIPASS", raising=False)
+    (tmp_path / "VERSION").write_text("v1.2.3", encoding="utf-8")
+    monkeypatch.setattr(tray_module._AppState, "script_dir", str(tmp_path))
+
+    assert tray_module.get_app_version() == "v1.2.3"  # nosec B101
+
+
+def test_get_app_version_falls_back_to_script_dir(
+    tray_module, monkeypatch, tmp_path
+):
+    """A bundle without VERSION still honours the script directory."""
+    bundle_dir = tmp_path / "meipass"
+    bundle_dir.mkdir()
+    (tmp_path / "VERSION").write_text("v2.0.0", encoding="utf-8")
+
+    monkeypatch.setattr(tray_module._AppState, "script_dir", str(tmp_path))
+    monkeypatch.setattr(tray_module.sys, "_MEIPASS", str(bundle_dir),
+                        raising=False)
+
+    assert tray_module.get_app_version() == "v2.0.0"  # nosec B101
+
+
+def test_macos_about_dialog_does_not_double_the_v_prefix(macos_module):
+    """APP_VERSION already carries its "v", so About must not add one.
+
+    The VERSION file ships "v0.6.3"; prefixing again produced "vv0.6.3",
+    and with the "dev" fallback it produced "vdev".
+    """
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    app_state.APP_VERSION = "v0.6.3"
+
+    tray.show_about_dialog(None)
+
+    message = DummyRumpsModule.get_alerts()[0][1]
+    assert "v0.6.3" in message  # nosec B101
+    assert "vv0.6.3" not in message  # nosec B101
+
+
+def test_macos_about_dialog_dev_build_has_no_v_prefix(macos_module):
+    """The dev fallback is shown as "dev", never "vdev"."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    app_state = _call_member(macos_module, "__getattribute__", "_AppState")
+    app_state.APP_VERSION = "dev"
+
+    tray.show_about_dialog(None)
+
+    message = DummyRumpsModule.get_alerts()[0][1]
+    assert "vdev" not in message  # nosec B101
+    assert "dev" in message  # nosec B101
