@@ -22,6 +22,7 @@ import shutil
 import threading
 import importlib
 import json
+import plistlib
 import re
 import socket
 import webbrowser
@@ -722,6 +723,179 @@ def get_asset_path(*path_components: str) -> Optional[str]:
     return None
 
 
+LAUNCH_AGENT_LABEL = "com.lmstudio.tray-manager"
+
+
+def get_launch_agent_path() -> str:
+    """Return the path of the per-user LaunchAgent plist.
+
+    Returns:
+        str: Path under ``~/Library/LaunchAgents``.
+    """
+    return os.path.expanduser(
+        f"~/Library/LaunchAgents/{LAUNCH_AGENT_LABEL}.plist"
+    )
+
+
+def get_launch_target() -> Optional[list[str]]:
+    """Return the command that should run at login.
+
+    Inside a bundle this is the ``.app`` executable; running from source it
+    is the interpreter plus this script, so a developer checkout can be
+    registered too.
+
+    Returns:
+        list[str] | None: Argument vector, or ``None`` when it cannot be
+        determined.
+    """
+    executable = os.path.abspath(sys.argv[0]) if sys.argv else ""
+
+    # _MEIPASS is checked alongside sys.frozen: both mark a PyInstaller
+    # build, and relying on either alone has bitten this file before.
+    bundled = (
+        getattr(sys, "frozen", False)
+        or getattr(sys, "_MEIPASS", None) is not None
+    )
+    if bundled:
+        if executable and os.path.isfile(executable):
+            return [executable]
+        return None
+
+    script = os.path.abspath(__file__)
+    if not os.path.isfile(script):
+        return None
+    return [sys.executable, script]
+
+
+def is_autostart_enabled() -> bool:
+    """Return True when a LaunchAgent for this app is installed.
+
+    Returns:
+        bool: ``True`` when the plist exists.
+    """
+    return os.path.isfile(get_launch_agent_path())
+
+
+def autostart_includes_daemon() -> bool:
+    """Return True when the login item also starts the llmster daemon.
+
+    Returns:
+        bool: ``True`` when the installed plist carries
+        ``--auto-start-daemon``.
+    """
+    plist_path = get_launch_agent_path()
+    if not os.path.isfile(plist_path):
+        return False
+
+    try:
+        with open(plist_path, "rb") as plist_file:
+            payload = plistlib.load(plist_file)
+    except (OSError, ValueError) as exc:
+        # A corrupt plist must not crash menu building; report "no daemon"
+        # and let the user re-enable it.
+        logging.debug("Cannot read LaunchAgent: %s", exc)
+        return False
+
+    arguments = payload.get("ProgramArguments") or []
+    if not isinstance(arguments, list):
+        return False
+    return "--auto-start-daemon" in arguments
+
+
+def enable_autostart(with_daemon: bool = False) -> bool:
+    """Install (or replace) the login item for this app.
+
+    Args:
+        with_daemon: When ``True``, the tray also starts the llmster daemon
+            at login by way of ``--auto-start-daemon``.
+
+    Returns:
+        bool: ``True`` when the LaunchAgent was written.
+    """
+    target = get_launch_target()
+    if not target:
+        logging.error("Cannot determine launch target for autostart")
+        return False
+
+    arguments = list(target)
+    if with_daemon:
+        arguments.append("--auto-start-daemon")
+
+    payload = {
+        "Label": LAUNCH_AGENT_LABEL,
+        "ProgramArguments": arguments,
+        "RunAtLoad": True,
+        # The tray owns its own lifecycle; relaunching it on exit would
+        # make "Quit Tray" impossible.
+        "KeepAlive": False,
+        "ProcessType": "Interactive",
+    }
+
+    plist_path = get_launch_agent_path()
+    try:
+        os.makedirs(os.path.dirname(plist_path), exist_ok=True)
+        tmp_path = f"{plist_path}.tmp"
+        with open(tmp_path, "wb") as plist_file:
+            plistlib.dump(payload, plist_file)
+        os.replace(tmp_path, plist_path)
+    except (OSError, ValueError) as exc:
+        logging.error("Failed to write LaunchAgent: %s", exc)
+        return False
+
+    _reload_launch_agent(plist_path)
+    logging.info("Autostart enabled: %s", plist_path)
+    return True
+
+
+def disable_autostart() -> bool:
+    """Remove the login item for this app.
+
+    Returns:
+        bool: ``True`` when no LaunchAgent remains.
+    """
+    plist_path = get_launch_agent_path()
+    if not os.path.isfile(plist_path):
+        return True
+
+    launchctl = shutil.which("launchctl")
+    if launchctl:
+        try:
+            _run_safe_command([launchctl, "unload", "-w", plist_path])
+        except (OSError, subprocess.SubprocessError) as exc:
+            logging.debug("launchctl unload failed: %s", exc)
+
+    try:
+        os.remove(plist_path)
+    except OSError as exc:
+        logging.error("Failed to remove LaunchAgent: %s", exc)
+        return False
+
+    logging.info("Autostart disabled: %s", plist_path)
+    return True
+
+
+def _reload_launch_agent(plist_path: str) -> None:
+    """Register the agent with launchd without starting a second copy.
+
+    ``launchctl load`` honours ``RunAtLoad`` immediately, which would launch
+    a second tray next to the one the user just clicked in. Only the stale
+    registration is removed here; the plist on disk is enough for the agent
+    to run at the next login.
+
+    Args:
+        plist_path: Path of the LaunchAgent plist.
+    """
+    launchctl = shutil.which("launchctl")
+    if not launchctl:
+        logging.debug("launchctl not found; agent applies at next login")
+        return
+
+    try:
+        _run_safe_command([launchctl, "unload", plist_path])
+    except (OSError, subprocess.SubprocessError) as exc:
+        logging.debug("launchctl unload failed: %s", exc)
+
+
 def _get_config_path() -> str:
     """Return config file path ~/.config/lmstudio_tray.json."""
     return os.path.expanduser("~/.config/lmstudio_tray.json")
@@ -1201,6 +1375,20 @@ def get_llmster_cmd() -> Optional[str]:
     return candidate
 
 
+def is_daemon_available() -> bool:
+    """Return True when the llmster daemon can be controlled here.
+
+    Only a standalone llmster binary counts. ``lms`` is deliberately not
+    accepted: where LM Studio embeds the daemon, ``lms daemon up`` starts
+    the desktop app rather than a headless daemon, so treating ``lms`` as
+    "daemon available" offers a start action that cannot work.
+
+    Returns:
+        bool: ``True`` when an llmster binary was found.
+    """
+    return bool(get_llmster_cmd())
+
+
 def _has_loaded_model(output: str) -> bool:
     """Return True if lms ps output indicates loaded model.
 
@@ -1646,21 +1834,51 @@ def get_desktop_app_pids():
     return pids
 
 
+def _existing_instance_patterns() -> list[str]:
+    """Return pgrep patterns matching other copies of this tray.
+
+    A bundled build runs as ``LM-Studio-Tray-Manager`` inside
+    ``Contents/MacOS``, so searching only for the script name misses it and
+    a second menu bar icon appears. The bundle pattern is anchored on the
+    bundle path so it cannot match unrelated processes that merely mention
+    the name.
+
+    Returns:
+        list[str]: Patterns for ``pgrep -f``.
+    """
+    patterns = ["lmstudio_tray.py"]
+    if IS_MACOS:
+        patterns.append(
+            "LM-Studio-Tray-Manager.app/Contents/MacOS/"
+            "LM-Studio-Tray-Manager"
+        )
+    return patterns
+
+
 def kill_existing_instances():
-    """Terminate other lmstudio_tray.py instances using pgrep/SIGTERM."""
+    """Terminate other running copies of the tray using pgrep/SIGTERM."""
     pgrep_cmd = get_pgrep_cmd()
     if not pgrep_cmd:
         logging.warning("pgrep not found; cannot detect existing instances")
         return
-    result = _run_safe_command([pgrep_cmd, "-f", "lmstudio_tray.py"])
-    pids = [
-        int(pid)
-        for pid in result.stdout.strip().split("\n")
-        if pid.isdigit()
-    ]
+
     current_pid = os.getpid()
-    for pid in pids:
-        if pid != current_pid:
+    seen: set[int] = set()
+
+    for pattern in _existing_instance_patterns():
+        try:
+            result = _run_safe_command([pgrep_cmd, "-f", pattern])
+        except (OSError, subprocess.SubprocessError) as exc:
+            logging.debug("pgrep for %r failed: %s", pattern, exc)
+            continue
+
+        for line in result.stdout.strip().split("\n"):
+            if not line.isdigit():
+                continue
+            pid = int(line)
+            if pid == current_pid or pid in seen:
+                continue
+            seen.add(pid)
             try:
                 os.kill(pid, signal.SIGTERM)
                 logging.info("Terminating old instance: PID %s", pid)
@@ -1911,8 +2129,7 @@ class TrayIcon:
             str: Status string.
         """
         try:
-            llmster_cmd = get_llmster_cmd()
-            if not llmster_cmd:
+            if not is_daemon_available():
                 return "not_found"
             if is_llmster_running():
                 return "running"
@@ -2134,15 +2351,10 @@ class TrayIcon:
         attempts = []
 
         if action == "start":
-            if lms_cmd:
-                attempts.extend(
-                    [
-                        [lms_cmd, "daemon", "up"],
-                        [lms_cmd, "daemon", "start"],
-                        [lms_cmd, "up"],
-                        [lms_cmd, "start"],
-                    ]
-                )
+            # lms is deliberately absent here: where LM Studio embeds the
+            # daemon, `lms daemon up` launches the desktop app instead of a
+            # headless daemon. Only a standalone llmster binary is used to
+            # start; lms remains in the stop path below.
             if llmster_cmd:
                 attempts.extend(
                     [
@@ -2379,8 +2591,9 @@ class TrayIcon:
                 self._run_validated_command(
                     [
                         notify_cmd,
-                        "Error",
-                        "llmster/lms not found. Please install LM Studio CLI.",
+                        "Daemon",
+                        "llmster not installed. Install it with: "
+                        "curl -fsSL https://lmstudio.ai/install.sh | bash",
                     ]
                 )
             return
@@ -3587,8 +3800,7 @@ class MacOSTrayIcon(_RumpsBase):
             str: ``"running"``, ``"stopped"``, or ``"not_found"``.
         """
         try:
-            llmster_cmd = get_llmster_cmd()
-            if not llmster_cmd:
+            if not is_daemon_available():
                 return "not_found"
             if is_llmster_running():
                 return "running"
@@ -3760,6 +3972,29 @@ class MacOSTrayIcon(_RumpsBase):
                 callback=self.show_config_dialog,
             )
         )
+
+        tray_autostart = is_autostart_enabled()
+        options.add(
+            rumps_lib.MenuItem(
+                f"{'✓' if tray_autostart else '  '} Start at Login",
+                callback=self.toggle_autostart,
+            )
+        )
+
+        # The daemon entry stays visible but inert unless llmster is present
+        # and the tray itself starts at login, so the dependency is obvious
+        # instead of failing silently at the next login.
+        daemon_available = is_daemon_available()
+        daemon_on = daemon_available and autostart_includes_daemon()
+        daemon_item = rumps_lib.MenuItem(
+            f"{'✓' if daemon_on else '  '} Start Daemon at Login",
+            callback=self.toggle_autostart_daemon,
+        )
+        if not (daemon_available and tray_autostart):
+            # rumps renders a callback-less item greyed out.
+            daemon_item.set_callback(None)
+        options.add(daemon_item)
+
         options.add(
             rumps_lib.MenuItem(
                 "Check for Updates",
@@ -4149,13 +4384,12 @@ class MacOSTrayIcon(_RumpsBase):
         llmster_cmd = get_llmster_cmd()
         attempts = []
         if action == "start":
-            if lms_cmd:
-                attempts.extend([
-                    [lms_cmd, "daemon", "up"],
-                    [lms_cmd, "daemon", "start"],
-                    [lms_cmd, "up"],
-                    [lms_cmd, "start"],
-                ])
+            # lms is deliberately absent here. When LM Studio embeds the
+            # daemon -- the norm on macOS -- `lms daemon up` prints
+            # "Waking up LM Studio service..." and launches the desktop app,
+            # reporting {"isDaemon": false}. A menu entry promising a
+            # headless daemon must never start a GUI, so only a standalone
+            # llmster binary qualifies. lms still serves status and stop.
             if llmster_cmd:
                 attempts.extend([
                     [llmster_cmd, "daemon", "up"],
@@ -4307,7 +4541,20 @@ class MacOSTrayIcon(_RumpsBase):
         ).start()
 
     def _start_daemon_body(self) -> None:
-        """Background thread body for :meth:`start_daemon`."""
+        """Background thread body for :meth:`start_daemon`.
+
+        Wrapped so an unexpected error still reaches the user: a bare
+        exception in a worker thread would otherwise kill it silently,
+        leaving the click with no feedback at all.
+        """
+        try:
+            self._start_daemon_body_impl()
+        except Exception:  # pylint: disable=broad-except
+            logging.exception("Daemon start failed unexpectedly")
+            self._notify("Error", "Daemon start failed. See the log.")
+
+    def _start_daemon_body_impl(self) -> None:
+        """Do the actual daemon start work."""
         if self.get_desktop_app_status() == "running":
             if not self._stop_desktop_app_processes():
                 self._notify(
@@ -4318,8 +4565,9 @@ class MacOSTrayIcon(_RumpsBase):
         start_attempts = self._build_daemon_attempts("start")
         if not start_attempts:
             self._notify(
-                "Error",
-                "llmster/lms not found. Please install LM Studio CLI.",
+                "Daemon",
+                "llmster not installed. Install it with: "
+                "curl -fsSL https://lmstudio.ai/install.sh | bash",
             )
             return
         for attempt in start_attempts:
@@ -4330,12 +4578,16 @@ class MacOSTrayIcon(_RumpsBase):
                         break
                     time.sleep(0.5)
                 if is_llmster_running():
+                    # Logged like the stop path, so the action is visible
+                    # even where notifications never reach the user.
+                    logging.info("llmster daemon started")
                     self._notify("LLMster", "llmster daemon is running")
                     self.build_menu()
                     self._schedule_menu_refresh()
                     return
             except (OSError, subprocess.SubprocessError) as e:
                 logging.error("Daemon start attempt failed: %s", e)
+        logging.error("Daemon start failed")
         self._notify("Error", "Daemon start failed")
         self.build_menu()
 
@@ -4363,6 +4615,10 @@ class MacOSTrayIcon(_RumpsBase):
             logging.error("Error stopping daemon: %s", e)
             self._notify("Error", str(e))
             self.build_menu()
+        except Exception:  # pylint: disable=broad-except
+            # Anything else would kill the worker thread without a trace.
+            logging.exception("Daemon stop failed unexpectedly")
+            self._notify("Error", "Daemon stop failed. See the log.")
 
     # ------------------------------------------------------------------
     # Desktop app start / stop
@@ -4518,6 +4774,64 @@ class MacOSTrayIcon(_RumpsBase):
             logging.error("rumps is not installed; cannot show status dialog")
             return
         rumps_lib.alert(title="LM Studio Status", message=text)
+
+    def toggle_autostart(self, sender: object) -> None:
+        """Enable or disable launching the tray at login.
+
+        Args:
+            sender: rumps sender object (unused).
+        """
+        _ = sender
+        if is_autostart_enabled():
+            if disable_autostart():
+                self._notify("Autostart", "Disabled: will not start at login")
+            else:
+                self._notify("Error", "Could not disable autostart")
+        else:
+            if enable_autostart():
+                self._notify("Autostart", "Enabled: starts at login")
+            else:
+                self._notify(
+                    "Error",
+                    "Could not enable autostart. See the log for details.",
+                )
+        self.build_menu()
+
+    def toggle_autostart_daemon(self, sender: object) -> None:
+        """Enable or disable starting the llmster daemon at login.
+
+        The daemon flag lives inside the tray's own login item, so this
+        rewrites that plist rather than installing a second agent.
+
+        Args:
+            sender: rumps sender object (unused).
+        """
+        _ = sender
+        if not is_daemon_available():
+            self._notify(
+                "Daemon Autostart",
+                "No daemon found. Install LM Studio, or run: "
+                "curl -fsSL https://lmstudio.ai/install.sh | bash",
+            )
+            return
+
+        if not is_autostart_enabled():
+            self._notify(
+                "Daemon Autostart",
+                "Enable 'Start at Login' first.",
+            )
+            return
+
+        wanted = not autostart_includes_daemon()
+        if enable_autostart(with_daemon=wanted):
+            state = "Enabled" if wanted else "Disabled"
+            self._notify("Daemon Autostart", f"{state} at login")
+        else:
+            self._notify(
+                "Error",
+                "Could not update daemon autostart. See the log for details.",
+            )
+        self.build_menu()
 
     def show_config_dialog(self, sender: object) -> None:
         """Prompt for the LM Studio API endpoint and persist it.

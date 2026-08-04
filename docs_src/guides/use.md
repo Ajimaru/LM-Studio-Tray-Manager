@@ -187,6 +187,26 @@ EOF
 
 Then enable autostart in your desktop environment settings.
 
+On **macOS** this is built into the tray instead - no file to write by hand.
+**Options → Start at Login** installs a LaunchAgent at
+`~/Library/LaunchAgents/com.lmstudio.tray-manager.plist`; a checkmark shows
+it is active, and switching it off removes the file again.
+
+**Start Daemon at Login** adds `--auto-start-daemon` to that same login
+item, so the tray brings up the llmster daemon after it starts. It requires
+`Start at Login` to be active and llmster to be installed; until both hold,
+the entry stays greyed out.
+
+Daemon control needs llmster itself
+(`curl -fsSL https://lmstudio.ai/install.sh | bash`). `lms daemon up` is
+**not** a substitute: where LM Studio embeds the daemon, that command
+prints "Waking up LM Studio service..." and launches the desktop app,
+reporting `{"isDaemon": false}`.
+
+Without llmster the tray therefore shows an inert
+🔴 **Daemon (Not Installed)** entry rather than a start action, identically
+on macOS and Linux.
+
 ## Command-Line Options
 
 ### Usage Syntax
@@ -357,11 +377,13 @@ When you click "Start Desktop App":
 
 When you click "Start LM Studio Daemon":
 
-1. **Tries CLI commands** in order:
-   - `lms daemon up` (preferred LM Studio CLI wrapper)
-   - `llmster daemon start` (direct daemon command)
+1. **Tries llmster commands** in order: `llmster daemon up`,
+   `llmster daemon start`, `llmster up`, `llmster start`
 
-   If the primary commands fail, also tries: `lms up`, `lms start`, `llmster up`, `llmster start`
+   `lms` is not used to start a daemon. Where LM Studio embeds the daemon,
+   `lms daemon up` launches the desktop app instead of a headless process,
+   so the menu entry is greyed out when llmster is absent. `lms` is still
+   used for stopping and for status.
 
 2. **Conflict handling**:
    - Stops desktop app first (if running)

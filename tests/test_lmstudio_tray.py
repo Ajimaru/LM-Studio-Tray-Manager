@@ -1848,8 +1848,12 @@ def test_build_daemon_attempts_start_and_stop(tray_module, monkeypatch):
     )
     start = _call_member(tray, "_build_daemon_attempts", "start")
     stop = _call_member(tray, "_build_daemon_attempts", "stop")
-    assert ["/usr/bin/lms", "daemon", "up"] in start  # nosec B101
+    assert ["/usr/bin/llmster", "daemon", "up"] in start  # nosec B101
     assert ["/usr/bin/llmster", "daemon", "down"] in stop  # nosec B101
+    # lms must never appear in the start path: where LM Studio embeds the
+    # daemon, `lms daemon up` launches the GUI instead of a headless daemon.
+    assert all(a[0] != "/usr/bin/lms" for a in start)  # nosec B101
+    assert ["/usr/bin/lms", "daemon", "down"] in stop  # nosec B101
 
 
 def test_run_daemon_attempts_stops_on_condition(tray_module, monkeypatch):
@@ -3182,7 +3186,10 @@ def test_build_menu_stopped_entries(tray_module, monkeypatch):
 def test_get_daemon_status_variants(tray_module, monkeypatch):
     """Return daemon status for missing, running, and stopped cases."""
     tray = _make_tray_instance(tray_module)
+    # not_found needs both entry points gone, not just the binary.
     monkeypatch.setattr(tray_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(tray_module, "is_llmster_running", lambda: False)
     assert tray.get_daemon_status() == "not_found"  # nosec B101
 
     monkeypatch.setattr(
@@ -4255,6 +4262,31 @@ def test_maybe_start_gui(monkeypatch, tray_module):
     assert calls == ["gui"]  # nosec B101
 
 
+def test_is_daemon_available_rejects_lms_alone(tray_module, monkeypatch):
+    """lms cannot start a headless daemon, so it does not count.
+
+    `lms daemon up` launches the desktop app where LM Studio embeds the
+    daemon, so accepting lms would offer a start action that cannot work.
+    """
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: "/bin/lms")
+    monkeypatch.setattr(tray_module, "get_llmster_cmd", lambda: None)
+    assert tray_module.is_daemon_available() is False  # nosec B101
+
+
+def test_is_daemon_available_accepts_llmster_alone(tray_module, monkeypatch):
+    """A standalone llmster binary counts too."""
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(tray_module, "get_llmster_cmd", lambda: "/bin/llmster")
+    assert tray_module.is_daemon_available() is True  # nosec B101
+
+
+def test_is_daemon_available_false_without_either(tray_module, monkeypatch):
+    """Neither CLI means there is no way to reach a daemon."""
+    monkeypatch.setattr(tray_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(tray_module, "get_llmster_cmd", lambda: None)
+    assert tray_module.is_daemon_available() is False  # nosec B101
+
+
 def test_get_llmster_cmd_permission_error_and_no_candidates(
     tray_module,
     monkeypatch,
@@ -4393,6 +4425,7 @@ def test_get_daemon_status_oserror(tray_module, monkeypatch):
         raise OSError("fail")
 
     monkeypatch.setattr(tray_module.subprocess, "run", raise_oserror)
+    monkeypatch.setattr(tray_module, "is_llmster_running", raise_oserror)
     assert _call_member(tray, "get_daemon_status") == "not_found"  # nosec B101
 
 
@@ -5581,6 +5614,10 @@ class DummyRumpsMenuItem:
         """Add a child menu item."""
         self._children.append(item)
 
+    def set_callback(self, callback):
+        """Set the callback; rumps greys out items whose callback is None."""
+        self.callback = callback
+
 
 class DummyRumpsMenu:
     """Lightweight rumps.Menu stub."""
@@ -5825,9 +5862,28 @@ def test_get_desktop_app_pids_macos_lm_studio_process_name(
 
 
 def test_macos_get_daemon_status_not_found(macos_module, monkeypatch):
-    """Returns 'not_found' when llmster is absent."""
+    """Returns 'not_found' when neither CLI can reach a daemon."""
     tray = _make_macos_tray(macos_module)
     monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "get_lms_cmd", lambda: None)
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
+    assert tray.get_daemon_status() == "not_found"  # nosec B101
+
+
+def test_macos_get_daemon_status_not_found_with_lms_only(
+    macos_module, monkeypatch
+):
+    """Without llmster the daemon reads as not installed.
+
+    The menu then shows the inert "Daemon (Not Installed)" entry, matching
+    the Linux build, instead of a start action that cannot work.
+    """
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/Users/x/.lmstudio/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "is_llmster_running", lambda: False)
     assert tray.get_daemon_status() == "not_found"  # nosec B101
 
 
@@ -6201,16 +6257,146 @@ def test_macos_check_model_status_change_warn_notification(
     )  # nosec B101
 
 
-def test_macos_build_daemon_attempts_start(macos_module, monkeypatch):
-    """_build_daemon_attempts returns start commands when lms is found."""
+def test_macos_build_daemon_attempts_start_needs_llmster(
+    macos_module, monkeypatch
+):
+    """lms alone yields no start command.
+
+    `lms daemon up` prints "Waking up LM Studio service..." and starts the
+    desktop app with {"isDaemon": false}. A headless menu entry must not
+    trigger that, so without llmster there is nothing to run.
+    """
     tray = _make_macos_tray(macos_module)
     monkeypatch.setattr(
         macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
     )
     monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
     attempts = _call_member(tray, "_build_daemon_attempts", "start")
+    assert attempts == []  # nosec B101
+
+
+def test_macos_build_daemon_attempts_start(macos_module, monkeypatch):
+    """_build_daemon_attempts returns llmster start commands."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(
+        macos_module, "get_llmster_cmd", lambda: "/usr/local/bin/llmster"
+    )
+    attempts = _call_member(tray, "_build_daemon_attempts", "start")
     assert len(attempts) > 0  # nosec B101
-    assert all(a[0] == "/usr/local/bin/lms" for a in attempts)  # nosec B101
+    assert all(  # nosec B101
+        a[0] == "/usr/local/bin/llmster" for a in attempts
+    )
+
+
+def test_macos_menu_shows_not_installed_without_llmster(
+    macos_module, monkeypatch
+):
+    """Without llmster the menu shows the inert entry, as on Linux.
+
+    No start action is offered, because none could succeed: `lms daemon up`
+    would launch the desktop app rather than a headless daemon.
+    """
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(
+        macos_module.MacOSTrayIcon,
+        "get_desktop_app_status",
+        lambda _s: "stopped",
+    )
+
+    macos_module.MacOSTrayIcon.build_menu(tray)
+    titles = [
+        getattr(i, "title", "") for i in tray.menu if i is not None
+    ]
+    assert any("Daemon (Not Installed)" in t for t in titles)  # nosec B101
+    assert not any("Start Daemon" in t for t in titles)  # nosec B101
+
+    inert = [i for i in tray.menu
+             if i is not None and "Not Installed" in getattr(i, "title", "")]
+    assert inert[0].callback is None  # nosec B101
+
+
+def test_macos_start_daemon_notifies_on_unexpected_error(
+    macos_module, monkeypatch
+):
+    """An unexpected error still reaches the user.
+
+    The worker thread would otherwise die silently, leaving the click with
+    no feedback at all -- indistinguishable from "nothing happened".
+    """
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+
+    def boom():
+        raise AttributeError("simulated internal failure")
+
+    monkeypatch.setattr(tray, "get_desktop_app_status", boom)
+
+    _call_member(tray, "_start_daemon_body")
+
+    assert any(  # nosec B101
+        "failed" in n[2].lower()
+        for n in DummyRumpsModule.get_notifications()
+    )
+
+
+def test_macos_stop_daemon_notifies_on_unexpected_error(
+    macos_module, monkeypatch
+):
+    """The stop path is guarded against non-OSError failures too."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+
+    def boom():
+        raise AttributeError("simulated internal failure")
+
+    monkeypatch.setattr(tray, "_stop_daemon_with_notification", boom)
+    monkeypatch.setattr(tray, "build_menu", lambda: None)
+
+    _call_member(tray, "_stop_daemon_body")
+
+    assert any(  # nosec B101
+        "failed" in n[2].lower()
+        for n in DummyRumpsModule.get_notifications()
+    )
+
+
+def test_macos_start_daemon_without_llmster_explains_install(
+    macos_module, monkeypatch
+):
+    """Starting without llmster names the install command, runs nothing.
+
+    The menu no longer offers this path, but ``--auto-start-daemon`` still
+    reaches it, so lms must never be used to start a daemon here either.
+    """
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
+    )
+    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
+    ran = []
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda cmd: ran.append(cmd) or _completed(returncode=0),
+    )
+
+    _call_member(tray, "_start_daemon_body")
+
+    # Nothing was executed: lms must never be used to start a daemon.
+    assert ran == []  # nosec B101
+    assert any(  # nosec B101
+        "install.sh" in n[2]
+        for n in DummyRumpsModule.get_notifications()
+    )
 
 
 def test_macos_build_daemon_attempts_stop(macos_module, monkeypatch):
@@ -6306,7 +6492,7 @@ def test_macos_start_daemon_body_no_cmd(macos_module, monkeypatch):
     _call_member(tray, "_start_daemon_body")
     notifications = DummyRumpsModule.get_notifications()
     assert any(
-        "not found" in n[2].lower()
+        "llmster" in n[2].lower() and "install" in n[2].lower()
         for n in notifications
     )  # nosec B101
 
@@ -6318,7 +6504,10 @@ def test_macos_start_daemon_body_success(macos_module, monkeypatch):
     monkeypatch.setattr(
         macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
     )
-    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    # Starting headless requires llmster; lms alone yields no attempts.
+    monkeypatch.setattr(
+        macos_module, "get_llmster_cmd", lambda: "/usr/local/bin/llmster"
+    )
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
     monkeypatch.setattr(
         macos_module,
@@ -6342,7 +6531,10 @@ def test_macos_start_daemon_body_fail(macos_module, monkeypatch):
     monkeypatch.setattr(
         macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
     )
-    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    # Starting headless requires llmster; lms alone yields no attempts.
+    monkeypatch.setattr(
+        macos_module, "get_llmster_cmd", lambda: "/usr/local/bin/llmster"
+    )
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
 
     def _run_safe_command_stub(command):
@@ -7562,7 +7754,10 @@ def test_macos_start_daemon_body_attempt_oserror(
     monkeypatch.setattr(
         macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
     )
-    monkeypatch.setattr(macos_module, "get_llmster_cmd", lambda: None)
+    # Starting headless requires llmster; lms alone yields no attempts.
+    monkeypatch.setattr(
+        macos_module, "get_llmster_cmd", lambda: "/usr/local/bin/llmster"
+    )
     monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "stopped")
 
     def raise_oserror(_cmd):
@@ -8812,3 +9007,462 @@ def test_macos_about_dialog_dev_build_has_no_v_prefix(macos_module):
     message = DummyRumpsModule.get_alerts()[0][1]
     assert "vdev" not in message  # nosec B101
     assert "dev" in message  # nosec B101
+
+
+# ----------------------------------------------------------------------
+# Autostart via LaunchAgent (macOS)
+# ----------------------------------------------------------------------
+
+
+@pytest.fixture(name="autostart_home")
+def autostart_home_fixture(tray_module, monkeypatch, tmp_path):
+    """Point the LaunchAgent path at a throwaway HOME.
+
+    Keeps the developer's real ~/Library/LaunchAgents untouched.
+    """
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(tray_module.shutil, "which", lambda _n: None)
+    return tmp_path
+
+
+def test_autostart_disabled_by_default(tray_module, autostart_home):
+    """With no plist present autostart reports as off."""
+    _ = autostart_home
+    assert tray_module.is_autostart_enabled() is False  # nosec B101
+
+
+def test_enable_autostart_writes_valid_plist(
+    tray_module, autostart_home, monkeypatch
+):
+    """Enabling writes a LaunchAgent that runs the app at login."""
+    monkeypatch.setattr(
+        tray_module, "get_launch_target", lambda: ["/bin/app"]
+    )
+    assert tray_module.enable_autostart() is True  # nosec B101
+    assert tray_module.is_autostart_enabled() is True  # nosec B101
+
+    path = tray_module.get_launch_agent_path()
+    assert str(autostart_home) in path  # nosec B101
+    with open(path, "rb") as handle:
+        data = tray_module.plistlib.load(handle)
+    assert data["Label"] == "com.lmstudio.tray-manager"  # nosec B101
+    assert data["RunAtLoad"] is True  # nosec B101
+    assert data["ProgramArguments"] == ["/bin/app"]  # nosec B101
+    # KeepAlive would make "Quit Tray" impossible.
+    assert data["KeepAlive"] is False  # nosec B101
+
+
+def test_enable_autostart_omits_daemon_flag_by_default(
+    tray_module, autostart_home, monkeypatch
+):
+    """Plain autostart starts the tray only."""
+    _ = autostart_home
+    monkeypatch.setattr(
+        tray_module, "get_launch_target", lambda: ["/bin/app"]
+    )
+    tray_module.enable_autostart()
+
+    with open(tray_module.get_launch_agent_path(), "rb") as handle:
+        data = tray_module.plistlib.load(handle)
+    assert data["ProgramArguments"] == ["/bin/app"]  # nosec B101
+    assert tray_module.autostart_includes_daemon() is False  # nosec B101
+
+
+def test_enable_autostart_with_daemon_flag(
+    tray_module, autostart_home, monkeypatch
+):
+    """Opting in appends --auto-start-daemon to the login item."""
+    _ = autostart_home
+    monkeypatch.setattr(
+        tray_module, "get_launch_target", lambda: ["/bin/app"]
+    )
+    tray_module.enable_autostart(with_daemon=True)
+
+    with open(tray_module.get_launch_agent_path(), "rb") as handle:
+        data = tray_module.plistlib.load(handle)
+    assert data["ProgramArguments"] == [  # nosec B101
+        "/bin/app",
+        "--auto-start-daemon",
+    ]
+    assert tray_module.autostart_includes_daemon() is True  # nosec B101
+
+
+def test_autostart_includes_daemon_survives_corrupt_plist(
+    tray_module, autostart_home
+):
+    """A damaged plist reports "no daemon" instead of breaking the menu."""
+    _ = autostart_home
+    path = tray_module.get_launch_agent_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write("not a plist")
+
+    assert tray_module.autostart_includes_daemon() is False  # nosec B101
+
+
+def test_enable_autostart_replaces_previous_entry(
+    tray_module, autostart_home, monkeypatch
+):
+    """Enabling twice rewrites the entry rather than duplicating it."""
+    _ = autostart_home
+    monkeypatch.setattr(
+        tray_module, "get_launch_target", lambda: ["/bin/app"]
+    )
+    tray_module.enable_autostart()
+    tray_module.enable_autostart()
+
+    with open(tray_module.get_launch_agent_path(), "rb") as handle:
+        data = tray_module.plistlib.load(handle)
+    assert data["ProgramArguments"] == ["/bin/app"]  # nosec B101
+
+
+def test_disable_autostart_removes_plist(
+    tray_module, autostart_home, monkeypatch
+):
+    """Disabling deletes the LaunchAgent."""
+    _ = autostart_home
+    monkeypatch.setattr(
+        tray_module, "get_launch_target", lambda: ["/bin/app"]
+    )
+    tray_module.enable_autostart()
+    assert tray_module.disable_autostart() is True  # nosec B101
+    assert tray_module.is_autostart_enabled() is False  # nosec B101
+
+
+def test_disable_autostart_is_idempotent(tray_module, autostart_home):
+    """Disabling when nothing is installed succeeds quietly."""
+    _ = autostart_home
+    assert tray_module.disable_autostart() is True  # nosec B101
+
+
+def test_enable_autostart_fails_without_target(
+    tray_module, autostart_home, monkeypatch
+):
+    """No resolvable launch target means no half-written plist."""
+    _ = autostart_home
+    monkeypatch.setattr(tray_module, "get_launch_target", lambda: None)
+    assert tray_module.enable_autostart() is False  # nosec B101
+    assert tray_module.is_autostart_enabled() is False  # nosec B101
+
+
+def test_get_launch_target_uses_executable_when_frozen(
+    tray_module, monkeypatch, tmp_path
+):
+    """A bundled app registers its own executable, not the interpreter."""
+    binary = tmp_path / "LM-Studio-Tray-Manager"
+    binary.write_text("", encoding="utf-8")
+    monkeypatch.setattr(tray_module.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(tray_module.sys, "argv", [str(binary)])
+
+    assert tray_module.get_launch_target() == [str(binary)]  # nosec B101
+
+
+def test_macos_options_menu_shows_autostart_state(
+    macos_module, monkeypatch
+):
+    """The Options submenu reflects the current autostart state."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_autostart_enabled", lambda: True)
+
+    rumps_lib = _call_member(
+        macos_module, "__getattribute__", "_rumps_lib"
+    )
+    options = macos_module.MacOSTrayIcon._build_options_menu(tray, rumps_lib)
+    titles = [getattr(c, "title", "") for c in options._children]
+
+    assert any("✓ Start at Login" in t for t in titles)  # nosec B101
+
+
+def _daemon_menu_item(macos_module, tray):
+    """Return the 'Start Daemon at Login' item from the Options submenu."""
+    rumps_lib = _call_member(
+        macos_module, "__getattribute__", "_rumps_lib"
+    )
+    options = macos_module.MacOSTrayIcon._build_options_menu(tray, rumps_lib)
+    for child in options._children:
+        if "Daemon at Login" in getattr(child, "title", ""):
+            return child
+    return None
+
+
+def test_macos_daemon_autostart_enabled_when_available(
+    macos_module, monkeypatch
+):
+    """With llmster present and tray autostart on, the entry is clickable."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_autostart_enabled", lambda: True)
+    monkeypatch.setattr(macos_module, "is_daemon_available", lambda: True)
+    monkeypatch.setattr(
+        macos_module, "autostart_includes_daemon", lambda: True
+    )
+
+    item = _daemon_menu_item(macos_module, tray)
+    assert item is not None  # nosec B101
+    assert "✓" in item.title  # nosec B101
+    assert item.callback is not None  # nosec B101
+
+
+def test_macos_daemon_autostart_greyed_without_llmster(
+    macos_module, monkeypatch
+):
+    """No llmster installed means the entry shows but cannot be clicked."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_autostart_enabled", lambda: True)
+    monkeypatch.setattr(macos_module, "is_daemon_available", lambda: False)
+
+    item = _daemon_menu_item(macos_module, tray)
+    assert item is not None  # nosec B101
+    assert item.callback is None  # nosec B101
+
+
+def test_macos_daemon_autostart_greyed_without_tray_autostart(
+    macos_module, monkeypatch
+):
+    """The daemon flag lives in the tray's login item, so it depends on it."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_autostart_enabled", lambda: False)
+    monkeypatch.setattr(macos_module, "is_daemon_available", lambda: True)
+
+    item = _daemon_menu_item(macos_module, tray)
+    assert item is not None  # nosec B101
+    assert item.callback is None  # nosec B101
+
+
+def test_macos_toggle_daemon_requires_llmster(macos_module, monkeypatch):
+    """Clicking without llmster notifies instead of writing a dead flag."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_daemon_available", lambda: False)
+    calls = []
+    monkeypatch.setattr(
+        macos_module,
+        "enable_autostart",
+        lambda **kw: calls.append(kw) or True,
+    )
+    notes = []
+    tray._notify = lambda title, msg: notes.append((title, msg))
+
+    macos_module.MacOSTrayIcon.toggle_autostart_daemon(tray, None)
+
+    assert calls == []  # nosec B101
+    assert "install.sh" in notes[0][1]  # nosec B101
+
+
+def test_macos_toggle_daemon_writes_flag(macos_module, monkeypatch):
+    """Toggling on rewrites the login item with the daemon flag."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_daemon_available", lambda: True)
+    monkeypatch.setattr(macos_module, "is_autostart_enabled", lambda: True)
+    monkeypatch.setattr(
+        macos_module, "autostart_includes_daemon", lambda: False
+    )
+    calls = []
+    monkeypatch.setattr(
+        macos_module,
+        "enable_autostart",
+        lambda **kw: calls.append(kw) or True,
+    )
+    tray._notify = lambda title, msg: None
+    tray.build_menu = lambda: None
+
+    macos_module.MacOSTrayIcon.toggle_autostart_daemon(tray, None)
+
+    assert calls == [{"with_daemon": True}]  # nosec B101
+
+
+def test_macos_toggle_daemon_requires_tray_autostart(
+    macos_module, monkeypatch
+):
+    """Without the tray login item there is no plist to add the flag to."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_daemon_available", lambda: True)
+    monkeypatch.setattr(macos_module, "is_autostart_enabled", lambda: False)
+    calls = []
+    monkeypatch.setattr(
+        macos_module,
+        "enable_autostart",
+        lambda **kw: calls.append(kw) or True,
+    )
+    notes = []
+    tray._notify = lambda title, msg: notes.append((title, msg))
+
+    macos_module.MacOSTrayIcon.toggle_autostart_daemon(tray, None)
+
+    assert calls == []  # nosec B101
+    assert "Start at Login" in notes[0][1]  # nosec B101
+
+
+def test_macos_toggle_daemon_reports_write_failure(macos_module, monkeypatch):
+    """A failed plist write surfaces an error instead of a success note."""
+    tray = _make_macos_tray(macos_module)
+    monkeypatch.setattr(macos_module, "is_daemon_available", lambda: True)
+    monkeypatch.setattr(macos_module, "is_autostart_enabled", lambda: True)
+    monkeypatch.setattr(
+        macos_module, "autostart_includes_daemon", lambda: False
+    )
+    monkeypatch.setattr(
+        macos_module, "enable_autostart", lambda **_kw: False
+    )
+    notes = []
+    tray._notify = lambda title, msg: notes.append((title, msg))
+    tray.build_menu = lambda: None
+
+    macos_module.MacOSTrayIcon.toggle_autostart_daemon(tray, None)
+
+    assert notes[0][0] == "Error"  # nosec B101
+
+
+def test_macos_toggle_autostart_enables_then_disables(
+    macos_module, monkeypatch
+):
+    """The menu action flips the stored state."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    state = {"on": False}
+
+    monkeypatch.setattr(
+        macos_module, "is_autostart_enabled", lambda: state["on"]
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "enable_autostart",
+        lambda: state.update(on=True) or True,
+    )
+    monkeypatch.setattr(
+        macos_module,
+        "disable_autostart",
+        lambda: state.update(on=False) or True,
+    )
+    monkeypatch.setattr(tray, "build_menu", lambda: None)
+
+    macos_module.MacOSTrayIcon.toggle_autostart(tray, None)
+    assert state["on"] is True  # nosec B101
+
+    macos_module.MacOSTrayIcon.toggle_autostart(tray, None)
+    assert state["on"] is False  # nosec B101
+
+
+def test_get_launch_target_detects_bundle_via_meipass(
+    tray_module, monkeypatch, tmp_path
+):
+    """_MEIPASS alone is enough to treat the app as bundled.
+
+    Relying only on sys.frozen would register the interpreter instead of
+    the .app, so the login item would point at a developer checkout.
+    """
+    binary = tmp_path / "LM-Studio-Tray-Manager"
+    binary.write_text("", encoding="utf-8")
+    monkeypatch.delattr(tray_module.sys, "frozen", raising=False)
+    monkeypatch.setattr(
+        tray_module.sys, "_MEIPASS", str(tmp_path), raising=False
+    )
+    monkeypatch.setattr(tray_module.sys, "argv", [str(binary)])
+
+    assert tray_module.get_launch_target() == [str(binary)]  # nosec B101
+
+
+def test_get_launch_target_none_when_executable_missing(
+    tray_module, monkeypatch, tmp_path
+):
+    """A bundle whose executable cannot be found yields no target."""
+    monkeypatch.setattr(tray_module.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(
+        tray_module.sys, "argv", [str(tmp_path / "does-not-exist")]
+    )
+
+    assert tray_module.get_launch_target() is None  # nosec B101
+
+
+# ----------------------------------------------------------------------
+# Second instance after enabling autostart
+# ----------------------------------------------------------------------
+
+
+def test_instance_patterns_include_bundle_on_macos(macos_module):
+    """The bundle executable must be matched, not just the script name.
+
+    A bundled tray runs as LM-Studio-Tray-Manager, so searching only for
+    lmstudio_tray.py leaves the old copy alive and a second menu bar icon
+    appears.
+    """
+    patterns = macos_module._existing_instance_patterns()
+    assert "lmstudio_tray.py" in patterns  # nosec B101
+    assert any(  # nosec B101
+        "LM-Studio-Tray-Manager.app/Contents/MacOS" in p for p in patterns
+    )
+
+
+def test_instance_patterns_script_only_on_linux(tray_module, monkeypatch):
+    """The Linux build has no .app bundle to look for."""
+    monkeypatch.setattr(tray_module, "IS_MACOS", False)
+    assert tray_module._existing_instance_patterns() == [  # nosec B101
+        "lmstudio_tray.py"
+    ]
+
+
+def test_kill_existing_instances_matches_bundle(macos_module, monkeypatch):
+    """A running bundled instance is terminated before starting a new one."""
+    monkeypatch.setattr(
+        macos_module, "get_pgrep_cmd", lambda: "/usr/bin/pgrep"
+    )
+    monkeypatch.setattr(macos_module.os, "getpid", lambda: 111)
+
+    def fake_run(cmd):
+        """Return a bundle PID only for the bundle pattern."""
+        pattern = cmd[-1]
+        if "Contents/MacOS" in pattern:
+            return _completed(returncode=0, stdout="222\n")
+        return _completed(returncode=1, stdout="")
+
+    monkeypatch.setattr(macos_module, "_run_safe_command", fake_run)
+
+    killed = []
+    monkeypatch.setattr(
+        macos_module.os, "kill", lambda pid, sig: killed.append(pid)
+    )
+
+    macos_module.kill_existing_instances()
+    assert killed == [222]  # nosec B101
+
+
+def test_kill_existing_instances_skips_self_and_duplicates(
+    macos_module, monkeypatch
+):
+    """The current process is never signalled, and PIDs are not repeated."""
+    monkeypatch.setattr(
+        macos_module, "get_pgrep_cmd", lambda: "/usr/bin/pgrep"
+    )
+    monkeypatch.setattr(macos_module.os, "getpid", lambda: 111)
+    monkeypatch.setattr(
+        macos_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=0, stdout="111\n222\n222\n"),
+    )
+
+    killed = []
+    monkeypatch.setattr(
+        macos_module.os, "kill", lambda pid, sig: killed.append(pid)
+    )
+
+    macos_module.kill_existing_instances()
+    assert killed == [222]  # nosec B101
+
+
+def test_reload_launch_agent_does_not_load(tray_module, monkeypatch):
+    """Enabling autostart must not spawn a second tray right away.
+
+    'launchctl load' honours RunAtLoad immediately, which is what produced
+    a duplicate menu bar icon.
+    """
+    monkeypatch.setattr(
+        tray_module.shutil, "which", lambda _n: "/bin/launchctl"
+    )
+    calls = []
+    monkeypatch.setattr(
+        tray_module, "_run_safe_command", lambda cmd: calls.append(cmd)
+    )
+
+    tray_module._reload_launch_agent("/tmp/x.plist")
+
+    actions = [c[1] for c in calls]
+    assert "unload" in actions  # nosec B101
+    assert "load" not in actions  # nosec B101

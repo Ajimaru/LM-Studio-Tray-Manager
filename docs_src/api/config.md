@@ -16,6 +16,22 @@ The application stores configuration at `~/.config/lmstudio_tray.json`.
         - save_config
         - _normalize_api_port
 
+## Autostart (macOS)
+
+Login startup is a per-user LaunchAgent at
+`~/Library/LaunchAgents/com.lmstudio.tray-manager.plist`. `KeepAlive` is
+deliberately off so that quitting the tray keeps it closed.
+
+::: lmstudio_tray
+    options:
+      members:
+        - get_launch_agent_path
+        - get_launch_target
+        - is_autostart_enabled
+        - autostart_includes_daemon
+        - enable_autostart
+        - disable_autostart
+
 ## API Configuration
 
 `is_remote_endpoint` decides whether status comes from local process
@@ -39,9 +55,14 @@ fallback for builds that do not serve `/api/v0`.
 
 ## LM Studio Commands
 
+`is_daemon_available` is the availability test to use: LM Studio embeds
+llmster and starts it via `lms daemon up`, so `get_llmster_cmd` alone
+reports "missing" on machines where the daemon actually runs.
+
 ::: lmstudio_tray
     options:
       members:
         - get_lms_cmd
         - get_llmster_cmd
+        - is_daemon_available
         - _has_loaded_model
