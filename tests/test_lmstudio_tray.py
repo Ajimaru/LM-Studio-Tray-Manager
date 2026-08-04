@@ -4262,6 +4262,72 @@ def test_maybe_start_gui(monkeypatch, tray_module):
     assert calls == ["gui"]  # nosec B101
 
 
+def test_escape_applescript_quotes_and_backslashes(tray_module):
+    """Text is escaped before being embedded in an AppleScript literal."""
+    assert tray_module._escape_applescript(  # nosec B101
+        'a "b" \\ c'
+    ) == 'a \\"b\\" \\\\ c'
+
+
+def test_notify_via_osascript_builds_command(tray_module, monkeypatch):
+    """The notification is posted through osascript with escaped text."""
+    monkeypatch.setattr(tray_module, "IS_MACOS", True)
+    monkeypatch.setattr(
+        tray_module.shutil, "which", lambda _n: "/usr/bin/osascript"
+    )
+    calls = []
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda cmd: calls.append(cmd) or _completed(returncode=0),
+    )
+
+    assert tray_module._notify_via_osascript(  # nosec B101
+        'Ti"tle', "Body"
+    ) is True
+    assert calls[0][0] == "/usr/bin/osascript"  # nosec B101
+    assert '\\"' in calls[0][2]  # nosec B101
+    assert "display notification" in calls[0][2]  # nosec B101
+
+
+def test_notify_via_osascript_reports_failure(tray_module, monkeypatch):
+    """A non-zero exit means the caller should fall back to rumps."""
+    monkeypatch.setattr(tray_module, "IS_MACOS", True)
+    monkeypatch.setattr(
+        tray_module.shutil, "which", lambda _n: "/usr/bin/osascript"
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=1, stderr="boom"),
+    )
+
+    assert tray_module._notify_via_osascript(  # nosec B101
+        "T", "M"
+    ) is False
+
+
+def test_notify_via_osascript_skips_without_binary(
+    tray_module, monkeypatch
+):
+    """Without osascript the helper declines instead of raising."""
+    monkeypatch.setattr(tray_module, "IS_MACOS", True)
+    monkeypatch.setattr(tray_module.shutil, "which", lambda _n: None)
+
+    assert tray_module._notify_via_osascript(  # nosec B101
+        "T", "M"
+    ) is False
+
+
+def test_notify_via_osascript_skips_off_macos(tray_module, monkeypatch):
+    """The helper is macOS-only."""
+    monkeypatch.setattr(tray_module, "IS_MACOS", False)
+
+    assert tray_module._notify_via_osascript(  # nosec B101
+        "T", "M"
+    ) is False
+
+
 def test_is_daemon_available_rejects_lms_alone(tray_module, monkeypatch):
     """lms cannot start a headless daemon, so it does not count.
 
@@ -5763,6 +5829,13 @@ def macos_module_fixture(monkeypatch, tmp_path):
     monkeypatch.setattr(module, "_rumps_lib", rumps_stub)
     monkeypatch.setattr(module, "_RumpsBase", DummyRumpsApp)
 
+    # Notifications go through osascript first in production. Tests assert
+    # against the rumps stub, so the osascript path is off by default here;
+    # the tests that cover it enable it explicitly.
+    monkeypatch.setattr(
+        module, "_notify_via_osascript", lambda _t, _m: False
+    )
+
     yield module
 
 
@@ -5975,15 +6048,40 @@ def test_macos_get_status_indicator(macos_module):
     assert tray.get_status_indicator("unknown") == "🔴"  # nosec B101
 
 
-def test_macos_notify_sends_rumps_notification(macos_module):
-    """_notify() calls rumps.notification with the right arguments."""
+def test_macos_notify_sends_rumps_notification(macos_module, monkeypatch):
+    """_notify() falls back to rumps when osascript is unavailable."""
     DummyRumpsModule.reset()
+    monkeypatch.setattr(
+        macos_module, "_notify_via_osascript", lambda _t, _m: False
+    )
     tray = _make_macos_tray(macos_module)
     _call_member(tray, "_notify", "Hello", "World")
     notifications = DummyRumpsModule.get_notifications()
     assert len(notifications) == 1  # nosec B101
     assert notifications[0][0] == "Hello"  # nosec B101
     assert notifications[0][2] == "World"  # nosec B101
+
+
+def test_macos_notify_prefers_osascript(macos_module, monkeypatch):
+    """osascript is tried first and short-circuits the rumps path.
+
+    rumps uses the deprecated NSUserNotification, which current macOS
+    drops silently for ad-hoc signed bundles -- no exception is raised, so
+    a fallback triggered by errors alone would never fire.
+    """
+    DummyRumpsModule.reset()
+    seen = []
+    monkeypatch.setattr(
+        macos_module,
+        "_notify_via_osascript",
+        lambda t, m: seen.append((t, m)) or True,
+    )
+    tray = _make_macos_tray(macos_module)
+
+    _call_member(tray, "_notify", "Hello", "World")
+
+    assert seen == [("Hello", "World")]  # nosec B101
+    assert DummyRumpsModule.get_notifications() == []  # nosec B101
 
 
 def test_macos_build_menu_daemon_running(macos_module, monkeypatch):

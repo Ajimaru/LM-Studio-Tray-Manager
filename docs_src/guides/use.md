@@ -282,6 +282,17 @@ The tray icon changes based on application status:
 | ℹ️ | Info | Daemon or desktop app running, but no model loaded |
 | ✅ | OK | A model is loaded and ready |
 
+### Notifications
+
+Starting or stopping the daemon or the desktop app posts a system
+notification, as do failures.
+
+On macOS these are posted via `osascript` rather than the deprecated
+`NSUserNotification` API that `rumps` uses: an ad-hoc signed bundle is
+never registered under **System Settings -> Notifications**, so those
+notifications are discarded without any error. Banners therefore appear
+under the Script Editor entry in System Settings.
+
 ### Left-Click Menu
 
 Left-click on the tray icon to open the context menu with available options.

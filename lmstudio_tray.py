@@ -1375,6 +1375,61 @@ def get_llmster_cmd() -> Optional[str]:
     return candidate
 
 
+def _escape_applescript(value: str) -> str:
+    """Return ``value`` safe to embed in an AppleScript string literal.
+
+    Args:
+        value: Text to escape.
+
+    Returns:
+        str: Text with backslashes and quotes escaped.
+    """
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def _notify_via_osascript(title: str, message: str) -> bool:
+    """Post a notification through ``osascript``.
+
+    ``rumps`` uses ``NSUserNotification``, deprecated since macOS 11. On
+    current macOS an ad-hoc signed bundle is never registered under System
+    Settings -> Notifications, so those notifications are dropped without
+    raising -- there is nothing to catch and no way to detect the loss.
+    ``osascript`` posts under the Script Editor identity instead, which is
+    registered, so the banner actually appears.
+
+    Args:
+        title: Notification title.
+        message: Notification body.
+
+    Returns:
+        bool: ``True`` when the notification was handed off successfully.
+    """
+    if not IS_MACOS:
+        return False
+
+    osascript = shutil.which("osascript")
+    if not osascript or not os.path.isabs(osascript):
+        return False
+
+    script = (
+        f'display notification "{_escape_applescript(message)}" '
+        f'with title "{_escape_applescript(title)}"'
+    )
+    try:
+        result = _run_safe_command([osascript, "-e", script])
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        logging.debug("osascript notification failed: %s", exc)
+        return False
+    if result.returncode != 0:
+        logging.debug(
+            "osascript notification returned %s: %s",
+            result.returncode,
+            (result.stderr or "").strip(),
+        )
+        return False
+    return True
+
+
 def is_daemon_available() -> bool:
     """Return True when the llmster daemon can be controlled here.
 
@@ -3913,6 +3968,9 @@ class MacOSTrayIcon(_RumpsBase):
             title (str): Notification title.
             message (str): Notification body text.
         """
+        if _notify_via_osascript(title, message):
+            return
+
         rumps_lib = _rumps_lib
         if rumps_lib is None:
             logging.debug("Notification skipped: rumps is not installed")
@@ -4699,14 +4757,20 @@ class MacOSTrayIcon(_RumpsBase):
         if not desktop_pids:
             self.build_menu()
             return
+        stopped = 0
         for pid in desktop_pids:
             try:
                 os.kill(pid, signal.SIGTERM)
+                stopped += 1
                 logging.info(
                     "Sent SIGTERM to desktop app PID %s", pid
                 )
             except (OSError, ProcessLookupError, PermissionError) as e:
                 logging.warning("Error stopping PID %s: %s", pid, e)
+        if stopped:
+            self._notify("LM Studio", "Desktop app stopped")
+        else:
+            self._notify("Error", "Could not stop the desktop app")
         self.build_menu()
         self._schedule_menu_refresh()
 
