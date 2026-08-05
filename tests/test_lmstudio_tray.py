@@ -4262,11 +4262,35 @@ def test_maybe_start_gui(monkeypatch, tray_module):
     assert calls == ["gui"]  # nosec B101
 
 
-def test_escape_applescript_quotes_and_backslashes(tray_module):
-    """Text is escaped before being embedded in an AppleScript literal."""
-    assert tray_module._escape_applescript(  # nosec B101
-        'a "b" \\ c'
-    ) == 'a \\"b\\" \\\\ c'
+def test_notify_via_osascript_passes_text_as_arguments(
+    tray_module, monkeypatch
+):
+    """Untrusted text never reaches the script body.
+
+    Model names come from the API, so interpolating them into AppleScript
+    would be an injection path. They are passed as argv instead, leaving
+    the script text constant.
+    """
+    monkeypatch.setattr(tray_module, "IS_MACOS", True)
+    monkeypatch.setattr(
+        tray_module.shutil, "which", lambda _n: "/usr/bin/osascript"
+    )
+    calls = []
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda cmd: calls.append(cmd) or _completed(returncode=0),
+    )
+
+    hostile = '"; do shell script "id"; --'
+    tray_module._notify_via_osascript("Title", hostile)
+
+    cmd = calls[0]
+    assert cmd[:2] == ["/usr/bin/osascript", "-e"]  # nosec B101
+    assert cmd[3:] == ["Title", hostile]  # nosec B101
+    # The payload must not appear anywhere in the script itself.
+    assert hostile not in cmd[2]  # nosec B101
+    assert "on run argv" in cmd[2]  # nosec B101
 
 
 def _prime_signed_bundle(tray_module, monkeypatch, tmp_path, report):
@@ -4365,8 +4389,9 @@ def test_notify_via_osascript_builds_command(tray_module, monkeypatch):
         'Ti"tle', "Body"
     ) is True
     assert calls[0][0] == "/usr/bin/osascript"  # nosec B101
-    assert '\\"' in calls[0][2]  # nosec B101
     assert "display notification" in calls[0][2]  # nosec B101
+    # Quotes survive verbatim: they are arguments, not script text.
+    assert calls[0][3:] == ['Ti"tle', "Body"]  # nosec B101
 
 
 def test_notify_via_osascript_reports_failure(tray_module, monkeypatch):

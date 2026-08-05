@@ -1375,18 +1375,6 @@ def get_llmster_cmd() -> Optional[str]:
     return candidate
 
 
-def _escape_applescript(value: str) -> str:
-    """Return ``value`` safe to embed in an AppleScript string literal.
-
-    Args:
-        value: Text to escape.
-
-    Returns:
-        str: Text with backslashes and quotes escaped.
-    """
-    return value.replace("\\", "\\\\").replace('"', '\\"')
-
-
 _signed_bundle_state: dict = {"checked": False, "signed": False}
 
 
@@ -1469,12 +1457,17 @@ def _notify_via_osascript(title: str, message: str) -> bool:
     if not osascript or not os.path.isabs(osascript):
         return False
 
+    # Title and message are passed as arguments rather than interpolated
+    # into the script text, so no amount of quoting in a model name can
+    # break out of the string literal. The script itself is constant.
     script = (
-        f'display notification "{_escape_applescript(message)}" '
-        f'with title "{_escape_applescript(title)}"'
+        "on run argv\n"
+        "display notification (item 2 of argv) "
+        "with title (item 1 of argv)\n"
+        "end run"
     )
     try:
-        result = _run_safe_command([osascript, "-e", script])
+        result = _run_safe_command([osascript, "-e", script, title, message])
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
         logging.debug("osascript notification failed: %s", exc)
         return False
