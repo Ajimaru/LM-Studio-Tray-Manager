@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -714,6 +714,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#left-click-menu" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -729,6 +740,17 @@
     <span class="md-ellipsis">
       
         Menu Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-a-remote-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring a Remote Host
       
     </span>
   </a>
@@ -1496,6 +1518,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#left-click-menu" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1511,6 +1544,17 @@
     <span class="md-ellipsis">
       
         Menu Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-a-remote-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring a Remote Host
       
     </span>
   </a>
@@ -1990,6 +2034,22 @@
 <li>To find the script location quickly: <code>which lmstudio_autostart.sh</code> or check your <a href="../setup/">setup.md</a> installation section for default locations</li>
 </ul>
 <p>Then enable autostart in your desktop environment settings.</p>
+<p>On <strong>macOS</strong> this is built into the tray instead - no file to write by hand.
+<strong>Options → Start at Login</strong> installs a LaunchAgent at
+<code>~/Library/LaunchAgents/com.lmstudio.tray-manager.plist</code>; a checkmark shows
+it is active, and switching it off removes the file again.</p>
+<p><strong>Start Daemon at Login</strong> adds <code>--auto-start-daemon</code> to that same login
+item, so the tray brings up the llmster daemon after it starts. It requires
+<code>Start at Login</code> to be active and llmster to be installed; until both hold,
+the entry stays greyed out.</p>
+<p>Daemon control needs llmster itself
+(<code>curl -fsSL https://lmstudio.ai/install.sh | bash</code>). <code>lms daemon up</code> is
+<strong>not</strong> a substitute: where LM Studio embeds the daemon, that command
+prints "Waking up LM Studio service..." and launches the desktop app,
+reporting <code>{"isDaemon": false}</code>.</p>
+<p>Without llmster the tray therefore shows an inert
+🔴 <strong>Daemon (Not Installed)</strong> entry rather than a start action, identically
+on macOS and Linux.</p>
 <h2 id="command-line-options">Command-Line Options<a class="headerlink" href="#command-line-options" title="Permanent link">&para;</a></h2>
 <h3 id="usage-syntax">Usage Syntax<a class="headerlink" href="#usage-syntax" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>lmstudio-tray-manager<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>model<span class="o">]</span><span class="w"> </span><span class="o">[</span>script_dir<span class="o">]</span>
@@ -2072,6 +2132,17 @@
 </tr>
 </tbody>
 </table>
+<h3 id="notifications">Notifications<a class="headerlink" href="#notifications" title="Permanent link">&para;</a></h3>
+<p>Starting or stopping the daemon or the desktop app posts a system
+notification, as do failures.</p>
+<p>On macOS the delivery route depends on how the app was signed. A
+Developer ID signed build has a registered notification identity, so the
+native API is used and banners carry the app's own icon.</p>
+<p>An ad-hoc signed or unsigned build has no such identity: macOS discards
+its notifications without raising any error. Those builds fall back to
+<code>osascript</code>, which posts under the Script Editor identity - the banners
+appear, but with the Script Editor icon, and are configured under that
+entry in <strong>System Settings -&gt; Notifications</strong>.</p>
 <h3 id="left-click-menu">Left-Click Menu<a class="headerlink" href="#left-click-menu" title="Permanent link">&para;</a></h3>
 <p>Left-click on the tray icon to open the context menu with available options.</p>
 <h3 id="menu-options">Menu Options<a class="headerlink" href="#menu-options" title="Permanent link">&para;</a></h3>
@@ -2089,17 +2160,34 @@
 <li><strong>Quit Tray</strong> - Exit the tray manager</li>
 </ul>
 <p>Each option is <strong>context-aware</strong>: unavailable actions are grayed out.</p>
+<h3 id="monitoring-a-remote-host">Monitoring a Remote Host<a class="headerlink" href="#monitoring-a-remote-host" title="Permanent link">&para;</a></h3>
+<p>Set <strong>Options → Configuration</strong> to a host other than this machine (for
+example <code>192.168.1.136:1234</code>) and the tray monitors that endpoint over the
+LM Studio HTTP API instead of local processes.</p>
+<p>In this mode the menu shows the endpoint and its state, and the start/stop
+entries are hidden - those act on local processes and cannot reach another
+machine:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>🟢 Remote: 192.168.1.136:1234
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  → Model loaded
+</code></pre></div>
+<p>The indicator is green when a model is loaded, yellow when the endpoint
+answers without one, and red when it is unreachable.</p>
+<p>A machine's own address still counts as local, so entering a host's own LAN
+IP on that host keeps the normal local menu. Point the setting back at
+<code>localhost</code> to restore local control.</p>
+<p>On macOS the endpoint is entered as a single <code>host:port</code> field; the GTK
+dialog on Linux has separate host and port entries.</p>
 <h2 id="desktop-app-launch">Desktop App Launch<a class="headerlink" href="#desktop-app-launch" title="Permanent link">&para;</a></h2>
 <h3 id="how-start-desktop-app-works">How "Start Desktop App" Works<a class="headerlink" href="#how-start-desktop-app-works" title="Permanent link">&para;</a></h3>
 <p>When you click "Start Desktop App":</p>
 <ol>
 <li><strong>Priority 1</strong>: Looks for installed <code>.deb</code> package</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Quick check: Look for executable in PATH</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>which<span class="w"> </span>lm-studio
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Alternative: Check installed Debian packages (if which returns nothing)</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>dpkg<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lm-studio
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Quick check: Look for executable in PATH</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>which<span class="w"> </span>lm-studio
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Alternative: Check installed Debian packages (if which returns nothing)</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>dpkg<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lm-studio
 </code></pre></div>
 <ol>
 <li><strong>Priority 2</strong>: Searches for AppImage in common locations:</li>
@@ -2115,8 +2203,8 @@
 <p><strong>Auto-detection</strong>: Recognizes both standard and versioned formats:</p>
 </li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>LM-Studio.AppImage
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>LM-Studio-0.4.3-*.AppImage
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>LM-Studio.AppImage
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>LM-Studio-0.4.3-*.AppImage
 </code></pre></div>
 <ol>
 <li><strong>On Launch</strong>:</li>
@@ -2136,11 +2224,13 @@
 <h3 id="how-start-lm-studio-daemon-works">How "Start LM Studio Daemon" Works<a class="headerlink" href="#how-start-lm-studio-daemon-works" title="Permanent link">&para;</a></h3>
 <p>When you click "Start LM Studio Daemon":</p>
 <ol>
-<li><strong>Tries CLI commands</strong> in order:</li>
-<li><code>lms daemon up</code> (preferred LM Studio CLI wrapper)</li>
-<li><code>llmster daemon start</code> (direct daemon command)</li>
+<li><strong>Tries llmster commands</strong> in order: <code>llmster daemon up</code>,
+   <code>llmster daemon start</code>, <code>llmster up</code>, <code>llmster start</code></li>
 </ol>
-<p>If the primary commands fail, also tries: <code>lms up</code>, <code>lms start</code>, <code>llmster up</code>, <code>llmster start</code></p>
+<p><code>lms</code> is not used to start a daemon. Where LM Studio embeds the daemon,
+   <code>lms daemon up</code> launches the desktop app instead of a headless process,
+   so the menu entry is greyed out when llmster is absent. <code>lms</code> is still
+   used for stopping and for status.</p>
 <ol>
 <li><strong>Conflict handling</strong>:</li>
 <li>Stops desktop app first (if running)</li>
@@ -2166,12 +2256,12 @@
 <h2 id="model-management">Model Management<a class="headerlink" href="#model-management" title="Permanent link">&para;</a></h2>
 <h3 id="interactive-model-selection">Interactive Model Selection<a class="headerlink" href="#interactive-model-selection" title="Permanent link">&para;</a></h3>
 <p>If you have multiple models, you can select which one to load:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Interactive selection + daemon autostart</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>./lmstudio_autostart.sh<span class="w"> </span>-L
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Set selection timeout (default 30 seconds)</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_SELECT_TIMEOUT</span><span class="o">=</span><span class="m">60</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>./lmstudio_autostart.sh<span class="w"> </span>-L
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Interactive selection + daemon autostart</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>./lmstudio_autostart.sh<span class="w"> </span>-L
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Set selection timeout (default 30 seconds)</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_SELECT_TIMEOUT</span><span class="o">=</span><span class="m">60</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>./lmstudio_autostart.sh<span class="w"> </span>-L
 </code></pre></div>
 <p>The script will:</p>
 <ol>
@@ -2183,17 +2273,17 @@
 <h3 id="autoload-models">Autoload Models<a class="headerlink" href="#autoload-models" title="Permanent link">&para;</a></h3>
 <p>To automatically load a specific model on startup, configure a default model using one of these methods:</p>
 <h4 id="option-1-via-lm-studio-cli-quick">Option 1: Via LM Studio CLI (Quick)<a class="headerlink" href="#option-1-via-lm-studio-cli-quick" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># List available models to find the exact name/ID</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>lms<span class="w"> </span>ls
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Load a specific model into the daemon</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>lms<span class="w"> </span>load<span class="w"> </span>&lt;model-name-or-id&gt;
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Verify it&#39;s set</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>lms<span class="w"> </span>ps
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># List available models to find the exact name/ID</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>lms<span class="w"> </span>ls
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Load a specific model into the daemon</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>lms<span class="w"> </span>load<span class="w"> </span>&lt;model-name-or-id&gt;
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Verify it&#39;s set</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>lms<span class="w"> </span>ps
 </code></pre></div>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>lms<span class="w"> </span>load<span class="w"> </span><span class="s2">&quot;meta-llama/llama-2-7b-hf&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>lms<span class="w"> </span>load<span class="w"> </span><span class="s2">&quot;meta-llama/llama-2-7b-hf&quot;</span>
 </code></pre></div>
 <h4 id="option-2-via-lm-studio-gui">Option 2: Via LM Studio GUI<a class="headerlink" href="#option-2-via-lm-studio-gui" title="Permanent link">&para;</a></h4>
 <ol>
@@ -2204,9 +2294,9 @@
 <h4 id="option-3-via-daemon-configuration-file">Option 3: Via Daemon Configuration File<a class="headerlink" href="#option-3-via-daemon-configuration-file" title="Permanent link">&para;</a></h4>
 <p>The LM Studio daemon stores its configuration in <code>~/.lmstudio/config.json</code>. You can manually edit this file and set the default model key to <code>"default_model": "&lt;model-id&gt;"</code>.</p>
 <p>Example configuration snippet (add the <code>"default_model"</code> key to your existing config file, don't replace the entire file):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="p">{</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">&quot;default_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;meta-llama/llama-2-7b-hf&quot;</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">&quot;default_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;meta-llama/llama-2-7b-hf&quot;</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="p">}</span>
 </code></pre></div>
 <p><strong>Note</strong>: After setting a default model with any method, the next time the daemon starts (via <code>lmstudio_autostart.sh</code> or <code>lms daemon up</code>), it will automatically load your configured model.</p>
 <h2 id="monitoring-and-logs">Monitoring and Logs<a class="headerlink" href="#monitoring-and-logs" title="Permanent link">&para;</a></h2>
@@ -2218,27 +2308,27 @@ GSettings schemas.  The tray manager attempts to set
 <code>GSETTINGS_SCHEMA_DIR</code> automatically, but in some minimal chroot or
 AppImage environments that directory may not be mounted.  The quick fixes
 are:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>gsettings-desktop-schemas
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nv">GSETTINGS_SCHEMA_DIR</span><span class="o">=</span>/usr/share/glib-2.0/schemas<span class="w"> </span>./lmstudio-tray-manager
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>gsettings-desktop-schemas
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nv">GSETTINGS_SCHEMA_DIR</span><span class="o">=</span>/usr/share/glib-2.0/schemas<span class="w"> </span>./lmstudio-tray-manager
 </code></pre></div>
 <p>This error is only relevant for the standalone binary; the Python package
 version inherits whatever environment your shell already provides.</p>
 <h3 id="view-logs-in-real-time">View Logs in Real-Time<a class="headerlink" href="#view-logs-in-real-time" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Watch tray monitor logs</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Watch daemon startup logs</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Watch all logs simultaneously</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/*.log
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="c1"># In separate terminals for combined view</span>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="c1"># Terminal 1:</span>
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
-<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>
-<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="c1"># Terminal 2:</span>
-<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Watch tray monitor logs</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Watch daemon startup logs</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c1"># Watch all logs simultaneously</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/*.log
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="c1"># In separate terminals for combined view</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="c1"># Terminal 1:</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="c1"># Terminal 2:</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
 </code></pre></div>
 <h3 id="understanding-log-files">Understanding Log Files<a class="headerlink" href="#understanding-log-files" title="Permanent link">&para;</a></h3>
 <p>The tray manager creates four log files:</p>
@@ -2280,33 +2370,33 @@ version inherits whatever environment your shell already provides.</p>
 </table>
 <p><strong>Log Format Examples:</strong></p>
 <p>Setup log:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>LM-Studio-Tray-Manager<span class="w"> </span>Setup<span class="w"> </span>---
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>OK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>LM-Studio-Tray-Manager<span class="w"> </span>Setup<span class="w"> </span>---
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>OK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span>found
 </code></pre></div>
 <p>Autostart log:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>🚀<span class="w"> </span>Starting<span class="w"> </span>llmster<span class="w"> </span>headless<span class="w"> </span>daemon...
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>✅<span class="w"> </span>llmster<span class="w"> </span>started.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>🚀<span class="w"> </span>Starting<span class="w"> </span>llmster<span class="w"> </span>headless<span class="w"> </span>daemon...
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>✅<span class="w"> </span>llmster<span class="w"> </span>started.
 </code></pre></div>
 <p>Tray log:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18,988<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Tray<span class="w"> </span>script<span class="w"> </span>started
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:19,123<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Status<span class="w"> </span>change:<span class="w"> </span>WARN<span class="w"> </span>-&gt;<span class="w"> </span>INFO
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18,988<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Tray<span class="w"> </span>script<span class="w"> </span>started
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:19,123<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Status<span class="w"> </span>change:<span class="w"> </span>WARN<span class="w"> </span>-&gt;<span class="w"> </span>INFO
 </code></pre></div>
 <p>Build log:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">22</span>:00:00<span class="o">]</span><span class="w"> </span><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Starting<span class="w"> </span>build<span class="w"> </span>process...
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">22</span>:01:30<span class="o">]</span><span class="w"> </span><span class="o">[</span>OK<span class="o">]</span><span class="w"> </span>Build<span class="w"> </span>completed<span class="w"> </span>successfully.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">22</span>:00:00<span class="o">]</span><span class="w"> </span><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Starting<span class="w"> </span>build<span class="w"> </span>process...
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">22</span>:01:30<span class="o">]</span><span class="w"> </span><span class="o">[</span>OK<span class="o">]</span><span class="w"> </span>Build<span class="w"> </span>completed<span class="w"> </span>successfully.
 </code></pre></div>
 <p>Each log file is <strong>recreated</strong> when the script starts, ensuring fresh logs for each run.</p>
 <h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">&para;</a></h3>
 <p>Enable debug mode for verbose output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Via command line</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>./lmstudio-tray-manager<span class="w"> </span>--debug
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Via environment variable</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_DEBUG</span><span class="o">=</span><span class="m">1</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>./lmstudio_autostart.sh
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="c1"># View debug output</span>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Via command line</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>./lmstudio-tray-manager<span class="w"> </span>--debug
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Via environment variable</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_DEBUG</span><span class="o">=</span><span class="m">1</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>./lmstudio_autostart.sh
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="c1"># View debug output</span>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
 </code></pre></div>
 <p>Debug mode shows:</p>
 <ul>
@@ -2320,8 +2410,8 @@ version inherits whatever environment your shell already provides.</p>
   <code>LD_LIBRARY_PATH</code>)</li>
 </ul>
 <p><strong>Example debug output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="m">2026</span>-03-01<span class="w"> </span><span class="m">14</span>:30:15<span class="w"> </span>ℹ️<span class="w">  </span>Sanitizing<span class="w"> </span>runtime<span class="w"> </span>environment<span class="w"> </span><span class="k">for</span><span class="w"> </span>tray<span class="w"> </span>launch<span class="w"> </span><span class="o">(</span>Snap/GTK/Python<span class="w"> </span>loader<span class="w"> </span>vars<span class="o">)</span>.
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="m">2026</span>-03-01<span class="w"> </span><span class="m">14</span>:30:15<span class="w"> </span>🐛<span class="w"> </span>Debug:<span class="w"> </span>sanitized<span class="w"> </span>vars:<span class="w"> </span>GTK_PATH<span class="w"> </span>GSETTINGS_SCHEMA_DIR<span class="w"> </span>LD_LIBRARY_PATH<span class="o">(</span>filtered:/snap/*<span class="o">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="m">2026</span>-03-01<span class="w"> </span><span class="m">14</span>:30:15<span class="w"> </span>ℹ️<span class="w">  </span>Sanitizing<span class="w"> </span>runtime<span class="w"> </span>environment<span class="w"> </span><span class="k">for</span><span class="w"> </span>tray<span class="w"> </span>launch<span class="w"> </span><span class="o">(</span>Snap/GTK/Python<span class="w"> </span>loader<span class="w"> </span>vars<span class="o">)</span>.
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="m">2026</span>-03-01<span class="w"> </span><span class="m">14</span>:30:15<span class="w"> </span>🐛<span class="w"> </span>Debug:<span class="w"> </span>sanitized<span class="w"> </span>vars:<span class="w"> </span>GTK_PATH<span class="w"> </span>GSETTINGS_SCHEMA_DIR<span class="w"> </span>LD_LIBRARY_PATH<span class="o">(</span>filtered:/snap/*<span class="o">)</span>
 </code></pre></div>
 <p>The sanitization prevents crashes when launching from Snap-packaged
 applications (like VSCode) that inject incompatible library paths. See
@@ -2333,25 +2423,25 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Check if LM Studio daemon is installed:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>lms<span class="w"> </span>--version
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>llmster<span class="w"> </span>--version
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>lms<span class="w"> </span>--version
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>llmster<span class="w"> </span>--version
 </code></pre></div>
 <ol>
 <li>Check logs for errors:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
 </code></pre></div>
 <ol>
 <li>Try starting daemon manually:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>lms<span class="w"> </span>start
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>lms<span class="w"> </span>ps<span class="w">  </span><span class="c1"># Check if running</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>lms<span class="w"> </span>start
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>lms<span class="w"> </span>ps<span class="w">  </span><span class="c1"># Check if running</span>
 </code></pre></div>
 <ol>
 <li>Enable debug mode:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>./lmstudio-tray-manager<span class="w"> </span>--debug
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>./lmstudio-tray-manager<span class="w"> </span>--debug
 </code></pre></div>
 <h3 id="websocket-authentication-error">WebSocket Authentication Error<a class="headerlink" href="#websocket-authentication-error" title="Permanent link">&para;</a></h3>
 <p><strong>Problem</strong>: Error message <code>Invalid passkey for lms CLI client</code> appears</p>
@@ -2366,26 +2456,26 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Kill all LM Studio daemon processes:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;lms&quot;</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;llmster&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;lms&quot;</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;llmster&quot;</span>
 </code></pre></div>
 <ol>
 <li>Clear authentication tokens:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Remove token files (location may vary by LM Studio version)</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>rm<span class="w"> </span>-f<span class="w"> </span>~/.lmstudio/auth_token
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>rm<span class="w"> </span>-f<span class="w"> </span>~/.config/lm-studio/auth_token
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Remove token files (location may vary by LM Studio version)</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>rm<span class="w"> </span>-f<span class="w"> </span>~/.lmstudio/auth_token
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>rm<span class="w"> </span>-f<span class="w"> </span>~/.config/lm-studio/auth_token
 </code></pre></div>
 <ol>
 <li>Restart the tray manager:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>./lmstudio_autostart.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>./lmstudio_autostart.sh
 </code></pre></div>
 <ol>
 <li>Verify daemon is running with fresh authentication:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>lms<span class="w"> </span>ps
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="c1"># Should show no authentication errors</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>lms<span class="w"> </span>ps
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="c1"># Should show no authentication errors</span>
 </code></pre></div>
 <h3 id="desktop-app-wont-launch">Desktop App Won't Launch<a class="headerlink" href="#desktop-app-wont-launch" title="Permanent link">&para;</a></h3>
 <p><strong>Problem</strong>: "Start Desktop App" button doesn't work</p>
@@ -2393,32 +2483,32 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Verify desktop app is installed:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Check for .deb installation</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>which<span class="w"> </span>lm-studio
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>dpkg<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lm-studio
-<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>
-<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="c1"># Check for AppImage</span>
-<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>find<span class="w"> </span>~<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;LM-Studio*.AppImage&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Check for .deb installation</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>which<span class="w"> </span>lm-studio
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>dpkg<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lm-studio
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="c1"># Check for AppImage</span>
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>find<span class="w"> </span>~<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;LM-Studio*.AppImage&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null
 </code></pre></div>
 <ol>
 <li>Check tray logs:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;desktop&quot;</span><span class="w"> </span>.logs/lmstudio_tray.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;desktop&quot;</span><span class="w"> </span>.logs/lmstudio_tray.log
 </code></pre></div>
 <ol>
 <li>Disable daemon first (they conflict):</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>lms<span class="w"> </span>stop
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="c1"># Then try starting desktop app via tray menu</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>lms<span class="w"> </span>stop
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="c1"># Then try starting desktop app via tray menu</span>
 </code></pre></div>
 <ol>
 <li>Manually launch:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># If AppImage</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>~/LM_Studio/LM-Studio.AppImage
-<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>
-<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="c1"># If .deb installed</span>
-<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>lm-studio
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># If AppImage</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>~/LM_Studio/LM-Studio.AppImage
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="c1"># If .deb installed</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>lm-studio
 </code></pre></div>
 <h3 id="tray-icon-issues">Tray Icon Issues<a class="headerlink" href="#tray-icon-issues" title="Permanent link">&para;</a></h3>
 <p><strong>Problem</strong>: Tray icon doesn't appear despite app running</p>
@@ -2426,13 +2516,13 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Verify app is running:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>pgrep<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lmstudio
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>pgrep<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lmstudio
 </code></pre></div>
 <ol>
 <li>Check for GTK3 issues:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>./venv/bin/python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import gi; gi.require_version(&#39;Gtk&#39;, &#39;3.0&#39;); from gi.repository import Gtk; print(&#39;GTK3 OK&#39;)&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>./venv/bin/python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import gi; gi.require_version(&#39;Gtk&#39;, &#39;3.0&#39;); from gi.repository import Gtk; print(&#39;GTK3 OK&#39;)&quot;</span>
 </code></pre></div>
 <ol>
 <li>Install missing GTK packages.  The tray uses
@@ -2443,17 +2533,17 @@ applications (like VSCode) that inject incompatible library paths. See
    alternate namespace if necessary, but you still need the GIR
    typelib installed.</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>gir1.2-gtk-3.0<span class="w"> </span>gir1.2-ayatanaappindicator3-0.1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>gir1.2-gtk-3.0<span class="w"> </span>gir1.2-ayatanaappindicator3-0.1
 </code></pre></div>
 <ol>
 <li>Check logs:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|icon\|tray&quot;</span><span class="w"> </span>.logs/lmstudio_tray.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|icon\|tray&quot;</span><span class="w"> </span>.logs/lmstudio_tray.log
 </code></pre></div>
 <ol>
 <li>Try debug mode:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>./lmstudio-tray-manager<span class="w"> </span>--debug<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>debug.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>./lmstudio-tray-manager<span class="w"> </span>--debug<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>debug.log
 </code></pre></div>
 <h3 id="high-cpu-usage">High CPU Usage<a class="headerlink" href="#high-cpu-usage" title="Permanent link">&para;</a></h3>
 <p><strong>Problem</strong>: Application consuming excessive CPU</p>
@@ -2461,30 +2551,30 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Check what's running:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>top<span class="w"> </span>-p<span class="w"> </span><span class="k">$(</span>pgrep<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py<span class="k">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>top<span class="w"> </span>-p<span class="w"> </span><span class="k">$(</span>pgrep<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py<span class="k">)</span>
 </code></pre></div>
 <ol>
 <li>Check for stuck processes:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lmstudio
-<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>lms<span class="w"> </span>ps
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lmstudio
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>lms<span class="w"> </span>ps
 </code></pre></div>
 <ol>
 <li>Stop and restart:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>pkill<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py
-<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>sleep<span class="w"> </span><span class="m">2</span>
-<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>./lmstudio_autostart.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>pkill<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>sleep<span class="w"> </span><span class="m">2</span>
+<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>./lmstudio_autostart.sh
 </code></pre></div>
 <ol>
 <li>Check logs for errors:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>tail<span class="w"> </span>-100<span class="w"> </span>.logs/lmstudio_tray.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>tail<span class="w"> </span>-100<span class="w"> </span>.logs/lmstudio_tray.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error&quot;</span>
 </code></pre></div>
 <ol>
 <li>Monitor in real-time:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="s1">&#39;ps aux | grep lmstudio&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="s1">&#39;ps aux | grep lmstudio&#39;</span>
 </code></pre></div>
 
 
@@ -2544,7 +2634,7 @@ applications (like VSCode) that inject incompatible library paths. See
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
