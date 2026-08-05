@@ -163,16 +163,17 @@ This setup script:
 
 **Download:**
 
-- `lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz`
-- `lmstudio-tray-manager-vX.Y.Z-macos-signed.tar.gz`
-- `lmstudio-tray-manager-vX.Y.Z-macos-notarized.tar.gz`
+- `lmstudio-tray-manager-vX.Y.Z-macos-arm64.dmg` — open it and drag the app
+  onto *Applications*
+- `lmstudio-tray-manager-vX.Y.Z-macos-arm64.tar.gz` — same bundle, for
+  scripted installs
 
-**Extract and run:**
+**Run from the tarball:**
 
 ```bash
 # example (replace X.Y.Z with version)
 VERSION=vX.Y.Z
-tar -xzf lmstudio-tray-manager-${VERSION}-macos-unsigned.tar.gz
+tar -xzf lmstudio-tray-manager-${VERSION}-macos-arm64.tar.gz
 
 # Double-click the .app in Finder, or run from terminal:
 open ./LM-Studio-Tray-Manager.app
@@ -181,26 +182,15 @@ open ./LM-Studio-Tray-Manager.app
 open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
 ```
 
-**If macOS says the app is damaged:**
-
-Unsigned builds are quarantined by Gatekeeper, which reports them as
-damaged rather than unsigned. Clear the attribute once:
-
-```bash
-xattr -cr ./LM-Studio-Tray-Manager.app
-```
-
 **Verify:**
 
 - Menu bar icon appears in the top-right corner
 - `lms ps` (check LM Studio daemon)
 - Click menu bar icon to see tray menu
 
-**Note:**
-
-- `macos-unsigned` is for local testing.
-- `macos-signed` is signed but may still show Gatekeeper prompts.
-- `macos-notarized` is the preferred release artifact for external macOS users.
+**Note:** builds are Apple Silicon only (`arm64`); Intel Macs are not
+supported. Locally built artifacts carry an `-unsigned` suffix when no
+signing identity was passed - those do need `xattr -cr` before launching.
 
 </details>
 <!-- markdownlint-enable MD033 -->
@@ -213,7 +203,7 @@ xattr -cr ./LM-Studio-Tray-Manager.app
 
 ## Requirements
 
-- **LM Studio Daemon** (llmster v0.0.3+): Headless backend for model inference
+- **LM Studio Daemon** (llmster v0.0.20+): Headless backend for model inference
 - **LM Studio Desktop App** (v0.4.3+): GUI frontend for model management and interaction
 - **Python 3.8+** for source builds
 - Linux system with GNOME/GTK3 support (AppImage works everywhere), or macOS 12+

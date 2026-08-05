@@ -150,6 +150,40 @@ For a signed and notarized build using a stored notarytool profile:
   --notary-profile AC_NOTARY
 ```
 
+### Storing notary credentials that survive
+
+`notarytool store-credentials` writes to the iCloud-managed "Local Items"
+keychain unless told otherwise, and the profile can vanish between runs
+("No Keychain password item found"). Use a dedicated keychain instead:
+
+```bash
+security create-keychain -p "PASSWORD" ~/Library/Keychains/notary.keychain-db
+security set-keychain-settings ~/Library/Keychains/notary.keychain-db
+security unlock-keychain -p "PASSWORD" ~/Library/Keychains/notary.keychain-db
+
+xcrun notarytool store-credentials "AC_NOTARY" \
+  --keychain ~/Library/Keychains/notary.keychain-db \
+  --apple-id "you@example.com" \
+  --team-id "TEAMID" \
+  --password "xxxx-xxxx-xxxx-xxxx"
+```
+
+`set-keychain-settings` without `-t` disables the idle lock, which would
+otherwise trip mid-notarization. The build script picks up
+`~/Library/Keychains/notary.keychain-db` automatically; pass
+`--notary-keychain <path>` for a different location, and export
+`NOTARY_KEYCHAIN_PASSWORD` to have the script unlock it.
+
+Notarization polls Apple for several minutes. If the Mac sleeps the
+connection drops ("The Internet connection appears to be offline") and the
+ticket is never stapled, so wrap long runs:
+
+```bash
+caffeinate -is ./tools/build_macos.sh --clean \
+  --sign-identity "Developer ID Application: Your Name (TEAMID)" \
+  --notary-profile AC_NOTARY
+```
+
 This will:
 
 1. Check for Python 3 and Xcode Command Line Tools
@@ -164,7 +198,8 @@ This will:
 **Output:**
 
 - **App bundle:** `dist/LM-Studio-Tray-Manager.app`
-- **Release archive:** `release/lmstudio-tray-manager-vX.Y.Z-macos-{unsigned|signed|notarized}.tar.gz`
+- **Release archive:** `release/lmstudio-tray-manager-vX.Y.Z-macos-arm64.tar.gz`
+  (an `-unsigned` suffix is added when no signing identity is passed)
 - **Checksums:** `release/SHA256SUMS-macos.txt`
 
 **Test the app:**
@@ -315,7 +350,7 @@ The `tools/build_macos.sh` script is the easiest way to build for macOS:
 - Creates isolated venv with rumps library
 - PyInstaller with macOS-specific options:
   - `--windowed --onedir` to emit a real `.app` bundle
-  - `--target-architecture=arm64` for Apple Silicon
+  - `--target-architecture` follows `uname -m`; override with `TARGET_ARCH`
   - Bundle identifier: `com.lmstudio.tray-manager`
   - Automatic ICNS generation from `assets/img/lm-studio-tray-manager.svg`
 - Resource bundling (setup.sh, README.md, LICENSE, assets)
@@ -350,7 +385,8 @@ open dist/LM-Studio-Tray-Manager.app --args --auto-start-daemon
 
 After building, release artifacts are created in the `release/` directory:
 
-- **Archive:** `lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz`
+- **Archive:** `lmstudio-tray-manager-vX.Y.Z-macos-arm64-unsigned.tar.gz`
+  (signed builds drop the suffix: `...-macos-arm64.tar.gz`)
 - **Checksums:** `SHA256SUMS-macos.txt`
 
 These can be distributed directly or uploaded to GitHub Releases.

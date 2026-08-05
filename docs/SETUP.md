@@ -16,14 +16,21 @@ chmod +x lmstudio-tray-manager-*.AppImage
 # That's it! No setup.sh needed.
 ```
 
-**macOS (.app bundle - recommended):**
+**macOS (.dmg - recommended):**
+
+Open `lmstudio-tray-manager-vX.Y.Z-macos-arm64.dmg` and drag
+**LM-Studio-Tray-Manager** onto the *Applications* shortcut. Releases are
+signed and notarized, so they open straight away. Apple Silicon only
+(`arm64`).
+
+**macOS (.app bundle - alternative):**
 
 ```bash
 # 1. Extract the .app bundle:
-tar -xzf lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz
+tar -xzf lmstudio-tray-manager-vX.Y.Z-macos-arm64.tar.gz
 
-# 2. Unsigned builds only: clear the Gatekeeper quarantine flag.
-#    Without this macOS reports the app as damaged instead of unsigned.
+# 2. Locally built unsigned bundles only (-unsigned suffix): clear the
+#    Gatekeeper quarantine flag, or macOS reports the app as damaged.
 xattr -cr ./LM-Studio-Tray-Manager.app
 
 # 3. Open in Finder or launch from terminal:
