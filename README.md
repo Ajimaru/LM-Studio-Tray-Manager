@@ -188,6 +188,11 @@ open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
 - `lms ps` (check LM Studio daemon)
 - Click menu bar icon to see tray menu
 
+**Start at login:** macOS handles this itself — the tray does not manage it.
+Open **System Settings → General → Login Items & Extensions** and add
+`LM-Studio-Tray-Manager.app` under *Open at Login*. To bring up the llmster
+daemon along with it, launch the app with `--auto-start-daemon`.
+
 **Note:** builds are Apple Silicon only (`arm64`); Intel Macs are not
 supported. Locally built artifacts carry an `-unsigned` suffix when no
 signing identity was passed - those do need `xattr -cr` before launching.
