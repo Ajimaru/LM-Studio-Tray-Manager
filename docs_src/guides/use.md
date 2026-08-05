@@ -287,11 +287,15 @@ The tray icon changes based on application status:
 Starting or stopping the daemon or the desktop app posts a system
 notification, as do failures.
 
-On macOS these are posted via `osascript` rather than the deprecated
-`NSUserNotification` API that `rumps` uses: an ad-hoc signed bundle is
-never registered under **System Settings -> Notifications**, so those
-notifications are discarded without any error. Banners therefore appear
-under the Script Editor entry in System Settings.
+On macOS the delivery route depends on how the app was signed. A
+Developer ID signed build has a registered notification identity, so the
+native API is used and banners carry the app's own icon.
+
+An ad-hoc signed or unsigned build has no such identity: macOS discards
+its notifications without raising any error. Those builds fall back to
+`osascript`, which posts under the Script Editor identity - the banners
+appear, but with the Script Editor icon, and are configured under that
+entry in **System Settings -> Notifications**.
 
 ### Left-Click Menu
 

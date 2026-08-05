@@ -1387,15 +1387,73 @@ def _escape_applescript(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
+_signed_bundle_state: dict = {"checked": False, "signed": False}
+
+
+def is_signed_bundle() -> bool:
+    """Return True when running from a Developer ID signed .app bundle.
+
+    Notifications posted by such a bundle carry the app's own icon and are
+    registered under System Settings -> Notifications. An ad-hoc signed or
+    unsigned build has no registered identity, so macOS discards its
+    notifications silently and ``osascript`` has to stand in.
+
+    The answer cannot change while the process runs, so it is cached: this
+    shells out to ``codesign`` and notifications are frequent.
+
+    Returns:
+        bool: ``True`` for a bundle signed with a real team identity.
+    """
+    state = _signed_bundle_state
+    if state["checked"]:
+        return state["signed"]
+    state["checked"] = True
+
+    bundled = (
+        getattr(sys, "frozen", False)
+        or getattr(sys, "_MEIPASS", None) is not None
+    )
+    if not IS_MACOS or not bundled:
+        return False
+
+    # Contents/MacOS/<exe> -> the .app directory.
+    executable = os.path.abspath(sys.argv[0]) if sys.argv else ""
+    app_path = os.path.dirname(os.path.dirname(os.path.dirname(executable)))
+    if not app_path.endswith(".app") or not os.path.isdir(app_path):
+        return False
+
+    codesign = shutil.which("codesign")
+    if not codesign or not os.path.isabs(codesign):
+        return False
+
+    try:
+        result = _run_safe_command([codesign, "-dv", app_path])
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        logging.debug("codesign check failed: %s", exc)
+        return False
+
+    # codesign writes its report to stderr.
+    report = f"{result.stderr or ''}{result.stdout or ''}"
+    signed = (
+        "TeamIdentifier=" in report
+        and "TeamIdentifier=not set" not in report
+    )
+    state["signed"] = signed
+    logging.debug(
+        "Bundle signature: %s", "Developer ID" if signed else "ad-hoc"
+    )
+    return signed
+
+
 def _notify_via_osascript(title: str, message: str) -> bool:
     """Post a notification through ``osascript``.
 
-    ``rumps`` uses ``NSUserNotification``, deprecated since macOS 11. On
-    current macOS an ad-hoc signed bundle is never registered under System
-    Settings -> Notifications, so those notifications are dropped without
-    raising -- there is nothing to catch and no way to detect the loss.
-    ``osascript`` posts under the Script Editor identity instead, which is
-    registered, so the banner actually appears.
+    ``rumps`` uses ``NSUserNotification``, deprecated since macOS 11. An
+    ad-hoc signed bundle is never registered under System Settings ->
+    Notifications, so those notifications are dropped without raising --
+    there is nothing to catch and no way to detect the loss. ``osascript``
+    posts under the Script Editor identity instead, which is registered, so
+    the banner actually appears (with the Script Editor icon).
 
     Args:
         title: Notification title.
@@ -3962,23 +4020,50 @@ class MacOSTrayIcon(_RumpsBase):
         _apply()
 
     def _notify(self, title: str, message: str) -> None:
-        """Send a macOS notification via rumps.
+        """Send a macOS notification.
+
+        A Developer ID signed bundle has a registered notification identity,
+        so the native API delivers banners carrying this app's own icon. An
+        ad-hoc or unsigned build has no such identity and macOS discards its
+        notifications silently, so ``osascript`` stands in -- at the cost of
+        showing the Script Editor icon.
 
         Args:
             title (str): Notification title.
             message (str): Notification body text.
         """
-        if _notify_via_osascript(title, message):
+        if is_signed_bundle():
+            if self._notify_via_rumps(title, message):
+                return
+            _notify_via_osascript(title, message)
             return
 
+        if _notify_via_osascript(title, message):
+            return
+        self._notify_via_rumps(title, message)
+
+    def _notify_via_rumps(self, title: str, message: str) -> bool:
+        """Post a notification through rumps' native API.
+
+        Args:
+            title (str): Notification title.
+            message (str): Notification body text.
+
+        Returns:
+            bool: ``True`` when rumps accepted the notification. Note that
+            macOS may still drop it for an unregistered bundle without
+            raising, which is why the caller checks the signature first.
+        """
         rumps_lib = _rumps_lib
         if rumps_lib is None:
             logging.debug("Notification skipped: rumps is not installed")
-            return
+            return False
 
         if not is_main_thread():
-            if run_on_main_thread(lambda: self._notify(title, message)):
-                return
+            if run_on_main_thread(
+                lambda: self._notify_via_rumps(title, message)
+            ):
+                return True
 
         try:
             try:
@@ -3997,6 +4082,8 @@ class MacOSTrayIcon(_RumpsBase):
                 )
         except (AttributeError, OSError, RuntimeError, TypeError) as exc:
             logging.debug("Notification failed: %s", exc)
+            return False
+        return True
 
     # ------------------------------------------------------------------
     # Menu building

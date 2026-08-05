@@ -4269,6 +4269,85 @@ def test_escape_applescript_quotes_and_backslashes(tray_module):
     ) == 'a \\"b\\" \\\\ c'
 
 
+def _prime_signed_bundle(tray_module, monkeypatch, tmp_path, report):
+    """Point is_signed_bundle() at a fake .app whose codesign says `report`."""
+    app = tmp_path / "X.app"
+    (app / "Contents" / "MacOS").mkdir(parents=True)
+    exe = app / "Contents" / "MacOS" / "X"
+    exe.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(tray_module, "IS_MACOS", True)
+    monkeypatch.setattr(tray_module.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(tray_module.sys, "argv", [str(exe)])
+    monkeypatch.setattr(
+        tray_module.shutil, "which", lambda _n: "/usr/bin/codesign"
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda _cmd: _completed(returncode=0, stderr=report),
+    )
+    monkeypatch.setattr(
+        tray_module,
+        "_signed_bundle_state",
+        {"checked": False, "signed": False},
+    )
+
+
+def test_is_signed_bundle_detects_developer_id(
+    tray_module, monkeypatch, tmp_path
+):
+    """A real team identity marks the bundle as signed."""
+    _prime_signed_bundle(
+        tray_module, monkeypatch, tmp_path,
+        "Identifier=com.x\nTeamIdentifier=M4ZK5A4MZ7\n",
+    )
+    assert tray_module.is_signed_bundle() is True  # nosec B101
+
+
+def test_is_signed_bundle_rejects_adhoc(tray_module, monkeypatch, tmp_path):
+    """Ad-hoc signing reports "not set" and does not count."""
+    _prime_signed_bundle(
+        tray_module, monkeypatch, tmp_path,
+        "Identifier=com.x\nTeamIdentifier=not set\n",
+    )
+    assert tray_module.is_signed_bundle() is False  # nosec B101
+
+
+def test_is_signed_bundle_false_from_source(tray_module, monkeypatch):
+    """Running from source is never a signed bundle."""
+    monkeypatch.setattr(tray_module, "IS_MACOS", True)
+    monkeypatch.setattr(tray_module.sys, "frozen", False, raising=False)
+    monkeypatch.setattr(tray_module.sys, "_MEIPASS", None, raising=False)
+    monkeypatch.setattr(
+        tray_module,
+        "_signed_bundle_state",
+        {"checked": False, "signed": False},
+    )
+    assert tray_module.is_signed_bundle() is False  # nosec B101
+
+
+def test_is_signed_bundle_caches_result(tray_module, monkeypatch, tmp_path):
+    """codesign runs once; notifications are far too frequent to re-check."""
+    _prime_signed_bundle(
+        tray_module, monkeypatch, tmp_path,
+        "TeamIdentifier=M4ZK5A4MZ7\n",
+    )
+    calls = []
+    monkeypatch.setattr(
+        tray_module,
+        "_run_safe_command",
+        lambda cmd: calls.append(cmd) or _completed(
+            returncode=0, stderr="TeamIdentifier=M4ZK5A4MZ7\n"
+        ),
+    )
+
+    tray_module.is_signed_bundle()
+    tray_module.is_signed_bundle()
+
+    assert len(calls) == 1  # nosec B101
+
+
 def test_notify_via_osascript_builds_command(tray_module, monkeypatch):
     """The notification is posted through osascript with escaped text."""
     monkeypatch.setattr(tray_module, "IS_MACOS", True)
@@ -5829,12 +5908,15 @@ def macos_module_fixture(monkeypatch, tmp_path):
     monkeypatch.setattr(module, "_rumps_lib", rumps_stub)
     monkeypatch.setattr(module, "_RumpsBase", DummyRumpsApp)
 
-    # Notifications go through osascript first in production. Tests assert
-    # against the rumps stub, so the osascript path is off by default here;
-    # the tests that cover it enable it explicitly.
+    # Unsigned builds notify through osascript first. Tests assert against
+    # the rumps stub, so that path is off by default here; the tests that
+    # cover it enable it explicitly.
     monkeypatch.setattr(
         module, "_notify_via_osascript", lambda _t, _m: False
     )
+    # Pin the signature so the notification route does not depend on how
+    # the test run itself was launched.
+    monkeypatch.setattr(module, "is_signed_bundle", lambda: False)
 
     yield module
 
@@ -6060,6 +6142,47 @@ def test_macos_notify_sends_rumps_notification(macos_module, monkeypatch):
     assert len(notifications) == 1  # nosec B101
     assert notifications[0][0] == "Hello"  # nosec B101
     assert notifications[0][2] == "World"  # nosec B101
+
+
+def test_macos_notify_signed_bundle_prefers_native(
+    macos_module, monkeypatch
+):
+    """A signed bundle notifies natively, so banners carry its own icon."""
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(macos_module, "is_signed_bundle", lambda: True)
+    seen = []
+    monkeypatch.setattr(
+        macos_module,
+        "_notify_via_osascript",
+        lambda t, m: seen.append((t, m)) or True,
+    )
+    tray = _make_macos_tray(macos_module)
+
+    _call_member(tray, "_notify", "Hello", "World")
+
+    notifications = DummyRumpsModule.get_notifications()
+    assert len(notifications) == 1  # nosec B101
+    assert notifications[0][0] == "Hello"  # nosec B101
+    # osascript would show the Script Editor icon, so it must not be used.
+    assert seen == []  # nosec B101
+
+
+def test_macos_notify_signed_bundle_falls_back(macos_module, monkeypatch):
+    """If the native call fails outright, osascript still delivers."""
+    DummyRumpsModule.reset()
+    monkeypatch.setattr(macos_module, "is_signed_bundle", lambda: True)
+    monkeypatch.setattr(macos_module, "_rumps_lib", None)
+    seen = []
+    monkeypatch.setattr(
+        macos_module,
+        "_notify_via_osascript",
+        lambda t, m: seen.append((t, m)) or True,
+    )
+    tray = _make_macos_tray(macos_module)
+
+    _call_member(tray, "_notify", "Hello", "World")
+
+    assert seen == [("Hello", "World")]  # nosec B101
 
 
 def test_macos_notify_prefers_osascript(macos_module, monkeypatch):
