@@ -31,3 +31,10 @@ setuptools==83.0.0
 # packaging 26.2 (source: packaging-26.2-py3-none-any.whl)
 # Required by PyInstaller (>=22.0)
 packaging==26.2
+
+# certifi 2026.7.22 (source: certifi-2026.7.22-py3-none-any.whl)
+# Runtime dependency, bundled into the binary. A frozen app ships libssl but
+# not the CA store it was built against, so HTTPS (the GitHub update check)
+# fails with CERTIFICATE_VERIFY_FAILED on machines that lack the build host's
+# certificate path. certifi supplies those certificates explicitly.
+certifi==2026.7.22

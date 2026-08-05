@@ -2034,14 +2034,12 @@
 <li>To find the script location quickly: <code>which lmstudio_autostart.sh</code> or check your <a href="../setup/">setup.md</a> installation section for default locations</li>
 </ul>
 <p>Then enable autostart in your desktop environment settings.</p>
-<p>On <strong>macOS</strong> this is built into the tray instead - no file to write by hand.
-<strong>Options → Start at Login</strong> installs a LaunchAgent at
-<code>~/Library/LaunchAgents/com.lmstudio.tray-manager.plist</code>; a checkmark shows
-it is active, and switching it off removes the file again.</p>
-<p><strong>Start Daemon at Login</strong> adds <code>--auto-start-daemon</code> to that same login
-item, so the tray brings up the llmster daemon after it starts. It requires
-<code>Start at Login</code> to be active and llmster to be installed; until both hold,
-the entry stays greyed out.</p>
+<p>On <strong>macOS</strong> use the system setting rather than the tray: open <strong>System
+Settings → General → Login Items &amp; Extensions</strong>, then add
+<code>LM-Studio-Tray-Manager.app</code> under <em>Open at Login</em>. macOS manages the entry
+itself, so there is no second place for it to fall out of sync.</p>
+<p>To also bring up the llmster daemon at login, pass <code>--auto-start-daemon</code>
+when launching the app.</p>
 <p>Daemon control needs llmster itself
 (<code>curl -fsSL https://lmstudio.ai/install.sh | bash</code>). <code>lms daemon up</code> is
 <strong>not</strong> a substitute: where LM Studio embeds the daemon, that command

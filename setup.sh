@@ -98,7 +98,15 @@ ask_yes_no() {
     local prompt="$1"
     local response
     while true; do
-        read -rp "$(printf '%b' "${YELLOW}${prompt}${NC} [y/n]: ")" response
+        # A failing read means stdin reached EOF - piped input that ran out,
+        # or a non-interactive run with no input at all. Without this branch
+        # the loop would spin forever on an empty response, printing the
+        # retry message until the process is killed.
+        if ! read -rp "$(printf '%b' "${YELLOW}${prompt}${NC} [y/n]: ")" \
+            response; then
+            printf '%b\n' "No input available; assuming no"
+            return 1
+        fi
         case "$response" in
             [yY][eE][sS]|[yY])
                 return 0

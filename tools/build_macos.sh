@@ -245,6 +245,12 @@ build_pyinstaller() {
         --specpath="$SPEC_DIR"
         --osx-bundle-identifier=com.lmstudio.tray-manager
         --target-architecture="$TARGET_ARCH"
+        # certifi is imported inside _build_ssl_context(), so PyInstaller's
+        # static analysis misses it. Declaring it also bundles cacert.pem via
+        # certifi's hook: the app ships libssl but not the CA store it was
+        # built against, so without this HTTPS fails with
+        # CERTIFICATE_VERIFY_FAILED on every Mac lacking that build path.
+        --hidden-import=certifi
         --add-data "$PROJECT_ROOT/VERSION"":."
         --add-data "$PROJECT_ROOT/AUTHORS"":."
         --add-data "$PROJECT_ROOT/assets"":assets"

@@ -16,22 +16,6 @@ The application stores configuration at `~/.config/lmstudio_tray.json`.
         - save_config
         - _normalize_api_port
 
-## Autostart (macOS)
-
-Login startup is a per-user LaunchAgent at
-`~/Library/LaunchAgents/com.lmstudio.tray-manager.plist`. `KeepAlive` is
-deliberately off so that quitting the tray keeps it closed.
-
-::: lmstudio_tray
-    options:
-      members:
-        - get_launch_agent_path
-        - get_launch_target
-        - is_autostart_enabled
-        - autostart_includes_daemon
-        - enable_autostart
-        - disable_autostart
-
 ## API Configuration
 
 `is_remote_endpoint` decides whether status comes from local process

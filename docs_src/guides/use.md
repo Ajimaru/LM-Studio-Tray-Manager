@@ -187,15 +187,13 @@ EOF
 
 Then enable autostart in your desktop environment settings.
 
-On **macOS** this is built into the tray instead - no file to write by hand.
-**Options → Start at Login** installs a LaunchAgent at
-`~/Library/LaunchAgents/com.lmstudio.tray-manager.plist`; a checkmark shows
-it is active, and switching it off removes the file again.
+On **macOS** use the system setting rather than the tray: open **System
+Settings → General → Login Items & Extensions**, then add
+`LM-Studio-Tray-Manager.app` under *Open at Login*. macOS manages the entry
+itself, so there is no second place for it to fall out of sync.
 
-**Start Daemon at Login** adds `--auto-start-daemon` to that same login
-item, so the tray brings up the llmster daemon after it starts. It requires
-`Start at Login` to be active and llmster to be installed; until both hold,
-the entry stays greyed out.
+To also bring up the llmster daemon at login, pass `--auto-start-daemon`
+when launching the app.
 
 Daemon control needs llmster itself
 (`curl -fsSL https://lmstudio.ai/install.sh | bash`). `lms daemon up` is

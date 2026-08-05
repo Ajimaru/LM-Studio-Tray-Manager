@@ -22,9 +22,9 @@ import shutil
 import threading
 import importlib
 import json
-import plistlib
 import re
 import socket
+import ssl
 import webbrowser
 from typing import Callable, Optional
 from types import ModuleType
@@ -723,179 +723,6 @@ def get_asset_path(*path_components: str) -> Optional[str]:
     return None
 
 
-LAUNCH_AGENT_LABEL = "com.lmstudio.tray-manager"
-
-
-def get_launch_agent_path() -> str:
-    """Return the path of the per-user LaunchAgent plist.
-
-    Returns:
-        str: Path under ``~/Library/LaunchAgents``.
-    """
-    return os.path.expanduser(
-        f"~/Library/LaunchAgents/{LAUNCH_AGENT_LABEL}.plist"
-    )
-
-
-def get_launch_target() -> Optional[list[str]]:
-    """Return the command that should run at login.
-
-    Inside a bundle this is the ``.app`` executable; running from source it
-    is the interpreter plus this script, so a developer checkout can be
-    registered too.
-
-    Returns:
-        list[str] | None: Argument vector, or ``None`` when it cannot be
-        determined.
-    """
-    executable = os.path.abspath(sys.argv[0]) if sys.argv else ""
-
-    # _MEIPASS is checked alongside sys.frozen: both mark a PyInstaller
-    # build, and relying on either alone has bitten this file before.
-    bundled = (
-        getattr(sys, "frozen", False)
-        or getattr(sys, "_MEIPASS", None) is not None
-    )
-    if bundled:
-        if executable and os.path.isfile(executable):
-            return [executable]
-        return None
-
-    script = os.path.abspath(__file__)
-    if not os.path.isfile(script):
-        return None
-    return [sys.executable, script]
-
-
-def is_autostart_enabled() -> bool:
-    """Return True when a LaunchAgent for this app is installed.
-
-    Returns:
-        bool: ``True`` when the plist exists.
-    """
-    return os.path.isfile(get_launch_agent_path())
-
-
-def autostart_includes_daemon() -> bool:
-    """Return True when the login item also starts the llmster daemon.
-
-    Returns:
-        bool: ``True`` when the installed plist carries
-        ``--auto-start-daemon``.
-    """
-    plist_path = get_launch_agent_path()
-    if not os.path.isfile(plist_path):
-        return False
-
-    try:
-        with open(plist_path, "rb") as plist_file:
-            payload = plistlib.load(plist_file)
-    except (OSError, ValueError) as exc:
-        # A corrupt plist must not crash menu building; report "no daemon"
-        # and let the user re-enable it.
-        logging.debug("Cannot read LaunchAgent: %s", exc)
-        return False
-
-    arguments = payload.get("ProgramArguments") or []
-    if not isinstance(arguments, list):
-        return False
-    return "--auto-start-daemon" in arguments
-
-
-def enable_autostart(with_daemon: bool = False) -> bool:
-    """Install (or replace) the login item for this app.
-
-    Args:
-        with_daemon: When ``True``, the tray also starts the llmster daemon
-            at login by way of ``--auto-start-daemon``.
-
-    Returns:
-        bool: ``True`` when the LaunchAgent was written.
-    """
-    target = get_launch_target()
-    if not target:
-        logging.error("Cannot determine launch target for autostart")
-        return False
-
-    arguments = list(target)
-    if with_daemon:
-        arguments.append("--auto-start-daemon")
-
-    payload = {
-        "Label": LAUNCH_AGENT_LABEL,
-        "ProgramArguments": arguments,
-        "RunAtLoad": True,
-        # The tray owns its own lifecycle; relaunching it on exit would
-        # make "Quit Tray" impossible.
-        "KeepAlive": False,
-        "ProcessType": "Interactive",
-    }
-
-    plist_path = get_launch_agent_path()
-    try:
-        os.makedirs(os.path.dirname(plist_path), exist_ok=True)
-        tmp_path = f"{plist_path}.tmp"
-        with open(tmp_path, "wb") as plist_file:
-            plistlib.dump(payload, plist_file)
-        os.replace(tmp_path, plist_path)
-    except (OSError, ValueError) as exc:
-        logging.error("Failed to write LaunchAgent: %s", exc)
-        return False
-
-    _reload_launch_agent(plist_path)
-    logging.info("Autostart enabled: %s", plist_path)
-    return True
-
-
-def disable_autostart() -> bool:
-    """Remove the login item for this app.
-
-    Returns:
-        bool: ``True`` when no LaunchAgent remains.
-    """
-    plist_path = get_launch_agent_path()
-    if not os.path.isfile(plist_path):
-        return True
-
-    launchctl = shutil.which("launchctl")
-    if launchctl:
-        try:
-            _run_safe_command([launchctl, "unload", "-w", plist_path])
-        except (OSError, subprocess.SubprocessError) as exc:
-            logging.debug("launchctl unload failed: %s", exc)
-
-    try:
-        os.remove(plist_path)
-    except OSError as exc:
-        logging.error("Failed to remove LaunchAgent: %s", exc)
-        return False
-
-    logging.info("Autostart disabled: %s", plist_path)
-    return True
-
-
-def _reload_launch_agent(plist_path: str) -> None:
-    """Register the agent with launchd without starting a second copy.
-
-    ``launchctl load`` honours ``RunAtLoad`` immediately, which would launch
-    a second tray next to the one the user just clicked in. Only the stale
-    registration is removed here; the plist on disk is enough for the agent
-    to run at the next login.
-
-    Args:
-        plist_path: Path of the LaunchAgent plist.
-    """
-    launchctl = shutil.which("launchctl")
-    if not launchctl:
-        logging.debug("launchctl not found; agent applies at next login")
-        return
-
-    try:
-        _run_safe_command([launchctl, "unload", plist_path])
-    except (OSError, subprocess.SubprocessError) as exc:
-        logging.debug("launchctl unload failed: %s", exc)
-
-
 def _get_config_path() -> str:
     """Return config file path ~/.config/lmstudio_tray.json."""
     return os.path.expanduser("~/.config/lmstudio_tray.json")
@@ -1276,6 +1103,31 @@ def _is_allowed_update_url(url: str) -> bool:
     )
 
 
+def _build_ssl_context() -> ssl.SSLContext:
+    """Return an SSL context with a trust store that survives freezing.
+
+    A PyInstaller bundle ships ``libssl`` but not the CA store it was
+    compiled against.  With a Homebrew Python that store lives under
+    ``/opt/homebrew/etc/openssl@3``, a path that does not exist on a machine
+    without Homebrew - so every HTTPS request fails there with
+    ``CERTIFICATE_VERIFY_FAILED`` while working fine on the build machine.
+
+    ``certifi`` is bundled to provide the certificates explicitly.  When it
+    is unavailable the platform defaults still apply, which is correct for a
+    normal source checkout.
+
+    Returns:
+        ssl.SSLContext: Context with certificate verification enabled.
+    """
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except (ImportError, OSError):
+        logging.debug("Update check: certifi unavailable, using system trust")
+        return ssl.create_default_context()
+
+
 def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
     """Fetch latest GitHub release tag, return (tag, error_msg) tuple."""
     if not _is_allowed_update_url(LATEST_RELEASE_API_URL):
@@ -1291,7 +1143,9 @@ def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
         LATEST_RELEASE_API_URL,
     )
     try:
-        https_handler = urllib_request.HTTPSHandler()
+        https_handler = urllib_request.HTTPSHandler(
+            context=_build_ssl_context()
+        )
         opener = urllib_request.build_opener(https_handler)
 
         with opener.open(request, timeout=10) as response:
@@ -1303,8 +1157,19 @@ def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
     except urllib_error.HTTPError as exc:
         logging.debug("Update check: HTTP error %s", exc.code)
         return None, f"HTTP {exc.code}"
-    except (urllib_error.URLError, OSError, ValueError):
-        logging.debug("Update check: network or parse error")
+    except (ssl.SSLCertVerificationError, ssl.SSLError) as exc:
+        # Reported separately: a missing trust store is a packaging bug, and
+        # folding it into the generic branch below hides that entirely.
+        logging.debug("Update check: TLS error %s", exc)
+        return None, "TLS certificate error"
+    except (urllib_error.URLError, OSError, ValueError) as exc:
+        # URLError wraps the original failure, so a TLS problem reaches this
+        # branch too unless it is unwrapped here.
+        reason = getattr(exc, "reason", None)
+        if isinstance(reason, ssl.SSLError):
+            logging.debug("Update check: TLS error %s", reason)
+            return None, "TLS certificate error"
+        logging.debug("Update check: network or parse error: %s", exc)
         return None, "Network or parse error"
 
 
@@ -4115,28 +3980,9 @@ class MacOSTrayIcon(_RumpsBase):
             )
         )
 
-        tray_autostart = is_autostart_enabled()
-        options.add(
-            rumps_lib.MenuItem(
-                f"{'✓' if tray_autostart else '  '} Start at Login",
-                callback=self.toggle_autostart,
-            )
-        )
-
-        # The daemon entry stays visible but inert unless llmster is present
-        # and the tray itself starts at login, so the dependency is obvious
-        # instead of failing silently at the next login.
-        daemon_available = is_daemon_available()
-        daemon_on = daemon_available and autostart_includes_daemon()
-        daemon_item = rumps_lib.MenuItem(
-            f"{'✓' if daemon_on else '  '} Start Daemon at Login",
-            callback=self.toggle_autostart_daemon,
-        )
-        if not (daemon_available and tray_autostart):
-            # rumps renders a callback-less item greyed out.
-            daemon_item.set_callback(None)
-        options.add(daemon_item)
-
+        # Launching at login is not managed here: macOS already offers it
+        # under System Settings > General > Login Items, and duplicating that
+        # in a LaunchAgent only adds a second place for the setting to drift.
         options.add(
             rumps_lib.MenuItem(
                 "Check for Updates",
@@ -4922,64 +4768,6 @@ class MacOSTrayIcon(_RumpsBase):
             logging.error("rumps is not installed; cannot show status dialog")
             return
         rumps_lib.alert(title="LM Studio Status", message=text)
-
-    def toggle_autostart(self, sender: object) -> None:
-        """Enable or disable launching the tray at login.
-
-        Args:
-            sender: rumps sender object (unused).
-        """
-        _ = sender
-        if is_autostart_enabled():
-            if disable_autostart():
-                self._notify("Autostart", "Disabled: will not start at login")
-            else:
-                self._notify("Error", "Could not disable autostart")
-        else:
-            if enable_autostart():
-                self._notify("Autostart", "Enabled: starts at login")
-            else:
-                self._notify(
-                    "Error",
-                    "Could not enable autostart. See the log for details.",
-                )
-        self.build_menu()
-
-    def toggle_autostart_daemon(self, sender: object) -> None:
-        """Enable or disable starting the llmster daemon at login.
-
-        The daemon flag lives inside the tray's own login item, so this
-        rewrites that plist rather than installing a second agent.
-
-        Args:
-            sender: rumps sender object (unused).
-        """
-        _ = sender
-        if not is_daemon_available():
-            self._notify(
-                "Daemon Autostart",
-                "No daemon found. Install LM Studio, or run: "
-                "curl -fsSL https://lmstudio.ai/install.sh | bash",
-            )
-            return
-
-        if not is_autostart_enabled():
-            self._notify(
-                "Daemon Autostart",
-                "Enable 'Start at Login' first.",
-            )
-            return
-
-        wanted = not autostart_includes_daemon()
-        if enable_autostart(with_daemon=wanted):
-            state = "Enabled" if wanted else "Disabled"
-            self._notify("Daemon Autostart", f"{state} at login")
-        else:
-            self._notify(
-                "Error",
-                "Could not update daemon autostart. See the log for details.",
-            )
-        self.build_menu()
 
     def show_config_dialog(self, sender: object) -> None:
         """Prompt for the LM Studio API endpoint and persist it.
