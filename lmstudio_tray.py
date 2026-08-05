@@ -1404,9 +1404,13 @@ def is_signed_bundle() -> bool:
     if not IS_MACOS or not bundled:
         return False
 
-    # Contents/MacOS/<exe> -> the .app directory.
-    executable = os.path.abspath(sys.argv[0]) if sys.argv else ""
-    app_path = os.path.dirname(os.path.dirname(os.path.dirname(executable)))
+    # Derive the bundle from _MEIPASS (Contents/Frameworks or Contents/MacOS)
+    # rather than sys.argv[0]: the loader sets it, so no command line input
+    # reaches the codesign call below.
+    meipass = getattr(sys, "_MEIPASS", None)
+    if not meipass:
+        return False
+    app_path = os.path.dirname(os.path.dirname(os.path.abspath(meipass)))
     if not app_path.endswith(".app") or not os.path.isdir(app_path):
         return False
 

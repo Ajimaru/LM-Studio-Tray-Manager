@@ -4305,7 +4305,11 @@ def _prime_signed_bundle(tray_module, monkeypatch, tmp_path, report):
 
     monkeypatch.setattr(tray_module, "IS_MACOS", True)
     monkeypatch.setattr(tray_module.sys, "frozen", True, raising=False)
-    monkeypatch.setattr(tray_module.sys, "argv", [str(exe)])
+    # The bundle is located via _MEIPASS, not argv, so no command line
+    # input can reach the codesign call.
+    monkeypatch.setattr(
+        tray_module.sys, "_MEIPASS", str(exe.parent), raising=False
+    )
     monkeypatch.setattr(
         tray_module.shutil, "which", lambda _n: "/usr/bin/codesign"
     )
