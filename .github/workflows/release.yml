@@ -19,7 +19,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # workflow_dispatch passes the branch name here, never a tag, so this
+      # would always fail a manual run. Manual runs are for exercising the
+      # build; only a tag push produces a release.
       - name: Validate tag format
+        if: github.ref_type == 'tag'
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
@@ -47,8 +51,14 @@ jobs:
       - name: Verify release artifacts
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#v}"
+          # On a manual run GITHUB_REF_NAME is the branch, so fall back to
+          # the VERSION file the build actually used.
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(tr -d ' \t\n\r' < VERSION)"
+            VERSION="${VERSION#v}"
+          fi
 
           # Verify all expected artifacts exist
           APPIMAGE="dist/lmstudio-tray-manager-${VERSION}-linux-x86_64.AppImage"
@@ -70,7 +80,9 @@ jobs:
           echo "Artifact sizes:"
           ls -lh "$APPIMAGE" "$SOURCE_TAR" "$BINARY_TAR" | awk '{print $9, "("$5")"}'
 
+      # A manual run must not create a release named after the branch.
       - name: Create GitHub release
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           name: ${{ github.ref_name }}
@@ -223,6 +235,7 @@ jobs:
           cat release/SHA256SUMS-macos.txt
 
       - name: Upload macOS artifacts
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           name: ${{ github.ref_name }}
