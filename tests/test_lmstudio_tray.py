@@ -8642,7 +8642,8 @@ def test_macos_build_menu_includes_configuration(macos_module, monkeypatch):
 
 @pytest.mark.parametrize(
     "host",
-    ["localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0", ""],
+    # 0.0.0.0 is test data for the loopback check, not a bind address.
+    ["localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0", ""],  # nosec B104
 )
 def test_is_remote_endpoint_false_for_loopback(tray_module, host):
     """Loopback forms always count as local."""
@@ -9707,7 +9708,8 @@ def test_reload_launch_agent_does_not_load(tray_module, monkeypatch):
         tray_module, "_run_safe_command", lambda cmd: calls.append(cmd)
     )
 
-    tray_module._reload_launch_agent("/tmp/x.plist")
+    # Path is only ever passed to a mocked command; nothing is created.
+    tray_module._reload_launch_agent("/tmp/x.plist")  # nosec B108
 
     actions = [c[1] for c in calls]
     assert "unload" in actions  # nosec B101
