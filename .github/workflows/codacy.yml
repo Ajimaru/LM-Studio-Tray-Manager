@@ -29,7 +29,7 @@ permissions:
 
 jobs:
   codacy-security-scan:
-    # CODACY_PROJECT_TOKEN only exists in the upstream repository, so this job
+    # CODACY_API_TOKEN only exists in the upstream repository, so this job
     # is skipped in forks instead of failing on every push.
     if: ${{ github.repository == 'Ajimaru/LM-Studio-Tray-Manager' }}
     permissions:
@@ -46,9 +46,11 @@ jobs:
       - name: Run Codacy Analysis CLI
         uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08
         with:
-          # Check https://github.com/codacy/codacy-analysis-cli#project-token to get your project token from your Codacy repository
-          # You can also omit the token and run the tools that support default configurations
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          # An account API token covers every repository, so one secret serves
+          # both this scan and the coverage upload in ci.yml. The action
+          # derives owner, repository and provider from the GitHub context,
+          # so no extra variables are needed here.
+          api-token: ${{ secrets.CODACY_API_TOKEN }}
           verbose: true
           output: results.sarif
           format: sarif
