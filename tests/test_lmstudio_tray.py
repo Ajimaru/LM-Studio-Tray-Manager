@@ -750,6 +750,14 @@ def tray_module_fixture(monkeypatch, tmp_path):
 
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
+    # This fixture stands for the GTK/Linux build, but the module derives
+    # IS_MACOS from sys.platform and picks up rumps if it happens to be
+    # installed - both at import time. On a macOS dev machine that silently
+    # produced the macOS variant, so the Linux branches under test were never
+    # the ones running. Pin the platform and hide rumps before the import.
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setitem(sys.modules, "rumps", None)
+
     def safe_run(_args, **_kwargs):
         """Return a safe default subprocess result during import."""
         _ = (_args, _kwargs)
