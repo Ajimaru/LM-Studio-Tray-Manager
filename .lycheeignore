@@ -1,0 +1,6 @@
+# GitHub requires a signed-in session for these social pages, so they answer
+# 404 to the link checker while working fine in a browser. Verified against
+# an unrelated repository (torvalds/linux/stargazers) to rule out a problem
+# with this one.
+https://github.com/.*/stargazers
+https://github.com/.*/watchers
