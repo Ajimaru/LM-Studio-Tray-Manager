@@ -150,15 +150,22 @@ def get_hidden_imports():
     Returns:
         list[str]: Hidden import module names.
     """
+    # certifi is imported inside _build_ssl_context() rather than at module
+    # level, so PyInstaller's static analysis does not see it. Declaring it
+    # here also pulls in its cacert.pem via the bundled certifi hook; without
+    # the CA store every HTTPS request fails on machines that lack the build
+    # host's certificate path.
+    common = ["certifi"]
+
     if sys.platform == "darwin":
-        return [
+        return common + [
             "rumps",
             "objc",
             "Foundation",
             "AppKit",
         ]
 
-    return [
+    return common + [
         "gi",
         "gi.repository",
         "gi.repository.Gtk",

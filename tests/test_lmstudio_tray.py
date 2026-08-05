@@ -14,11 +14,13 @@ The tests use mocked GTK, AppIndicator, and GLib components to avoid requiring
 a display server or actual system dependencies during test execution.
 """
 
+import builtins
 import importlib.util
 import json
 import logging
 import os
 import signal
+import ssl
 import threading
 import subprocess  # nosec B404
 import sys
@@ -635,6 +637,10 @@ class DummyUrlLib:
     class HTTPSHandler:
         """Dummy HTTPS handler for urllib opener."""
 
+        def __init__(self, context=None):
+            """Accept the SSL context the update check passes in."""
+            self.context = context
+
     class DummyOpenerDirector:
         """Dummy opener that returns a fixed response payload."""
 
@@ -1135,6 +1141,10 @@ def test_get_latest_release_version_reads_tag(tray_module, monkeypatch):
     class DummyHttpsHandler:
         """Stand-in for urllib.request.HTTPSHandler."""
 
+        def __init__(self, context=None):
+            """Accept the SSL context the update check passes in."""
+            self.context = context
+
     def dummy_build_opener(_handler):
         return DummyOpener(payload)
 
@@ -1190,6 +1200,65 @@ def test_get_latest_release_version_url_error(tray_module, monkeypatch):
     version, error = tray_module.get_latest_release_version()
     assert version is None  # nosec B101
     assert error == "Network or parse error"  # nosec B101
+
+
+def test_get_latest_release_version_tls_error(tray_module, monkeypatch):
+    """Report a TLS failure separately from a plain network failure.
+
+    A frozen bundle without a CA store fails here, and folding that into the
+    generic network branch hides a packaging bug behind a misleading message.
+    """
+    exc = ssl.SSLCertVerificationError(
+        "unable to get local issuer certificate"
+    )
+    monkeypatch.setattr(
+        tray_module, "urllib_request", DummyUrlLib(b"", raise_exc=exc)
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "TLS certificate error"  # nosec B101
+
+
+def test_get_latest_release_version_tls_error_wrapped(
+    tray_module, monkeypatch
+):
+    """Unwrap a TLS failure that arrives wrapped inside a URLError."""
+    exc = urllib.error.URLError(
+        reason=ssl.SSLCertVerificationError("certificate verify failed")
+    )
+    monkeypatch.setattr(
+        tray_module, "urllib_request", DummyUrlLib(b"", raise_exc=exc)
+    )
+    version, error = tray_module.get_latest_release_version()
+    assert version is None  # nosec B101
+    assert error == "TLS certificate error"  # nosec B101
+
+
+def test_build_ssl_context_verifies_certificates(tray_module):
+    """The update context must keep verification and hostname checks on."""
+    context = tray_module._build_ssl_context()
+    assert context.verify_mode == ssl.CERT_REQUIRED  # nosec B101
+    assert context.check_hostname is True  # nosec B101
+    assert context.get_ca_certs()  # nosec B101
+
+
+def test_build_ssl_context_without_certifi(tray_module, monkeypatch):
+    """Fall back to the platform trust store when certifi is missing.
+
+    A source checkout has no certifi, and the system defaults are correct
+    there - only a frozen bundle needs the bundled CA file.
+    """
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "certifi":
+            raise ImportError("no certifi")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    context = tray_module._build_ssl_context()
+    assert context.verify_mode == ssl.CERT_REQUIRED  # nosec B101
+    assert context.check_hostname is True  # nosec B101
 
 
 def test_get_latest_release_version_invalid_url(tray_module, monkeypatch):

@@ -25,6 +25,7 @@ import json
 import plistlib
 import re
 import socket
+import ssl
 import webbrowser
 from typing import Callable, Optional
 from types import ModuleType
@@ -1276,6 +1277,31 @@ def _is_allowed_update_url(url: str) -> bool:
     )
 
 
+def _build_ssl_context() -> ssl.SSLContext:
+    """Return an SSL context with a trust store that survives freezing.
+
+    A PyInstaller bundle ships ``libssl`` but not the CA store it was
+    compiled against.  With a Homebrew Python that store lives under
+    ``/opt/homebrew/etc/openssl@3``, a path that does not exist on a machine
+    without Homebrew - so every HTTPS request fails there with
+    ``CERTIFICATE_VERIFY_FAILED`` while working fine on the build machine.
+
+    ``certifi`` is bundled to provide the certificates explicitly.  When it
+    is unavailable the platform defaults still apply, which is correct for a
+    normal source checkout.
+
+    Returns:
+        ssl.SSLContext: Context with certificate verification enabled.
+    """
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except (ImportError, OSError):
+        logging.debug("Update check: certifi unavailable, using system trust")
+        return ssl.create_default_context()
+
+
 def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
     """Fetch latest GitHub release tag, return (tag, error_msg) tuple."""
     if not _is_allowed_update_url(LATEST_RELEASE_API_URL):
@@ -1291,7 +1317,9 @@ def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
         LATEST_RELEASE_API_URL,
     )
     try:
-        https_handler = urllib_request.HTTPSHandler()
+        https_handler = urllib_request.HTTPSHandler(
+            context=_build_ssl_context()
+        )
         opener = urllib_request.build_opener(https_handler)
 
         with opener.open(request, timeout=10) as response:
@@ -1303,8 +1331,19 @@ def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
     except urllib_error.HTTPError as exc:
         logging.debug("Update check: HTTP error %s", exc.code)
         return None, f"HTTP {exc.code}"
-    except (urllib_error.URLError, OSError, ValueError):
-        logging.debug("Update check: network or parse error")
+    except (ssl.SSLCertVerificationError, ssl.SSLError) as exc:
+        # Reported separately: a missing trust store is a packaging bug, and
+        # folding it into the generic branch below hides that entirely.
+        logging.debug("Update check: TLS error %s", exc)
+        return None, "TLS certificate error"
+    except (urllib_error.URLError, OSError, ValueError) as exc:
+        # URLError wraps the original failure, so a TLS problem reaches this
+        # branch too unless it is unwrapped here.
+        reason = getattr(exc, "reason", None)
+        if isinstance(reason, ssl.SSLError):
+            logging.debug("Update check: TLS error %s", reason)
+            return None, "TLS certificate error"
+        logging.debug("Update check: network or parse error: %s", exc)
         return None, "Network or parse error"
 
 
