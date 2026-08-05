@@ -3296,29 +3296,29 @@ things, so this variant reports them separately.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1686">1686</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1679">1679</a></span>
+<span class="normal"><a href="#__codelineno-0-1680">1680</a></span>
+<span class="normal"><a href="#__codelineno-0-1681">1681</a></span>
+<span class="normal"><a href="#__codelineno-0-1682">1682</a></span>
+<span class="normal"><a href="#__codelineno-0-1683">1683</a></span>
+<span class="normal"><a href="#__codelineno-0-1684">1684</a></span>
+<span class="normal"><a href="#__codelineno-0-1685">1685</a></span>
+<span class="normal"><a href="#__codelineno-0-1686">1686</a></span>
 <span class="normal"><a href="#__codelineno-0-1687">1687</a></span>
 <span class="normal"><a href="#__codelineno-0-1688">1688</a></span>
 <span class="normal"><a href="#__codelineno-0-1689">1689</a></span>
-<span class="normal"><a href="#__codelineno-0-1690">1690</a></span>
-<span class="normal"><a href="#__codelineno-0-1691">1691</a></span>
-<span class="normal"><a href="#__codelineno-0-1692">1692</a></span>
-<span class="normal"><a href="#__codelineno-0-1693">1693</a></span>
-<span class="normal"><a href="#__codelineno-0-1694">1694</a></span>
-<span class="normal"><a href="#__codelineno-0-1695">1695</a></span>
-<span class="normal"><a href="#__codelineno-0-1696">1696</a></span>
-<span class="normal"><a href="#__codelineno-0-1697">1697</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1686" name="__codelineno-0-1686"></a><span class="k">def</span><span class="w"> </span><span class="nf">check_api_reachable</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-<a id="__codelineno-0-1687" name="__codelineno-0-1687"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Query the API, separating reachability from model state.</span>
-<a id="__codelineno-0-1688" name="__codelineno-0-1688"></a>
-<a id="__codelineno-0-1689" name="__codelineno-0-1689"></a><span class="sd">    ``check_api_models`` collapses &quot;unreachable&quot; and &quot;no model loaded&quot; into</span>
-<a id="__codelineno-0-1690" name="__codelineno-0-1690"></a><span class="sd">    a single ``False``. For a remote endpoint those mean very different</span>
-<a id="__codelineno-0-1691" name="__codelineno-0-1691"></a><span class="sd">    things, so this variant reports them separately.</span>
-<a id="__codelineno-0-1692" name="__codelineno-0-1692"></a>
-<a id="__codelineno-0-1693" name="__codelineno-0-1693"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-1694" name="__codelineno-0-1694"></a><span class="sd">        tuple[bool, bool]: ``(reachable, has_loaded_model)``.</span>
-<a id="__codelineno-0-1695" name="__codelineno-0-1695"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1696" name="__codelineno-0-1696"></a>    <span class="n">reachable</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">query_api_models</span><span class="p">()</span>
-<a id="__codelineno-0-1697" name="__codelineno-0-1697"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">reachable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
+<span class="normal"><a href="#__codelineno-0-1690">1690</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1679" name="__codelineno-0-1679"></a><span class="k">def</span><span class="w"> </span><span class="nf">check_api_reachable</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<a id="__codelineno-0-1680" name="__codelineno-0-1680"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Query the API, separating reachability from model state.</span>
+<a id="__codelineno-0-1681" name="__codelineno-0-1681"></a>
+<a id="__codelineno-0-1682" name="__codelineno-0-1682"></a><span class="sd">    ``check_api_models`` collapses &quot;unreachable&quot; and &quot;no model loaded&quot; into</span>
+<a id="__codelineno-0-1683" name="__codelineno-0-1683"></a><span class="sd">    a single ``False``. For a remote endpoint those mean very different</span>
+<a id="__codelineno-0-1684" name="__codelineno-0-1684"></a><span class="sd">    things, so this variant reports them separately.</span>
+<a id="__codelineno-0-1685" name="__codelineno-0-1685"></a>
+<a id="__codelineno-0-1686" name="__codelineno-0-1686"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-1687" name="__codelineno-0-1687"></a><span class="sd">        tuple[bool, bool]: ``(reachable, has_loaded_model)``.</span>
+<a id="__codelineno-0-1688" name="__codelineno-0-1688"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1689" name="__codelineno-0-1689"></a>    <span class="n">reachable</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">query_api_models</span><span class="p">()</span>
+<a id="__codelineno-0-1690" name="__codelineno-0-1690"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">reachable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3367,21 +3367,21 @@ things, so this variant reports them separately.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1725">1725</a></span>
-<span class="normal"><a href="#__codelineno-0-1726">1726</a></span>
-<span class="normal"><a href="#__codelineno-0-1727">1727</a></span>
-<span class="normal"><a href="#__codelineno-0-1728">1728</a></span>
-<span class="normal"><a href="#__codelineno-0-1729">1729</a></span>
-<span class="normal"><a href="#__codelineno-0-1730">1730</a></span>
-<span class="normal"><a href="#__codelineno-0-1731">1731</a></span>
-<span class="normal"><a href="#__codelineno-0-1732">1732</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1725" name="__codelineno-0-1725"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_api_loaded_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-0-1726" name="__codelineno-0-1726"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return names of models the API reports as loaded.</span>
-<a id="__codelineno-0-1727" name="__codelineno-0-1727"></a>
-<a id="__codelineno-0-1728" name="__codelineno-0-1728"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-1729" name="__codelineno-0-1729"></a><span class="sd">        list[str]: Loaded model names, empty when none or unreachable.</span>
-<a id="__codelineno-0-1730" name="__codelineno-0-1730"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1731" name="__codelineno-0-1731"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">query_api_models</span><span class="p">()</span>
-<a id="__codelineno-0-1732" name="__codelineno-0-1732"></a>    <span class="k">return</span> <span class="n">names</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1718">1718</a></span>
+<span class="normal"><a href="#__codelineno-0-1719">1719</a></span>
+<span class="normal"><a href="#__codelineno-0-1720">1720</a></span>
+<span class="normal"><a href="#__codelineno-0-1721">1721</a></span>
+<span class="normal"><a href="#__codelineno-0-1722">1722</a></span>
+<span class="normal"><a href="#__codelineno-0-1723">1723</a></span>
+<span class="normal"><a href="#__codelineno-0-1724">1724</a></span>
+<span class="normal"><a href="#__codelineno-0-1725">1725</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1718" name="__codelineno-0-1718"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_api_loaded_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<a id="__codelineno-0-1719" name="__codelineno-0-1719"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return names of models the API reports as loaded.</span>
+<a id="__codelineno-0-1720" name="__codelineno-0-1720"></a>
+<a id="__codelineno-0-1721" name="__codelineno-0-1721"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-1722" name="__codelineno-0-1722"></a><span class="sd">        list[str]: Loaded model names, empty when none or unreachable.</span>
+<a id="__codelineno-0-1723" name="__codelineno-0-1723"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1724" name="__codelineno-0-1724"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">query_api_models</span><span class="p">()</span>
+<a id="__codelineno-0-1725" name="__codelineno-0-1725"></a>    <span class="k">return</span> <span class="n">names</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3657,29 +3657,29 @@ the desktop app rather than a headless daemon, so treating <code>lms</code> as
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1491">1491</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1484">1484</a></span>
+<span class="normal"><a href="#__codelineno-0-1485">1485</a></span>
+<span class="normal"><a href="#__codelineno-0-1486">1486</a></span>
+<span class="normal"><a href="#__codelineno-0-1487">1487</a></span>
+<span class="normal"><a href="#__codelineno-0-1488">1488</a></span>
+<span class="normal"><a href="#__codelineno-0-1489">1489</a></span>
+<span class="normal"><a href="#__codelineno-0-1490">1490</a></span>
+<span class="normal"><a href="#__codelineno-0-1491">1491</a></span>
 <span class="normal"><a href="#__codelineno-0-1492">1492</a></span>
 <span class="normal"><a href="#__codelineno-0-1493">1493</a></span>
 <span class="normal"><a href="#__codelineno-0-1494">1494</a></span>
-<span class="normal"><a href="#__codelineno-0-1495">1495</a></span>
-<span class="normal"><a href="#__codelineno-0-1496">1496</a></span>
-<span class="normal"><a href="#__codelineno-0-1497">1497</a></span>
-<span class="normal"><a href="#__codelineno-0-1498">1498</a></span>
-<span class="normal"><a href="#__codelineno-0-1499">1499</a></span>
-<span class="normal"><a href="#__codelineno-0-1500">1500</a></span>
-<span class="normal"><a href="#__codelineno-0-1501">1501</a></span>
-<span class="normal"><a href="#__codelineno-0-1502">1502</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1491" name="__codelineno-0-1491"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_daemon_available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-1492" name="__codelineno-0-1492"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when the llmster daemon can be controlled here.</span>
-<a id="__codelineno-0-1493" name="__codelineno-0-1493"></a>
-<a id="__codelineno-0-1494" name="__codelineno-0-1494"></a><span class="sd">    Only a standalone llmster binary counts. ``lms`` is deliberately not</span>
-<a id="__codelineno-0-1495" name="__codelineno-0-1495"></a><span class="sd">    accepted: where LM Studio embeds the daemon, ``lms daemon up`` starts</span>
-<a id="__codelineno-0-1496" name="__codelineno-0-1496"></a><span class="sd">    the desktop app rather than a headless daemon, so treating ``lms`` as</span>
-<a id="__codelineno-0-1497" name="__codelineno-0-1497"></a><span class="sd">    &quot;daemon available&quot; offers a start action that cannot work.</span>
-<a id="__codelineno-0-1498" name="__codelineno-0-1498"></a>
-<a id="__codelineno-0-1499" name="__codelineno-0-1499"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-1500" name="__codelineno-0-1500"></a><span class="sd">        bool: ``True`` when an llmster binary was found.</span>
-<a id="__codelineno-0-1501" name="__codelineno-0-1501"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1502" name="__codelineno-0-1502"></a>    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">get_llmster_cmd</span><span class="p">())</span>
+<span class="normal"><a href="#__codelineno-0-1495">1495</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1484" name="__codelineno-0-1484"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_daemon_available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-1485" name="__codelineno-0-1485"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when the llmster daemon can be controlled here.</span>
+<a id="__codelineno-0-1486" name="__codelineno-0-1486"></a>
+<a id="__codelineno-0-1487" name="__codelineno-0-1487"></a><span class="sd">    Only a standalone llmster binary counts. ``lms`` is deliberately not</span>
+<a id="__codelineno-0-1488" name="__codelineno-0-1488"></a><span class="sd">    accepted: where LM Studio embeds the daemon, ``lms daemon up`` starts</span>
+<a id="__codelineno-0-1489" name="__codelineno-0-1489"></a><span class="sd">    the desktop app rather than a headless daemon, so treating ``lms`` as</span>
+<a id="__codelineno-0-1490" name="__codelineno-0-1490"></a><span class="sd">    &quot;daemon available&quot; offers a start action that cannot work.</span>
+<a id="__codelineno-0-1491" name="__codelineno-0-1491"></a>
+<a id="__codelineno-0-1492" name="__codelineno-0-1492"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-1493" name="__codelineno-0-1493"></a><span class="sd">        bool: ``True`` when an llmster binary was found.</span>
+<a id="__codelineno-0-1494" name="__codelineno-0-1494"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1495" name="__codelineno-0-1495"></a>    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">get_llmster_cmd</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3705,35 +3705,35 @@ the desktop app rather than a headless daemon, so treating <code>lms</code> as
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1505">1505</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1498">1498</a></span>
+<span class="normal"><a href="#__codelineno-0-1499">1499</a></span>
+<span class="normal"><a href="#__codelineno-0-1500">1500</a></span>
+<span class="normal"><a href="#__codelineno-0-1501">1501</a></span>
+<span class="normal"><a href="#__codelineno-0-1502">1502</a></span>
+<span class="normal"><a href="#__codelineno-0-1503">1503</a></span>
+<span class="normal"><a href="#__codelineno-0-1504">1504</a></span>
+<span class="normal"><a href="#__codelineno-0-1505">1505</a></span>
 <span class="normal"><a href="#__codelineno-0-1506">1506</a></span>
 <span class="normal"><a href="#__codelineno-0-1507">1507</a></span>
 <span class="normal"><a href="#__codelineno-0-1508">1508</a></span>
 <span class="normal"><a href="#__codelineno-0-1509">1509</a></span>
 <span class="normal"><a href="#__codelineno-0-1510">1510</a></span>
 <span class="normal"><a href="#__codelineno-0-1511">1511</a></span>
-<span class="normal"><a href="#__codelineno-0-1512">1512</a></span>
-<span class="normal"><a href="#__codelineno-0-1513">1513</a></span>
-<span class="normal"><a href="#__codelineno-0-1514">1514</a></span>
-<span class="normal"><a href="#__codelineno-0-1515">1515</a></span>
-<span class="normal"><a href="#__codelineno-0-1516">1516</a></span>
-<span class="normal"><a href="#__codelineno-0-1517">1517</a></span>
-<span class="normal"><a href="#__codelineno-0-1518">1518</a></span>
-<span class="normal"><a href="#__codelineno-0-1519">1519</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1505" name="__codelineno-0-1505"></a><span class="k">def</span><span class="w"> </span><span class="nf">_has_loaded_model</span><span class="p">(</span><span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-1506" name="__codelineno-0-1506"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if lms ps output indicates loaded model.</span>
-<a id="__codelineno-0-1507" name="__codelineno-0-1507"></a>
-<a id="__codelineno-0-1508" name="__codelineno-0-1508"></a><span class="sd">    Includes debug logging.</span>
-<a id="__codelineno-0-1509" name="__codelineno-0-1509"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1510" name="__codelineno-0-1510"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+<span class="normal"><a href="#__codelineno-0-1512">1512</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1498" name="__codelineno-0-1498"></a><span class="k">def</span><span class="w"> </span><span class="nf">_has_loaded_model</span><span class="p">(</span><span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-1499" name="__codelineno-0-1499"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if lms ps output indicates loaded model.</span>
+<a id="__codelineno-0-1500" name="__codelineno-0-1500"></a>
+<a id="__codelineno-0-1501" name="__codelineno-0-1501"></a><span class="sd">    Includes debug logging.</span>
+<a id="__codelineno-0-1502" name="__codelineno-0-1502"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1503" name="__codelineno-0-1503"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+<a id="__codelineno-0-1504" name="__codelineno-0-1504"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-1505" name="__codelineno-0-1505"></a>    <span class="n">text</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<a id="__codelineno-0-1506" name="__codelineno-0-1506"></a>    <span class="k">if</span> <span class="s2">&quot;no models&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+<a id="__codelineno-0-1507" name="__codelineno-0-1507"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output explicitly reports no models&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1508" name="__codelineno-0-1508"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-1509" name="__codelineno-0-1509"></a>    <span class="k">if</span> <span class="s2">&quot;available&quot;</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">and</span> <span class="s2">&quot;loaded&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+<a id="__codelineno-0-1510" name="__codelineno-0-1510"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output contains only available models, ignoring&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-1511" name="__codelineno-0-1511"></a>        <span class="k">return</span> <span class="kc">False</span>
-<a id="__codelineno-0-1512" name="__codelineno-0-1512"></a>    <span class="n">text</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-<a id="__codelineno-0-1513" name="__codelineno-0-1513"></a>    <span class="k">if</span> <span class="s2">&quot;no models&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
-<a id="__codelineno-0-1514" name="__codelineno-0-1514"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output explicitly reports no models&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1515" name="__codelineno-0-1515"></a>        <span class="k">return</span> <span class="kc">False</span>
-<a id="__codelineno-0-1516" name="__codelineno-0-1516"></a>    <span class="k">if</span> <span class="s2">&quot;available&quot;</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">and</span> <span class="s2">&quot;loaded&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
-<a id="__codelineno-0-1517" name="__codelineno-0-1517"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;lms ps output contains only available models, ignoring&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1518" name="__codelineno-0-1518"></a>        <span class="k">return</span> <span class="kc">False</span>
-<a id="__codelineno-0-1519" name="__codelineno-0-1519"></a>    <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-0-1512" name="__codelineno-0-1512"></a>    <span class="k">return</span> <span class="kc">True</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
