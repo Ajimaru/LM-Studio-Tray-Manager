@@ -887,12 +887,13 @@ def test_version_flag_exits(tmp_path, monkeypatch):
         sys.argv = old_argv
 
 
-@pytest.mark.skip(
+@pytest.mark.skipif(
+    sys.platform == "darwin",
     reason=(
         "Hangs indefinitely on macOS: re-executes the module with mocked GTK "
         "and never returns. Pre-existing, reproduced on an unmodified "
-        "checkout. See TODO in project memory."
-    )
+        "checkout. Runs normally on Linux, where GTK is real."
+    ),
 )
 def test_namespace_fallback_to_appindicator3(monkeypatch, tmp_path):
     """If Ayatana namespace is missing, we fall back to ``AppIndicator3``.
@@ -976,12 +977,13 @@ def test_namespace_fallback_to_appindicator3(monkeypatch, tmp_path):
     assert getattr(module, "_AppState").AppIndicator3 is app_mod  # nosec B101
 
 
-@pytest.mark.skip(
+@pytest.mark.skipif(
+    sys.platform == "darwin",
     reason=(
         "Hangs indefinitely on macOS: re-executes the module with mocked GTK "
         "and never returns. Pre-existing, reproduced on an unmodified "
-        "checkout. See TODO in project memory."
-    )
+        "checkout. Runs normally on Linux, where GTK is real."
+    ),
 )
 def test_namespace_missing_exits(monkeypatch, capsys):
     """Fail with a clear error when no AppIndicator namespace exists."""
@@ -4084,12 +4086,13 @@ def test_start_daemon_fails_when_desktop_cannot_stop(tray_module, monkeypatch):
     )  # nosec B101
 
 
-@pytest.mark.skip(
+@pytest.mark.skipif(
+    sys.platform == "darwin",
     reason=(
         "Hangs indefinitely on macOS: re-executes the module with mocked GTK "
         "and never returns. Pre-existing, reproduced on an unmodified "
-        "checkout. See TODO in project memory."
-    )
+        "checkout. Runs normally on Linux, where GTK is real."
+    ),
 )
 def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     """Enable warning capture when module is imported in debug mode."""
