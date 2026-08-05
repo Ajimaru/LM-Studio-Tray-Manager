@@ -9714,3 +9714,85 @@ def test_reload_launch_agent_does_not_load(tray_module, monkeypatch):
     actions = [c[1] for c in calls]
     assert "unload" in actions  # nosec B101
     assert "load" not in actions  # nosec B101
+
+
+# ----------------------------------------------------------------------
+# main() entry point
+# ----------------------------------------------------------------------
+
+
+def _main_args(**overrides):
+    """Return an argparse-like namespace with main()'s expected fields."""
+    defaults = {
+        "auto_start_daemon": False,
+        "gui": False,
+        "version": False,
+        "debug": False,
+        "list_models": False,
+        "model": None,
+        "script_dir": ".",
+    }
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+def test_main_version_flag_prints_and_exits(tray_module, monkeypatch, capsys):
+    """--version reports the resolved version and stops before startup."""
+    monkeypatch.setattr(
+        tray_module, "parse_args", lambda: _main_args(version=True)
+    )
+    monkeypatch.setattr(tray_module, "load_config", lambda: None)
+    monkeypatch.setattr(tray_module, "get_app_version", lambda: "v9.9.9")
+
+    with pytest.raises(SystemExit) as exc:
+        tray_module.main()
+
+    assert exc.value.code == 0  # nosec B101
+    assert "v9.9.9" in capsys.readouterr().out  # nosec B101
+
+
+def test_main_warns_on_conflicting_flags(tray_module, monkeypatch, capsys):
+    """--auto-start-daemon and --gui together warn that --gui wins."""
+    monkeypatch.setattr(
+        tray_module,
+        "parse_args",
+        lambda: _main_args(auto_start_daemon=True, gui=True, version=True),
+    )
+    monkeypatch.setattr(tray_module, "load_config", lambda: None)
+    monkeypatch.setattr(tray_module, "get_app_version", lambda: "v1.0.0")
+
+    with pytest.raises(SystemExit):
+        tray_module.main()
+
+    assert "mutually exclusive" in capsys.readouterr().err  # nosec B101
+
+
+def test_main_delegates_to_macos_backend(tray_module, monkeypatch):
+    """On macOS main() hands over to _run_macos and returns."""
+    monkeypatch.setattr(
+        tray_module, "parse_args", lambda: _main_args()
+    )
+    monkeypatch.setattr(tray_module, "load_config", lambda: None)
+    monkeypatch.setattr(tray_module, "IS_MACOS", True)
+    called = []
+    monkeypatch.setattr(
+        tray_module, "_run_macos", lambda a: called.append(a)
+    )
+
+    tray_module.main()
+
+    assert len(called) == 1  # nosec B101
+
+
+def test_main_exits_without_pygobject(tray_module, monkeypatch, capsys):
+    """On Linux a missing gi is a fatal, explained error."""
+    monkeypatch.setattr(tray_module, "parse_args", lambda: _main_args())
+    monkeypatch.setattr(tray_module, "load_config", lambda: None)
+    monkeypatch.setattr(tray_module, "IS_MACOS", False)
+    monkeypatch.setattr(tray_module, "gi", None)
+
+    with pytest.raises(SystemExit) as exc:
+        tray_module.main()
+
+    assert exc.value.code == 1  # nosec B101
+    assert "PyGObject" in capsys.readouterr().err  # nosec B101
