@@ -186,11 +186,48 @@ jobs:
 
           ./tools/build_macos.sh "${build_args[@]}"
 
+      - name: Verify macOS artifacts
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          dmg=(release/lmstudio-tray-manager-*-macos-*.dmg)
+          tarball=(release/lmstudio-tray-manager-*-macos-*.tar.gz)
+
+          [[ ${#dmg[@]} -gt 0 ]] || { echo "❌ DMG missing"; exit 1; }
+          [[ ${#tarball[@]} -gt 0 ]] || { echo "❌ Tarball missing"; exit 1; }
+          [[ -f release/SHA256SUMS-macos.txt ]] || {
+            echo "❌ Checksums missing"; exit 1; }
+
+          # Never publish an unsigned build: it would fail Gatekeeper and
+          # send users back to the xattr workaround. The build script marks
+          # those with an -unsigned suffix.
+          for f in "${dmg[@]}" "${tarball[@]}"; do
+            case "$f" in
+              *-unsigned.*)
+                echo "❌ Unsigned artifact would be published: $f"
+                echo "   Check the signing secrets for this repository."
+                exit 1
+                ;;
+            esac
+          done
+
+          # Signed is not enough - the notarization ticket has to be
+          # stapled, or offline machines still see a warning.
+          xcrun stapler validate "${dmg[0]}"
+          xcrun stapler validate dist/LM-Studio-Tray-Manager.app
+          spctl -a -t open --context context:primary-signature \
+            -vvv "${dmg[0]}"
+
+          ls -lh release/lmstudio-tray-manager-*-macos-*
+          cat release/SHA256SUMS-macos.txt
+
       - name: Upload macOS artifacts
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           name: ${{ github.ref_name }}
           generate_release_notes: false
           files: |
+            release/lmstudio-tray-manager-*-macos-*.dmg
             release/lmstudio-tray-manager-*-macos-*.tar.gz
             release/SHA256SUMS-macos.txt
