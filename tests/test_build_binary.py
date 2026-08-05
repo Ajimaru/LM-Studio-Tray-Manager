@@ -162,14 +162,35 @@ def test_check_dependencies_installs(
     assert calls[0][:3] == [sys.executable, "-m", "pip"]
 
 
-def test_get_hidden_imports_contains_both_indicators(build_binary_module):
+def test_get_hidden_imports_contains_both_indicators(
+    build_binary_module, monkeypatch
+):
     """
     Hidden imports list should include both AyatanaAppIndicator3 and
     AppIndicator3.
     """
+    monkeypatch.setattr(build_binary_module.sys, "platform", "linux")
     hidden = build_binary_module.get_hidden_imports()
     assert "gi.repository.AyatanaAppIndicator3" in hidden
     assert "gi.repository.AppIndicator3" in hidden
+
+
+def test_get_hidden_imports_macos_bundles_pyobjc(
+    build_binary_module, monkeypatch
+):
+    """macOS builds must ship rumps and the PyObjC bindings.
+
+    Foundation backs the main-thread marshalling; if PyInstaller drops it
+    the tray silently loses its AppKit thread safety. Note that shipped
+    macOS bundles are built by tools/build_macos.sh, which does not call
+    this module - see the note on get_hidden_imports().
+    """
+    monkeypatch.setattr(build_binary_module.sys, "platform", "darwin")
+    hidden = build_binary_module.get_hidden_imports()
+    assert "rumps" in hidden
+    assert "Foundation" in hidden
+    assert "objc" in hidden
+    assert not any(h.startswith("gi.") for h in hidden)
 
 
 def test_get_data_files(build_binary_module):

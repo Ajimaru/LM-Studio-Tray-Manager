@@ -187,6 +187,26 @@ EOF
 
 Then enable autostart in your desktop environment settings.
 
+On **macOS** this is built into the tray instead - no file to write by hand.
+**Options → Start at Login** installs a LaunchAgent at
+`~/Library/LaunchAgents/com.lmstudio.tray-manager.plist`; a checkmark shows
+it is active, and switching it off removes the file again.
+
+**Start Daemon at Login** adds `--auto-start-daemon` to that same login
+item, so the tray brings up the llmster daemon after it starts. It requires
+`Start at Login` to be active and llmster to be installed; until both hold,
+the entry stays greyed out.
+
+Daemon control needs llmster itself
+(`curl -fsSL https://lmstudio.ai/install.sh | bash`). `lms daemon up` is
+**not** a substitute: where LM Studio embeds the daemon, that command
+prints "Waking up LM Studio service..." and launches the desktop app,
+reporting `{"isDaemon": false}`.
+
+Without llmster the tray therefore shows an inert
+🔴 **Daemon (Not Installed)** entry rather than a start action, identically
+on macOS and Linux.
+
 ## Command-Line Options
 
 ### Usage Syntax
@@ -262,6 +282,21 @@ The tray icon changes based on application status:
 | ℹ️ | Info | Daemon or desktop app running, but no model loaded |
 | ✅ | OK | A model is loaded and ready |
 
+### Notifications
+
+Starting or stopping the daemon or the desktop app posts a system
+notification, as do failures.
+
+On macOS the delivery route depends on how the app was signed. A
+Developer ID signed build has a registered notification identity, so the
+native API is used and banners carry the app's own icon.
+
+An ad-hoc signed or unsigned build has no such identity: macOS discards
+its notifications without raising any error. Those builds fall back to
+`osascript`, which posts under the Script Editor identity - the banners
+appear, but with the Script Editor icon, and are configured under that
+entry in **System Settings -> Notifications**.
+
 ### Left-Click Menu
 
 Left-click on the tray icon to open the context menu with available options.
@@ -282,6 +317,31 @@ The menu shows the following options (availability depends on current state):
 - **Quit Tray** - Exit the tray manager
 
 Each option is **context-aware**: unavailable actions are grayed out.
+
+### Monitoring a Remote Host
+
+Set **Options → Configuration** to a host other than this machine (for
+example `192.168.1.136:1234`) and the tray monitors that endpoint over the
+LM Studio HTTP API instead of local processes.
+
+In this mode the menu shows the endpoint and its state, and the start/stop
+entries are hidden - those act on local processes and cannot reach another
+machine:
+
+```text
+🟢 Remote: 192.168.1.136:1234
+  → Model loaded
+```
+
+The indicator is green when a model is loaded, yellow when the endpoint
+answers without one, and red when it is unreachable.
+
+A machine's own address still counts as local, so entering a host's own LAN
+IP on that host keeps the normal local menu. Point the setting back at
+`localhost` to restore local control.
+
+On macOS the endpoint is entered as a single `host:port` field; the GTK
+dialog on Linux has separate host and port entries.
 
 ## Desktop App Launch
 
@@ -332,11 +392,13 @@ When you click "Start Desktop App":
 
 When you click "Start LM Studio Daemon":
 
-1. **Tries CLI commands** in order:
-   - `lms daemon up` (preferred LM Studio CLI wrapper)
-   - `llmster daemon start` (direct daemon command)
+1. **Tries llmster commands** in order: `llmster daemon up`,
+   `llmster daemon start`, `llmster up`, `llmster start`
 
-   If the primary commands fail, also tries: `lms up`, `lms start`, `llmster up`, `llmster start`
+   `lms` is not used to start a daemon. Where LM Studio embeds the daemon,
+   `lms daemon up` launches the desktop app instead of a headless process,
+   so the menu entry is greyed out when llmster is absent. `lms` is still
+   used for stopping and for status.
 
 2. **Conflict handling**:
    - Stops desktop app first (if running)

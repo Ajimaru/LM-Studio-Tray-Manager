@@ -6,9 +6,9 @@ Automation scripts for LM Studio & llmster - to control and monitor the applicat
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python + gi](https://img.shields.io/badge/Python-gi_compatible-blue.svg)](https://www.python.org/downloads/)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%26%20macOS-orange.svg)](https://www.linux.org/)
-[![LM Studio App v0.4.3+](https://img.shields.io/badge/LM_Studio_App-v0.4.3+-green.svg)](https://lmstudio.ai/download)
-[![llmster v0.0.3+](https://img.shields.io/badge/llmster-v0.0.3+-green.svg)](https://lmstudio.ai)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-orange.svg)](https://www.linux.org/)
+[![LM Studio App v0.4.20+](https://img.shields.io/badge/LM_Studio_App-v0.4.20+-green.svg)](https://lmstudio.ai/download)
+[![llmster v0.0.20+](https://img.shields.io/badge/llmster-v0.0.20+-green.svg)](https://lmstudio.ai)
 [![Release](https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ajimaru/LM-Studio-Tray-Manager/total.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases)
 
@@ -163,16 +163,17 @@ This setup script:
 
 **Download:**
 
-- `lmstudio-tray-manager-vX.Y.Z-macos-unsigned.tar.gz`
-- `lmstudio-tray-manager-vX.Y.Z-macos-signed.tar.gz`
-- `lmstudio-tray-manager-vX.Y.Z-macos-notarized.tar.gz`
+- `lmstudio-tray-manager-vX.Y.Z-macos-arm64.dmg` — open it and drag the app
+  onto *Applications*
+- `lmstudio-tray-manager-vX.Y.Z-macos-arm64.tar.gz` — same bundle, for
+  scripted installs
 
-**Extract and run:**
+**Run from the tarball:**
 
 ```bash
 # example (replace X.Y.Z with version)
 VERSION=vX.Y.Z
-tar -xzf lmstudio-tray-manager-${VERSION}-macos-unsigned.tar.gz
+tar -xzf lmstudio-tray-manager-${VERSION}-macos-arm64.tar.gz
 
 # Double-click the .app in Finder, or run from terminal:
 open ./LM-Studio-Tray-Manager.app
@@ -187,11 +188,9 @@ open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
 - `lms ps` (check LM Studio daemon)
 - Click menu bar icon to see tray menu
 
-**Note:**
-
-- `macos-unsigned` is for local testing.
-- `macos-signed` is signed but may still show Gatekeeper prompts.
-- `macos-notarized` is the preferred release artifact for external macOS users.
+**Note:** builds are Apple Silicon only (`arm64`); Intel Macs are not
+supported. Locally built artifacts carry an `-unsigned` suffix when no
+signing identity was passed - those do need `xattr -cr` before launching.
 
 </details>
 <!-- markdownlint-enable MD033 -->
@@ -204,7 +203,7 @@ open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
 
 ## Requirements
 
-- **LM Studio Daemon** (llmster v0.0.3+): Headless backend for model inference
+- **LM Studio Daemon** (llmster v0.0.20+): Headless backend for model inference
 - **LM Studio Desktop App** (v0.4.3+): GUI frontend for model management and interaction
 - **Python 3.8+** for source builds
 - Linux system with GNOME/GTK3 support (AppImage works everywhere), or macOS 12+

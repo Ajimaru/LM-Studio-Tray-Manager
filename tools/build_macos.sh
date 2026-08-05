@@ -31,7 +31,18 @@ GENERATED_ICON="${BUILD_DIR}/LM-Studio-Tray-Manager.icns"
 APP_PATH="${DIST_DIR}/LM-Studio-Tray-Manager.app"
 SIGN_IDENTITY=""
 NOTARY_PROFILE=""
-ARCHIVE_SUFFIX="unsigned"
+# The bundle is single-architecture: PyInstaller can only ship what the
+# host Python provides. Release names carry it so an Intel user does not
+# download an arm64-only build.
+TARGET_ARCH="${TARGET_ARCH:-$(uname -m)}"
+# Without --keychain, notarytool stores the profile in the iCloud-managed
+# "Local Items" keychain, where it can disappear between runs. A dedicated
+# keychain keeps it put; picked up automatically when it exists.
+NOTARY_KEYCHAIN="${NOTARY_KEYCHAIN:-}"
+DEFAULT_NOTARY_KEYCHAIN="$HOME/Library/Keychains/notary.keychain-db"
+# Only unsigned builds are marked. A signed/notarized build is the normal
+# release artifact, so its name stays short: ...-macos-arm64.dmg
+ARCHIVE_SUFFIX="-unsigned"
 ICON_PATH=""
 
 cd "$PROJECT_ROOT"
@@ -66,9 +77,17 @@ parse_args() {
                 NOTARY_PROFILE="$2"
                 shift 2
                 ;;
+            --notary-keychain)
+                if [[ $# -lt 2 ]]; then
+                    echo -e "${RED}❌ --notary-keychain requires a value${NC}"
+                    exit 1
+                fi
+                NOTARY_KEYCHAIN="$2"
+                shift 2
+                ;;
             *)
                 echo -e "${RED}❌ Unknown option: $1${NC}"
-                echo "Usage: ./tools/build_macos.sh [--clean] [--sign-identity <identity>] [--notary-profile <profile>]"
+                echo "Usage: ./tools/build_macos.sh [--clean] [--sign-identity <identity>] [--notary-profile <profile>] [--notary-keychain <path>]"
                 exit 1
                 ;;
         esac
@@ -166,11 +185,26 @@ generate_icon() {
     mkdir -p "$ICON_RENDER_DIR" "$ICONSET_DIR"
 
     if [[ -f "$ICON_VECTOR_SOURCE" ]]; then
-        local rendered_icon
-        rendered_icon="$ICON_RENDER_DIR/$(basename "$ICON_VECTOR_SOURCE").png"
-        qlmanage -t -s 1024 -o "$ICON_RENDER_DIR" "$ICON_VECTOR_SOURCE" >/dev/null 2>&1
+        # qlmanage -s N caps the preview size, it does not scale the artwork
+        # up. The source SVG declares width/height of 64, so QuickLook draws
+        # it at 64px in the corner of a 1024px canvas and leaves the rest
+        # transparent - which is exactly what a tiny top-left icon in Finder
+        # looks like. Render from a copy that declares the target size so the
+        # vector is rasterised at full resolution instead.
+        local scaled_svg rendered_icon
+        scaled_svg="$ICON_RENDER_DIR/icon-1024.svg"
+        sed -E \
+            -e '1,/<svg/ s/(<svg[^>]*[[:space:]])width="[^"]*"/\1width="1024"/' \
+            -e '1,/<svg/ s/(<svg[^>]*[[:space:]])height="[^"]*"/\1height="1024"/' \
+            "$ICON_VECTOR_SOURCE" > "$scaled_svg"
+
+        rendered_icon="$ICON_RENDER_DIR/$(basename "$scaled_svg").png"
+        qlmanage -t -s 1024 -o "$ICON_RENDER_DIR" "$scaled_svg" >/dev/null 2>&1
         if [[ -f "$rendered_icon" ]]; then
-            cp "$rendered_icon" "$ICON_MASTER_PNG"
+            # Normalise to an exact 1024x1024 square regardless of what
+            # QuickLook produced.
+            sips -z 1024 1024 "$rendered_icon" \
+                --out "$ICON_MASTER_PNG" >/dev/null 2>&1
         fi
     fi
 
@@ -210,7 +244,7 @@ build_pyinstaller() {
         --workpath="$PYINSTALLER_WORK_DIR"
         --specpath="$SPEC_DIR"
         --osx-bundle-identifier=com.lmstudio.tray-manager
-        --target-architecture=arm64
+        --target-architecture="$TARGET_ARCH"
         --add-data "$PROJECT_ROOT/VERSION"":."
         --add-data "$PROJECT_ROOT/AUTHORS"":."
         --add-data "$PROJECT_ROOT/assets"":assets"
@@ -228,6 +262,24 @@ build_pyinstaller() {
     if [[ ! -f "$binary_path" ]]; then
         echo -e "${RED}❌ PyInstaller build failed${NC}"
         exit 1
+    fi
+
+    # PyInstaller defaults the bundle version to 0.0.0, which is what
+    # Finder and a signed/notarized release would report.
+    local version
+    version="$(tr -d ' \t\n\r' < "$PROJECT_ROOT/VERSION" 2>/dev/null)"
+    version="${version#v}"
+    if [[ -n "$version" ]]; then
+        /usr/libexec/PlistBuddy -c \
+            "Set :CFBundleShortVersionString $version" \
+            "$APP_PATH/Contents/Info.plist" >/dev/null 2>&1 || true
+        /usr/libexec/PlistBuddy -c \
+            "Set :CFBundleVersion $version" \
+            "$APP_PATH/Contents/Info.plist" >/dev/null 2>&1 \
+            || /usr/libexec/PlistBuddy -c \
+                "Add :CFBundleVersion string $version" \
+                "$APP_PATH/Contents/Info.plist" >/dev/null 2>&1 || true
+        echo -e "${GREEN}✅ Bundle version set to $version${NC}"
     fi
 
     echo -e "${GREEN}✅ .app bundle created${NC}"
@@ -272,14 +324,58 @@ copy_resources() {
 codesign_app() {
     if [[ -z "$SIGN_IDENTITY" ]]; then
         echo -e "${BLUE}ℹ️  Skipping code signing (no --sign-identity provided)${NC}"
+        # Editing Info.plist and copying resources both invalidate the
+        # ad-hoc signature PyInstaller applied ("plist or signature have
+        # been modified"). Re-seal so the unsigned build still verifies.
+        codesign --force --deep --sign - "$APP_PATH" >/dev/null 2>&1 || true
         return
     fi
 
     echo -e "${BLUE}🔏 Code signing app bundle...${NC}"
-    codesign --force --deep --options runtime --sign "$SIGN_IDENTITY" "$APP_PATH"
+
+    # A PyInstaller bundle needs Hardened Runtime exceptions; signing with
+    # --options runtime alone produces an app that crashes on launch.
+    local entitlements="$PROJECT_ROOT/tools/macos-entitlements.plist"
+    local sign_args=(--force --deep --options runtime)
+    if [[ -f "$entitlements" ]]; then
+        sign_args+=(--entitlements "$entitlements")
+    else
+        echo -e "${RED}⚠️  $entitlements missing; signing without it${NC}"
+    fi
+
+    codesign "${sign_args[@]}" --sign "$SIGN_IDENTITY" "$APP_PATH"
     codesign --verify --deep --strict --verbose=2 "$APP_PATH"
-    ARCHIVE_SUFFIX="signed"
+    ARCHIVE_SUFFIX=""
     echo -e "${GREEN}✅ App bundle signed${NC}"
+}
+
+# Echo the credential arguments for notarytool, including --keychain when a
+# dedicated keychain is configured or present at the default location.
+notary_args() {
+    printf '%s\n' --keychain-profile "$NOTARY_PROFILE"
+
+    local keychain="$NOTARY_KEYCHAIN"
+    if [[ -z "$keychain" && -f "$DEFAULT_NOTARY_KEYCHAIN" ]]; then
+        keychain="$DEFAULT_NOTARY_KEYCHAIN"
+    fi
+    if [[ -n "$keychain" ]]; then
+        printf '%s\n' --keychain "$keychain"
+    fi
+}
+
+# Unlocking is best effort: a locked keychain fails mid-notarization, which
+# is the worst moment for it.
+unlock_notary_keychain() {
+    local keychain="$NOTARY_KEYCHAIN"
+    if [[ -z "$keychain" && -f "$DEFAULT_NOTARY_KEYCHAIN" ]]; then
+        keychain="$DEFAULT_NOTARY_KEYCHAIN"
+    fi
+    [[ -n "$keychain" ]] || return 0
+
+    if [[ -n "${NOTARY_KEYCHAIN_PASSWORD:-}" ]]; then
+        security unlock-keychain -p "$NOTARY_KEYCHAIN_PASSWORD" "$keychain" \
+            2>/dev/null || true
+    fi
 }
 
 notarize_app() {
@@ -300,15 +396,21 @@ notarize_app() {
 
     echo -e "${BLUE}🧾 Notarizing app bundle...${NC}"
 
+    unlock_notary_keychain
+    local notary_opts=()
+    while IFS= read -r line; do
+        notary_opts+=("$line")
+    done < <(notary_args)
+
     local notarize_zip="${BUILD_DIR}/LM-Studio-Tray-Manager-notarize.zip"
     rm -f "$notarize_zip"
 
     ditto -c -k --keepParent "$APP_PATH" "$notarize_zip"
-    xcrun notarytool submit "$notarize_zip" --keychain-profile "$NOTARY_PROFILE" --wait
+    xcrun notarytool submit "$notarize_zip" "${notary_opts[@]}" --wait
     xcrun stapler staple "$APP_PATH"
     xcrun stapler validate "$APP_PATH"
 
-    ARCHIVE_SUFFIX="notarized"
+    ARCHIVE_SUFFIX=""
     echo -e "${GREEN}✅ App bundle notarized and stapled${NC}"
 }
 
@@ -318,7 +420,13 @@ create_release_archive() {
     VERSION=$(cat VERSION)
     mkdir -p "$RELEASE_DIR"
 
-    ARCHIVE_NAME="lmstudio-tray-manager-${VERSION}-macos-${ARCHIVE_SUFFIX}.tar.gz"
+    # Drop macOS artifacts from earlier runs. The suffix encodes the signing
+    # state, so a leftover "unsigned" file would otherwise sit next to the
+    # signed one and be published by the release workflow's wildcard.
+    rm -f "$RELEASE_DIR"/lmstudio-tray-manager-*-macos-*.tar.gz \
+          "$RELEASE_DIR"/lmstudio-tray-manager-*-macos-*.dmg
+
+    ARCHIVE_NAME="lmstudio-tray-manager-${VERSION}-macos-${TARGET_ARCH}${ARCHIVE_SUFFIX}.tar.gz"
 
     tar -czf "$RELEASE_DIR/$ARCHIVE_NAME" \
         -C "$DIST_DIR" \
@@ -331,13 +439,71 @@ create_release_archive() {
         (cd "$RELEASE_DIR" && shasum -a 256 "$ARCHIVE_NAME" > "SHA256SUMS-macos.txt")
     fi
 
-    echo -e "${GREEN}✅ Release archive created${NC}"
+    create_dmg "$VERSION"
+
+    # Checksums cover every artifact, so regenerate after the DMG exists.
+    if command -v sha256sum >/dev/null 2>&1; then
+        (cd "$RELEASE_DIR" && sha256sum lmstudio-tray-manager-*-macos-* \
+            > "SHA256SUMS-macos.txt")
+    else
+        (cd "$RELEASE_DIR" && shasum -a 256 lmstudio-tray-manager-*-macos-* \
+            > "SHA256SUMS-macos.txt")
+    fi
+
+    echo -e "${GREEN}✅ Release artifacts created${NC}"
     echo ""
-    echo "📦 Archive: $ARCHIVE_NAME"
-    ls -lh "$RELEASE_DIR/$ARCHIVE_NAME"
+    ls -lh "$RELEASE_DIR"/lmstudio-tray-manager-*-macos-*
     echo ""
-    echo "🔐 Checksum:"
+    echo "🔐 Checksums:"
     cat "$RELEASE_DIR/SHA256SUMS-macos.txt"
+}
+
+create_dmg() {
+    local version="$1"
+    local dmg_name="lmstudio-tray-manager-${version}-macos-${TARGET_ARCH}${ARCHIVE_SUFFIX}.dmg"
+    local dmg_path="$RELEASE_DIR/$dmg_name"
+    local staging="$BUILD_DIR/dmg"
+
+    echo -e "${BLUE}💿 Creating DMG...${NC}"
+
+    rm -rf "$staging" "$dmg_path"
+    mkdir -p "$staging"
+    cp -R "$APP_PATH" "$staging/"
+
+    # Drag-and-drop target, so users install without a terminal.
+    ln -s /Applications "$staging/Applications"
+
+    if ! hdiutil create \
+            -volname "LM Studio Tray Manager" \
+            -srcfolder "$staging" \
+            -ov -format UDZO \
+            "$dmg_path" >/dev/null; then
+        echo -e "${RED}❌ DMG creation failed${NC}"
+        rm -rf "$staging"
+        return 1
+    fi
+    rm -rf "$staging"
+
+    # An unsigned DMG triggers Gatekeeper even when the app inside is
+    # notarized, so sign and staple the container as well.
+    if [[ -n "$SIGN_IDENTITY" ]]; then
+        codesign --force --sign "$SIGN_IDENTITY" "$dmg_path"
+        echo -e "${GREEN}✅ DMG signed${NC}"
+    fi
+    if [[ -n "$NOTARY_PROFILE" && -n "$SIGN_IDENTITY" ]]; then
+        echo -e "${BLUE}🧾 Notarizing DMG...${NC}"
+        unlock_notary_keychain
+        local notary_opts=()
+        while IFS= read -r line; do
+            notary_opts+=("$line")
+        done < <(notary_args)
+        xcrun notarytool submit "$dmg_path" "${notary_opts[@]}" --wait
+        xcrun stapler staple "$dmg_path"
+        xcrun stapler validate "$dmg_path"
+        echo -e "${GREEN}✅ DMG notarized and stapled${NC}"
+    fi
+
+    echo -e "${GREEN}✅ DMG created: $dmg_name${NC}"
 }
 
 print_next_steps() {

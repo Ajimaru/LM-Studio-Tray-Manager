@@ -131,4 +131,8 @@ jobs:
           CODACY_PROJECT_NAME: ${{ vars.CODACY_PROJECT_NAME }}
         continue-on-error: true
         run: |
-          bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t "$CODACY_API_TOKEN"
+          # -t expects a *repository* token. An account token is picked up
+          # from CODACY_API_TOKEN together with the provider, username and
+          # project name above; passing it via -t makes the reporter look up
+          # a project that does not exist ("Request URL not found").
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml

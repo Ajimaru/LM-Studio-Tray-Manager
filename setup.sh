@@ -531,9 +531,14 @@ PYCODE
 }
 
 check_rumps() {
+    # Foundation is checked alongside rumps: the tray uses PyObjC directly to
+    # marshal AppKit calls onto the main thread. rumps depends on
+    # pyobjc-framework-Cocoa, so a working install has both, but a partial
+    # environment would otherwise start with that safety net silently missing.
     if command -v python3 >/dev/null 2>&1; then
         python3 - <<'PYCODE' >/dev/null 2>&1
 import rumps  # noqa: F401
+from Foundation import NSObject, NSThread  # noqa: F401
 PYCODE
         return $?
     fi
@@ -548,13 +553,14 @@ if [ "$IS_MACOS" = true ]; then
         print_step "Skipped (binary release bundles its own dependencies)"
         log_output "INFO" "Step 4: Skipped rumps check (binary release)"
     elif check_rumps; then
-        print_step "rumps is already installed"
-        log_output "INFO" "rumps Python package detected"
+        print_step "rumps and PyObjC are already installed"
+        log_output "INFO" "rumps and PyObjC (Foundation) detected"
     else
-        print_warning "rumps not found"
-        log_output "WARN" "rumps Python package missing"
+        print_warning "rumps (or its PyObjC dependency) not found"
+        log_output "WARN" "rumps or PyObjC Foundation bindings missing"
         echo ""
-        print_info "The macOS tray backend requires the 'rumps' Python package."
+        print_info "The macOS tray backend requires the 'rumps' Python package"
+        print_info "and its PyObjC bindings (installed together by pip)."
         if [ "$DRY_RUN" = "1" ]; then
             print_info "[DRY-RUN] Would install: pip install rumps"
             log_output "INFO" "DRY-RUN: Would install rumps via pip"
