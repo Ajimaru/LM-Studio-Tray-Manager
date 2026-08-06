@@ -388,6 +388,7 @@ EOF</code></pre>
                 <li><strong>Stop Daemon:</strong> Stops llmster daemon process</li>
                 <li><strong>Show Status:</strong> Displays current LM Studio status via <code>lms ps</code> output. If daemon is not running, falls back to querying the LM Studio API directly and displays loaded models. Shows "No models loaded or error." if neither succeeds.</li>
                 <li><strong>Options &gt; Configuration:</strong> Configure LM Studio API host/port endpoint. Default: <code>localhost:1234</code>. Configuration is persisted at <code>~/.config/lmstudio_tray.json</code></li>
+                <li><strong>Options &gt; Start with Windows</strong> (Windows only)<strong>:</strong> Tick to run the tray at login, untick to stop it. Writes the same Startup-folder shortcut as <code>lmstudio_autostart.ps1 -InstallAutostart</code> and the installer's autostart task, so the checkbox reports the true state however it was switched on</li>
                 <li><strong>Options &gt; Check for updates:</strong> Manual GitHub release check</li>
                 <li><strong>About:</strong> Shows version, update status, and authors</li>
                 <li><strong>Quit Tray:</strong> Terminates the tray monitor</li>

@@ -2040,13 +2040,18 @@ Settings → General → Login Items &amp; Extensions</strong>, then add
 itself, so there is no second place for it to fall out of sync.</p>
 <p>To also bring up the llmster daemon at login, pass <code>--auto-start-daemon</code>
 when launching the app.</p>
-<p>On <strong>Windows</strong>, tick <em>start with Windows</em> in the installer, or register it
-afterwards:</p>
+<p>On <strong>Windows</strong> the tray manages this itself: tick <strong>Options → Start with
+Windows</strong> in the menu. The checkbox reflects the current state, so it also
+tells you whether autostart is on.</p>
+<p>The same setting is reachable outside the tray - tick <em>start with Windows</em>
+in the installer, or run:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">.\</span><span class="n">lmstudio_autostart</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-InstallAutostart</span>      <span class="c"># undo with -UninstallAutostart</span>
 </code></pre></div>
-<p>That writes a shortcut into the Startup folder (<code>shell:startup</code>) rather than
-a registry value or a scheduled task: it needs no elevation, and it stays
-visible and removable without this script.</p>
+<p>All three write the <em>same</em> shortcut into the Startup folder
+(<code>shell:startup</code>), rather than a registry value or a scheduled task: it
+needs no elevation, and it stays visible and removable without any of them.
+Because they share one file, whichever switched autostart on, the others see
+it and can switch it off again.</p>
 <p>Daemon control needs llmster itself
 (<code>curl -fsSL https://lmstudio.ai/install.sh | bash</code>). <code>lms daemon up</code> is
 <strong>not</strong> a substitute: where LM Studio embeds the daemon, that command
@@ -2167,6 +2172,8 @@ disabled loses nothing but the banner.</p>
 <li><strong>Show Status</strong> - Manually refresh and display the tray status</li>
 <li><strong>Options</strong> - Submenu containing:</li>
 <li><strong>Configuration</strong> - Access application settings</li>
+<li><strong>Start with Windows</strong> <em>(Windows only)</em> - Tick to start the tray at
+    login, untick to stop it. See <a href="#autostart-on-login">Autostart on Login</a></li>
 <li><strong>Check for updates</strong> - Check GitHub for new releases</li>
 <li><strong>About</strong> - Display application information</li>
 <li><strong>Quit Tray</strong> - Exit the tray manager</li>

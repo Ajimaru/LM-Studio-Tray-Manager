@@ -235,11 +235,15 @@ Expand-Archive lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip -DestinationPath .
   or `.logs\lmstudio_tray.log` next to the `.exe` when that folder is
   writable
 
-**Start with Windows:** tick the box in the installer, or register it later:
+**Start with Windows:** tick **Options → Start with Windows** in the tray
+menu. The installer offers the same box, and it can be set from PowerShell:
 
 ```powershell
 .\lmstudio_autostart.ps1 -InstallAutostart    # undo with -UninstallAutostart
 ```
+
+All three write the same Startup‑folder shortcut, so the tray's checkbox
+shows the true state whichever route you took.
 
 **Note:** the builds are **not code‑signed** — this project has no
 Authenticode certificate. SmartScreen will warn on first run; choose *More

@@ -34,11 +34,15 @@ def completed(returncode=0, stdout="", stderr=""):
 class DummyMenuItem:
     """Stand-in for ``pystray.MenuItem``."""
 
-    def __init__(self, text, action=None, enabled=True):
-        """Record the item's text, callback and enabled state."""
+    def __init__(self, text, action=None, enabled=True, checked=None):
+        """Record the item's text, callback, enabled and checked state."""
         self.text = text
         self.action = action
         self.enabled = enabled
+        # pystray accepts either None (not a checkbox) or a callable it
+        # invokes with the item; the stub keeps it unevaluated so tests can
+        # assert on the state at the moment they choose.
+        self.checked = checked
 
     def __repr__(self):
         """Return a debugging representation naming the item."""

@@ -44,3 +44,19 @@ event, and the dialogs are drawn with tkinter.
         - _run_tk_dialog
         - _show_tk_message
         - _prompt_tk_endpoint
+
+### Autostart
+
+Windows has no per-app login-item setting of its own, so the tray offers one
+under **Options → Start with Windows**. It writes the same Startup-folder
+shortcut as `lmstudio_autostart.ps1 -InstallAutostart` and the installer's
+autostart task, which is what lets the menu's checkbox report the true state
+however autostart was switched on.
+
+::: lmstudio_tray
+    options:
+      members:
+        - is_autostart_enabled
+        - enable_autostart
+        - disable_autostart
+        - get_autostart_shortcut_path

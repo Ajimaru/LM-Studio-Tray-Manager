@@ -195,16 +195,22 @@ itself, so there is no second place for it to fall out of sync.
 To also bring up the llmster daemon at login, pass `--auto-start-daemon`
 when launching the app.
 
-On **Windows**, tick *start with Windows* in the installer, or register it
-afterwards:
+On **Windows** the tray manages this itself: tick **Options → Start with
+Windows** in the menu. The checkbox reflects the current state, so it also
+tells you whether autostart is on.
+
+The same setting is reachable outside the tray - tick *start with Windows*
+in the installer, or run:
 
 ```powershell
 .\lmstudio_autostart.ps1 -InstallAutostart      # undo with -UninstallAutostart
 ```
 
-That writes a shortcut into the Startup folder (`shell:startup`) rather than
-a registry value or a scheduled task: it needs no elevation, and it stays
-visible and removable without this script.
+All three write the *same* shortcut into the Startup folder
+(`shell:startup`), rather than a registry value or a scheduled task: it
+needs no elevation, and it stays visible and removable without any of them.
+Because they share one file, whichever switched autostart on, the others see
+it and can switch it off again.
 
 Daemon control needs llmster itself
 (`curl -fsSL https://lmstudio.ai/install.sh | bash`). `lms daemon up` is
@@ -330,6 +336,8 @@ The menu shows the following options (availability depends on current state):
 - **Show Status** - Manually refresh and display the tray status
 - **Options** - Submenu containing:
   - **Configuration** - Access application settings
+  - **Start with Windows** *(Windows only)* - Tick to start the tray at
+    login, untick to stop it. See [Autostart on Login](#autostart-on-login)
   - **Check for updates** - Check GitHub for new releases
 - **About** - Display application information
 - **Quit Tray** - Exit the tray manager

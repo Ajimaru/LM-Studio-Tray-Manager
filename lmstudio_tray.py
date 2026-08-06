@@ -419,6 +419,12 @@ LLMSTER_IMAGE_NAME = "llmster.exe"
 LM_STUDIO_IMAGE_NAME = "LM Studio.exe"
 TRAY_IMAGE_NAME = "lmstudio-tray-manager.exe"
 
+# The Startup-folder shortcut is written by three separate things: this
+# module, lmstudio_autostart.ps1, and the Inno Setup installer's optional
+# autostart task. They deliberately share one file name so that whichever
+# enabled it, the others see it and can turn it off again.
+AUTOSTART_SHORTCUT_NAME = "LM Studio Tray Manager.lnk"
+
 
 def _ensure_gsettings_schema():
     """
@@ -1964,6 +1970,236 @@ def _parse_tasklist_csv(output: str) -> list[tuple[str, int]]:
         processes.append((image_name, int(pid_text)))
 
     return processes
+
+
+# -----------------------------------------
+# === Windows autostart (Startup folder) ===
+# -----------------------------------------
+
+
+def get_powershell_cmd() -> Optional[str]:
+    """Return absolute powershell.exe path from PATH (Windows only)."""
+    return shutil.which("powershell")
+
+
+def _get_startup_dir() -> Optional[str]:
+    """Return the current user's Startup folder.
+
+    Asks the shell rather than assuming a path, because the Start-menu
+    folders can be redirected (roaming profiles, some corporate policies)
+    and a shortcut written to the wrong place would silently never run.
+    Falls back to the default location under ``%APPDATA%`` when the shell
+    call is unavailable.
+
+    Returns:
+        Optional[str]: Absolute path, or ``None`` when it cannot be
+        determined.
+    """
+    if not IS_WINDOWS:
+        return None
+
+    csidl_startup = 7
+    max_path = 260
+    try:
+        # Imported here, like the console helper above: ctypes.windll only
+        # exists on Windows, and this module must import cleanly elsewhere.
+        import ctypes  # pylint: disable=import-outside-toplevel
+
+        buf = ctypes.create_unicode_buffer(max_path)
+        # SHGetFolderPathW returns S_OK (0) on success.
+        if ctypes.windll.shell32.SHGetFolderPathW(
+            None, csidl_startup, None, 0, buf
+        ) == 0 and buf.value:
+            return buf.value
+    except (AttributeError, ImportError, OSError) as exc:
+        logging.debug("SHGetFolderPathW failed: %s", exc)
+
+    appdata = os.environ.get("APPDATA")
+    if not appdata:
+        return None
+    return os.path.join(
+        appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup"
+    )
+
+
+def get_autostart_shortcut_path() -> Optional[str]:
+    """Return the path of this app's Startup-folder shortcut.
+
+    Returns:
+        Optional[str]: Absolute path, or ``None`` off Windows or when the
+        Startup folder cannot be located.
+    """
+    startup_dir = _get_startup_dir()
+    if not startup_dir:
+        return None
+    return os.path.join(startup_dir, AUTOSTART_SHORTCUT_NAME)
+
+
+def is_autostart_enabled() -> bool:
+    """Report whether the tray is registered to start with Windows.
+
+    Returns:
+        bool: ``True`` when the Startup-folder shortcut exists.
+    """
+    shortcut = get_autostart_shortcut_path()
+    return bool(shortcut) and os.path.isfile(shortcut)
+
+
+def _get_autostart_target() -> Optional[tuple[str, list[str], str]]:
+    """Return how Windows should relaunch this tray at login.
+
+    Mirrors ``Get-TrayCommand`` in lmstudio_autostart.ps1: a frozen build
+    points at its own executable, a source checkout at an interpreter plus
+    this script. ``pythonw.exe`` is preferred over ``python.exe`` so the
+    login does not flash a console window.
+
+    The working directory follows what is being *run*, not what runs it: a
+    source launch has to start in the repository, since the log directory
+    and the default ``script_dir`` are resolved relative to the process's
+    current directory, and the interpreter's own folder is neither.
+
+    Returns:
+        Optional[tuple[str, list[str], str]]: Executable, its arguments and
+        the working directory, or ``None`` when nothing can be resolved.
+    """
+    frozen = (
+        getattr(sys, "frozen", False)
+        or getattr(sys, "_MEIPASS", None) is not None
+    )
+    if frozen:
+        executable = os.path.abspath(sys.executable)
+        if not os.path.isfile(executable):
+            return None
+        return executable, [], os.path.dirname(executable)
+
+    script = os.path.abspath(__file__)
+    if not os.path.isfile(script):
+        return None
+
+    interpreter = os.path.abspath(sys.executable)
+    pythonw = os.path.join(os.path.dirname(interpreter), "pythonw.exe")
+    if os.path.isfile(pythonw):
+        interpreter = pythonw
+    if not os.path.isfile(interpreter):
+        return None
+    return interpreter, [script], os.path.dirname(script)
+
+
+def _ps_quote(value: str) -> str:
+    """Quote a string as a PowerShell single-quoted literal.
+
+    Inside single quotes PowerShell expands nothing, so doubling the
+    embedded quote is the whole escaping rule. Paths are system-derived
+    here, but a checkout under a directory such as ``Rob's Git`` would
+    otherwise break the generated command.
+
+    Args:
+        value: Text to quote.
+
+    Returns:
+        str: The quoted literal, apostrophes included.
+    """
+    escaped = value.replace("'", "''")
+    return f"'{escaped}'"
+
+
+def enable_autostart() -> bool:
+    """Register the tray to start with Windows.
+
+    Writes the same Startup-folder shortcut that lmstudio_autostart.ps1 and
+    the installer write. Creating a ``.lnk`` needs the Windows shell's COM
+    object, so this drives it through ``powershell.exe`` rather than adding
+    a pywin32 dependency for one call.
+
+    Returns:
+        bool: ``True`` when the shortcut now exists.
+    """
+    shortcut = get_autostart_shortcut_path()
+    if not shortcut:
+        logging.error("Cannot enable autostart: Startup folder not found")
+        return False
+
+    target = _get_autostart_target()
+    if not target:
+        logging.error("Cannot enable autostart: tray executable not found")
+        return False
+    executable, arguments, working_dir = target
+
+    powershell = get_powershell_cmd()
+    if not powershell or not os.path.isabs(powershell):
+        logging.error("Cannot enable autostart: powershell.exe not found")
+        return False
+
+    startup_dir = os.path.dirname(shortcut)
+    try:
+        os.makedirs(startup_dir, exist_ok=True)
+    except OSError as exc:
+        logging.error("Cannot create the Startup folder: %s", exc)
+        return False
+
+    script = (
+        "$s = (New-Object -ComObject WScript.Shell)"
+        f".CreateShortcut({_ps_quote(shortcut)});"
+        f"$s.TargetPath = {_ps_quote(executable)};"
+        f"$s.Arguments = {_ps_quote(' '.join(arguments))};"
+        f"$s.WorkingDirectory = {_ps_quote(working_dir)};"
+        f"$s.Description = {_ps_quote(APP_NAME)};"
+        "$s.Save()"
+    )
+
+    try:
+        result = _run_safe_command([
+            powershell,
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy", "Bypass",
+            "-Command", script,
+        ])
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        logging.error("Failed to create the autostart shortcut: %s", exc)
+        return False
+
+    if result.returncode != 0:
+        logging.error(
+            "Failed to create the autostart shortcut: %s",
+            (result.stderr or "").strip() or f"exit {result.returncode}",
+        )
+        return False
+
+    if not os.path.isfile(shortcut):
+        logging.error("Autostart shortcut was not created at %s", shortcut)
+        return False
+
+    logging.info("Autostart enabled: %s", shortcut)
+    return True
+
+
+def disable_autostart() -> bool:
+    """Remove the Startup-folder shortcut.
+
+    Succeeds when the shortcut is already absent: the requested end state
+    is "not registered", which is then already true.
+
+    Returns:
+        bool: ``True`` when the tray no longer starts with Windows.
+    """
+    shortcut = get_autostart_shortcut_path()
+    if not shortcut:
+        logging.error("Cannot disable autostart: Startup folder not found")
+        return False
+
+    if not os.path.isfile(shortcut):
+        logging.debug("Autostart was not enabled; nothing to remove")
+        return True
+
+    try:
+        os.remove(shortcut)
+    except OSError as exc:
+        logging.error("Failed to remove the autostart shortcut: %s", exc)
+        return False
+
+    logging.info("Autostart disabled: %s", shortcut)
+    return True
 
 
 def get_api_loaded_models() -> list[str]:
@@ -5788,12 +6024,52 @@ class WindowsTrayIcon:
                 pystray_lib.MenuItem(
                     "Configuration", self.show_config_dialog
                 ),
+                # Unlike macOS, Windows offers no built-in per-app login
+                # item, so the setting belongs here. checked is a callable
+                # so the box reflects the Startup folder itself: whether it
+                # was the installer, the PowerShell script or this menu that
+                # registered the tray, the state shown stays truthful.
+                pystray_lib.MenuItem(
+                    "Start with Windows",
+                    self.toggle_autostart,
+                    checked=lambda _item: is_autostart_enabled(),
+                ),
                 pystray_lib.MenuItem(
                     "Check for Updates", self.manual_check_updates
                 ),
                 pystray_lib.MenuItem("About", self.show_about_dialog),
             ),
         )
+
+    def toggle_autostart(self, _icon=None, _item=None) -> None:
+        """Turn "start with Windows" on or off.
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        if is_autostart_enabled():
+            if disable_autostart():
+                self._notify(
+                    "Autostart", "The tray no longer starts with Windows."
+                )
+            else:
+                _show_tk_message(
+                    "Autostart",
+                    "Could not remove the autostart entry.\n"
+                    "See the log for details.",
+                )
+        elif enable_autostart():
+            self._notify("Autostart", "The tray now starts with Windows.")
+        else:
+            _show_tk_message(
+                "Autostart",
+                "Could not register the tray to start with Windows.\n"
+                "See the log for details.",
+            )
+
+        # The checkbox is only re-evaluated when pystray rebuilds the menu.
+        self.build_menu()
 
     def _build_remote_menu_items(self, pystray_lib) -> list:
         """Return menu entries for a remote endpoint.

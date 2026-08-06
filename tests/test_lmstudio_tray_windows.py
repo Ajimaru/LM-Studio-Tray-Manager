@@ -22,6 +22,7 @@ Covered here:
 import os
 import signal
 import subprocess  # nosec B404
+import sys
 from pathlib import Path
 
 import pytest
@@ -609,3 +610,431 @@ def test_kill_existing_instances_never_calls_pgrep(
     monkeypatch.setattr(windows_module, "get_pgrep_cmd", fail)
 
     windows_module.kill_existing_instances()
+
+
+# ---------------------------------------------------------------------
+# Autostart (Startup-folder shortcut)
+# ---------------------------------------------------------------------
+
+
+@pytest.fixture(name="startup_dir")
+def startup_dir_fixture(windows_module, monkeypatch, tmp_path):
+    """Redirect the Startup folder into tmp_path.
+
+    Without this the helpers ask the real shell where Startup is, and on a
+    Windows host these tests would create and delete shortcuts in the
+    developer's actual Startup folder.
+    """
+    startup = tmp_path / "Startup"
+    startup.mkdir()
+    monkeypatch.setattr(
+        windows_module, "_get_startup_dir", lambda: str(startup)
+    )
+    return startup
+
+
+def test_startup_dir_prefers_the_shell(windows_module, monkeypatch, tmp_path):
+    """SHGetFolderPathW decides, so folder redirection is honoured."""
+    resolved = tmp_path / "Redirected"
+
+    class FakeBuffer:
+        """Minimal stand-in for a ctypes string buffer."""
+
+        value = ""
+
+    class FakeShell32:
+        """Namespace mirroring ctypes.windll.shell32."""
+
+        @staticmethod
+        def SHGetFolderPathW(  # pylint: disable=invalid-name
+            _token, _csidl, _handle, _flags, buf
+        ):
+            """Write the redirected path and report success."""
+            buf.value = str(resolved)
+            return 0
+
+    class FakeWindll:
+        """Namespace mirroring ctypes.windll."""
+
+        shell32 = FakeShell32
+
+    class FakeCtypes:
+        """Stand-in for the ctypes module's Windows surface."""
+
+        windll = FakeWindll
+
+        @staticmethod
+        def create_unicode_buffer(_size):
+            """Return an object exposing a writable ``value``."""
+            return FakeBuffer()
+
+    monkeypatch.setitem(sys.modules, "ctypes", FakeCtypes)
+
+    assert windows_module._get_startup_dir() == str(resolved)  # nosec B101
+
+
+def test_startup_dir_falls_back_to_appdata(
+    windows_module, monkeypatch, tmp_path
+):
+    """When the shell call is unavailable, %APPDATA% supplies the path."""
+    monkeypatch.setitem(sys.modules, "ctypes", None)
+    monkeypatch.setenv("APPDATA", str(tmp_path / "Roaming"))
+
+    expected = os.path.join(
+        str(tmp_path / "Roaming"),
+        "Microsoft", "Windows", "Start Menu", "Programs", "Startup",
+    )
+
+    assert windows_module._get_startup_dir() == expected  # nosec B101
+
+
+def test_startup_dir_without_appdata(windows_module, monkeypatch):
+    """With neither the shell nor %APPDATA%, there is no answer to give."""
+    monkeypatch.setitem(sys.modules, "ctypes", None)
+    monkeypatch.delenv("APPDATA", raising=False)
+
+    assert windows_module._get_startup_dir() is None  # nosec B101
+
+
+def test_shortcut_path_uses_the_shared_name(windows_module, startup_dir):
+    """The name matches the PowerShell script and the installer."""
+    expected = os.path.join(
+        str(startup_dir), windows_module.AUTOSTART_SHORTCUT_NAME
+    )
+
+    assert (  # nosec B101
+        windows_module.get_autostart_shortcut_path() == expected
+    )
+    assert (  # nosec B101
+        windows_module.AUTOSTART_SHORTCUT_NAME
+        == "LM Studio Tray Manager.lnk"
+    )
+
+
+def test_shortcut_path_without_a_startup_folder(windows_module, monkeypatch):
+    """No Startup folder means no shortcut path."""
+    monkeypatch.setattr(windows_module, "_get_startup_dir", lambda: None)
+
+    assert windows_module.get_autostart_shortcut_path() is None  # nosec B101
+
+
+def test_is_autostart_enabled_tracks_the_shortcut(windows_module, startup_dir):
+    """Presence of the file is the whole state."""
+    assert windows_module.is_autostart_enabled() is False  # nosec B101
+
+    (startup_dir / windows_module.AUTOSTART_SHORTCUT_NAME).write_text(
+        "", encoding="utf-8"
+    )
+
+    assert windows_module.is_autostart_enabled() is True  # nosec B101
+
+
+def test_is_autostart_enabled_without_a_startup_folder(
+    windows_module, monkeypatch
+):
+    """An unknown Startup folder reads as not enabled rather than raising."""
+    monkeypatch.setattr(windows_module, "_get_startup_dir", lambda: None)
+
+    assert windows_module.is_autostart_enabled() is False  # nosec B101
+
+
+def test_autostart_target_frozen(windows_module, monkeypatch, tmp_path):
+    """A frozen build registers its own executable with no arguments."""
+    exe = tmp_path / "lmstudio-tray-manager.exe"
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(windows_module.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(windows_module.sys, "executable", str(exe))
+
+    assert windows_module._get_autostart_target() == (  # nosec B101
+        str(exe), [], str(tmp_path),
+    )
+
+
+def test_autostart_target_frozen_but_missing(
+    windows_module, monkeypatch, tmp_path
+):
+    """A frozen build whose executable has gone registers nothing."""
+    monkeypatch.setattr(windows_module.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(
+        windows_module.sys, "executable", str(tmp_path / "gone.exe")
+    )
+
+    assert windows_module._get_autostart_target() is None  # nosec B101
+
+
+def test_autostart_target_source_prefers_pythonw(
+    windows_module, monkeypatch, tmp_path
+):
+    """From source, pythonw.exe avoids a console window at login."""
+    monkeypatch.delattr(windows_module.sys, "frozen", raising=False)
+    scripts = tmp_path / "Scripts"
+    scripts.mkdir()
+    (scripts / "python.exe").write_text("", encoding="utf-8")
+    (scripts / "pythonw.exe").write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        windows_module.sys, "executable", str(scripts / "python.exe")
+    )
+
+    executable, arguments, working_dir = (
+        windows_module._get_autostart_target()
+    )
+    script = os.path.abspath(windows_module.__file__)
+
+    assert executable == str(scripts / "pythonw.exe")  # nosec B101
+    assert arguments == [script]  # nosec B101
+    # The repository, not the interpreter's folder: the log directory and
+    # the default script_dir are resolved relative to the process's cwd.
+    assert working_dir == os.path.dirname(script)  # nosec B101
+
+
+def test_autostart_target_source_falls_back_to_python(
+    windows_module, monkeypatch, tmp_path
+):
+    """Without pythonw.exe the console interpreter still works."""
+    monkeypatch.delattr(windows_module.sys, "frozen", raising=False)
+    scripts = tmp_path / "Scripts"
+    scripts.mkdir()
+    (scripts / "python.exe").write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        windows_module.sys, "executable", str(scripts / "python.exe")
+    )
+
+    executable = windows_module._get_autostart_target()[0]
+
+    assert executable == str(scripts / "python.exe")  # nosec B101
+
+
+def test_autostart_target_without_an_interpreter(
+    windows_module, monkeypatch, tmp_path
+):
+    """No usable interpreter means nothing can be registered."""
+    monkeypatch.delattr(windows_module.sys, "frozen", raising=False)
+    monkeypatch.setattr(
+        windows_module.sys, "executable", str(tmp_path / "gone.exe")
+    )
+
+    assert windows_module._get_autostart_target() is None  # nosec B101
+
+
+def test_ps_quote_doubles_apostrophes(windows_module):
+    """A path such as ``Rob's Git`` must not end the quoted literal."""
+    assert (  # nosec B101
+        windows_module._ps_quote("D:\\Rob's Git\\app.exe")
+        == "'D:\\Rob''s Git\\app.exe'"
+    )
+
+
+def _stub_powershell(windows_module, monkeypatch, shortcut, returncode=0):
+    """Point the helpers at a fake powershell that creates the shortcut.
+
+    Returns:
+        list: The commands the fake powershell was handed.
+    """
+    recorded = []
+
+    def fake_run(command):
+        """Record the command and create the shortcut on success."""
+        recorded.append(command)
+        if returncode == 0:
+            Path(shortcut).write_text("shortcut", encoding="utf-8")
+        return _completed(returncode=returncode, stdout="", stderr="boom")
+
+    monkeypatch.setattr(
+        windows_module, "get_powershell_cmd", lambda: "C:\\Windows\\ps.exe"
+    )
+    monkeypatch.setattr(windows_module, "_run_safe_command", fake_run)
+    return recorded
+
+
+def test_enable_autostart_writes_the_shortcut(
+    windows_module, monkeypatch, startup_dir, tmp_path
+):
+    """The generated command carries the target and working directory."""
+    exe = tmp_path / "lmstudio-tray-manager.exe"
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        windows_module,
+        "_get_autostart_target",
+        lambda: (str(exe), [], str(tmp_path)),
+    )
+    shortcut = startup_dir / windows_module.AUTOSTART_SHORTCUT_NAME
+    recorded = _stub_powershell(windows_module, monkeypatch, shortcut)
+
+    assert windows_module.enable_autostart() is True  # nosec B101
+    assert shortcut.is_file()  # nosec B101
+
+    script = recorded[0][-1]
+    assert windows_module._ps_quote(str(exe)) in script  # nosec B101
+    assert (  # nosec B101
+        f"$s.WorkingDirectory = {windows_module._ps_quote(str(tmp_path))};"
+        in script
+    )
+    assert "WScript.Shell" in script  # nosec B101
+
+
+def test_enable_autostart_passes_source_arguments(
+    windows_module, monkeypatch, startup_dir, tmp_path
+):
+    """A source run registers the interpreter plus the script path."""
+    interpreter = tmp_path / "pythonw.exe"
+    interpreter.write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        windows_module,
+        "_get_autostart_target",
+        lambda: (
+            str(interpreter), ["D:\\repo\\lmstudio_tray.py"], "D:\\repo"
+        ),
+    )
+    shortcut = startup_dir / windows_module.AUTOSTART_SHORTCUT_NAME
+    recorded = _stub_powershell(windows_module, monkeypatch, shortcut)
+
+    assert windows_module.enable_autostart() is True  # nosec B101
+    script = recorded[0][-1]
+    assert (  # nosec B101
+        "$s.Arguments = 'D:\\repo\\lmstudio_tray.py';" in script
+    )
+    assert "$s.WorkingDirectory = 'D:\\repo';" in script  # nosec B101
+
+
+def test_enable_autostart_without_a_startup_folder(
+    windows_module, monkeypatch
+):
+    """An unknown Startup folder is reported rather than guessed at."""
+    monkeypatch.setattr(windows_module, "_get_startup_dir", lambda: None)
+
+    assert windows_module.enable_autostart() is False  # nosec B101
+
+
+def test_enable_autostart_without_a_target(
+    windows_module, monkeypatch, startup_dir
+):
+    """Nothing to point the shortcut at means no shortcut."""
+    _ = startup_dir
+    monkeypatch.setattr(windows_module, "_get_autostart_target", lambda: None)
+
+    assert windows_module.enable_autostart() is False  # nosec B101
+
+
+def test_enable_autostart_without_powershell(
+    windows_module, monkeypatch, startup_dir, tmp_path
+):
+    """Creating a .lnk needs the shell's COM object via powershell.exe."""
+    _ = startup_dir
+    exe = tmp_path / "app.exe"
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        windows_module,
+        "_get_autostart_target",
+        lambda: (str(exe), [], str(tmp_path)),
+    )
+    monkeypatch.setattr(windows_module, "get_powershell_cmd", lambda: None)
+
+    assert windows_module.enable_autostart() is False  # nosec B101
+
+
+def test_enable_autostart_reports_a_failing_powershell(
+    windows_module, monkeypatch, startup_dir, tmp_path
+):
+    """A non-zero exit is a failure even though no exception is raised."""
+    exe = tmp_path / "app.exe"
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        windows_module,
+        "_get_autostart_target",
+        lambda: (str(exe), [], str(tmp_path)),
+    )
+    shortcut = startup_dir / windows_module.AUTOSTART_SHORTCUT_NAME
+    _stub_powershell(windows_module, monkeypatch, shortcut, returncode=1)
+
+    assert windows_module.enable_autostart() is False  # nosec B101
+    assert not shortcut.exists()  # nosec B101
+
+
+def test_enable_autostart_reports_a_silent_no_op(
+    windows_module, monkeypatch, startup_dir, tmp_path
+):
+    """Exit 0 without a resulting file is still a failure."""
+    _ = startup_dir
+    exe = tmp_path / "app.exe"
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        windows_module,
+        "_get_autostart_target",
+        lambda: (str(exe), [], str(tmp_path)),
+    )
+    monkeypatch.setattr(
+        windows_module, "get_powershell_cmd", lambda: "C:\\Windows\\ps.exe"
+    )
+    monkeypatch.setattr(
+        windows_module,
+        "_run_safe_command",
+        lambda _command: _completed(returncode=0, stdout="", stderr=""),
+    )
+
+    assert windows_module.enable_autostart() is False  # nosec B101
+
+
+def test_enable_autostart_survives_a_subprocess_error(
+    windows_module, monkeypatch, startup_dir, tmp_path
+):
+    """A raising powershell is reported, not propagated to the menu."""
+    _ = startup_dir
+    exe = tmp_path / "app.exe"
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        windows_module,
+        "_get_autostart_target",
+        lambda: (str(exe), [], str(tmp_path)),
+    )
+    monkeypatch.setattr(
+        windows_module, "get_powershell_cmd", lambda: "C:\\Windows\\ps.exe"
+    )
+
+    def boom(_command):
+        """Simulate powershell.exe failing to launch."""
+        raise OSError("cannot run")
+
+    monkeypatch.setattr(windows_module, "_run_safe_command", boom)
+
+    assert windows_module.enable_autostart() is False  # nosec B101
+
+
+def test_disable_autostart_removes_the_shortcut(windows_module, startup_dir):
+    """Disabling deletes the file the other tools also recognise."""
+    shortcut = startup_dir / windows_module.AUTOSTART_SHORTCUT_NAME
+    shortcut.write_text("", encoding="utf-8")
+
+    assert windows_module.disable_autostart() is True  # nosec B101
+    assert not shortcut.exists()  # nosec B101
+
+
+def test_disable_autostart_is_idempotent(windows_module, startup_dir):
+    """Already-absent is the requested end state, so it counts as success."""
+    _ = startup_dir
+
+    assert windows_module.disable_autostart() is True  # nosec B101
+
+
+def test_disable_autostart_without_a_startup_folder(
+    windows_module, monkeypatch
+):
+    """An unknown Startup folder cannot be cleaned up."""
+    monkeypatch.setattr(windows_module, "_get_startup_dir", lambda: None)
+
+    assert windows_module.disable_autostart() is False  # nosec B101
+
+
+def test_disable_autostart_reports_a_locked_shortcut(
+    windows_module, monkeypatch, startup_dir
+):
+    """A removal that fails is reported rather than claimed as success."""
+    shortcut = startup_dir / windows_module.AUTOSTART_SHORTCUT_NAME
+    shortcut.write_text("", encoding="utf-8")
+
+    def deny(_path):
+        """Simulate the file being locked or permission denied."""
+        raise OSError("in use")
+
+    monkeypatch.setattr(windows_module.os, "remove", deny)
+
+    assert windows_module.disable_autostart() is False  # nosec B101

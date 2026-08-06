@@ -770,6 +770,11 @@ Autostart is a shortcut in the user's Startup folder rather than a registry
 value or a scheduled task: it needs no elevation, and it can be seen and
 removed from `shell:startup` without this script.
 
+The tray itself offers the same switch under **Options → Start with
+Windows**, and the installer under its *start with Windows* task. All three
+write the one shortcut, so the state stays consistent no matter which you
+use.
+
 ### File locations (Windows)
 
 | What | Where |

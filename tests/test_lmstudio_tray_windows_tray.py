@@ -600,7 +600,7 @@ def test_menu_always_offers_status_options_and_quit(
 
 
 def test_options_submenu_entries(windows_module, monkeypatch):
-    """The Options submenu carries configuration, updates and about."""
+    """The Options submenu carries configuration, autostart, updates, about."""
     tray = _make_tray(windows_module)
     _stub_statuses(windows_module, monkeypatch, "stopped", "stopped")
 
@@ -608,8 +608,32 @@ def test_options_submenu_entries(windows_module, monkeypatch):
     options = _menu_item(tray, "Options")
 
     assert [item.text for item in options.action.items] == [  # nosec B101
-        "Configuration", "Check for Updates", "About",
+        "Configuration", "Start with Windows", "Check for Updates", "About",
     ]
+
+
+def test_autostart_menu_item_reflects_the_startup_folder(
+    windows_module, monkeypatch
+):
+    """The checkbox is a callable, so it tracks the shortcut's presence."""
+    tray = _make_tray(windows_module)
+    _stub_statuses(windows_module, monkeypatch, "stopped", "stopped")
+
+    tray.build_menu()
+    options = _menu_item(tray, "Options")
+    item = next(
+        entry for entry in options.action.items
+        if entry.text == "Start with Windows"
+    )
+
+    state = {"on": False}
+    monkeypatch.setattr(
+        windows_module, "is_autostart_enabled", lambda: state["on"]
+    )
+    assert item.checked(item) is False  # nosec B101
+
+    state["on"] = True
+    assert item.checked(item) is True  # nosec B101
 
 
 def test_menu_refreshes_the_live_icon(windows_module, monkeypatch):
@@ -2496,3 +2520,110 @@ def test_gui_flag_starts_desktop_app(windows_module, monkeypatch):
     tray._maybe_start_gui()
 
     assert started == [True]  # nosec B101
+
+
+# ---------------------------------------------------------------------
+# Autostart toggle
+# ---------------------------------------------------------------------
+
+
+def _stub_autostart(windows_module, monkeypatch, enabled, result=True):
+    """Stub the autostart helpers and record which one was called.
+
+    Returns:
+        list: ``["enable"]`` or ``["disable"]`` once the toggle has run.
+    """
+    calls = []
+    monkeypatch.setattr(
+        windows_module, "is_autostart_enabled", lambda: enabled
+    )
+    monkeypatch.setattr(
+        windows_module,
+        "enable_autostart",
+        lambda: calls.append("enable") or result,
+    )
+    monkeypatch.setattr(
+        windows_module,
+        "disable_autostart",
+        lambda: calls.append("disable") or result,
+    )
+    return calls
+
+
+def test_toggle_autostart_enables_when_off(windows_module, monkeypatch):
+    """An unregistered tray gets registered, and says so."""
+    tray = _make_tray(windows_module)
+    _stub_statuses(windows_module, monkeypatch, "stopped", "stopped")
+    calls = _stub_autostart(windows_module, monkeypatch, enabled=False)
+
+    tray.toggle_autostart()
+
+    assert calls == ["enable"]  # nosec B101
+    assert tray.icon.notifications == [  # nosec B101
+        ("Autostart", "The tray now starts with Windows.")
+    ]
+
+
+def test_toggle_autostart_disables_when_on(windows_module, monkeypatch):
+    """A registered tray gets unregistered, and says so."""
+    tray = _make_tray(windows_module)
+    _stub_statuses(windows_module, monkeypatch, "stopped", "stopped")
+    calls = _stub_autostart(windows_module, monkeypatch, enabled=True)
+
+    tray.toggle_autostart()
+
+    assert calls == ["disable"]  # nosec B101
+    assert tray.icon.notifications == [  # nosec B101
+        ("Autostart", "The tray no longer starts with Windows.")
+    ]
+
+
+def test_toggle_autostart_reports_a_failed_enable(windows_module, monkeypatch):
+    """A failure surfaces as a dialog, not a notification claiming success."""
+    tray = _make_tray(windows_module)
+    _stub_statuses(windows_module, monkeypatch, "stopped", "stopped")
+    _stub_autostart(windows_module, monkeypatch, enabled=False, result=False)
+    shown = []
+    monkeypatch.setattr(
+        windows_module,
+        "_show_tk_message",
+        lambda title, message: shown.append((title, message)) or True,
+    )
+
+    tray.toggle_autostart()
+
+    assert tray.icon.notifications == []  # nosec B101
+    assert shown[0][0] == "Autostart"  # nosec B101
+    assert "Could not register" in shown[0][1]  # nosec B101
+
+
+def test_toggle_autostart_reports_a_failed_disable(
+    windows_module, monkeypatch
+):
+    """A failed removal is reported rather than silently ignored."""
+    tray = _make_tray(windows_module)
+    _stub_statuses(windows_module, monkeypatch, "stopped", "stopped")
+    _stub_autostart(windows_module, monkeypatch, enabled=True, result=False)
+    shown = []
+    monkeypatch.setattr(
+        windows_module,
+        "_show_tk_message",
+        lambda title, message: shown.append((title, message)) or True,
+    )
+
+    tray.toggle_autostart()
+
+    assert tray.icon.notifications == []  # nosec B101
+    assert "Could not remove" in shown[0][1]  # nosec B101
+
+
+def test_toggle_autostart_rebuilds_the_menu(windows_module, monkeypatch):
+    """The checkbox only changes once pystray rebuilds the menu."""
+    tray = _make_tray(windows_module)
+    _stub_statuses(windows_module, monkeypatch, "stopped", "stopped")
+    _stub_autostart(windows_module, monkeypatch, enabled=False)
+    before = tray.icon.update_menu_calls
+
+    tray.toggle_autostart()
+
+    assert tray.icon.update_menu_calls > before  # nosec B101
