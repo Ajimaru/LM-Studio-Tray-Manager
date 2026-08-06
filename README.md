@@ -6,7 +6,7 @@ Automation scripts for LM Studio & llmster - to control and monitor the applicat
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python + gi](https://img.shields.io/badge/Python-gi_compatible-blue.svg)](https://www.python.org/downloads/)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-orange.svg)](https://www.linux.org/)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-orange.svg)](https://en.wikipedia.org/wiki/List_of_operating_systems)
 [![LM Studio App v0.4.20+](https://img.shields.io/badge/LM_Studio_App-v0.4.20+-green.svg)](https://lmstudio.ai/download)
 [![llmster v0.0.20+](https://img.shields.io/badge/llmster-v0.0.20+-green.svg)](https://lmstudio.ai)
 [![Release](https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
@@ -14,7 +14,7 @@ Automation scripts for LM Studio & llmster - to control and monitor the applicat
 
 ## Features
 
-- **🖥️ System Tray Monitor**: GTK3 tray integration with live daemon/app controls and status transitions
+- **🖥️ System Tray Monitor**: Native tray integration on Linux (GTK3), macOS (menu bar) and Windows (notification area), with live daemon/app controls and status transitions
 - **🎛️ Tray Menu Controls**: Start/stop daemon and start/stop desktop app, including conflict-safe switching between both modes
 - **🚦 Icon Status Schema**: `❌` not installed, `⚠️` both stopped, `ℹ️` runtime active but no model loaded, `✅` model loaded
 - **🔎 Update Checks**: Periodic GitHub release checks with a manual "Check for updates" action under the Options menu
@@ -200,22 +200,80 @@ signing identity was passed - those do need `xattr -cr` before launching.
 </details>
 <!-- markdownlint-enable MD033 -->
 
+#### Path 4 : Windows installer or portable .exe
+
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Show Windows install steps</summary>
+
+**Download:**
+
+- `lmstudio-tray-manager-X.Y.Z-windows-x86_64-setup.exe` — installer with a
+  Start‑menu entry and an optional *start with Windows* checkbox
+- `lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip` — portable build; unzip
+  anywhere and run the `.exe`
+
+**Run from the ZIP:**
+
+```powershell
+# example (replace X.Y.Z with version)
+Expand-Archive lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip -DestinationPath .
+
+# Run normally
+.\lmstudio-tray-manager.exe
+
+# Or with auto-start daemon
+.\lmstudio-tray-manager.exe --auto-start-daemon
+```
+
+**Verify:**
+
+- Tray icon appears in the notification area (bottom‑right); hover it to see
+  the status
+- `lms ps` (check LM Studio daemon)
+- Log file: `%LOCALAPPDATA%\lmstudio-tray-manager\logs\lmstudio_tray.log`,
+  or `.logs\lmstudio_tray.log` next to the `.exe` when that folder is
+  writable
+
+**Start with Windows:** tick the box in the installer, or register it later:
+
+```powershell
+.\lmstudio_autostart.ps1 -InstallAutostart    # undo with -UninstallAutostart
+```
+
+**Note:** the builds are **not code‑signed** — this project has no
+Authenticode certificate. SmartScreen will warn on first run; choose *More
+info → Run anyway*, or verify the download against
+`SHA256SUMS-windows.txt` first:
+
+```powershell
+Get-FileHash .\lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip -Algorithm SHA256
+```
+
+Builds are x64 only; on an ARM64 device they run under emulation.
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
 ## Platform Support
 
 - **Linux**: GTK3 + AppIndicator3 (Ubuntu, Fedora, openSUSE, Debian, Arch, etc.)
 - **macOS**: rumps / PyObjC (Monterey, Ventura, Sonoma, and later)
-- **Windows**: Not supported
+- **Windows**: pystray + Pillow (Windows 10 and 11, x64)
 
 ## Requirements
 
 - **LM Studio Daemon** (llmster v0.0.20+): Headless backend for model inference
 - **LM Studio Desktop App** (v0.4.3+): GUI frontend for model management and interaction
 - **Python 3.8+** for source builds
-- Linux system with GNOME/GTK3 support (AppImage works everywhere), or macOS 12+
+- Linux system with GNOME/GTK3 support (AppImage works everywhere), macOS 12+,
+  or Windows 10/11 (x64)
 
 > **Linux:** Package‑manager automation supports **apt, dnf, pacman, zypper, and apk**.
 > Other distros receive manual installation guidance.
 > **macOS:** Builds require Xcode Command Line Tools.
+> **Windows:** The installer and the portable `.exe` are self‑contained.
+> Running from source needs `pip install -r requirements-windows.txt`.
 
 ## Quick Reference
 
@@ -284,6 +342,30 @@ lms ps
 lms daemon down
 ```
 
+On **Windows**, use `lmstudio_autostart.ps1` and the `.exe`. The tray's own
+flags are identical; only the launcher differs:
+
+```powershell
+# Start daemon + tray
+.\lmstudio_autostart.ps1
+
+# Launch the desktop app instead (stops the daemon first)
+.\lmstudio_autostart.ps1 -Gui
+
+# List local models without starting LM Studio
+.\lmstudio_autostart.ps1 -ListModels
+
+# Verbose output
+.\lmstudio_autostart.ps1 -DebugMode
+
+# Start with Windows (undo with -UninstallAutostart)
+.\lmstudio_autostart.ps1 -InstallAutostart
+
+# Run the executable directly
+.\lmstudio-tray-manager.exe --auto-start-daemon
+.\lmstudio-tray-manager.exe --version
+```
+
 </details>
 <!-- markdownlint-enable MD033 -->
 
@@ -302,6 +384,14 @@ Check the logs if issues persist:
 cat .logs/setup.log
 cat .logs/lmstudio_autostart.log
 cat .logs/lmstudio_tray.log
+```
+
+On Windows, or wherever the install directory is read-only, the logs move to
+the per-user data directory:
+
+```powershell
+Get-Content "$env:LOCALAPPDATA\lmstudio-tray-manager\logs\lmstudio_tray.log"
+Get-Content "$env:LOCALAPPDATA\lmstudio-tray-manager\logs\lmstudio_autostart.log"
 ```
 
 ## Documentation

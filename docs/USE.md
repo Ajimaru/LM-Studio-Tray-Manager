@@ -195,6 +195,17 @@ itself, so there is no second place for it to fall out of sync.
 To also bring up the llmster daemon at login, pass `--auto-start-daemon`
 when launching the app.
 
+On **Windows**, tick *start with Windows* in the installer, or register it
+afterwards:
+
+```powershell
+.\lmstudio_autostart.ps1 -InstallAutostart      # undo with -UninstallAutostart
+```
+
+That writes a shortcut into the Startup folder (`shell:startup`) rather than
+a registry value or a scheduled task: it needs no elevation, and it stays
+visible and removable without this script.
+
 Daemon control needs llmster itself
 (`curl -fsSL https://lmstudio.ai/install.sh | bash`). `lms daemon up` is
 **not** a substitute: where LM Studio embeds the daemon, that command
@@ -203,7 +214,7 @@ reporting `{"isDaemon": false}`.
 
 Without llmster the tray therefore shows an inert
 🔴 **Daemon (Not Installed)** entry rather than a start action, identically
-on macOS and Linux.
+on Linux, macOS and Windows.
 
 ## Command-Line Options
 
@@ -280,6 +291,10 @@ The tray icon changes based on application status:
 | ℹ️ | Info | Daemon or desktop app running, but no model loaded |
 | ✅ | OK | A model is loaded and ready |
 
+On Linux the indicator is the icon itself, and on macOS it is the menu-bar
+title. The Windows notification area shows an icon but no text, so the
+indicator lives in the **tooltip**: hover the tray icon to read it.
+
 ### Notifications
 
 Starting or stopping the daemon or the desktop app posts a system
@@ -294,6 +309,11 @@ its notifications without raising any error. Those builds fall back to
 `osascript`, which posts under the Script Editor identity - the banners
 appear, but with the Script Editor icon, and are configured under that
 entry in **System Settings -> Notifications**.
+
+On Windows the notifications go through pystray's Win32 backend and appear
+as normal toasts. They are a courtesy only - every notification has a
+matching line in `lmstudio_tray.log`, so a shell with the notification area
+disabled loses nothing but the banner.
 
 ### Left-Click Menu
 
@@ -338,8 +358,11 @@ A machine's own address still counts as local, so entering a host's own LAN
 IP on that host keeps the normal local menu. Point the setting back at
 `localhost` to restore local control.
 
-On macOS the endpoint is entered as a single `host:port` field; the GTK
-dialog on Linux has separate host and port entries.
+On macOS and Windows the endpoint is entered as a single `host:port` field;
+the GTK dialog on Linux has separate host and port entries. The Windows
+dialogs are drawn with tkinter and open as ordinary windows, so they may
+appear behind the active application - check the taskbar if one seems not to
+have opened.
 
 ## Desktop App Launch
 

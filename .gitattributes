@@ -7,9 +7,12 @@
 *.md text eol=lf
 *.txt text eol=lf
 
-# Keep Windows script line endings if such files are added later
+# Keep Windows script line endings
 *.bat text eol=crlf
 *.cmd text eol=crlf
+*.ps1 text eol=crlf
+# Inno Setup reads either, but its own tooling writes CRLF
+*.iss text eol=crlf
 
 # Prevent Git from altering binary files
 *.png binary

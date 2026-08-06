@@ -1,10 +1,11 @@
 # Setup Guide
 
-> **Platform support:** Linux (GTK3 + AppIndicator3) and macOS (rumps / PyObjC).
-> Windows is not supported. AppImage releases are Linux-only.
+> **Platform support:** Linux (GTK3 + AppIndicator3), macOS (rumps / PyObjC)
+> and Windows 10/11 (pystray). AppImage releases are Linux-only.
 > Package‑manager automation is available for **apt, dnf,
 > pacman, zypper, and apk** on Linux; on macOS `setup.sh` uses `pip` to
-> install the `rumps` dependency.
+> install the `rumps` dependency. `setup.sh` has no Windows counterpart -
+> see [Windows Installation](#windows-installation).
 
 ## Quick Summary
 
@@ -44,6 +45,20 @@ open ./LM-Studio-Tray-Manager.app --args --auto-start-daemon
 pip install rumps
 # 2. Run the tray monitor:
 python3 lmstudio_tray.py --auto-start-daemon
+```
+
+**Windows (installer - recommended):**
+
+Run `lmstudio-tray-manager-X.Y.Z-windows-x86_64-setup.exe`. It installs
+per-user, needs no administrator rights, and offers a *start with Windows*
+checkbox. The builds are unsigned, so SmartScreen warns on first run -
+choose *More info -> Run anyway*.
+
+**Windows (portable .exe - alternative):**
+
+```powershell
+Expand-Archive lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip -DestinationPath .
+.\lmstudio-tray-manager.exe --auto-start-daemon
 ```
 
 For other installation types (binary, Python source), `setup.sh` automates configuration and dependency checking.
@@ -91,6 +106,14 @@ For other installation types (binary, Python source), `setup.sh` automates confi
     - [Notifications](#notifications)
     - [Desktop app detection](#desktop-app-detection)
     - [Known limitations](#known-limitations)
+  - [Windows Installation](#windows-installation)
+    - [Requirements (Windows)](#requirements-windows)
+    - [Quick start (Windows)](#quick-start-windows)
+    - [SmartScreen warning](#smartscreen-warning)
+    - [Autostart (Windows)](#autostart-windows)
+    - [File locations (Windows)](#file-locations-windows)
+    - [Desktop app detection (Windows)](#desktop-app-detection-windows)
+    - [Known limitations (Windows)](#known-limitations-windows)
   - [Next Steps](#next-steps)
 
 ## What setup.sh Does
@@ -677,6 +700,109 @@ The tray manager looks for `LM Studio.app` in:
 - AppImage releases are Linux-only; use the Python source release on macOS.
 - The macOS tray displays a status emoji (✅ / ℹ️ / ⚠️ / ❌) in the menu bar
   rather than a custom icon, since GTK icon themes are not available.
+
+## Windows Installation
+
+The tray manager supports Windows 10 and 11 natively using
+[`pystray`](https://github.com/moses-palmer/pystray) for the notification-area
+icon and `tkinter` (Python standard library) for its dialogs.
+
+### Requirements (Windows)
+
+- Windows 10 or 11, x64
+- LM Studio desktop app and/or the `lms` CLI from [lmstudio.ai](https://lmstudio.ai/)
+- Only for running from source: Python 3.10+ with `tkinter`
+  (included in the python.org installer)
+
+The installer and the portable `.exe` bundle their own Python — neither needs
+one installed.
+
+### Quick start (Windows)
+
+**Installer (recommended):**
+
+Run `lmstudio-tray-manager-X.Y.Z-windows-x86_64-setup.exe`. It installs
+per-user, adds a Start-menu entry, and offers a *start with Windows*
+checkbox. No administrator rights are required.
+
+**Portable:**
+
+```powershell
+Expand-Archive lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip -DestinationPath .
+.\lmstudio-tray-manager.exe --auto-start-daemon
+```
+
+**From source:**
+
+```powershell
+pip install -r requirements-windows.txt
+python lmstudio_tray.py --auto-start-daemon
+```
+
+### SmartScreen warning
+
+The Windows builds are **not code-signed** — the project has no Authenticode
+certificate. On first run SmartScreen shows *"Windows protected your PC"*;
+choose **More info → Run anyway**.
+
+Verify the download against the published checksums first if you prefer:
+
+```powershell
+Get-FileHash .\lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip -Algorithm SHA256
+# compare with the matching line in SHA256SUMS-windows.txt
+```
+
+### Autostart (Windows)
+
+`setup.sh` has no Windows counterpart — there is no venv or package-manager
+work to automate. `lmstudio_autostart.ps1` covers the rest:
+
+```powershell
+# Start the daemon and the tray
+.\lmstudio_autostart.ps1
+
+# Start the desktop app instead (stops the daemon first)
+.\lmstudio_autostart.ps1 -Gui
+
+# List local models without starting LM Studio
+.\lmstudio_autostart.ps1 -ListModels
+
+# Register / unregister start with Windows
+.\lmstudio_autostart.ps1 -InstallAutostart
+.\lmstudio_autostart.ps1 -UninstallAutostart
+```
+
+Autostart is a shortcut in the user's Startup folder rather than a registry
+value or a scheduled task: it needs no elevation, and it can be seen and
+removed from `shell:startup` without this script.
+
+### File locations (Windows)
+
+| What | Where |
+| --- | --- |
+| Config | `%APPDATA%\lmstudio-tray-manager\lmstudio_tray.json` |
+| Logs | `.logs\` next to the executable, falling back to `%LOCALAPPDATA%\lmstudio-tray-manager\logs\` when that is read-only |
+| Autostart shortcut | `shell:startup` (`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`) |
+
+An existing `~\.config\lmstudio_tray.json` from an earlier install is still
+read, and migrated to `%APPDATA%` on the next save.
+
+### Desktop app detection (Windows)
+
+The tray manager looks for `LM Studio.exe` in:
+
+- `%LOCALAPPDATA%\Programs\LM Studio\`
+- `%ProgramFiles%\LM Studio\`
+
+### Known limitations (Windows)
+
+- Builds are x64 only. They run on ARM64 devices under emulation.
+- The builds are unsigned; see the SmartScreen note above.
+- `tasklist` reports image names but no command lines, so the tray cannot
+  tell an LM Studio helper process from the main window the way it does on
+  Linux and macOS. This only affects internal filtering — status and
+  start/stop behave the same.
+- AppImage releases are Linux-only.
 
 ## Next Steps
 

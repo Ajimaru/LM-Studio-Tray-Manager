@@ -38,6 +38,11 @@ If you encounter issues:
    - `.logs/lmstudio_autostart.log` - Daemon and startup logs
    - `.logs/lmstudio_tray.log` - Tray monitor logs
 
+   When that directory is not writable - an installed Windows build under
+   `Program Files`, for example - the logs move to the per-user data
+   directory instead: `%LOCALAPPDATA%\lmstudio-tray-manager\logs\` on
+   Windows, `~/.local/share/lmstudio-tray-manager/logs/` elsewhere.
+
 ## Opening the Documentation
 
 The `index.html` is best viewed in a web browser. You can open it with:

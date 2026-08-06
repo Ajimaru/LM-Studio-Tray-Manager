@@ -13,9 +13,12 @@ venv/
 .venv/
 .venv-docs/
 .logs/
-dist/
-build/
-.build-cache/
+# Anchored to the repository root: these are build outputs that only ever
+# appear there. Unanchored, "build/" also matched docs/mkdocs/guides/build/,
+# which kept the generated Build guide out of the published site.
+/dist/
+/build/
+/.build-cache/
 .coverage
 .pytest_cache/
 .pyre/

@@ -486,7 +486,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
 
                     Src -->|"Required: setup<br/>environment"| Setup
 
-                    Run1 -->|"Starts tray monitor"| Monitor["GTK3 System Tray<br/>Monitors daemon & API"]
+                    Run1 -->|"Starts tray monitor"| Monitor["System Tray<br/>Monitors daemon & API"]
                     Run2 -->|"Starts tray monitor"| Monitor
                     Setup -->|"Shows appropriate<br/>commands for your<br/>installation type"| Run1
                     Setup -->|"or"| Run2
@@ -578,7 +578,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     L --> I["<b>END</b>"]
             </div>
 
-            <h3>lmstudio-tray-manager - Standalone Binary (Linux & macOS)</h3>
+            <h3>lmstudio-tray-manager - Standalone Binary (Linux, macOS & Windows)</h3>
             <p>The standalone binary compiled from PyInstaller combines the tray monitor with command-line argument handling. No venv activation required.</p>
             <div class="mermaid">
                 graph TD
@@ -596,7 +596,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     Auto --> RunStart
                     Gui --> RunStart
                     Default --> RunStart
-                    RunStart --> E["Create GTK3/rumps<br/>tray icon"]
+                    RunStart --> E["Create GTK3/rumps/pystray<br/>tray icon"]
                     E --> F["Set up left-click<br/>menu"]
                     F --> G["Start daemon/API<br/>monitoring"]
                     G --> H{Status<br/>check}
@@ -626,12 +626,12 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     W --> H
             </div>
 
-            <h3>lmstudio_tray.py - GTK3 System Tray Monitor (Python Source)</h3>
-            <p>The detailed tray monitor implementation when running from Python source. This shows the internal monitoring and status update loop.</p>
+            <h3>lmstudio_tray.py - System Tray Monitor (Python Source)</h3>
+            <p>The detailed tray monitor implementation when running from Python source. This shows the internal monitoring and status update loop. The backend is GTK3 on Linux, rumps on macOS and pystray on Windows; the monitoring loop is the same on all three.</p>
             <div class="mermaid">
                 graph TD
                     A["<b>lmstudio_tray.py</b><br/>START"] --> B[Kill existing instances]
-                    B --> C[Create GTK3 tray icon]
+                    B --> C[Create tray icon<br/>GTK3 / rumps / pystray]
                     C --> D[Set up left-click menu]
                     D --> E[Start daemon/API monitoring]
                     E --> F{Status check}

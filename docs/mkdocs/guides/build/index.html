@@ -1,0 +1,2919 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python API documentation for LM Studio Tray Manager">
+      
+      
+        <meta name="author" content="Ajimaru">
+      
+      
+        <link rel="canonical" href="https://ajimaru.github.io/LM-Studio-Tray-Manager/guides/build/">
+      
+      
+        <link rel="prev" href="../use/">
+      
+      
+        <link rel="next" href="../../api/lmstudio_tray/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Build - LM Studio Tray Manager - Python API Reference</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#building-binary-distribution" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LM Studio Tray Manager - Python API Reference" class="md-header__button md-logo" aria-label="LM Studio Tray Manager - Python API Reference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LM Studio Tray Manager - Python API Reference
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Build
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ajimaru/LM-Studio-Tray-Manager
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../setup/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/lmstudio_tray/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LM Studio Tray Manager - Python API Reference" class="md-nav__button md-logo" aria-label="LM Studio Tray Manager - Python API Reference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    LM Studio Tray Manager - Python API Reference
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ajimaru/LM-Studio-Tray-Manager
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appimage-recommended-fully-portable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage (Recommended): Fully Portable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-build-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary (Build locally)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#macos-app-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS .app Bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows-exe-and-installer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows .exe and Installer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appimage-build-docker-based-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage Build (Docker-based, Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-binary-build-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated Binary Build (Local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#macos-app-build-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS .app Build (Local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-notary-credentials-that-survive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storing notary credentials that survive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-binary-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Binary Build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-appimage-build-alternative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker AppImage Build (Alternative)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Packages
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#method-1-shell-script-easiest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 1: Shell Script (Easiest)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-2-python-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 2: Python Script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-3-pyinstaller-spec-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 3: PyInstaller Spec File
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#macos-build-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS Build Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="macOS Build Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-signing-and-notarization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Signing and Notarization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-actions-macos-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions macOS Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#windows-build-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows Build Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Windows Build Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-script-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build script (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requirements-windows-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements (Windows build)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-artifacts-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release artifacts (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#console-output-from-a-windowed-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console output from a windowed build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-signing-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code signing (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-actions-windows-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions Windows release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optimization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#size-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Size Reduction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected Sizes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#missing-gtk3-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing GTK3 Libraries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-requirements-on-target-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Requirements on Target Machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-crashes-on-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary Crashes on Startup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#large-binary-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Large Binary Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-approaches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative Approaches
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternative Approaches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nuitka" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nuitka
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appimage-recommended-fully-portable-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage (Recommended): Fully Portable Release
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AppImage (Recommended): Fully Portable Release">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-docker-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Docker (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-github-actions-automatic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: GitHub Actions (Automatic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rust-rewrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rust Rewrite
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/lmstudio_tray/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/tray/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Tray
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appimage-recommended-fully-portable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage (Recommended): Fully Portable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-build-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary (Build locally)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#macos-app-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS .app Bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows-exe-and-installer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows .exe and Installer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appimage-build-docker-based-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage Build (Docker-based, Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-binary-build-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated Binary Build (Local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#macos-app-build-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS .app Build (Local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-notary-credentials-that-survive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storing notary credentials that survive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-binary-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Binary Build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-appimage-build-alternative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker AppImage Build (Alternative)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Packages
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#method-1-shell-script-easiest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 1: Shell Script (Easiest)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-2-python-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 2: Python Script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-3-pyinstaller-spec-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 3: PyInstaller Spec File
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#macos-build-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS Build Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="macOS Build Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-signing-and-notarization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Signing and Notarization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-actions-macos-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions macOS Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#windows-build-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows Build Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Windows Build Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-script-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build script (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requirements-windows-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements (Windows build)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-artifacts-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release artifacts (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#console-output-from-a-windowed-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console output from a windowed build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-signing-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code signing (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-actions-windows-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions Windows release
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optimization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#size-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Size Reduction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected Sizes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#missing-gtk3-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing GTK3 Libraries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-requirements-on-target-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Requirements on Target Machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-crashes-on-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary Crashes on Startup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#large-binary-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Large Binary Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-approaches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative Approaches
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternative Approaches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nuitka" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nuitka
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appimage-recommended-fully-portable-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppImage (Recommended): Fully Portable Release
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AppImage (Recommended): Fully Portable Release">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-docker-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Docker (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-github-actions-automatic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: GitHub Actions (Automatic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rust-rewrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rust Rewrite
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="building-binary-distribution">Building Binary Distribution<a class="headerlink" href="#building-binary-distribution" title="Permanent link">&para;</a></h1>
+<p>This document describes how to build standalone releases of LM Studio Tray Manager.</p>
+<p><strong>For most users and distributions, the <a href="#appimage-recommended-fully-portable">AppImage release</a> is recommended.</strong> It's fully self-contained with Python, GTK3, all dependencies, and the application bundled together-truly portable across all Linux distributions. No setup script or system dependencies needed. See <a href="#appimage-recommended-fully-portable">AppImage (Recommended)</a> for details.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#building-binary-distribution">Building Binary Distribution</a></li>
+<li><a href="#table-of-contents">Table of Contents</a></li>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#appimage-recommended-fully-portable">AppImage (Recommended): Fully Portable</a></li>
+<li><a href="#binary-build-locally">Binary (Build locally)</a></li>
+<li><a href="#macos-app-bundle">macOS .app Bundle</a></li>
+<li><a href="#windows-exe-and-installer">Windows .exe and Installer</a></li>
+</ul>
+</li>
+<li><a href="#quick-start">Quick Start</a><ul>
+<li><a href="#appimage-build-docker-based-recommended">AppImage Build (Docker-based, Recommended)</a></li>
+<li><a href="#automated-binary-build-local">Automated Binary Build (Local)</a></li>
+<li><a href="#macos-app-build-local">macOS .app Build (Local)</a></li>
+<li><a href="#manual-binary-build">Manual Binary Build</a></li>
+<li><a href="#docker-appimage-build-alternative">Docker AppImage Build (Alternative)</a></li>
+</ul>
+</li>
+<li><a href="#requirements">Requirements</a><ul>
+<li><a href="#build-dependencies">Build Dependencies</a></li>
+<li><a href="#python-packages">Python Packages</a></li>
+</ul>
+</li>
+<li><a href="#build-methods">Build Methods</a><ul>
+<li><a href="#method-1-shell-script-easiest">Method 1: Shell Script (Easiest)</a></li>
+<li><a href="#method-2-python-script">Method 2: Python Script</a></li>
+<li><a href="#method-3-pyinstaller-spec-file">Method 3: PyInstaller Spec File</a></li>
+</ul>
+</li>
+<li><a href="#macos-build-details">macOS Build Details</a><ul>
+<li><a href="#build-script">Build Script</a></li>
+<li><a href="#local-testing">Local Testing</a></li>
+<li><a href="#release-artifacts">Release Artifacts</a></li>
+<li><a href="#code-signing-and-notarization">Code Signing and Notarization</a></li>
+</ul>
+</li>
+<li><a href="#windows-build-details">Windows Build Details</a><ul>
+<li><a href="#build-script-windows">Build script (Windows)</a></li>
+<li><a href="#requirements-windows-build">Requirements (Windows build)</a></li>
+<li><a href="#release-artifacts-windows">Release artifacts (Windows)</a></li>
+<li><a href="#console-output-from-a-windowed-build">Console output from a windowed build</a></li>
+<li><a href="#code-signing-windows">Code signing (Windows)</a></li>
+<li><a href="#github-actions-windows-release">GitHub Actions Windows release</a></li>
+</ul>
+</li>
+<li><a href="#optimization">Optimization</a><ul>
+<li><a href="#size-reduction">Size Reduction</a></li>
+<li><a href="#expected-sizes">Expected Sizes</a></li>
+</ul>
+</li>
+<li><a href="#testing">Testing</a><ul>
+<li><a href="#basic-tests">Basic Tests</a></li>
+<li><a href="#full-test">Full Test</a></li>
+</ul>
+</li>
+<li><a href="#troubleshooting">Troubleshooting</a><ul>
+<li><a href="#missing-gtk3-libraries">Missing GTK3 Libraries</a></li>
+<li><a href="#runtime-requirements-on-target-machine">Runtime Requirements on Target Machine</a></li>
+<li><a href="#binary-crashes-on-startup">Binary Crashes on Startup</a></li>
+<li><a href="#large-binary-size">Large Binary Size</a></li>
+</ul>
+</li>
+<li><a href="#alternative-approaches">Alternative Approaches</a><ul>
+<li><a href="#nuitka">Nuitka</a></li>
+<li><a href="#appimage-recommended-fully-portable-release">AppImage (Recommended): Fully Portable Release</a></li>
+<li><a href="#option-1-docker-recommended">Option 1: Docker (Recommended)</a></li>
+<li><a href="#option-2-github-actions-automatic">Option 2: GitHub Actions (Automatic)</a></li>
+<li><a href="#rust-rewrite">Rust Rewrite</a></li>
+</ul>
+</li>
+<li><a href="#support">Support</a></li>
+<li><a href="#next-steps">Next Steps</a></li>
+</ul>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The project offers multiple build approaches with different portability levels:</p>
+<h3 id="appimage-recommended-fully-portable">AppImage (Recommended): Fully Portable<a class="headerlink" href="#appimage-recommended-fully-portable" title="Permanent link">&para;</a></h3>
+<p>The AppImage release is the <strong>most portable and recommended option</strong> for Linux:</p>
+<ul>
+<li>✅ Bundles everything: Python, GTK3, GObject-Introspection, all libraries</li>
+<li>✅ Single executable file (~34 MB)</li>
+<li>✅ Works on virtually any modern Linux system</li>
+<li>✅ No setup script or system dependencies needed</li>
+<li>✅ Just <code>chmod +x</code> and run</li>
+</ul>
+<p><strong>Build method:</strong> <code>tools/Dockerfile.release</code> (Docker-based, recommended)</p>
+<h3 id="binary-build-locally">Binary (Build locally)<a class="headerlink" href="#binary-build-locally" title="Permanent link">&para;</a></h3>
+<p>For custom Linux builds on your machine:</p>
+<ul>
+<li>Python interpreter</li>
+<li>All Python application code and PyGObject</li>
+<li>Application assets (icons, VERSION file, etc.)</li>
+</ul>
+<p><strong>Note:</strong> GTK3 and GObject Introspection (GI) shared libraries must be installed on the target system at runtime.</p>
+<h3 id="macos-app-bundle">macOS .app Bundle<a class="headerlink" href="#macos-app-bundle" title="Permanent link">&para;</a></h3>
+<p>Native macOS application bundle built with PyInstaller:</p>
+<ul>
+<li>✅ Self-contained .app directory structure</li>
+<li>✅ Includes Python 3.12 runtime and all dependencies</li>
+<li>✅ Bundles rumps library (macOS tray integration)</li>
+<li>✅ Bundles PyObjC (<code>objc</code>, <code>Foundation</code>), used to run AppKit calls on the
+  main thread - without it menu updates from worker threads crash the app</li>
+<li>✅ ~50-80 MB uncompressed, ~30 MB as tar.gz</li>
+<li>✅ Works on macOS 12+</li>
+<li>Optional: Code Sign + Notarize for Gatekeeper approval</li>
+</ul>
+<p><strong>Build method:</strong> <code>./tools/build_macos.sh</code> (local) or GitHub Actions <code>build-macos</code> job (CI/CD)</p>
+<h3 id="windows-exe-and-installer">Windows .exe and Installer<a class="headerlink" href="#windows-exe-and-installer" title="Permanent link">&para;</a></h3>
+<p>Native Windows build produced with PyInstaller:</p>
+<ul>
+<li>✅ Single self-contained <code>.exe</code>, no Python installation needed</li>
+<li>✅ Bundles pystray (notification-area icon) and Pillow</li>
+<li>✅ Bundles tkinter for the status, about and configuration dialogs</li>
+<li>✅ ~17 MB as a one-file build, ~19 MB as an installer</li>
+<li>✅ Works on Windows 10 and 11 (x64)</li>
+<li>❌ Not code-signed: SmartScreen warns on first run</li>
+</ul>
+<p><strong>Build method:</strong> <code>.\tools\build_windows.ps1</code> (local) or GitHub Actions <code>build-windows</code> job (CI/CD)</p>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="appimage-build-docker-based-recommended">AppImage Build (Docker-based, Recommended)<a class="headerlink" href="#appimage-build-docker-based-recommended" title="Permanent link">&para;</a></h3>
+<p>For a fully portable AppImage with all dependencies bundled:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>tools/Dockerfile.release<span class="w"> </span>-t<span class="w"> </span>lmstudio-release:latest<span class="w"> </span>.
+</code></pre></div>
+<p>This produces a 34 MB AppImage with:</p>
+<ul>
+<li>Python 3.12</li>
+<li>GTK3 runtime + all required libraries</li>
+<li>GObject-Introspection + typelibs</li>
+<li>Application code and assets</li>
+</ul>
+<p><strong>GitHub Actions:</strong> The <code>release.yml</code> workflow automatically uses this method when you push a version tag.</p>
+<h3 id="automated-binary-build-local">Automated Binary Build (Local)<a class="headerlink" href="#automated-binary-build-local" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>tools/build.sh
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>./tools/build.sh
+</code></pre></div>
+<p>This will:</p>
+<ol>
+<li>Check dependencies</li>
+<li>Create a Python venv (if missing) with system site-packages</li>
+<li>Clean previous builds</li>
+<li>Run PyInstaller</li>
+<li>Strip debug symbols</li>
+<li>Show final binary size</li>
+</ol>
+<h3 id="macos-app-build-local">macOS .app Build (Local)<a class="headerlink" href="#macos-app-build-local" title="Permanent link">&para;</a></h3>
+<p>For building a native macOS .app bundle on your Mac:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>tools/build_macos.sh
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>./tools/build_macos.sh
+</code></pre></div>
+<p>For a signed build:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./tools/build_macos.sh<span class="w"> </span>--clean<span class="w"> </span>--sign-identity<span class="w"> </span><span class="s2">&quot;Developer ID Application: Your Name (TEAMID)&quot;</span>
+</code></pre></div>
+<p>For a signed and notarized build using a stored notarytool profile:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./tools/build_macos.sh<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--clean<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--sign-identity<span class="w"> </span><span class="s2">&quot;Developer ID Application: Your Name (TEAMID)&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--notary-profile<span class="w"> </span>AC_NOTARY
+</code></pre></div>
+<h3 id="storing-notary-credentials-that-survive">Storing notary credentials that survive<a class="headerlink" href="#storing-notary-credentials-that-survive" title="Permanent link">&para;</a></h3>
+<p><code>notarytool store-credentials</code> writes to the iCloud-managed "Local Items"
+keychain unless told otherwise, and the profile can vanish between runs
+("No Keychain password item found"). Use a dedicated keychain instead:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>security<span class="w"> </span>create-keychain<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;PASSWORD&quot;</span><span class="w"> </span>~/Library/Keychains/notary.keychain-db
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>security<span class="w"> </span>set-keychain-settings<span class="w"> </span>~/Library/Keychains/notary.keychain-db
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>security<span class="w"> </span>unlock-keychain<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;PASSWORD&quot;</span><span class="w"> </span>~/Library/Keychains/notary.keychain-db
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>xcrun<span class="w"> </span>notarytool<span class="w"> </span>store-credentials<span class="w"> </span><span class="s2">&quot;AC_NOTARY&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>--keychain<span class="w"> </span>~/Library/Keychains/notary.keychain-db<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span>--apple-id<span class="w"> </span><span class="s2">&quot;you@example.com&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>--team-id<span class="w"> </span><span class="s2">&quot;TEAMID&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--password<span class="w"> </span><span class="s2">&quot;xxxx-xxxx-xxxx-xxxx&quot;</span>
+</code></pre></div>
+<p><code>set-keychain-settings</code> without <code>-t</code> disables the idle lock, which would
+otherwise trip mid-notarization. The build script picks up
+<code>~/Library/Keychains/notary.keychain-db</code> automatically; pass
+<code>--notary-keychain &lt;path&gt;</code> for a different location, and export
+<code>NOTARY_KEYCHAIN_PASSWORD</code> to have the script unlock it.</p>
+<p>Notarization polls Apple for several minutes. If the Mac sleeps the
+connection drops ("The Internet connection appears to be offline") and the
+ticket is never stapled, so wrap long runs:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>caffeinate<span class="w"> </span>-is<span class="w"> </span>./tools/build_macos.sh<span class="w"> </span>--clean<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--sign-identity<span class="w"> </span><span class="s2">&quot;Developer ID Application: Your Name (TEAMID)&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--notary-profile<span class="w"> </span>AC_NOTARY
+</code></pre></div>
+<p>This will:</p>
+<ol>
+<li>Check for Python 3 and Xcode Command Line Tools</li>
+<li>Render a high-resolution ICNS icon from the SVG asset when available</li>
+<li>Create a Python venv with rumps (macOS tray library)</li>
+<li>Install all build dependencies</li>
+<li>Build a native Apple Silicon <code>.app</code> bundle with PyInstaller</li>
+<li>Bundle application resources and menu bar metadata</li>
+<li>Optionally code sign and notarize the app</li>
+<li>Create a <code>.tar.gz</code> release archive with checksums</li>
+</ol>
+<p><strong>Output:</strong></p>
+<ul>
+<li><strong>App bundle:</strong> <code>dist/LM-Studio-Tray-Manager.app</code></li>
+<li><strong>Release archive:</strong> <code>release/lmstudio-tray-manager-vX.Y.Z-macos-arm64.tar.gz</code>
+  (an <code>-unsigned</code> suffix is added when no signing identity is passed)</li>
+<li><strong>Checksums:</strong> <code>release/SHA256SUMS-macos.txt</code></li>
+</ul>
+<p><strong>Test the app:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># From terminal</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>dist/LM-Studio-Tray-Manager.app/Contents/MacOS/LM-Studio-Tray-Manager
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Or from Finder</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>open<span class="w"> </span>dist/LM-Studio-Tray-Manager.app<span class="w"> </span>--args<span class="w"> </span>--auto-start-daemon
+</code></pre></div>
+<p><strong>Clean build:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>./tools/build_macos.sh<span class="w"> </span>--clean
+</code></pre></div>
+<h3 id="manual-binary-build">Manual Binary Build<a class="headerlink" href="#manual-binary-build" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Install build dependencies (pinned versions)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-build.txt
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Build using Python script</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>python3<span class="w"> </span>tools/build_binary.py
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Or build using spec file</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>pyinstaller<span class="w"> </span>lmstudio-tray-manager.spec
+</code></pre></div>
+<h3 id="docker-appimage-build-alternative">Docker AppImage Build (Alternative)<a class="headerlink" href="#docker-appimage-build-alternative" title="Permanent link">&para;</a></h3>
+<p>For Windows/macOS developers without native Linux, use Docker:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>tools/Dockerfile.release<span class="w"> </span>-t<span class="w"> </span>lmstudio-release:latest<span class="w"> </span>.
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>release-temp<span class="w"> </span>lmstudio-release:latest
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>docker<span class="w"> </span>cp<span class="w"> </span>release-temp:/app/dist<span class="w"> </span>dist/
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>docker<span class="w"> </span>rm<span class="w"> </span>release-temp
+</code></pre></div>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<h3 id="build-dependencies">Build Dependencies<a class="headerlink" href="#build-dependencies" title="Permanent link">&para;</a></h3>
+<p>A C toolchain (gcc or clang) is required because the PyInstaller
+bootloader gets compiled during installation.  The bootloader also links
+against <strong>zlib</strong>; you must have the zlib development headers/libraries
+installed (<code>zlib1g-dev</code> on Debian/Ubuntu, <code>zlib-devel</code> on Fedora).
+On Debian/Ubuntu the required build packages are provided by
+<code>build-essential</code> plus <code>zlib1g-dev</code>; Fedora ships <code>@development-tools</code> and
+<code>zlib-devel</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Ubuntu/Debian</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>python3.12<span class="w"> </span>python3.12-venv<span class="w"> </span>python3-pip<span class="w"> </span>binutils<span class="w"> </span>build-essential<span class="w"> </span>zlib1g-dev
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Fedora</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>python3-pip<span class="w"> </span>binutils<span class="w"> </span>@development-tools<span class="w"> </span>zlib-devel
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Arch Linux</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>sudo<span class="w"> </span>pacman<span class="w"> </span>-S<span class="w"> </span>python-pip<span class="w"> </span>binutils<span class="w"> </span>base-devel<span class="w"> </span>zlib
+</code></pre></div>
+<p>The <code>tools/build.sh</code> helper script now checks for a working compiler; if none is
+found it will prompt you and (optionally) attempt to install the necessary
+packages before continuing.</p>
+<h3 id="python-packages">Python Packages<a class="headerlink" href="#python-packages" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-build.txt
+</code></pre></div>
+<blockquote>
+<p><strong>Note:</strong> the repository also contains a companion
+<a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager/blob/main/requirements.txt"><code>requirements.txt</code></a> file. That copy omits the
+<code>--hash=</code> pins and line continuations so that dependency scanners
+(Depfu, Snyk, etc.) can read it without errors. The actual build
+process continues to rely on <code>requirements-build.txt</code> for
+integrity‑checked installs.</p>
+</blockquote>
+<h2 id="build-methods">Build Methods<a class="headerlink" href="#build-methods" title="Permanent link">&para;</a></h2>
+<h3 id="method-1-shell-script-easiest">Method 1: Shell Script (Easiest)<a class="headerlink" href="#method-1-shell-script-easiest" title="Permanent link">&para;</a></h3>
+<p>The <code>tools/build.sh</code> script automates the entire process with optimization:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>tools/build.sh
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>./tools/build.sh
+</code></pre></div>
+<p><strong>Output:</strong></p>
+<ul>
+<li>Binary: <code>dist/lmstudio-tray-manager</code></li>
+<li>Size: ~15-25 MB (optimized) or ~40-50 MB (unoptimized)</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li><code>tools/build.sh</code> creates a <code>venv</code> automatically when missing.</li>
+<li>The venv uses <code>--system-site-packages</code> so <code>gi</code> bindings are available.</li>
+</ul>
+<h3 id="method-2-python-script">Method 2: Python Script<a class="headerlink" href="#method-2-python-script" title="Permanent link">&para;</a></h3>
+<p>The <code>tools/build_binary.py</code> script provides programmatic build control:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>python3<span class="w"> </span>tools/build_binary.py
+</code></pre></div>
+<p><strong>Features:</strong></p>
+<ul>
+<li>Dependency checking</li>
+<li>Hidden imports auto-detection</li>
+<li>Data files bundling</li>
+<li>Build status reporting</li>
+</ul>
+<h3 id="method-3-pyinstaller-spec-file">Method 3: PyInstaller Spec File<a class="headerlink" href="#method-3-pyinstaller-spec-file" title="Permanent link">&para;</a></h3>
+<p>For advanced customization, edit <code>lmstudio-tray-manager.spec</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Edit spec file</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>nano<span class="w"> </span>lmstudio-tray-manager.spec
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Build using spec</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>pyinstaller<span class="w"> </span>lmstudio-tray-manager.spec
+</code></pre></div>
+<p><strong>Customization options:</strong></p>
+<ul>
+<li>Hidden imports list</li>
+<li>Excluded modules</li>
+<li>Data files</li>
+<li>Build flags (strip, console)</li>
+</ul>
+<h2 id="macos-build-details">macOS Build Details<a class="headerlink" href="#macos-build-details" title="Permanent link">&para;</a></h2>
+<h3 id="build-script">Build Script<a class="headerlink" href="#build-script" title="Permanent link">&para;</a></h3>
+<p>The <code>tools/build_macos.sh</code> script is the easiest way to build for macOS:</p>
+<p><strong>Features:</strong></p>
+<ul>
+<li>Automatic Python 3 and Xcode Command Line Tools detection</li>
+<li>Uses macOS Quick Look to rasterize the SVG icon into a 1024px master image</li>
+<li>Creates isolated venv with rumps library</li>
+<li>PyInstaller with macOS-specific options:</li>
+<li><code>--windowed --onedir</code> to emit a real <code>.app</code> bundle</li>
+<li><code>--target-architecture</code> follows <code>uname -m</code>; override with <code>TARGET_ARCH</code></li>
+<li>Bundle identifier: <code>com.lmstudio.tray-manager</code></li>
+<li>Automatic ICNS generation from <code>assets/img/lm-studio-tray-manager.svg</code></li>
+<li>Resource bundling (setup.sh, README.md, LICENSE, assets)</li>
+<li>Optional code signing and notarization in the same build flow</li>
+<li>Automatic .tar.gz archive creation with checksums</li>
+</ul>
+<h3 id="local-testing">Local Testing<a class="headerlink" href="#local-testing" title="Permanent link">&para;</a></h3>
+<p>Test the unsigned app directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Start the app from command line</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>dist/LM-Studio-Tray-Manager.app/Contents/MacOS/LM-Studio-Tray-Manager
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Or with options</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>dist/LM-Studio-Tray-Manager.app/Contents/MacOS/LM-Studio-Tray-Manager<span class="w"> </span>--debug
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Or from Finder</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>open<span class="w"> </span>dist/LM-Studio-Tray-Manager.app
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="c1"># Or with auto-start daemon</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>open<span class="w"> </span>dist/LM-Studio-Tray-Manager.app<span class="w"> </span>--args<span class="w"> </span>--auto-start-daemon
+</code></pre></div>
+<p><strong>Verify:</strong></p>
+<ul>
+<li>Menu bar icon appears in top-right corner</li>
+<li><code>lms ps</code> shows daemon status</li>
+<li>Click menu bar icon to see tray menu and options</li>
+</ul>
+<h3 id="release-artifacts">Release Artifacts<a class="headerlink" href="#release-artifacts" title="Permanent link">&para;</a></h3>
+<p>After building, release artifacts are created in the <code>release/</code> directory:</p>
+<ul>
+<li><strong>Archive:</strong> <code>lmstudio-tray-manager-vX.Y.Z-macos-arm64-unsigned.tar.gz</code>
+  (signed builds drop the suffix: <code>...-macos-arm64.tar.gz</code>)</li>
+<li><strong>Checksums:</strong> <code>SHA256SUMS-macos.txt</code></li>
+</ul>
+<p>These can be distributed directly or uploaded to GitHub Releases.</p>
+<h3 id="code-signing-and-notarization">Code Signing and Notarization<a class="headerlink" href="#code-signing-and-notarization" title="Permanent link">&para;</a></h3>
+<p>For distribution beyond testing, sign the <code>.app</code> and notarize it.</p>
+<ol>
+<li><strong>Obtain Developer ID Certificate</strong></li>
+<li>Enroll in <a href="https://developer.apple.com/programs/">Apple Developer Program</a></li>
+<li>Create a Developer ID Application certificate</li>
+</ol>
+<p>Store notarization credentials once:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>xcrun<span class="w"> </span>notarytool<span class="w"> </span>store-credentials<span class="w"> </span>AC_NOTARY<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>--apple-id<span class="w"> </span><span class="s2">&quot;you@example.com&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>--team-id<span class="w"> </span><span class="s2">&quot;TEAM1234567&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>--password<span class="w"> </span><span class="s2">&quot;app-specific-password&quot;</span>
+</code></pre></div>
+<ol>
+<li><strong>Build, sign, and notarize in one command</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>./tools/build_macos.sh<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span>--clean<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>--sign-identity<span class="w"> </span><span class="s2">&quot;Developer ID Application: Your Name (TEAM1234567)&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span>--notary-profile<span class="w"> </span>AC_NOTARY
+</code></pre></div>
+<ol>
+<li><strong>Verify the stapled result</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>xcrun<span class="w"> </span>stapler<span class="w"> </span>validate<span class="w"> </span>dist/LM-Studio-Tray-Manager.app
+</code></pre></div>
+<h3 id="github-actions-macos-release">GitHub Actions macOS Release<a class="headerlink" href="#github-actions-macos-release" title="Permanent link">&para;</a></h3>
+<p>The <code>build-macos</code> job in <code>.github/workflows/release.yml</code> now calls <code>tools/build_macos.sh</code> directly.</p>
+<p>If the following secrets are present, the workflow imports your Developer ID certificate, signs the bundle, stores notarytool credentials, notarizes the build, and uploads a notarized archive:</p>
+<ul>
+<li><code>MACOS_CERTIFICATE_BASE64</code></li>
+<li><code>MACOS_CERTIFICATE_PASSWORD</code></li>
+<li><code>MACOS_KEYCHAIN_PASSWORD</code> (optional)</li>
+<li><code>APPLE_ID</code></li>
+<li><code>APPLE_TEAM_ID</code></li>
+<li><code>APPLE_APP_PASSWORD</code></li>
+</ul>
+<p>If those secrets are not configured, the same workflow still produces an unsigned macOS archive for testing.</p>
+<p>See <a href="https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution">macOS Code Signing Guide</a> for detailed instructions.</p>
+<h2 id="windows-build-details">Windows Build Details<a class="headerlink" href="#windows-build-details" title="Permanent link">&para;</a></h2>
+<h3 id="build-script-windows">Build script (Windows)<a class="headerlink" href="#build-script-windows" title="Permanent link">&para;</a></h3>
+<p><code>tools/build_windows.ps1</code> is the counterpart to <code>tools/build_macos.sh</code>:</p>
+<p><strong>Features:</strong></p>
+<ul>
+<li>Verifies the Python interpreter actually runs before using it - Windows 11
+  ships an App Execution Alias at
+  <code>%LOCALAPPDATA%\Microsoft\WindowsApps\python.exe</code> that is on <code>PATH</code> even
+  when Python is not installed, and only opens the Microsoft Store</li>
+<li>Creates an isolated venv, installs <code>requirements-build.txt</code> with
+  <code>--require-hashes</code> and <code>requirements-windows.txt</code> pinned</li>
+<li>Generates a multi-resolution <code>.ico</code> from <code>assets/img/lm-studio-tray-manager.png</code>
+  with Pillow, so no binary icon is committed</li>
+<li>Runs <code>tools/build_binary.py</code>, which on Windows adds <code>pystray._win32</code>,
+  <code>PIL._tkinter_finder</code> and <code>tkinter</code> as hidden imports and skips the
+  pkg-config GdkPixbuf lookup</li>
+<li>Smoke-tests the executable, packages the portable ZIP, builds the Inno
+  Setup installer, and writes <code>SHA256SUMS-windows.txt</code></li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c"># Full build (installer included when Inno Setup is present)</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="p">.\</span><span class="n">tools</span><span class="p">\</span><span class="n">build_windows</span><span class="p">.</span><span class="n">ps1</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c"># Clean rebuild</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="p">.\</span><span class="n">tools</span><span class="p">\</span><span class="n">build_windows</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Clean</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c"># Portable ZIP only</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="p">.\</span><span class="n">tools</span><span class="p">\</span><span class="n">build_windows</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-SkipInstaller</span>
+</code></pre></div>
+<h3 id="requirements-windows-build">Requirements (Windows build)<a class="headerlink" href="#requirements-windows-build" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Windows 10 or 11, x64</li>
+<li>Python 3.10+ from <a href="https://www.python.org/downloads/">python.org</a> (the
+  Microsoft Store build works too, but the alias caveat above applies)</li>
+<li>Inno Setup 6, only for the installer:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">winget</span> <span class="n">install</span> <span class="n">JRSoftware</span><span class="p">.</span><span class="n">InnoSetup</span>
+</code></pre></div>
+<p>The build script finds <code>ISCC.exe</code> under <code>%LOCALAPPDATA%\Programs\Inno Setup 6</code>
+as well as both <code>Program Files</code> locations — winget installs per-user unless it
+is run elevated. Without Inno Setup the build still succeeds and simply skips
+the installer.</p>
+<h3 id="release-artifacts-windows">Release artifacts (Windows)<a class="headerlink" href="#release-artifacts-windows" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lmstudio-tray-manager-X.Y.Z-windows-x86_64.exe</code> (in <code>dist\</code>)</td>
+<td>The one-file build, ~17 MB</td>
+</tr>
+<tr>
+<td><code>lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip</code></td>
+<td>Portable: the <code>.exe</code>, <code>lmstudio_autostart.ps1</code>, <code>VERSION</code>, <code>AUTHORS</code>, <code>LICENSE</code>, <code>README.md</code></td>
+</tr>
+<tr>
+<td><code>lmstudio-tray-manager-X.Y.Z-windows-x86_64-setup.exe</code></td>
+<td>Inno Setup installer, ~19 MB</td>
+</tr>
+<tr>
+<td><code>SHA256SUMS-windows.txt</code></td>
+<td>Checksums, in <code>sha256sum -c</code> format</td>
+</tr>
+</tbody>
+</table>
+<h3 id="console-output-from-a-windowed-build">Console output from a windowed build<a class="headerlink" href="#console-output-from-a-windowed-build" title="Permanent link">&para;</a></h3>
+<p>The executable is built with <code>--windowed</code>, so it starts without a console and
+<code>sys.stdout</code>/<code>sys.stderr</code> are <code>None</code>. The app reattaches the calling
+terminal's console when there is one, so <code>--version</code> and <code>--help</code> print
+normally from PowerShell, and falls back to the null device otherwise —
+argparse writes to <code>stderr</code> unconditionally and would otherwise raise.</p>
+<p>One consequence when scripting against it: PowerShell does not wait for a
+GUI-subsystem process, so <code>$LASTEXITCODE</code> is never set. Use <code>Start-Process</code>
+to get a real exit code:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nv">$p</span> <span class="p">=</span> <span class="nb">Start-Process</span> <span class="p">.\</span><span class="n">dist</span><span class="p">\</span><span class="n">lmstudio-tray-manager</span><span class="p">.</span><span class="n">exe</span> <span class="n">-ArgumentList</span> <span class="s1">&#39;--version&#39;</span> <span class="p">`</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="n">-Wait</span> <span class="n">-PassThru</span> <span class="n">-NoNewWindow</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="nv">$p</span><span class="p">.</span><span class="n">ExitCode</span>
+</code></pre></div>
+<h3 id="code-signing-windows">Code signing (Windows)<a class="headerlink" href="#code-signing-windows" title="Permanent link">&para;</a></h3>
+<p>The Windows artifacts are <strong>not signed</strong> — the project has no Authenticode
+certificate, so SmartScreen warns on first run. This is the one place the
+Windows release is weaker than the macOS one, which is signed and notarized.
+Users verify against <code>SHA256SUMS-windows.txt</code> instead.</p>
+<h3 id="github-actions-windows-release">GitHub Actions Windows release<a class="headerlink" href="#github-actions-windows-release" title="Permanent link">&para;</a></h3>
+<p>The <code>build-windows</code> job in <code>.github/workflows/release.yml</code> runs on
+<code>windows-latest</code>, installs Inno Setup via winget, runs
+<code>tools/build_windows.ps1 -Clean</code>, insists that all three artifacts exist, and
+uploads them to the release on a tag push.</p>
+<h2 id="optimization">Optimization<a class="headerlink" href="#optimization" title="Permanent link">&para;</a></h2>
+<h3 id="size-reduction">Size Reduction<a class="headerlink" href="#size-reduction" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Strip debug symbols</strong> (saves ~5-10 MB):</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>strip<span class="w"> </span>dist/lmstudio-tray-manager
+</code></pre></div>
+<ol>
+<li><strong>Exclude unused modules</strong> (edit spec file):</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="n">excludes</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>    <span class="s1">&#39;tkinter&#39;</span><span class="p">,</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="s1">&#39;matplotlib&#39;</span><span class="p">,</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="s1">&#39;numpy&#39;</span><span class="p">,</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="s1">&#39;pandas&#39;</span><span class="p">,</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="p">]</span>
+</code></pre></div>
+<h3 id="expected-sizes">Expected Sizes<a class="headerlink" href="#expected-sizes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Build Type</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unoptimized</td>
+<td>40-50 MB</td>
+</tr>
+<tr>
+<td>+ Strip</td>
+<td>30-40 MB</td>
+</tr>
+<tr>
+<td>+ Excludes</td>
+<td>10-20 MB</td>
+</tr>
+</tbody>
+</table>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<h3 id="basic-tests">Basic Tests<a class="headerlink" href="#basic-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Version check</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>./dist/lmstudio-tray-manager<span class="w"> </span>--version
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Help message</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>./dist/lmstudio-tray-manager<span class="w"> </span>--help
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="c1"># Run application</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>./dist/lmstudio-tray-manager
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="c1"># Auto-start daemon on launch</span>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>./dist/lmstudio-tray-manager<span class="w"> </span>--auto-start-daemon
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="c1"># Start GUI on launch (stops daemon first)</span>
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>./dist/lmstudio-tray-manager<span class="w"> </span>--gui
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a><span class="c1"># Debug mode</span>
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>./dist/lmstudio-tray-manager<span class="w"> </span>--debug
+</code></pre></div>
+<h3 id="full-test">Full Test<a class="headerlink" href="#full-test" title="Permanent link">&para;</a></h3>
+<p>The project uses <code>pytest</code> with the <a href="https://pypi.org/project/pytest-cov/">pytest-cov</a>
+plugin to generate coverage reports.  On Debian/Ubuntu you can install the
+required packages with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>python3-pytest<span class="w"> </span>python3-pytest-cov
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="c1"># or, if you prefer pip:</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="c1"># pip install pytest pytest-cov</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Run all tests with coverage</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>lmstudio_tray<span class="w"> </span>--cov<span class="o">=</span>build_binary<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Test binary execution</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>./dist/lmstudio-tray-manager<span class="w"> </span><span class="p">&amp;</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>sleep<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>pkill<span class="w"> </span>-f<span class="w"> </span>lmstudio-tray-manager
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="missing-gtk3-libraries">Missing GTK3 Libraries<a class="headerlink" href="#missing-gtk3-libraries" title="Permanent link">&para;</a></h3>
+<p><strong>Error:</strong> <code>gi.repository.Gtk not found</code></p>
+<p><strong>Solution:</strong> Add hidden imports to spec file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="n">hiddenimports</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>    <span class="s1">&#39;gi.repository.Gtk&#39;</span><span class="p">,</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>    <span class="s1">&#39;gi.repository.GLib&#39;</span><span class="p">,</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>    <span class="c1"># ... other GTK modules</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="p">]</span>
+</code></pre></div>
+<h3 id="runtime-requirements-on-target-machine">Runtime Requirements on Target Machine<a class="headerlink" href="#runtime-requirements-on-target-machine" title="Permanent link">&para;</a></h3>
+<p>The binary still relies on system GTK/gi packages:</p>
+<ul>
+<li><code>gir1.2-gtk-3.0</code></li>
+<li><code>gir1.2-ayatanaappindicator3-0.1</code> (provides GTK3 AppIndicator3
+  namespace; some platforms may instead offer only <code>AppIndicator3</code>)</li>
+</ul>
+<p>Optional (silences a warning):</p>
+<ul>
+<li><code>libcanberra-gtk3-module</code></li>
+</ul>
+<h3 id="binary-crashes-on-startup">Binary Crashes on Startup<a class="headerlink" href="#binary-crashes-on-startup" title="Permanent link">&para;</a></h3>
+<p><strong>Error:</strong> Segmentation fault or silent exit</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check GTK3 is installed on target system:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># example for Debian/Ubuntu</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>gir1.2-gtk-3.0<span class="w"> </span>gir1.2-ayatanaappindicator3-0.1
+</code></pre></div>
+<ol>
+<li>Run with debug output:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>./dist/lmstudio-tray-manager<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>debug.log
+</code></pre></div>
+<ol>
+<li>Check <code>debug.log</code> for missing libraries or other errors.</li>
+</ol>
+<h3 id="large-binary-size">Large Binary Size<a class="headerlink" href="#large-binary-size" title="Permanent link">&para;</a></h3>
+<p><strong>Issue:</strong> Binary exceeds 50 MB</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Enable strip: <code>strip=True</code> in spec file</li>
+<li>Exclude unused modules (see Optimization section)</li>
+<li>Use <code>--exclude-module</code> flag:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>pyinstaller<span class="w"> </span>--exclude-module<span class="w"> </span>tkinter<span class="w"> </span>lmstudio_tray.py
+</code></pre></div>
+<h2 id="alternative-approaches">Alternative Approaches<a class="headerlink" href="#alternative-approaches" title="Permanent link">&para;</a></h2>
+<p>For smaller binaries or different requirements, consider:</p>
+<h3 id="nuitka">Nuitka<a class="headerlink" href="#nuitka" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Compiles Python to C</li>
+<li>Smaller binaries (~5-10 MB)</li>
+<li>Faster startup time</li>
+<li>More complex build process</li>
+</ul>
+<h3 id="appimage-recommended-fully-portable-release">AppImage (Recommended): Fully Portable Release<a class="headerlink" href="#appimage-recommended-fully-portable-release" title="Permanent link">&para;</a></h3>
+<p><strong>What is it?</strong></p>
+<p>The AppImage is the <strong>standard Linux application format</strong> - truly portable across all distributions:</p>
+<ul>
+<li>Standard Linux app format recognized by most desktop environments</li>
+<li>Complete runtime environment bundled: Python, GTK3, GObject-Introspection, all libraries</li>
+<li>Single executable file that's completely self-contained</li>
+<li>Just ~34 MB with all dependencies included</li>
+<li><strong>Zero external dependencies</strong> (except LM Studio daemon itself)</li>
+</ul>
+<p><strong>How is it different from Binary Release?</strong></p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Binary Release</th>
+<th>AppImage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td>✓ Bundled</td>
+<td>✓ Bundled</td>
+</tr>
+<tr>
+<td>PyGObject</td>
+<td>✓ Bundled</td>
+<td>✓ Bundled</td>
+</tr>
+<tr>
+<td>GTK3 Runtime</td>
+<td>✗ System dep</td>
+<td>✓ Bundled</td>
+</tr>
+<tr>
+<td>GI Typelibs</td>
+<td>✗ System dep</td>
+<td>✓ Bundled</td>
+</tr>
+<tr>
+<td>Size</td>
+<td>15-25 MB</td>
+<td>34 MB</td>
+</tr>
+<tr>
+<td>Setup needed</td>
+<td>Yes (setup.sh)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Portability</td>
+<td>Medium</td>
+<td><strong>Excellent</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key advantages:</strong></p>
+<ul>
+<li>✓ Works on virtually any Linux distribution (2022+)</li>
+<li>✓ No <code>setup.sh</code> needed - just <code>chmod +x</code> and run</li>
+<li>✓ Better for distribution to end users</li>
+<li>✓ Self-contained: LM Studio daemon is the <em>only</em> external requirement</li>
+<li>✓ Works on systems where GTK3 isn't installed</li>
+</ul>
+<p><strong>Building AppImage:</strong></p>
+<h4 id="option-1-docker-recommended">Option 1: Docker (Recommended)<a class="headerlink" href="#option-1-docker-recommended" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Build AppImage using tools/Dockerfile.release</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>tools/Dockerfile.release<span class="w"> </span>-t<span class="w"> </span>lmstudio-release:latest<span class="w"> </span>.
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Extract artifacts</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="nv">CONTAINER_ID</span><span class="o">=</span><span class="k">$(</span>docker<span class="w"> </span>create<span class="w"> </span>lmstudio-release:latest<span class="k">)</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>docker<span class="w"> </span>cp<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CONTAINER_ID</span><span class="s2">&quot;</span>:/app/dist/.<span class="w"> </span>dist/
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>docker<span class="w"> </span>rm<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CONTAINER_ID</span><span class="s2">&quot;</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="c1"># Result: 34 MB AppImage with all dependencies</span>
+<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>ls<span class="w"> </span>-lh<span class="w"> </span>dist/*.AppImage
+</code></pre></div>
+<h4 id="option-2-github-actions-automatic">Option 2: GitHub Actions (Automatic)<a class="headerlink" href="#option-2-github-actions-automatic" title="Permanent link">&para;</a></h4>
+<p>The <code>release.yml</code> workflow automatically builds AppImage using <code>tools/Dockerfile.release</code> when you push a version tag:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>git<span class="w"> </span>tag<span class="w"> </span>v0.6.1
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v0.6.1
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="c1"># → release.yml builds AppImage automatically</span>
+</code></pre></div>
+<p><strong>Using AppImage:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>lmstudio-tray-manager-*.AppImage
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>./lmstudio-tray-manager-*.AppImage<span class="w"> </span>--auto-start-daemon
+</code></pre></div>
+<p><strong>Linux Compatibility:</strong></p>
+<p>The AppImage works on most modern Linux systems with glibc ≥ 2.35 (released 2022):</p>
+<table>
+<thead>
+<tr>
+<th>Distribution</th>
+<th>Version</th>
+<th>Status</th>
+<th>glibc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ubuntu</td>
+<td>24.04, 23.10, 22.04 LTS</td>
+<td>✅ Full</td>
+<td>≥ 2.35</td>
+</tr>
+<tr>
+<td>Debian</td>
+<td>12 (Bookworm), 11+</td>
+<td>✅ Full</td>
+<td>≥ 2.36</td>
+</tr>
+<tr>
+<td>Fedora</td>
+<td>39+</td>
+<td>✅ Full</td>
+<td>≥ 2.38</td>
+</tr>
+<tr>
+<td>openSUSE Leap</td>
+<td>15.5+</td>
+<td>✅ Full</td>
+<td>≥ 2.35</td>
+</tr>
+<tr>
+<td>Linux Mint</td>
+<td>21.x+</td>
+<td>✅ Full</td>
+<td>≥ 2.35</td>
+</tr>
+<tr>
+<td>Pop!_OS</td>
+<td>22.04+</td>
+<td>✅ Full</td>
+<td>≥ 2.35</td>
+</tr>
+<tr>
+<td><strong>Older systems</strong></td>
+<td>&lt; 2022</td>
+<td>⚠️ May not work</td>
+<td>&lt; 2.35</td>
+</tr>
+</tbody>
+</table>
+<p><strong>For older Linux systems:</strong> Use the source tarball with Python package release instead.</p>
+<p><strong>Note:</strong> Chromium-based AppImages occasionally fail to start due to an
+incorrectly configured SUID sandbox helper. The tray manager
+automatically launches AppImages with <code>--no-sandbox</code> to work around this
+issue; otherwise you may need to run the AppImage manually with that flag.</p>
+<h3 id="rust-rewrite">Rust Rewrite<a class="headerlink" href="#rust-rewrite" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Native binary (~2-5 MB)</li>
+<li>Maximum performance</li>
+<li>Requires full rewrite</li>
+<li>Uses gtk-rs bindings</li>
+</ul>
+<p>See <a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager/discussions">GitHub Discussions</a> for more details on alternative approaches.</p>
+<h2 id="support">Support<a class="headerlink" href="#support" title="Permanent link">&para;</a></h2>
+<p>For build issues or questions:</p>
+<ul>
+<li><a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager/issues">Open an issue</a></li>
+<li><a href="https://github.com/Ajimaru/LM-Studio-Tray-Manager/discussions">Discussions</a></li>
+<li>Check existing issues with <code>build</code> label</li>
+</ul>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>After building the binary, proceed to <a href="../setup/">setup.md</a> to configure and install it.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -12,6 +12,7 @@ This document describes how to build standalone releases of LM Studio Tray Manag
     - [AppImage (Recommended): Fully Portable](#appimage-recommended-fully-portable)
     - [Binary (Build locally)](#binary-build-locally)
     - [macOS .app Bundle](#macos-app-bundle)
+    - [Windows .exe and Installer](#windows-exe-and-installer)
   - [Quick Start](#quick-start)
     - [AppImage Build (Docker-based, Recommended)](#appimage-build-docker-based-recommended)
     - [Automated Binary Build (Local)](#automated-binary-build-local)
@@ -30,6 +31,13 @@ This document describes how to build standalone releases of LM Studio Tray Manag
     - [Local Testing](#local-testing)
     - [Release Artifacts](#release-artifacts)
     - [Code Signing and Notarization](#code-signing-and-notarization)
+  - [Windows Build Details](#windows-build-details)
+    - [Build script (Windows)](#build-script-windows)
+    - [Requirements (Windows build)](#requirements-windows-build)
+    - [Release artifacts (Windows)](#release-artifacts-windows)
+    - [Console output from a windowed build](#console-output-from-a-windowed-build)
+    - [Code signing (Windows)](#code-signing-windows)
+    - [GitHub Actions Windows release](#github-actions-windows-release)
   - [Optimization](#optimization)
     - [Size Reduction](#size-reduction)
     - [Expected Sizes](#expected-sizes)
@@ -90,6 +98,19 @@ Native macOS application bundle built with PyInstaller:
 - Optional: Code Sign + Notarize for Gatekeeper approval
 
 **Build method:** `./tools/build_macos.sh` (local) or GitHub Actions `build-macos` job (CI/CD)
+
+### Windows .exe and Installer
+
+Native Windows build produced with PyInstaller:
+
+- ✅ Single self-contained `.exe`, no Python installation needed
+- ✅ Bundles pystray (notification-area icon) and Pillow
+- ✅ Bundles tkinter for the status, about and configuration dialogs
+- ✅ ~17 MB as a one-file build, ~19 MB as an installer
+- ✅ Works on Windows 10 and 11 (x64)
+- ❌ Not code-signed: SmartScreen warns on first run
+
+**Build method:** `.\tools\build_windows.ps1` (local) or GitHub Actions `build-windows` job (CI/CD)
 
 ## Quick Start
 
@@ -439,6 +460,96 @@ If the following secrets are present, the workflow imports your Developer ID cer
 If those secrets are not configured, the same workflow still produces an unsigned macOS archive for testing.
 
 See [macOS Code Signing Guide](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution) for detailed instructions.
+
+## Windows Build Details
+
+### Build script (Windows)
+
+`tools/build_windows.ps1` is the counterpart to `tools/build_macos.sh`:
+
+**Features:**
+
+- Verifies the Python interpreter actually runs before using it - Windows 11
+  ships an App Execution Alias at
+  `%LOCALAPPDATA%\Microsoft\WindowsApps\python.exe` that is on `PATH` even
+  when Python is not installed, and only opens the Microsoft Store
+- Creates an isolated venv, installs `requirements-build.txt` with
+  `--require-hashes` and `requirements-windows.txt` pinned
+- Generates a multi-resolution `.ico` from `assets/img/lm-studio-tray-manager.png`
+  with Pillow, so no binary icon is committed
+- Runs `tools/build_binary.py`, which on Windows adds `pystray._win32`,
+  `PIL._tkinter_finder` and `tkinter` as hidden imports and skips the
+  pkg-config GdkPixbuf lookup
+- Smoke-tests the executable, packages the portable ZIP, builds the Inno
+  Setup installer, and writes `SHA256SUMS-windows.txt`
+
+```powershell
+# Full build (installer included when Inno Setup is present)
+.\tools\build_windows.ps1
+
+# Clean rebuild
+.\tools\build_windows.ps1 -Clean
+
+# Portable ZIP only
+.\tools\build_windows.ps1 -SkipInstaller
+```
+
+### Requirements (Windows build)
+
+- Windows 10 or 11, x64
+- Python 3.10+ from [python.org](https://www.python.org/downloads/) (the
+  Microsoft Store build works too, but the alias caveat above applies)
+- Inno Setup 6, only for the installer:
+
+```powershell
+winget install JRSoftware.InnoSetup
+```
+
+The build script finds `ISCC.exe` under `%LOCALAPPDATA%\Programs\Inno Setup 6`
+as well as both `Program Files` locations — winget installs per-user unless it
+is run elevated. Without Inno Setup the build still succeeds and simply skips
+the installer.
+
+### Release artifacts (Windows)
+
+| Artifact | Contents |
+| --- | --- |
+| `lmstudio-tray-manager-X.Y.Z-windows-x86_64.exe` (in `dist\`) | The one-file build, ~17 MB |
+| `lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip` | Portable: the `.exe`, `lmstudio_autostart.ps1`, `VERSION`, `AUTHORS`, `LICENSE`, `README.md` |
+| `lmstudio-tray-manager-X.Y.Z-windows-x86_64-setup.exe` | Inno Setup installer, ~19 MB |
+| `SHA256SUMS-windows.txt` | Checksums, in `sha256sum -c` format |
+
+### Console output from a windowed build
+
+The executable is built with `--windowed`, so it starts without a console and
+`sys.stdout`/`sys.stderr` are `None`. The app reattaches the calling
+terminal's console when there is one, so `--version` and `--help` print
+normally from PowerShell, and falls back to the null device otherwise —
+argparse writes to `stderr` unconditionally and would otherwise raise.
+
+One consequence when scripting against it: PowerShell does not wait for a
+GUI-subsystem process, so `$LASTEXITCODE` is never set. Use `Start-Process`
+to get a real exit code:
+
+```powershell
+$p = Start-Process .\dist\lmstudio-tray-manager.exe -ArgumentList '--version' `
+    -Wait -PassThru -NoNewWindow
+$p.ExitCode
+```
+
+### Code signing (Windows)
+
+The Windows artifacts are **not signed** — the project has no Authenticode
+certificate, so SmartScreen warns on first run. This is the one place the
+Windows release is weaker than the macOS one, which is signed and notarized.
+Users verify against `SHA256SUMS-windows.txt` instead.
+
+### GitHub Actions Windows release
+
+The `build-windows` job in `.github/workflows/release.yml` runs on
+`windows-latest`, installs Inno Setup via winget, runs
+`tools/build_windows.ps1 -Clean`, insists that all three artifacts exist, and
+uploads them to the release on a tag push.
 
 ## Optimization
 

@@ -956,6 +956,100 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#windows-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Windows Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-start-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smartscreen-warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SmartScreen warning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autostart-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autostart (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-locations-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File locations (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#desktop-app-detection-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop app detection (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-limitations-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known limitations (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1742,6 +1836,100 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#windows-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Windows Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-start-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smartscreen-warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SmartScreen warning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autostart-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autostart (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-locations-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File locations (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#desktop-app-detection-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop app detection (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-limitations-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known limitations (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1774,11 +1962,12 @@
 
 <h1 id="setup-guide">Setup Guide<a class="headerlink" href="#setup-guide" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Platform support:</strong> Linux (GTK3 + AppIndicator3) and macOS (rumps / PyObjC).
-Windows is not supported. AppImage releases are Linux-only.
+<p><strong>Platform support:</strong> Linux (GTK3 + AppIndicator3), macOS (rumps / PyObjC)
+and Windows 10/11 (pystray). AppImage releases are Linux-only.
 Package‑manager automation is available for <strong>apt, dnf,
 pacman, zypper, and apk</strong> on Linux; on macOS <code>setup.sh</code> uses <code>pip</code> to
-install the <code>rumps</code> dependency.</p>
+install the <code>rumps</code> dependency. <code>setup.sh</code> has no Windows counterpart -
+see <a href="#windows-installation">Windows Installation</a>.</p>
 </blockquote>
 <h2 id="quick-summary">Quick Summary<a class="headerlink" href="#quick-summary" title="Permanent link">&para;</a></h2>
 <p><strong>If you have an AppImage release</strong> (Linux, easiest option - recommended):</p>
@@ -1807,6 +1996,15 @@ signed and notarized, so they open straight away. Apple Silicon only
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pip<span class="w"> </span>install<span class="w"> </span>rumps
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># 2. Run the tray monitor:</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>python3<span class="w"> </span>lmstudio_tray.py<span class="w"> </span>--auto-start-daemon
+</code></pre></div>
+<p><strong>Windows (installer - recommended):</strong></p>
+<p>Run <code>lmstudio-tray-manager-X.Y.Z-windows-x86_64-setup.exe</code>. It installs
+per-user, needs no administrator rights, and offers a <em>start with Windows</em>
+checkbox. The builds are unsigned, so SmartScreen warns on first run -
+choose <em>More info -&gt; Run anyway</em>.</p>
+<p><strong>Windows (portable .exe - alternative):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">Expand-Archive</span> <span class="n">lmstudio-tray-manager-X</span><span class="p">.</span><span class="n">Y</span><span class="p">.</span><span class="n">Z-windows-x86_64</span><span class="p">.</span><span class="n">zip</span> <span class="n">-DestinationPath</span> <span class="p">.</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="p">.\</span><span class="n">lmstudio-tray-manager</span><span class="p">.</span><span class="n">exe</span> <span class="p">-</span><span class="n">-auto-start-daemon</span>
 </code></pre></div>
 <p>For other installation types (binary, Python source), <code>setup.sh</code> automates configuration and dependency checking.</p>
 <h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
@@ -1862,6 +2060,16 @@ signed and notarized, so they open straight away. Apple Silicon only
 <li><a href="#notifications">Notifications</a></li>
 <li><a href="#desktop-app-detection">Desktop app detection</a></li>
 <li><a href="#known-limitations">Known limitations</a></li>
+</ul>
+</li>
+<li><a href="#windows-installation">Windows Installation</a><ul>
+<li><a href="#requirements-windows">Requirements (Windows)</a></li>
+<li><a href="#quick-start-windows">Quick start (Windows)</a></li>
+<li><a href="#smartscreen-warning">SmartScreen warning</a></li>
+<li><a href="#autostart-windows">Autostart (Windows)</a></li>
+<li><a href="#file-locations-windows">File locations (Windows)</a></li>
+<li><a href="#desktop-app-detection-windows">Desktop app detection (Windows)</a></li>
+<li><a href="#known-limitations-windows">Known limitations (Windows)</a></li>
 </ul>
 </li>
 <li><a href="#next-steps">Next Steps</a></li>
@@ -1935,9 +2143,9 @@ script directory</p>
 </ul>
 <p><strong>⚠️ setup.sh is optional for AppImage releases!</strong></p>
 <p>You can run the AppImage directly without <code>setup.sh</code> - no dependencies at all:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Just make it executable and run</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>chmod<span class="w"> </span>+x<span class="w"> </span>./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage<span class="w"> </span>--auto-start-daemon
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Just make it executable and run</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>chmod<span class="w"> </span>+x<span class="w"> </span>./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage<span class="w"> </span>--auto-start-daemon
 </code></pre></div>
 <p><strong>Or use setup.sh if you want to:</strong></p>
 <ul>
@@ -1945,9 +2153,9 @@ script directory</p>
 <li>Detect and configure the LM Studio desktop app</li>
 <li>Get a setup log file for troubleshooting</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>setup.sh
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./setup.sh
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage<span class="w"> </span>--auto-start-daemon
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>setup.sh
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./setup.sh
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>./lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage<span class="w"> </span>--auto-start-daemon
 </code></pre></div>
 <h3 id="binary-release">Binary Release<a class="headerlink" href="#binary-release" title="Permanent link">&para;</a></h3>
 <p><strong>Detection:</strong> Script finds <code>lmstudio-tray-manager</code> binary in the script directory</p>
@@ -1960,7 +2168,7 @@ script directory</p>
 <li>✓ Minimal dependencies (no Python installation required)</li>
 </ul>
 <p><strong>Next steps:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>./lmstudio-tray-manager<span class="w"> </span>--auto-start-daemon
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./lmstudio-tray-manager<span class="w"> </span>--auto-start-daemon
 </code></pre></div>
 <h3 id="python-package-release">Python Package Release<a class="headerlink" href="#python-package-release" title="Permanent link">&para;</a></h3>
 <p><strong>Detection:</strong> No <code>lmstudio-tray-manager</code> binary found</p>
@@ -1974,17 +2182,17 @@ script directory</p>
 <li>✓ Sets up GTK3 and PyGObject support</li>
 </ul>
 <p><strong>Next steps:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./lmstudio_autostart.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./lmstudio_autostart.sh
 </code></pre></div>
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Run the setup script (auto-detects installation type)</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>./setup.sh
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Preview setup actions without changing your system</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>./setup.sh<span class="w"> </span>--dry-run
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Show available setup options</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>./setup.sh<span class="w"> </span>--help
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Run the setup script (auto-detects installation type)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>./setup.sh
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Preview setup actions without changing your system</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>./setup.sh<span class="w"> </span>--dry-run
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Show available setup options</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>./setup.sh<span class="w"> </span>--help
 </code></pre></div>
 <p>The setup will:</p>
 <ul>
@@ -2006,52 +2214,52 @@ script directory</p>
 <li>Writes a dry-run summary to <code>.logs/setup.log</code></li>
 </ul>
 <p>Example output for Python package releases (Steps 4 and 5 are skipped for binary releases):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Running<span class="w"> </span>setup<span class="w"> </span><span class="k">in</span><span class="w"> </span>dry-run<span class="w"> </span>mode<span class="w"> </span><span class="o">(</span>no<span class="w"> </span>changes<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>applied<span class="o">)</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="o">[</span>CHECK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span><span class="o">(</span>lms<span class="o">)</span>:<span class="w"> </span>found
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="o">[</span>CHECK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>desktop<span class="w"> </span>app:<span class="w"> </span>not<span class="w"> </span>found
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="o">[</span>DRY-RUN<span class="o">]</span><span class="w"> </span>Would<span class="w"> </span>open<span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>download<span class="w"> </span>page<span class="w"> </span><span class="k">for</span><span class="w"> </span>desktop<span class="w"> </span>app<span class="w"> </span>guidance
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="o">[</span>CHECK<span class="o">]</span><span class="w"> </span>GTK3/GObject<span class="w"> </span>typelibs:<span class="w"> </span>missing<span class="w"> </span><span class="o">(</span>would<span class="w"> </span>install<span class="w"> </span>gir1.2-gtk-3.0<span class="o">)</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="o">[</span>CHECK<span class="o">]</span><span class="w"> </span>Compatible<span class="w"> </span>Python<span class="w"> </span>+<span class="w"> </span>PyGObject:<span class="w"> </span>found
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="o">[</span>DRY-RUN<span class="o">]</span><span class="w"> </span>Would<span class="w"> </span>recreate<span class="w"> </span>virtual<span class="w"> </span>environment<span class="w"> </span><span class="k">in</span>:<span class="w"> </span>./venv
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="o">[</span>DRY-RUN<span class="o">]</span><span class="w"> </span>Would<span class="w"> </span>run:<span class="w"> </span>/usr/bin/python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="o">[</span>DONE<span class="o">]</span><span class="w"> </span>Dry-run<span class="w"> </span>completed<span class="w"> </span>successfully<span class="w"> </span><span class="o">(</span><span class="m">0</span><span class="w"> </span>changes<span class="w"> </span>applied<span class="o">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Running<span class="w"> </span>setup<span class="w"> </span><span class="k">in</span><span class="w"> </span>dry-run<span class="w"> </span>mode<span class="w"> </span><span class="o">(</span>no<span class="w"> </span>changes<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>applied<span class="o">)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="o">[</span>CHECK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span><span class="o">(</span>lms<span class="o">)</span>:<span class="w"> </span>found
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="o">[</span>CHECK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>desktop<span class="w"> </span>app:<span class="w"> </span>not<span class="w"> </span>found
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="o">[</span>DRY-RUN<span class="o">]</span><span class="w"> </span>Would<span class="w"> </span>open<span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>download<span class="w"> </span>page<span class="w"> </span><span class="k">for</span><span class="w"> </span>desktop<span class="w"> </span>app<span class="w"> </span>guidance
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="o">[</span>CHECK<span class="o">]</span><span class="w"> </span>GTK3/GObject<span class="w"> </span>typelibs:<span class="w"> </span>missing<span class="w"> </span><span class="o">(</span>would<span class="w"> </span>install<span class="w"> </span>gir1.2-gtk-3.0<span class="o">)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="o">[</span>CHECK<span class="o">]</span><span class="w"> </span>Compatible<span class="w"> </span>Python<span class="w"> </span>+<span class="w"> </span>PyGObject:<span class="w"> </span>found
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="o">[</span>DRY-RUN<span class="o">]</span><span class="w"> </span>Would<span class="w"> </span>recreate<span class="w"> </span>virtual<span class="w"> </span>environment<span class="w"> </span><span class="k">in</span>:<span class="w"> </span>./venv
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="o">[</span>DRY-RUN<span class="o">]</span><span class="w"> </span>Would<span class="w"> </span>run:<span class="w"> </span>/usr/bin/python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="o">[</span>DONE<span class="o">]</span><span class="w"> </span>Dry-run<span class="w"> </span>completed<span class="w"> </span>successfully<span class="w"> </span><span class="o">(</span><span class="m">0</span><span class="w"> </span>changes<span class="w"> </span>applied<span class="o">)</span>
 </code></pre></div>
 <p><strong>Note:</strong> For binary releases, the Python environment steps (Steps 4 and 5) are automatically skipped by the gating logic in <code>setup.sh</code>, so you will not see the virtualenv or pip installation lines in the dry-run output.</p>
 <h2 id="setup-script-outputs">Setup Script Outputs<a class="headerlink" href="#setup-script-outputs" title="Permanent link">&para;</a></h2>
 <h3 id="if-lm-studio-daemon-is-missing">If LM Studio Daemon is Missing<a class="headerlink" href="#if-lm-studio-daemon-is-missing" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>⚠<span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span>not<span class="w"> </span>found
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>The<span class="w"> </span>daemon<span class="w"> </span><span class="o">(</span>llmster<span class="o">)</span><span class="w"> </span>is<span class="w"> </span>required<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>automation<span class="w"> </span>scripts.
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>Would<span class="w"> </span>you<span class="w"> </span>like<span class="w"> </span>to<span class="w"> </span>download<span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon?<span class="w"> </span><span class="o">[</span>y/n<span class="o">]</span>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>⚠<span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span>not<span class="w"> </span>found
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>The<span class="w"> </span>daemon<span class="w"> </span><span class="o">(</span>llmster<span class="o">)</span><span class="w"> </span>is<span class="w"> </span>required<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>automation<span class="w"> </span>scripts.
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>Would<span class="w"> </span>you<span class="w"> </span>like<span class="w"> </span>to<span class="w"> </span>download<span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon?<span class="w"> </span><span class="o">[</span>y/n<span class="o">]</span>:
 </code></pre></div>
 <p>Selecting <code>y</code> opens the download page. You'll need to install it manually from <a href="https://lmstudio.ai/">https://lmstudio.ai/</a></p>
 <h3 id="if-lm-studio-desktop-app-is-missing">If LM Studio Desktop App is Missing<a class="headerlink" href="#if-lm-studio-desktop-app-is-missing" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>⚠<span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>desktop<span class="w"> </span>app<span class="w"> </span>not<span class="w"> </span>found
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>The<span class="w"> </span>desktop<span class="w"> </span>app<span class="w"> </span>is<span class="w"> </span>required<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>--gui<span class="w"> </span>option.
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>Choose<span class="w"> </span>installation<span class="w"> </span>method:
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="m">1</span><span class="o">)</span><span class="w"> </span>Download<span class="w"> </span>installer/package<span class="w"> </span>from<span class="w"> </span>lmstudio.ai
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="m">2</span><span class="o">)</span><span class="w"> </span>Use<span class="w"> </span>AppImage<span class="w"> </span><span class="o">(</span>manual<span class="w"> </span>download<span class="o">)</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="m">3</span><span class="o">)</span><span class="w"> </span>Skip<span class="w"> </span><span class="o">(</span>can<span class="w"> </span>be<span class="w"> </span>installed<span class="w"> </span>later<span class="o">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>⚠<span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>desktop<span class="w"> </span>app<span class="w"> </span>not<span class="w"> </span>found
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>The<span class="w"> </span>desktop<span class="w"> </span>app<span class="w"> </span>is<span class="w"> </span>required<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>--gui<span class="w"> </span>option.
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>Choose<span class="w"> </span>installation<span class="w"> </span>method:
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="m">1</span><span class="o">)</span><span class="w"> </span>Download<span class="w"> </span>installer/package<span class="w"> </span>from<span class="w"> </span>lmstudio.ai
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="m">2</span><span class="o">)</span><span class="w"> </span>Use<span class="w"> </span>AppImage<span class="w"> </span><span class="o">(</span>manual<span class="w"> </span>download<span class="o">)</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="m">3</span><span class="o">)</span><span class="w"> </span>Skip<span class="w"> </span><span class="o">(</span>can<span class="w"> </span>be<span class="w"> </span>installed<span class="w"> </span>later<span class="o">)</span>
 </code></pre></div>
 <p><strong>Option 1</strong>: Download from <a href="https://lmstudio.ai/download">https://lmstudio.ai/download</a> and install using
 your distro's package manager, for example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Debian/Ubuntu</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>./LM-Studio-0.4.4-1-x64.deb
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Fedora/RHEL</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>./LM-Studio-0.4.4-1-x64.rpm
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Arch – use the AppImage or an AUR helper</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1"># All distros – AppImage (no install required)</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>chmod<span class="w"> </span>+x<span class="w"> </span>LM-Studio-0.4.4-1-x64.AppImage<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./LM-Studio-0.4.4-1-x64.AppImage
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Debian/Ubuntu</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>./LM-Studio-0.4.4-1-x64.deb
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># Fedora/RHEL</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>./LM-Studio-0.4.4-1-x64.rpm
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># Arch – use the AppImage or an AUR helper</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="c1"># All distros – AppImage (no install required)</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>chmod<span class="w"> </span>+x<span class="w"> </span>LM-Studio-0.4.4-1-x64.AppImage<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./LM-Studio-0.4.4-1-x64.AppImage
 </code></pre></div>
 <p><strong>Option 2</strong>: Provide path to AppImage file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># example (replace with actual path and file name)</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>Enter<span class="w"> </span>path<span class="w"> </span>to<span class="w"> </span>AppImage<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>or<span class="w"> </span>directory<span class="w"> </span>containing<span class="w"> </span>it<span class="o">)</span>:<span class="w"> </span>/home/user/Downloads/LM-Studio-0.4.4-1-x64.AppImage
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># example (replace with actual path and file name)</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>Enter<span class="w"> </span>path<span class="w"> </span>to<span class="w"> </span>AppImage<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>or<span class="w"> </span>directory<span class="w"> </span>containing<span class="w"> </span>it<span class="o">)</span>:<span class="w"> </span>/home/user/Downloads/LM-Studio-0.4.4-1-x64.AppImage
 </code></pre></div>
 <h3 id="if-no-compatible-python-is-found">If No Compatible Python Is Found<a class="headerlink" href="#if-no-compatible-python-is-found" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>⚠<span class="w"> </span>No<span class="w"> </span>compatible<span class="w"> </span>Python<span class="w"> </span>interpreter<span class="w"> </span>with<span class="w"> </span>working<span class="w"> </span>gi<span class="w"> </span>found
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>The<span class="w"> </span>setup<span class="w"> </span>needs<span class="w"> </span>a<span class="w"> </span>Python<span class="w"> </span>interpreter<span class="w"> </span>where<span class="w"> </span><span class="s1">&#39;import gi&#39;</span><span class="w"> </span>works.
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>Would<span class="w"> </span>you<span class="w"> </span>like<span class="w"> </span>to<span class="w"> </span>install<span class="w"> </span>python3,<span class="w"> </span>python3-venv<span class="w"> </span>and<span class="w"> </span>python3-gi<span class="w"> </span>now?<span class="w"> </span><span class="o">[</span>y/n<span class="o">]</span>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>⚠<span class="w"> </span>No<span class="w"> </span>compatible<span class="w"> </span>Python<span class="w"> </span>interpreter<span class="w"> </span>with<span class="w"> </span>working<span class="w"> </span>gi<span class="w"> </span>found
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>The<span class="w"> </span>setup<span class="w"> </span>needs<span class="w"> </span>a<span class="w"> </span>Python<span class="w"> </span>interpreter<span class="w"> </span>where<span class="w"> </span><span class="s1">&#39;import gi&#39;</span><span class="w"> </span>works.
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>Would<span class="w"> </span>you<span class="w"> </span>like<span class="w"> </span>to<span class="w"> </span>install<span class="w"> </span>python3,<span class="w"> </span>python3-venv<span class="w"> </span>and<span class="w"> </span>python3-gi<span class="w"> </span>now?<span class="w"> </span><span class="o">[</span>y/n<span class="o">]</span>:
 </code></pre></div>
 <p>Selecting <code>y</code> installs <code>python3</code>, <code>python3-venv</code>, and <code>python3-gi</code> via <code>apt</code>.</p>
 <h2 id="whats-inside-the-venv">What's Inside the venv?<a class="headerlink" href="#whats-inside-the-venv" title="Permanent link">&para;</a></h2>
@@ -2064,44 +2272,44 @@ your distro's package manager, for example:</p>
 <h2 id="file-structure-after-setup">File Structure After Setup<a class="headerlink" href="#file-structure-after-setup" title="Permanent link">&para;</a></h2>
 <h3 id="for-appimage-release">For AppImage Release<a class="headerlink" href="#for-appimage-release" title="Permanent link">&para;</a></h3>
 <p>After running <code>./setup.sh</code> (or <code>chmod +x</code> manually):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>.
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>├── lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage  # Self-contained AppImage
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>└── ~/.local/share/lmstudio-tray-manager/logs/         # 📝 Log files directory (AppImage-specific)
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    └── lmstudio_tray.log                              # Tray monitor log (created at runtime)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>.
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>├── lmstudio-tray-manager-X.Y.Z-linux-x86_64.AppImage  # Self-contained AppImage
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>└── ~/.local/share/lmstudio-tray-manager/logs/         # 📝 Log files directory (AppImage-specific)
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    └── lmstudio_tray.log                              # Tray monitor log (created at runtime)
 </code></pre></div>
 <p><strong>Note:</strong> No venv or GTK3 dependencies needed; the AppImage is fully self-contained. Logs are stored in your home directory due to AppImage's read-only filesystem.</p>
 <h3 id="for-binary-release">For Binary Release<a class="headerlink" href="#for-binary-release" title="Permanent link">&para;</a></h3>
 <p>After running <code>./setup.sh</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>.
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>├── lmstudio-tray-manager       # Pre-built binary
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>├── .logs/                      # 📝 Log files directory
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>│   └── setup.log               # Setup script log (created during setup)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>.
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>├── lmstudio-tray-manager       # Pre-built binary
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>├── .logs/                      # 📝 Log files directory
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>│   └── setup.log               # Setup script log (created during setup)
 </code></pre></div>
 <p><strong>Note:</strong> No venv created; binary is self-contained.</p>
 <h3 id="for-python-package">For Python Package<a class="headerlink" href="#for-python-package" title="Permanent link">&para;</a></h3>
 <p>After running <code>./setup.sh</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>.
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>├── venv/                       # 🆕 Python virtual environment
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>├── lmstudio_autostart.sh       # Automation script
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>├── lmstudio_tray.py            # Tray monitor script
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>├── .logs/                      # 📝 Log files directory
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>│   ├── setup.log               # Setup script log (created during setup)
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>│   ├── lmstudio_autostart.log  # Daemon script log
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>│   └── lmstudio_tray.log       # Tray monitor log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>.
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>├── venv/                       # 🆕 Python virtual environment
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>├── lmstudio_autostart.sh       # Automation script
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>├── lmstudio_tray.py            # Tray monitor script
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>├── .logs/                      # 📝 Log files directory
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>│   ├── setup.log               # Setup script log (created during setup)
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>│   ├── lmstudio_autostart.log  # Daemon script log
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>│   └── lmstudio_tray.log       # Tray monitor log
 </code></pre></div>
 <h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <p>The setup is automatic, but you can customize with environment variables:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Manually set venv location (if not in default ./venv)</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">VENV_DIR</span><span class="o">=</span>/custom/path/to/venv
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>./lmstudio_autostart.sh
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="c1"># Enable debug mode</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_DEBUG</span><span class="o">=</span><span class="m">1</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>./lmstudio_autostart.sh
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="c1"># Set model selection timeout (seconds)</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_SELECT_TIMEOUT</span><span class="o">=</span><span class="m">60</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>./lmstudio_autostart.sh<span class="w"> </span>-L<span class="w">  </span><span class="c1"># Interactive model selection + loads selected model in daemon mode</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Manually set venv location (if not in default ./venv)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">VENV_DIR</span><span class="o">=</span>/custom/path/to/venv
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>./lmstudio_autostart.sh
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1"># Enable debug mode</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_DEBUG</span><span class="o">=</span><span class="m">1</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>./lmstudio_autostart.sh
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="c1"># Set model selection timeout (seconds)</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LM_AUTOSTART_SELECT_TIMEOUT</span><span class="o">=</span><span class="m">60</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>./lmstudio_autostart.sh<span class="w"> </span>-L<span class="w">  </span><span class="c1"># Interactive model selection + loads selected model in daemon mode</span>
 </code></pre></div>
 <h2 id="log-file-format">Log File Format<a class="headerlink" href="#log-file-format" title="Permanent link">&para;</a></h2>
 <p>All log files include a standardized header at the start that shows when the script was run:</p>
@@ -2109,69 +2317,69 @@ your distro's package manager, for example:</p>
 <p><strong>Privacy note:</strong> <code>$HOME</code> paths are replaced with <code>~</code> in setup.log and other log files to avoid exposing your home directory.</p>
 </blockquote>
 <h3 id="setuplog">setup.log<a class="headerlink" href="#setuplog" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="o">================================================================================</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>LM<span class="w"> </span>Studio<span class="w"> </span>Setup<span class="w"> </span>Log
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>Started:<span class="w"> </span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="o">================================================================================</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>LM-Studio-Tray-Manager<span class="w"> </span>Setup<span class="w"> </span>---
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>OK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span>found
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>...
-</code></pre></div>
-<h3 id="lmstudio_autostartlog">lmstudio_autostart.log<a class="headerlink" href="#lmstudio_autostartlog" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="o">================================================================================</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>LM<span class="w"> </span>Studio<span class="w"> </span>Autostart<span class="w"> </span>Log
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>Started:<span class="w"> </span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>LM<span class="w"> </span>Studio<span class="w"> </span>Setup<span class="w"> </span>Log
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>Started:<span class="w"> </span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="o">================================================================================</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>🚀<span class="w"> </span>Starting<span class="w"> </span>llmster<span class="w"> </span>headless<span class="w"> </span>daemon...
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>✅<span class="w"> </span>llmster<span class="w"> </span>started.
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>LM-Studio-Tray-Manager<span class="w"> </span>Setup<span class="w"> </span>---
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="o">[</span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:54:38<span class="o">]</span><span class="w"> </span><span class="o">[</span>OK<span class="o">]</span><span class="w"> </span>LM<span class="w"> </span>Studio<span class="w"> </span>daemon<span class="w"> </span>found
 <a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>...
 </code></pre></div>
-<h3 id="lmstudio_traylog">lmstudio_tray.log<a class="headerlink" href="#lmstudio_traylog" title="Permanent link">&para;</a></h3>
+<h3 id="lmstudio_autostartlog">lmstudio_autostart.log<a class="headerlink" href="#lmstudio_autostartlog" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="o">================================================================================</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>LM<span class="w"> </span>Studio<span class="w"> </span>Tray<span class="w"> </span>Monitor<span class="w"> </span>Log
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>LM<span class="w"> </span>Studio<span class="w"> </span>Autostart<span class="w"> </span>Log
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>Started:<span class="w"> </span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="o">================================================================================</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18,988<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Tray<span class="w"> </span>script<span class="w"> </span>started
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:19,123<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Status<span class="w"> </span>change:<span class="w"> </span>WARN<span class="w"> </span>-&gt;<span class="w"> </span>INFO
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>🚀<span class="w"> </span>Starting<span class="w"> </span>llmster<span class="w"> </span>headless<span class="w"> </span>daemon...
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18<span class="w"> </span>✅<span class="w"> </span>llmster<span class="w"> </span>started.
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>...
+</code></pre></div>
+<h3 id="lmstudio_traylog">lmstudio_tray.log<a class="headerlink" href="#lmstudio_traylog" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="o">================================================================================</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>LM<span class="w"> </span>Studio<span class="w"> </span>Tray<span class="w"> </span>Monitor<span class="w"> </span>Log
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>Started:<span class="w"> </span><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="o">================================================================================</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:18,988<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Tray<span class="w"> </span>script<span class="w"> </span>started
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="m">2026</span>-02-20<span class="w"> </span><span class="m">21</span>:55:19,123<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Status<span class="w"> </span>change:<span class="w"> </span>WARN<span class="w"> </span>-&gt;<span class="w"> </span>INFO
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>...
 </code></pre></div>
 <p>All output is logged to the <code>.logs/</code> directory (view logs in <a href="../use/">use.md</a>).</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="venv-not-found">venv not found<a class="headerlink" href="#venv-not-found" title="Permanent link">&para;</a></h3>
 <p>If the autostart script doesn't find your venv:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Set VENV_DIR explicitly (or add to .bashrc/.zshrc)</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">VENV_DIR</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/venv
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>./lmstudio_autostart.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Set VENV_DIR explicitly (or add to .bashrc/.zshrc)</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">VENV_DIR</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/venv
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>./lmstudio_autostart.sh
 </code></pre></div>
 <p>Or activate and use directly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Linux example</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="nb">source</span><span class="w"> </span>./venv/bin/activate
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>python3<span class="w"> </span>./lmstudio_tray.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Linux example</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="nb">source</span><span class="w"> </span>./venv/bin/activate
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>python3<span class="w"> </span>./lmstudio_tray.py
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Windows example (if using WSL or similar)</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="nb">source</span><span class="w"> </span>./venv/Scripts/activate.ps1
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>python<span class="w"> </span>./lmstudio_tray.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Windows example (if using WSL or similar)</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="nb">source</span><span class="w"> </span>./venv/Scripts/activate.ps1
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>python<span class="w"> </span>./lmstudio_tray.py
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># macOS example (if using pyenv or similar)</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="nb">source</span><span class="w"> </span>./venv/bin/activate
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>python3<span class="w"> </span>./lmstudio_tray.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># macOS example (if using pyenv or similar)</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="nb">source</span><span class="w"> </span>./venv/bin/activate
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>python3<span class="w"> </span>./lmstudio_tray.py
 </code></pre></div>
 <h3 id="checking-logs">Checking Logs<a class="headerlink" href="#checking-logs" title="Permanent link">&para;</a></h3>
 <p>All output is logged to the <code>.logs/</code> directory:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># View setup logs (complete installation history)</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>cat<span class="w"> </span>.logs/setup.log
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># View autostart daemon logs</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="c1"># View tray monitor logs</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
-<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
-<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="c1"># Search for errors in all logs</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;error&#39;</span><span class="w"> </span>.logs/*.log
-<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>
-<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="c1"># View all logs in real-time (in separate terminal)</span>
-<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/*.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># View setup logs (complete installation history)</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>cat<span class="w"> </span>.logs/setup.log
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># View autostart daemon logs</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_autostart.log
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="c1"># View tray monitor logs</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/lmstudio_tray.log
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="c1"># Search for errors in all logs</span>
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;error&#39;</span><span class="w"> </span>.logs/*.log
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="c1"># View all logs in real-time (in separate terminal)</span>
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>tail<span class="w"> </span>-f<span class="w"> </span>.logs/*.log
 </code></pre></div>
 <h3 id="network-prerequisites-for-updates">Network Prerequisites for Updates<a class="headerlink" href="#network-prerequisites-for-updates" title="Permanent link">&para;</a></h3>
 <p>The tray monitor requires outbound HTTPS access to GitHub for update checks. If you see "Unable to check for updates." or encounter network issues, verify network connectivity and check logs. See <a href="../use/">use.md</a> for detailed troubleshooting steps.</p>
@@ -2180,14 +2388,14 @@ your distro's package manager, for example:</p>
 <ol>
 <li>Verify the venv Python can import <code>gi</code>:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>./venv/bin/python3<span class="w"> </span>--version
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>./venv/bin/python3<span class="w"> </span>--version
 </code></pre></div>
 <ol>
 <li>See <a href="../use/">use.md</a> for log viewing instructions.</li>
 </ol>
 <h3 id="gsettings-schema-error">GSettings Schema Error<a class="headerlink" href="#gsettings-schema-error" title="Permanent link">&para;</a></h3>
 <p>If the tray binary aborts with a message like:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>GLib-GIO-ERROR<span class="w"> </span>**:<span class="w"> </span>Settings<span class="w"> </span>schema<span class="w"> </span><span class="s1">&#39;org.gnome.settings-daemon.plugins.xsettings&#39;</span><span class="w"> </span>does<span class="w"> </span>not<span class="w"> </span>contain<span class="w"> </span>a<span class="w"> </span>key<span class="w"> </span>named<span class="w"> </span><span class="s1">&#39;antialiasing&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>GLib-GIO-ERROR<span class="w"> </span>**:<span class="w"> </span>Settings<span class="w"> </span>schema<span class="w"> </span><span class="s1">&#39;org.gnome.settings-daemon.plugins.xsettings&#39;</span><span class="w"> </span>does<span class="w"> </span>not<span class="w"> </span>contain<span class="w"> </span>a<span class="w"> </span>key<span class="w"> </span>named<span class="w"> </span><span class="s1">&#39;antialiasing&#39;</span>
 </code></pre></div>
 <p>this means GLib could not find the system GSettings schemas during GTK
 initialization.  It is unrelated to the tray code and is triggered by the
@@ -2198,8 +2406,8 @@ bundle environment of the standalone binary.</p>
   (Debian/Ubuntu: <code>sudo apt install gsettings-desktop-schemas</code>).</li>
 <li>Run the binary with the schema path set explicitly:</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="nv">GSETTINGS_SCHEMA_DIR</span><span class="o">=</span>/usr/share/glib-2.0/schemas<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">  </span>./lmstudio-tray-manager
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nv">GSETTINGS_SCHEMA_DIR</span><span class="o">=</span>/usr/share/glib-2.0/schemas<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">  </span>./lmstudio-tray-manager
 </code></pre></div>
 <p>The tray monitor now sets <code>GSETTINGS_SCHEMA_DIR</code> automatically at startup
 when the directory exists, so this problem should no longer occur.  You can
@@ -2209,22 +2417,22 @@ still use one of the above workarounds if your environment is unusual.</p>
 <ol>
 <li>Check if the daemon is really running:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>lms<span class="w"> </span>ps
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>lms<span class="w"> </span>ps
 </code></pre></div>
 <ol>
 <li>Verify the tray process is active:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>pgrep<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>pgrep<span class="w"> </span>-f<span class="w"> </span>lmstudio_tray.py
 </code></pre></div>
 <ol>
 <li>Check logs for errors:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>cat<span class="w"> </span>.logs/lmstudio_tray.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>cat<span class="w"> </span>.logs/lmstudio_tray.log
 </code></pre></div>
 <ol>
 <li>Manually test GTK3:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>./venv/bin/python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import gi; gi.require_version(&#39;Gtk&#39;, &#39;3.0&#39;); from gi.repository import Gtk; print(&#39;GTK3 OK&#39;)&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>./venv/bin/python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import gi; gi.require_version(&#39;Gtk&#39;, &#39;3.0&#39;); from gi.repository import Gtk; print(&#39;GTK3 OK&#39;)&quot;</span>
 </code></pre></div>
 <h3 id="runtime-environment-sanitization">Runtime Environment Sanitization<a class="headerlink" href="#runtime-environment-sanitization" title="Permanent link">&para;</a></h3>
 <p>The tray launcher (<code>lmstudio_autostart.sh</code>) automatically sanitizes the
@@ -2242,15 +2450,15 @@ removes or filters these variables:</p>
 </ul>
 <p><strong>Normal operation:</strong></p>
 <p>You'll see this message in <code>.logs/lmstudio_autostart.log</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="m">2026</span>-03-01<span class="w"> </span><span class="m">14</span>:30:15<span class="w"> </span>ℹ️<span class="w">  </span>Sanitizing<span class="w"> </span>runtime<span class="w"> </span>environment<span class="w"> </span><span class="k">for</span><span class="w"> </span>tray<span class="w"> </span>launch<span class="w"> </span><span class="o">(</span>Snap/GTK/Python<span class="w"> </span>loader<span class="w"> </span>vars<span class="o">)</span>.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="m">2026</span>-03-01<span class="w"> </span><span class="m">14</span>:30:15<span class="w"> </span>ℹ️<span class="w">  </span>Sanitizing<span class="w"> </span>runtime<span class="w"> </span>environment<span class="w"> </span><span class="k">for</span><span class="w"> </span>tray<span class="w"> </span>launch<span class="w"> </span><span class="o">(</span>Snap/GTK/Python<span class="w"> </span>loader<span class="w"> </span>vars<span class="o">)</span>.
 </code></pre></div>
 <p><strong>Debug mode:</strong> Run with <code>--debug</code> or <code>DEBUG=1</code> to see which specific
 variables were sanitized:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>./lmstudio_autostart.sh<span class="w"> </span>--debug
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="c1"># Shows: &quot;Debug: sanitized vars: GTK_PATH GSETTINGS_SCHEMA_DIR LD_LIBRARY_PATH(filtered:/snap/*)&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>./lmstudio_autostart.sh<span class="w"> </span>--debug
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="c1"># Shows: &quot;Debug: sanitized vars: GTK_PATH GSETTINGS_SCHEMA_DIR LD_LIBRARY_PATH(filtered:/snap/*)&quot;</span>
 </code></pre></div>
 <p>This sanitization is <strong>automatic</strong> and prevents crashes like:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>undefined<span class="w"> </span>symbol:<span class="w"> </span>__libc_pthread_init,<span class="w"> </span>version<span class="w"> </span>GLIBC_PRIVATE
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>undefined<span class="w"> </span>symbol:<span class="w"> </span>__libc_pthread_init,<span class="w"> </span>version<span class="w"> </span>GLIBC_PRIVATE
 </code></pre></div>
 <p>If you experience issues, check <code>.logs/lmstudio_autostart.log</code> for the
 sanitization message. No action needed—the script handles this automatically.</p>
@@ -2282,11 +2490,11 @@ can differ by Python version.</p>
 <li>LM Studio desktop app (optional, for <code>--gui</code> mode)</li>
 </ul>
 <h3 id="quick-start-macos">Quick start (macOS)<a class="headerlink" href="#quick-start-macos" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># Install the macOS tray dependency</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>pip<span class="w"> </span>install<span class="w"> </span>rumps
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
-<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># Run the tray monitor</span>
-<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>python3<span class="w"> </span>lmstudio_tray.py<span class="w"> </span>--auto-start-daemon
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># Install the macOS tray dependency</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>pip<span class="w"> </span>install<span class="w"> </span>rumps
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="c1"># Run the tray monitor</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>python3<span class="w"> </span>lmstudio_tray.py<span class="w"> </span>--auto-start-daemon
 </code></pre></div>
 <h3 id="using-setupsh-on-macos">Using setup.sh on macOS<a class="headerlink" href="#using-setupsh-on-macos" title="Permanent link">&para;</a></h3>
 <p><code>setup.sh</code> supports macOS and will:</p>
@@ -2297,8 +2505,8 @@ can differ by Python version.</p>
 <li>Check for / install the <code>rumps</code> Python package.</li>
 <li>Create a Python virtual environment and install <code>rumps</code> into it.</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>./setup.sh<span class="w">          </span><span class="c1"># interactive setup</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>./setup.sh<span class="w"> </span>--dry-run<span class="w">  </span><span class="c1"># preview steps without making changes</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>./setup.sh<span class="w">          </span><span class="c1"># interactive setup</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>./setup.sh<span class="w"> </span>--dry-run<span class="w">  </span><span class="c1"># preview steps without making changes</span>
 </code></pre></div>
 <h3 id="notifications">Notifications<a class="headerlink" href="#notifications" title="Permanent link">&para;</a></h3>
 <p>On macOS, notifications are sent via <code>rumps.notification()</code>.
@@ -2315,6 +2523,100 @@ in <strong>System Settings → Notifications</strong>.</p>
 <li>AppImage releases are Linux-only; use the Python source release on macOS.</li>
 <li>The macOS tray displays a status emoji (✅ / ℹ️ / ⚠️ / ❌) in the menu bar
   rather than a custom icon, since GTK icon themes are not available.</li>
+</ul>
+<h2 id="windows-installation">Windows Installation<a class="headerlink" href="#windows-installation" title="Permanent link">&para;</a></h2>
+<p>The tray manager supports Windows 10 and 11 natively using
+<a href="https://github.com/moses-palmer/pystray"><code>pystray</code></a> for the notification-area
+icon and <code>tkinter</code> (Python standard library) for its dialogs.</p>
+<h3 id="requirements-windows">Requirements (Windows)<a class="headerlink" href="#requirements-windows" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Windows 10 or 11, x64</li>
+<li>LM Studio desktop app and/or the <code>lms</code> CLI from <a href="https://lmstudio.ai/">lmstudio.ai</a></li>
+<li>Only for running from source: Python 3.10+ with <code>tkinter</code>
+  (included in the python.org installer)</li>
+</ul>
+<p>The installer and the portable <code>.exe</code> bundle their own Python — neither needs
+one installed.</p>
+<h3 id="quick-start-windows">Quick start (Windows)<a class="headerlink" href="#quick-start-windows" title="Permanent link">&para;</a></h3>
+<p><strong>Installer (recommended):</strong></p>
+<p>Run <code>lmstudio-tray-manager-X.Y.Z-windows-x86_64-setup.exe</code>. It installs
+per-user, adds a Start-menu entry, and offers a <em>start with Windows</em>
+checkbox. No administrator rights are required.</p>
+<p><strong>Portable:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="nb">Expand-Archive</span> <span class="n">lmstudio-tray-manager-X</span><span class="p">.</span><span class="n">Y</span><span class="p">.</span><span class="n">Z-windows-x86_64</span><span class="p">.</span><span class="n">zip</span> <span class="n">-DestinationPath</span> <span class="p">.</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="p">.\</span><span class="n">lmstudio-tray-manager</span><span class="p">.</span><span class="n">exe</span> <span class="p">-</span><span class="n">-auto-start-daemon</span>
+</code></pre></div>
+<p><strong>From source:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="n">pip</span> <span class="n">install</span> <span class="n">-r</span> <span class="n">requirements-windows</span><span class="p">.</span><span class="n">txt</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="n">python</span> <span class="n">lmstudio_tray</span><span class="p">.</span><span class="n">py</span> <span class="p">-</span><span class="n">-auto-start-daemon</span>
+</code></pre></div>
+<h3 id="smartscreen-warning">SmartScreen warning<a class="headerlink" href="#smartscreen-warning" title="Permanent link">&para;</a></h3>
+<p>The Windows builds are <strong>not code-signed</strong> — the project has no Authenticode
+certificate. On first run SmartScreen shows <em>"Windows protected your PC"</em>;
+choose <strong>More info → Run anyway</strong>.</p>
+<p>Verify the download against the published checksums first if you prefer:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="nb">Get-FileHash</span> <span class="p">.\</span><span class="n">lmstudio-tray-manager-X</span><span class="p">.</span><span class="n">Y</span><span class="p">.</span><span class="n">Z-windows-x86_64</span><span class="p">.</span><span class="n">zip</span> <span class="n">-Algorithm</span> <span class="n">SHA256</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a><span class="c"># compare with the matching line in SHA256SUMS-windows.txt</span>
+</code></pre></div>
+<h3 id="autostart-windows">Autostart (Windows)<a class="headerlink" href="#autostart-windows" title="Permanent link">&para;</a></h3>
+<p><code>setup.sh</code> has no Windows counterpart — there is no venv or package-manager
+work to automate. <code>lmstudio_autostart.ps1</code> covers the rest:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c"># Start the daemon and the tray</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="p">.\</span><span class="n">lmstudio_autostart</span><span class="p">.</span><span class="n">ps1</span>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c"># Start the desktop app instead (stops the daemon first)</span>
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a><span class="p">.\</span><span class="n">lmstudio_autostart</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Gui</span>
+<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>
+<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="c"># List local models without starting LM Studio</span>
+<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a><span class="p">.\</span><span class="n">lmstudio_autostart</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-ListModels</span>
+<a id="__codelineno-42-9" name="__codelineno-42-9" href="#__codelineno-42-9"></a>
+<a id="__codelineno-42-10" name="__codelineno-42-10" href="#__codelineno-42-10"></a><span class="c"># Register / unregister start with Windows</span>
+<a id="__codelineno-42-11" name="__codelineno-42-11" href="#__codelineno-42-11"></a><span class="p">.\</span><span class="n">lmstudio_autostart</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-InstallAutostart</span>
+<a id="__codelineno-42-12" name="__codelineno-42-12" href="#__codelineno-42-12"></a><span class="p">.\</span><span class="n">lmstudio_autostart</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-UninstallAutostart</span>
+</code></pre></div>
+<p>Autostart is a shortcut in the user's Startup folder rather than a registry
+value or a scheduled task: it needs no elevation, and it can be seen and
+removed from <code>shell:startup</code> without this script.</p>
+<h3 id="file-locations-windows">File locations (Windows)<a class="headerlink" href="#file-locations-windows" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Config</td>
+<td><code>%APPDATA%\lmstudio-tray-manager\lmstudio_tray.json</code></td>
+</tr>
+<tr>
+<td>Logs</td>
+<td><code>.logs\</code> next to the executable, falling back to <code>%LOCALAPPDATA%\lmstudio-tray-manager\logs\</code> when that is read-only</td>
+</tr>
+<tr>
+<td>Autostart shortcut</td>
+<td><code>shell:startup</code> (<code>%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>An existing <code>~\.config\lmstudio_tray.json</code> from an earlier install is still
+read, and migrated to <code>%APPDATA%</code> on the next save.</p>
+<h3 id="desktop-app-detection-windows">Desktop app detection (Windows)<a class="headerlink" href="#desktop-app-detection-windows" title="Permanent link">&para;</a></h3>
+<p>The tray manager looks for <code>LM Studio.exe</code> in:</p>
+<ul>
+<li><code>%LOCALAPPDATA%\Programs\LM Studio\</code></li>
+<li><code>%ProgramFiles%\LM Studio\</code></li>
+</ul>
+<h3 id="known-limitations-windows">Known limitations (Windows)<a class="headerlink" href="#known-limitations-windows" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Builds are x64 only. They run on ARM64 devices under emulation.</li>
+<li>The builds are unsigned; see the SmartScreen note above.</li>
+<li><code>tasklist</code> reports image names but no command lines, so the tray cannot
+  tell an LM Studio helper process from the main window the way it does on
+  Linux and macOS. This only affects internal filtering — status and
+  start/stop behave the same.</li>
+<li>AppImage releases are Linux-only.</li>
 </ul>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <p>After setup is complete, proceed to <a href="../use/">use.md</a> to learn how to run and use the application.</p>
