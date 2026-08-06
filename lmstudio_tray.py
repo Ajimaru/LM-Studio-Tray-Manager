@@ -512,6 +512,58 @@ def get_app_version() -> str:
     return load_version_from_dir(_AppState.script_dir)
 
 
+def _ensure_std_streams() -> None:
+    """Give a windowed Windows build somewhere to write ``--help`` output.
+
+    PyInstaller's ``--windowed`` bootloader starts the process with no
+    console, leaving ``sys.stdout`` and ``sys.stderr`` set to ``None``.
+    ``print()`` tolerates that and does nothing, but argparse does not: it
+    calls ``file.write()`` unconditionally, so ``--help`` died with an
+    ``AttributeError`` traceback instead of printing usage.
+
+    When the app was launched from a terminal, that terminal's console is
+    reattached so both flags print where the user typed them. Otherwise -
+    a double-click from Explorer, say - the streams are pointed at the
+    null device, which loses the text but keeps the process from crashing.
+    """
+    if sys.stdout is not None and sys.stderr is not None:
+        return
+
+    if IS_WINDOWS and _attach_parent_console():
+        return
+
+    null_stream = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115
+    if sys.stdout is None:
+        sys.stdout = null_stream
+    if sys.stderr is None:
+        sys.stderr = null_stream
+
+
+def _attach_parent_console() -> bool:
+    """Reattach the console of the process that launched this one.
+
+    Returns:
+        bool: ``True`` when a console was attached and the standard
+        streams were reopened onto it.
+    """
+    try:
+        import ctypes  # pylint: disable=import-outside-toplevel
+
+        attach_parent_process = -1
+        if not ctypes.windll.kernel32.AttachConsole(attach_parent_process):
+            return False
+
+        # CONOUT$/CONIN$ address the attached console directly, whatever
+        # the parent had its own handles redirected to.
+        if sys.stdout is None:
+            sys.stdout = open("CONOUT$", "w", encoding="utf-8")
+        if sys.stderr is None:
+            sys.stderr = open("CONOUT$", "w", encoding="utf-8")
+    except (AttributeError, OSError, ValueError):
+        return False
+    return True
+
+
 def main() -> None:
     """
     Parse CLI args, load dependencies, configure logging, and start app.
@@ -519,6 +571,8 @@ def main() -> None:
     Raises:
         SystemExit: On --version flag.
     """
+    _ensure_std_streams()
+
     args = parse_args()
 
     # -------------------------------------------
@@ -2248,6 +2302,29 @@ def _existing_instance_patterns() -> list[str]:
     return patterns
 
 
+def _own_process_pids() -> set[int]:
+    """Return the PIDs belonging to this instance, which must not be killed.
+
+    A PyInstaller one-file build runs as two processes under the same image
+    name: the bootloader, which unpacks the bundle into a temporary
+    directory, and the child it spawns to run this code. Protecting only
+    ``getpid()`` therefore made the child terminate its own bootloader -
+    and the bootloader is what deletes that temporary directory on exit, so
+    every launch leaked an unpacked copy of the app.
+
+    Returns:
+        set[int]: This process and, where available, its parent.
+    """
+    pids = {os.getpid()}
+    try:
+        pids.add(os.getppid())
+    except (AttributeError, OSError):
+        # getppid is documented for Windows but guard anyway: losing the
+        # parent here only costs the leak this function exists to prevent.
+        logging.debug("Could not determine the parent process id")
+    return pids
+
+
 def _kill_existing_instances_windows() -> None:
     """Terminate other copies of the frozen tray executable on Windows.
 
@@ -2263,9 +2340,9 @@ def _kill_existing_instances_windows() -> None:
         )
         return
 
-    current_pid = os.getpid()
+    own_pids = _own_process_pids()
     for _name, pid in _query_tasklist(TRAY_IMAGE_NAME):
-        if pid == current_pid:
+        if pid in own_pids:
             continue
         try:
             os.kill(pid, signal.SIGTERM)

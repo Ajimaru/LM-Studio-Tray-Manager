@@ -515,6 +515,7 @@ def test_kill_existing_instances_terminates_other_frozen_copies(
 ):
     """A frozen build terminates other copies but never itself."""
     monkeypatch.setattr(windows_module.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(windows_module.os, "getppid", lambda: 88888)
     monkeypatch.setattr(
         windows_module,
         "_query_tasklist",
@@ -536,6 +537,43 @@ def test_kill_existing_instances_terminates_other_frozen_copies(
     windows_module.kill_existing_instances()
 
     assert killed == [(555, signal.SIGTERM)]  # nosec B101
+
+
+def test_kill_existing_instances_spares_the_bootloader(
+    windows_module, monkeypatch
+):
+    """The one-file bootloader parent is never terminated.
+
+    PyInstaller runs a one-file build as two processes sharing an image
+    name. Killing the parent orphans the unpacked temporary directory it
+    is responsible for deleting.
+    """
+    monkeypatch.setattr(windows_module.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(windows_module.os, "getppid", lambda: 11112)
+    monkeypatch.setattr(
+        windows_module,
+        "_query_tasklist",
+        lambda _name: [
+            ("lmstudio-tray-manager.exe", 11112),
+            ("lmstudio-tray-manager.exe", 99999),
+        ],
+    )
+
+    killed = []
+    monkeypatch.setattr(
+        windows_module.os, "kill", lambda pid, sig: killed.append(pid)
+    )
+
+    windows_module.kill_existing_instances()
+
+    assert killed == []  # nosec B101
+
+
+def test_own_process_pids_without_getppid(windows_module, monkeypatch):
+    """A missing getppid degrades to protecting just this process."""
+    monkeypatch.delattr(windows_module.os, "getppid", raising=False)
+
+    assert windows_module._own_process_pids() == {99999}  # nosec B101
 
 
 def test_kill_existing_instances_survives_permission_error(

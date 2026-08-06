@@ -1,0 +1,26 @@
+# Windows runtime dependencies for the system tray.
+#
+# Not needed for the Linux or macOS builds - the tray picks its backend at
+# import time, and these are only imported when sys.platform is "win32".
+#
+# This file is intentionally hash-free so vulnerability scanners (for
+# example Snyk) can parse it reliably, matching the convention in
+# requirements.txt. Versions remain pinned exactly. The hash-locked
+# variants live in requirements-build.txt.
+#
+# tkinter is used for the dialogs but is not listed here: it ships with
+# the python.org Windows installer as part of the standard library.
+
+# pystray 0.19.5 (source: pystray-0.19.5-py2.py3-none-any.whl)
+# Notification-area icon and menu. Its Win32 backend is selected at import
+# time through a dotted module name, so tools/build_binary.py declares
+# pystray._win32 as a hidden import for the frozen build.
+pystray==0.19.5
+
+# pillow 12.3.0 (source: pillow-12.3.0-cp312-cp312-win_amd64.whl)
+# Required by pystray: the tray icon is handed over as a PIL image.
+pillow==12.3.0
+
+# six 1.17.0 (source: six-1.17.0-py2.py3-none-any.whl)
+# Transitive dependency of pystray.
+six==1.17.0

@@ -15,7 +15,7 @@ import subprocess  # nosec B404
 import sys
 import time
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -120,6 +120,114 @@ def test_run_windows_starts_the_tray(windows_module, monkeypatch, tmp_path):
     windows_module._run_windows(None)
 
     assert started == [True]  # nosec B101
+
+
+# ---------------------------------------------------------------------
+# Standard streams in a windowed build
+# ---------------------------------------------------------------------
+
+
+def test_ensure_std_streams_leaves_working_streams_alone(
+    windows_module, monkeypatch
+):
+    """With a real console attached there is nothing to repair."""
+    def fail():
+        """Fail the test if the console is reattached needlessly."""
+        pytest.fail("tried to attach a console that already exists")
+
+    monkeypatch.setattr(windows_module, "_attach_parent_console", fail)
+
+    windows_module._ensure_std_streams()
+
+
+def test_ensure_std_streams_reattaches_parent_console(
+    windows_module, monkeypatch
+):
+    """A windowed build reuses the console it was launched from."""
+    monkeypatch.setattr(windows_module.sys, "stdout", None)
+    attached = []
+    monkeypatch.setattr(
+        windows_module,
+        "_attach_parent_console",
+        lambda: attached.append(True) or True,
+    )
+
+    windows_module._ensure_std_streams()
+
+    assert attached == [True]  # nosec B101
+
+
+def test_ensure_std_streams_falls_back_to_devnull(
+    windows_module, monkeypatch
+):
+    """Launched from Explorer, output is discarded rather than crashing.
+
+    argparse writes to sys.stderr unconditionally, so leaving it as None
+    turned --help into an AttributeError traceback.
+    """
+    monkeypatch.setattr(windows_module.sys, "stdout", None)
+    monkeypatch.setattr(windows_module.sys, "stderr", None)
+    monkeypatch.setattr(
+        windows_module, "_attach_parent_console", lambda: False
+    )
+
+    windows_module._ensure_std_streams()
+
+    assert windows_module.sys.stdout is not None  # nosec B101
+    assert windows_module.sys.stderr is not None  # nosec B101
+    # The point of the fallback: writing must not raise.
+    windows_module.sys.stderr.write("discarded\n")
+
+
+def test_attach_parent_console_reopens_streams(windows_module, monkeypatch):
+    """A successful AttachConsole reopens stdout and stderr on it."""
+    monkeypatch.setattr(windows_module.sys, "stdout", None)
+    monkeypatch.setattr(windows_module.sys, "stderr", None)
+
+    opened = []
+    monkeypatch.setattr(
+        windows_module.sys.modules["builtins"],
+        "open",
+        lambda target, *a, **k: opened.append(target) or SimpleNamespace(
+            write=lambda _text: None
+        ),
+    )
+    fake_ctypes = ModuleType("ctypes")
+    setattr(
+        fake_ctypes,
+        "windll",
+        SimpleNamespace(kernel32=SimpleNamespace(AttachConsole=lambda _p: 1)),
+    )
+    monkeypatch.setitem(sys.modules, "ctypes", fake_ctypes)
+
+    assert windows_module._attach_parent_console() is True  # nosec B101
+    assert opened == ["CONOUT$", "CONOUT$"]  # nosec B101
+
+
+def test_attach_parent_console_without_a_parent_console(
+    windows_module, monkeypatch
+):
+    """No console to attach to reports failure so the caller can fall back."""
+    monkeypatch.setattr(windows_module.sys, "stdout", None)
+    fake_ctypes = ModuleType("ctypes")
+    setattr(
+        fake_ctypes,
+        "windll",
+        SimpleNamespace(kernel32=SimpleNamespace(AttachConsole=lambda _p: 0)),
+    )
+    monkeypatch.setitem(sys.modules, "ctypes", fake_ctypes)
+
+    assert windows_module._attach_parent_console() is False  # nosec B101
+
+
+def test_attach_parent_console_survives_missing_kernel32(
+    windows_module, monkeypatch
+):
+    """A ctypes without windll (any non-Windows host) is not fatal."""
+    monkeypatch.setattr(windows_module.sys, "stdout", None)
+    monkeypatch.setitem(sys.modules, "ctypes", ModuleType("ctypes"))
+
+    assert windows_module._attach_parent_console() is False  # nosec B101
 
 
 def test_configure_logging_writes_header(

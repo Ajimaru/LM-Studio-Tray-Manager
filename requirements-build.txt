@@ -36,6 +36,22 @@ altgraph==0.17.5 \
 macholib==1.16.4 \
     --hash=sha256:da1a3fa8266e30f0ce7e97c6a54eefaae8edd1e5f86f3eb8b95457cae90265ea
 
+# pefile 2024.8.26 (source: pefile-2024.8.26.tar.gz + py3-none-any wheel)
+# Transitive dependency used by PyInstaller on Windows to read and rewrite
+# PE headers. Listed unconditionally, the way macholib is: it is pure
+# Python, so installing it on the other platforms costs nothing and keeps
+# --require-hashes resolvable from a single file.
+pefile==2024.8.26 \
+    --hash=sha256:3ff6c5d8b43e8c37bb6e6dd5085658d658a7a0bdcd20b6a07b1fcfc1c4e9d632 \
+    --hash=sha256:76f8b485dcd3b1bb8166f1128d395fa3d87af26360c2358fb75b80019b957c6f
+
+# pywin32-ctypes 0.2.3 (source: pywin32-ctypes-0.2.3.tar.gz + py3-none-any wheel)
+# Transitive dependency used by PyInstaller on Windows for the version
+# resource and manifest handling.
+pywin32-ctypes==0.2.3 \
+    --hash=sha256:8a1513379d709975552d202d942d9837758905c8d01eb82b8bcc30918929e7b8 \
+    --hash=sha256:d162dc04946d704503b2edc4d55f3dba5c1d539ead017afa00142c38b9885755
+
 # pyinstaller-hooks-contrib 2026.6 (source: pyinstaller_hooks_contrib-2026.6.tar.gz + py3-none-any wheel)
 # Transitive dependency for PyInstaller hooks
 pyinstaller-hooks-contrib==2026.6 \

@@ -26,6 +26,7 @@ release/
 coverage.xml
 htmlcov/
 venv_macos/
+venv_windows/
 .DS_Store
 
 #Ignore AI rules

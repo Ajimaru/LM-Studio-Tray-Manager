@@ -83,6 +83,140 @@ jobs:
           fi
           python -m lmstudio_tray --help
 
+  validate-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # ensure the python sources compile under a Windows interpreter,
+      # where the tray takes its pystray/tasklist branches
+      - name: Python syntax check
+        run: |
+          python -m py_compile lmstudio_tray.py
+          python -m py_compile tools/build_binary.py
+
+      # the PowerShell counterpart of the `bash -n` checks in `validate`
+      - name: PowerShell syntax check
+        shell: pwsh
+        run: |
+          $failed = $false
+          foreach ($file in @('lmstudio_autostart.ps1', 'tools/build_windows.ps1')) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file), [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) {
+              $failed = $true
+              Write-Host "::error file=$file::$($errors.Count) parse error(s)"
+              $errors | ForEach-Object {
+                Write-Host "  line $($_.Extent.StartLineNumber): $($_.Message)"
+              }
+            }
+          }
+          if ($failed) { exit 1 }
+
+      # the PowerShell counterpart of shellcheck
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+
+      # -Path takes a single string, not a list, so each file is analyzed on
+      # its own. -EnableExit reports the finding count as the exit code, and
+      # a non-zero code from any file has to survive the loop.
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $findings = 0
+          foreach ($file in @('lmstudio_autostart.ps1', 'tools/build_windows.ps1')) {
+            $results = Invoke-ScriptAnalyzer -Path $file -Severity Error, Warning
+            foreach ($result in $results) {
+              $findings++
+              Write-Host "::error file=$file,line=$($result.Line)::$($result.RuleName): $($result.Message)"
+            }
+          }
+          if ($findings -gt 0) { exit 1 }
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --require-hashes -r requirements-build.txt
+          pip install -r requirements-windows.txt
+
+      # produce the executable the release job will ship
+      - name: Build executable
+        if: ${{ success() }}
+        run: |
+          python tools/build_binary.py
+          if (-not (Test-Path dist/lmstudio-tray-manager.exe)) { exit 1 }
+        shell: pwsh
+
+      # A --windowed build detaches from the console, so PowerShell does not
+      # wait for it and $LASTEXITCODE is never set. Start-Process -Wait is
+      # the only way to get a real exit code back.
+      - name: Smoke-run built executable
+        shell: pwsh
+        run: |
+          foreach ($flag in @('--version', '--help')) {
+            $process = Start-Process -FilePath dist/lmstudio-tray-manager.exe `
+              -ArgumentList $flag -Wait -PassThru -NoNewWindow
+            if ($process.ExitCode -ne 0) {
+              Write-Host "::error::$flag exited with $($process.ExitCode)"
+              exit 1
+            }
+          }
+
+      # the script itself always has a console, so its output can be asserted
+      - name: Smoke-run from source
+        run: |
+          python lmstudio_tray.py --version
+          python lmstudio_tray.py --help
+
+      # exercise the autostart helper in its read-only mode. Exit code 3
+      # means "no models found", which is the expected result on a runner
+      # with no LM Studio installed.
+      - name: Run autostart script in list-models mode
+        shell: pwsh
+        run: |
+          ./lmstudio_autostart.ps1 -ListModels
+          if ($LASTEXITCODE -notin @(0, 3)) {
+            Write-Host "::error::autostart -ListModels exited with $LASTEXITCODE"
+            exit 1
+          }
+
+  test-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # pytest-cov is needed even though coverage is disabled below:
+      # pytest.ini puts --cov in addopts, and pytest rejects the flag
+      # outright when the plugin is missing.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+
+      # Only the Windows-specific suites run here. The rest of
+      # test_lmstudio_tray.py assumes a POSIX HOME and pgrep/ps throughout,
+      # so it stays on the Linux `test` job, which also owns the coverage
+      # gate.
+      - name: Run Windows tests
+        run: |
+          pytest tests/test_lmstudio_tray_windows.py tests/test_lmstudio_tray_windows_tray.py --no-cov -q
+
   test:
     runs-on: ubuntu-24.04
     strategy:
