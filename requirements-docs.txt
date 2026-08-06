@@ -19,3 +19,29 @@ mkdocstrings[python]==1.0.6
 
 # Keep syntax-highlighting stable for mkdocstrings source blocks.
 Pygments==2.20.0
+
+# Transitive dependencies that shape the generated HTML. Pinning only the
+# direct ones left a hole: a release of any of these changed docs/mkdocs
+# without a single repository file changing, and the workflow's
+# "Verify MkDocs output is up to date" check would fail on a commit that
+# had nothing to do with the docs.
+#
+# All four are at their newest release as of 2026-08-06, so this pins the
+# state the committed HTML was generated from rather than freezing an old
+# one. Note this narrows the hole rather than closing it - Jinja2 and
+# MarkupSafe still float, and only a full lock file would cover them.
+
+# Renders the API pages from the parsed source.
+mkdocstrings-python==2.0.5
+
+# Parses lmstudio_tray.py for mkdocstrings; produces the code listings
+# whose line numbering the verify step compares. Distributed as
+# "griffelib"; the older "griffe" name is a different project now.
+griffelib==2.1.0
+
+# Resolves the cross-references between API pages.
+mkdocs-autorefs==1.4.4
+
+# Markdown rendering, and the extensions the Material theme relies on.
+Markdown==3.10.3
+pymdown-extensions==11.0.1

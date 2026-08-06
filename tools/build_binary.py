@@ -17,6 +17,31 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 
+def _use_utf8_output() -> None:
+    """Make the progress output survive a non-UTF-8 console.
+
+    The status lines below use "✓", "✅" and friends. A Windows console
+    defaults to a legacy code page - cp1252 on the GitHub runner - where
+    encoding U+2713 raises UnicodeEncodeError and takes the whole build
+    down after PyInstaller has already succeeded. Re-encoding as UTF-8
+    with a replacement fallback keeps the build's exit status about the
+    build.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):
+            # A redirected or already-detached stream; the glyphs are
+            # cosmetic, so carry on rather than fail the build here.
+            pass
+
+
+_use_utf8_output()
+
+
 def get_project_root() -> Path:
     """Return the repository root for this script."""
     return Path(__file__).resolve().parent.parent
