@@ -12,6 +12,7 @@ Usage:
 """
 
 import argparse
+import csv
 import subprocess  # nosec B404
 import sys
 import os
@@ -21,6 +22,7 @@ import logging
 import shutil
 import threading
 import importlib
+import io
 import json
 import re
 import socket
@@ -48,7 +50,19 @@ except ImportError:
     NSObject = None
     NSThread = None
 
+try:
+    import pystray as _pystray_lib
+except ImportError:
+    _pystray_lib = None
+
+try:
+    from PIL import Image as _pil_image
+except ImportError:
+    _pil_image = None
+
 IS_MACOS = sys.platform == "darwin"
+IS_WINDOWS = sys.platform == "win32"
+IS_LINUX = not IS_MACOS and not IS_WINDOWS
 _RumpsBase = _rumps_lib.App if _rumps_lib is not None else object
 
 DEFAULT_APP_VERSION = "dev"
@@ -168,9 +182,32 @@ def _get_default_script_dir() -> str:
         return os.getcwd()
 
 
+def _get_user_data_dir() -> str:
+    """
+    Return the per-user directory for application data.
+
+    Windows keeps machine-local application state under ``%LOCALAPPDATA%``;
+    an installed build lives under ``Program Files`` where a normal user
+    cannot write, so the fallback location matters more there than on the
+    other platforms.
+
+    Returns:
+        str: Absolute path to the per-user data directory.
+    """
+    if IS_WINDOWS:
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if local_app_data:
+            return os.path.join(local_app_data, "lmstudio-tray-manager")
+        return os.path.expanduser(
+            "~/AppData/Local/lmstudio-tray-manager"
+        )
+
+    return os.path.expanduser("~/.local/share/lmstudio-tray-manager")
+
+
 def _get_writable_logs_dir(base_script_dir: str) -> str:
     """
-    Get writable logs directory, fallback to ~/.local/share if needed.
+    Get writable logs directory, fallback to the user data dir if needed.
 
     Args:
         base_script_dir (str): Script directory to check.
@@ -188,9 +225,7 @@ def _get_writable_logs_dir(base_script_dir: str) -> str:
         os.remove(test_file)
         return logs_dir
     except (OSError, IOError, PermissionError):
-        writable_logs = os.path.expanduser(
-            '~/.local/share/lmstudio-tray-manager/logs'
-        )
+        writable_logs = os.path.join(_get_user_data_dir(), "logs")
         os.makedirs(writable_logs, exist_ok=True)
         return writable_logs
 
@@ -368,6 +403,14 @@ LATEST_RELEASE_API_URL = (
     "/releases/latest"
 )
 
+# ---------------------------------------------------
+# === Windows process image names (tasklist etc.) ===
+# ---------------------------------------------------
+
+LLMSTER_IMAGE_NAME = "llmster.exe"
+LM_STUDIO_IMAGE_NAME = "LM Studio.exe"
+TRAY_IMAGE_NAME = "lmstudio-tray-manager.exe"
+
 
 def _ensure_gsettings_schema():
     """
@@ -433,7 +476,9 @@ def get_release_url(tag: Optional[str] = None) -> str:
 # -----------------------
 
 
-LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
+LMS_CLI = os.path.expanduser(
+    "~/.lmstudio/bin/lms.exe" if IS_WINDOWS else "~/.lmstudio/bin/lms"
+)
 
 
 def get_app_version() -> str:
@@ -724,8 +769,46 @@ def get_asset_path(*path_components: str) -> Optional[str]:
 
 
 def _get_config_path() -> str:
-    """Return config file path ~/.config/lmstudio_tray.json."""
+    """Return the config file path the app writes to.
+
+    POSIX platforms use ``~/.config/lmstudio_tray.json``. Windows has no
+    ``~/.config`` convention, so roaming user settings live under
+    ``%APPDATA%`` instead - that keeps them out of the install directory,
+    which is read-only for a normal user once the installer has put the app
+    under ``Program Files``.
+
+    Returns:
+        str: Absolute path to the config file.
+    """
+    if IS_WINDOWS:
+        app_data = os.environ.get("APPDATA")
+        if app_data:
+            return os.path.join(
+                app_data, "lmstudio-tray-manager", "lmstudio_tray.json"
+            )
+        return os.path.expanduser(
+            "~/AppData/Roaming/lmstudio-tray-manager/lmstudio_tray.json"
+        )
+
     return os.path.expanduser("~/.config/lmstudio_tray.json")
+
+
+def _get_config_read_paths() -> list[str]:
+    """Return config paths to try when loading, most specific first.
+
+    Windows moved the config from ``~/.config`` to ``%APPDATA%``. Reading
+    the old location as a fallback means an existing install keeps its
+    endpoint after an upgrade; the next save migrates it to the new path.
+
+    Returns:
+        list[str]: Candidate config paths, without duplicates.
+    """
+    paths = [_get_config_path()]
+    if IS_WINDOWS:
+        legacy = os.path.expanduser("~/.config/lmstudio_tray.json")
+        if legacy not in paths:
+            paths.append(legacy)
+    return paths
 
 
 def _normalize_api_port(value: object) -> Optional[int]:
@@ -794,22 +877,29 @@ def load_config() -> None:
 
     Updates _AppState.API_HOST and API_PORT.
     """
-    config_path = _get_config_path()
-    logging.debug("Attempting to load config from %s", config_path)
-    try:
-        with open(config_path, "r", encoding="utf-8") as config_file:
-            data = json.load(config_file)
-    except FileNotFoundError:
+    candidates = _get_config_read_paths()
+    data = None
+    for config_path in candidates:
+        logging.debug("Attempting to load config from %s", config_path)
+        try:
+            with open(config_path, "r", encoding="utf-8") as config_file:
+                data = json.load(config_file)
+        except FileNotFoundError:
+            continue
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            logging.warning(
+                "Failed to load config from %s: %s",
+                config_path,
+                exc
+            )
+            return
+        else:
+            break
+
+    if data is None:
         logging.info(
             "Config file not found at %s, using defaults",
-            config_path
-        )
-        return
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        logging.warning(
-            "Failed to load config from %s: %s",
-            config_path,
-            exc
+            candidates[0]
         )
         return
 
@@ -1173,9 +1263,30 @@ def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
         return None, "Network or parse error"
 
 
+def _is_executable_file(path: str) -> bool:
+    """Return True when ``path`` is a file this platform can execute.
+
+    NTFS carries no execute permission bit, so ``os.access(path, os.X_OK)``
+    degrades to an existence check on Windows and tells us nothing. There,
+    executability is decided by the extension, which the caller has already
+    fixed by looking for ``lms.exe`` rather than ``lms``.
+
+    Args:
+        path: Candidate file path.
+
+    Returns:
+        bool: ``True`` when the file exists and can be run.
+    """
+    if not os.path.isfile(path):
+        return False
+    if IS_WINDOWS:
+        return True
+    return os.access(path, os.X_OK)
+
+
 def get_lms_cmd() -> Optional[str]:
     """Return LM Studio CLI path if executable, else resolve from PATH."""
-    if os.path.isfile(LMS_CLI) and os.access(LMS_CLI, os.X_OK):
+    if _is_executable_file(LMS_CLI):
         return LMS_CLI
     return shutil.which("lms")
 
@@ -1199,16 +1310,18 @@ def get_llmster_cmd() -> Optional[str]:
             candidate = None
         else:
             candidates = []
+            binary_names = (
+                ("llmster.exe", "llmster") if IS_WINDOWS else ("llmster",)
+            )
             try:
                 for entry in os.listdir(llmster_root):
-                    candidate_path = os.path.join(
-                        llmster_root, entry, "llmster"
-                    )
-                    if (
-                        os.path.isfile(candidate_path)
-                        and os.access(candidate_path, os.X_OK)
-                    ):
-                        candidates.append(candidate_path)
+                    for binary_name in binary_names:
+                        candidate_path = os.path.join(
+                            llmster_root, entry, binary_name
+                        )
+                        if _is_executable_file(candidate_path):
+                            candidates.append(candidate_path)
+                            break
             except (OSError, PermissionError):
                 candidate = None
             else:
@@ -1584,6 +1697,48 @@ def get_dpkg_cmd() -> Optional[str]:
     return shutil.which("dpkg")
 
 
+def get_tasklist_cmd() -> Optional[str]:
+    """Return absolute tasklist.exe path from PATH (Windows only)."""
+    return shutil.which("tasklist")
+
+
+def get_taskkill_cmd() -> Optional[str]:
+    """Return absolute taskkill.exe path from PATH (Windows only)."""
+    return shutil.which("taskkill")
+
+
+def _parse_tasklist_csv(output: str) -> list[tuple[str, int]]:
+    """Parse ``tasklist /NH /FO CSV`` output into (image name, PID) pairs.
+
+    ``tasklist`` exits 0 even when a filter matches nothing - it prints
+    ``INFO: No tasks are running which match...`` instead - so callers have
+    to judge by the parsed rows rather than the return code. CSV is parsed
+    with :mod:`csv` rather than split by hand because image names contain
+    spaces (``LM Studio.exe``) and are therefore quoted.
+
+    Args:
+        output: Raw stdout from ``tasklist``.
+
+    Returns:
+        list[tuple[str, int]]: One entry per process row. Rows without a
+        numeric PID (the INFO line, blank lines) are skipped.
+    """
+    processes: list[tuple[str, int]] = []
+    if not output:
+        return processes
+
+    for row in csv.reader(io.StringIO(output)):
+        if len(row) < 2:
+            continue
+        image_name = row[0].strip()
+        pid_text = row[1].strip()
+        if not image_name or not pid_text.isdigit():
+            continue
+        processes.append((image_name, int(pid_text)))
+
+    return processes
+
+
 def get_api_loaded_models() -> list[str]:
     """Return names of models the API reports as loaded.
 
@@ -1661,8 +1816,79 @@ def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _query_tasklist(image_name: str) -> list[tuple[str, int]]:
+    """Return processes matching ``image_name`` via ``tasklist``.
+
+    Args:
+        image_name: Executable name to filter on, e.g. ``"llmster.exe"``.
+
+    Returns:
+        list[tuple[str, int]]: Matching (image name, PID) pairs; empty when
+        tasklist is unavailable or the query fails.
+    """
+    tasklist_cmd = get_tasklist_cmd()
+    if not tasklist_cmd or not os.path.isabs(tasklist_cmd):
+        return []
+
+    try:
+        result = _run_safe_command([
+            tasklist_cmd,
+            "/FI", f"IMAGENAME eq {image_name}",
+            "/NH",
+            "/FO", "CSV",
+        ])
+    except (
+        FileNotFoundError,
+        ValueError,
+        OSError,
+        subprocess.SubprocessError,
+    ) as exc:
+        logging.debug("tasklist query for %r failed: %s", image_name, exc)
+        return []
+
+    if result.returncode != 0:
+        return []
+
+    return _parse_tasklist_csv(result.stdout)
+
+
+def _run_taskkill(args: list[str]) -> bool:
+    """Run ``taskkill`` with ``args`` appended.
+
+    Args:
+        args: Arguments following the executable, e.g.
+            ``["/IM", "llmster.exe", "/T"]``.
+
+    Returns:
+        bool: ``True`` when taskkill was invoked, ``False`` when it is
+        unavailable or the call raised. A non-zero exit is reported as
+        ``True``: taskkill returns 128 when nothing matched, which is a
+        successful no-op rather than a failure.
+    """
+    taskkill_cmd = get_taskkill_cmd()
+    if not taskkill_cmd or not os.path.isabs(taskkill_cmd):
+        logging.warning("taskkill not found; cannot stop process")
+        return False
+
+    try:
+        _run_safe_command([taskkill_cmd] + args)
+    except (
+        FileNotFoundError,
+        ValueError,
+        OSError,
+        subprocess.SubprocessError,
+    ) as exc:
+        logging.debug("taskkill %s failed: %s", args, exc)
+        return False
+
+    return True
+
+
 def is_llmster_running() -> bool:
     """Return True if llmster process running (using pgrep or ps)."""
+    if IS_WINDOWS:
+        return bool(_query_tasklist(LLMSTER_IMAGE_NAME))
+
     pgrep_cmd = get_pgrep_cmd()
     if pgrep_cmd and os.path.isabs(pgrep_cmd):
         try:
@@ -1735,11 +1961,30 @@ def _is_lm_studio_appimage_label(value):
     return True
 
 
+def _get_desktop_app_pids_windows() -> list[int]:
+    """Return PIDs of every LM Studio desktop process on Windows.
+
+    Unlike the POSIX branch this cannot exclude Electron helpers:
+    ``tasklist`` reports image names only, never a command line, so the
+    ``--type=`` renderer filter has no Windows equivalent. Both callers
+    tolerate that - the status check only asks whether the list is
+    non-empty, and stopping the app kills the whole process tree anyway.
+
+    Returns:
+        list[int]: PIDs of all ``LM Studio.exe`` processes.
+    """
+    return [pid for _name, pid in _query_tasklist(LM_STUDIO_IMAGE_NAME)]
+
+
 def get_desktop_app_pids():
     """Return PIDs of LM Studio desktop app root processes.
 
-    Excludes workers/helpers.
+    Excludes workers/helpers (POSIX only - see
+    :func:`_get_desktop_app_pids_windows`).
     """
+    if IS_WINDOWS:
+        return _get_desktop_app_pids_windows()
+
     pids = []
     ps_cmd = get_ps_cmd()
     if not ps_cmd:
@@ -1830,8 +2075,38 @@ def _existing_instance_patterns() -> list[str]:
     return patterns
 
 
+def _kill_existing_instances_windows() -> None:
+    """Terminate other copies of the frozen tray executable on Windows.
+
+    Only a frozen build can be identified reliably. Running from source the
+    process image is ``python.exe``, which ``tasklist`` cannot distinguish
+    from any other Python program on the machine - matching on it would
+    terminate unrelated work, so that case is skipped instead.
+    """
+    if getattr(sys, "frozen", False) is not True:
+        logging.debug(
+            "Not a frozen build; skipping single-instance check "
+            "(python.exe cannot be matched safely)"
+        )
+        return
+
+    current_pid = os.getpid()
+    for _name, pid in _query_tasklist(TRAY_IMAGE_NAME):
+        if pid == current_pid:
+            continue
+        try:
+            os.kill(pid, signal.SIGTERM)
+            logging.info("Terminating old instance: PID %s", pid)
+        except (OSError, ProcessLookupError, PermissionError) as exc:
+            logging.warning("Error terminating PID %s: %s", pid, exc)
+
+
 def kill_existing_instances():
     """Terminate other running copies of the tray using pgrep/SIGTERM."""
+    if IS_WINDOWS:
+        _kill_existing_instances_windows()
+        return
+
     pgrep_cmd = get_pgrep_cmd()
     if not pgrep_cmd:
         logging.warning("pgrep not found; cannot detect existing instances")

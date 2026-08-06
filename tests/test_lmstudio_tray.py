@@ -6001,6 +6001,14 @@ def macos_module_fixture(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(os, "getpid", lambda: 99999)
 
+    # The module derives IS_MACOS/IS_WINDOWS/IS_LINUX from sys.platform at
+    # import time, and setting IS_MACOS afterwards leaves the other two
+    # reflecting the host. On a Windows dev machine that left IS_WINDOWS
+    # true here, so process helpers took the tasklist branch and the macOS
+    # behaviour under test never ran. Pin the platform before the import,
+    # the same way the Linux fixture above does.
+    monkeypatch.setattr(sys, "platform", "darwin")
+
     module_name = "lmstudio_tray_macos"
     sys.modules.pop(module_name, None)
     spec = importlib.util.spec_from_file_location(
@@ -6014,6 +6022,8 @@ def macos_module_fixture(monkeypatch, tmp_path):
     spec.loader.exec_module(module)
 
     monkeypatch.setattr(module, "IS_MACOS", True)
+    monkeypatch.setattr(module, "IS_WINDOWS", False)
+    monkeypatch.setattr(module, "IS_LINUX", False)
     monkeypatch.setattr(module, "_rumps_lib", rumps_stub)
     monkeypatch.setattr(module, "_RumpsBase", DummyRumpsApp)
 
