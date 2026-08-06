@@ -17,6 +17,7 @@ import csv
 import subprocess  # nosec B404
 import sys
 import os
+import ntpath
 import time
 import signal
 import logging
@@ -2132,7 +2133,7 @@ def enable_autostart() -> bool:
     executable, arguments, working_dir = target
 
     powershell = get_powershell_cmd()
-    if not powershell or not os.path.isabs(powershell):
+    if not powershell or not _is_abs_path(powershell):
         logging.error("Cannot enable autostart: powershell.exe not found")
         return False
 
@@ -2250,6 +2251,24 @@ def check_api_models() -> bool:
     return has_loaded_model
 
 
+def _is_abs_path(path: str) -> bool:
+    """Report whether ``path`` is absolute by the target platform's rules.
+
+    On Windows ``os.path`` *is* ``ntpath``, so in production this is
+    exactly ``os.path.isabs``. It matters when the Windows code paths are
+    exercised on a POSIX host - the Linux test job runs them - where
+    ``os.path.isabs`` calls ``C:\\Windows\\System32\\tasklist.exe``
+    relative and the caller silently takes its "not found" branch.
+
+    Args:
+        path: Path to judge.
+
+    Returns:
+        bool: ``True`` when absolute for the platform in effect.
+    """
+    return ntpath.isabs(path) if IS_WINDOWS else os.path.isabs(path)
+
+
 def _no_window_kwargs() -> dict:
     """Return the subprocess flags that suppress a console window.
 
@@ -2290,7 +2309,7 @@ def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
         raise ValueError("All command arguments must be strings")
 
     exe = command[0]
-    if not os.path.isabs(exe):
+    if not _is_abs_path(exe):
         raise ValueError(f"Executable must be absolute path: {exe}")
 
     return subprocess.run(
@@ -2316,7 +2335,7 @@ def _query_tasklist(image_name: str) -> list[tuple[str, int]]:
         tasklist is unavailable or the query fails.
     """
     tasklist_cmd = get_tasklist_cmd()
-    if not tasklist_cmd or not os.path.isabs(tasklist_cmd):
+    if not tasklist_cmd or not _is_abs_path(tasklist_cmd):
         return []
 
     try:
@@ -2355,7 +2374,7 @@ def _run_taskkill(args: list[str]) -> bool:
         successful no-op rather than a failure.
     """
     taskkill_cmd = get_taskkill_cmd()
-    if not taskkill_cmd or not os.path.isabs(taskkill_cmd):
+    if not taskkill_cmd or not _is_abs_path(taskkill_cmd):
         logging.warning("taskkill not found; cannot stop process")
         return False
 

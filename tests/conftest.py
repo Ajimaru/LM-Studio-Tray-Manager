@@ -111,7 +111,6 @@ def windows_module_fixture(monkeypatch, tmp_path):
         return completed(returncode=1, stdout="", stderr="")
 
     monkeypatch.setattr(subprocess, "run", safe_run)
-    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr(os, "getpid", lambda: 99999)
 
     home = tmp_path / "home"
@@ -131,7 +130,18 @@ def windows_module_fixture(monkeypatch, tmp_path):
         raise RuntimeError("Failed to create module spec or loader")
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
-    spec.loader.exec_module(module)
+
+    # sys.platform is pinned only across the import, which is where the
+    # module derives IS_WINDOWS and its path constants. Leaving it pinned
+    # for the whole test breaks the stdlib on a POSIX host: shutil.which()
+    # re-reads sys.platform on every call and would take its Windows
+    # branch, reaching into _winapi, which is None off Windows.
+    original_platform = sys.platform
+    sys.platform = "win32"
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.platform = original_platform
 
     monkeypatch.setattr(module, "_pystray_lib", pystray_stub)
     monkeypatch.setattr(module, "_pil_image", pil_image_stub)

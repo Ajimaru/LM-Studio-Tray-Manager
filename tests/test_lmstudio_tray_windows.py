@@ -613,6 +613,47 @@ def test_kill_existing_instances_never_calls_pgrep(
 
 
 # ---------------------------------------------------------------------
+# Running the Windows code paths on a POSIX host
+# ---------------------------------------------------------------------
+
+
+def test_abs_path_accepts_a_drive_letter(windows_module):
+    """A Windows path must read as absolute even on a POSIX host.
+
+    ``os.path.isabs`` calls ``C:\\Windows\\System32\\tasklist.exe``
+    relative on Linux, where the coverage-gated job runs these suites, and
+    every caller would silently take its "executable not found" branch.
+    """
+    assert windows_module._is_abs_path(r"C:\Windows\x.exe")  # nosec B101
+    assert windows_module._is_abs_path("\\\\server\\share\\x")  # nosec B101
+    assert not windows_module._is_abs_path("x.exe")  # nosec B101
+
+
+def test_abs_path_uses_host_rules_off_windows(windows_module, monkeypatch):
+    """Off Windows the ordinary POSIX rules apply again."""
+    monkeypatch.setattr(windows_module, "IS_WINDOWS", False)
+
+    assert windows_module._is_abs_path("/usr/bin/x")  # nosec B101
+    assert not windows_module._is_abs_path("bin/x")  # nosec B101
+
+
+def test_fixture_restores_the_real_platform(windows_module):
+    """sys.platform is pinned across the import only.
+
+    Left pinned, stdlib functions that re-read it per call go wrong on a
+    POSIX host - ``shutil.which`` takes its Windows branch and reaches
+    into ``_winapi``, which is ``None`` there.
+    """
+    # The module still believes it is on Windows - that is what the pin
+    # during import bought - while the stdlib sees the real host, so this
+    # call must simply work rather than raise AttributeError on _winapi.
+    assert windows_module.IS_WINDOWS is True  # nosec B101
+    assert (  # nosec B101
+        windows_module.shutil.which("definitely-not-a-real-binary") is None
+    )
+
+
+# ---------------------------------------------------------------------
 # Console-window suppression
 # ---------------------------------------------------------------------
 

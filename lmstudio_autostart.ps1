@@ -64,7 +64,7 @@
     Justification = 'Parameters are read inside the functions below, which the analyzer does not follow.')]
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
     'PSAvoidUsingWriteHost', '',
-    Justification = 'Write-Log deliberately writes coloured progress to the console; its output is not pipeline data.')]
+    Justification = 'Write-TrayLog deliberately writes coloured progress to the console; its output is not pipeline data.')]
 param(
     [switch]$Gui,
     [switch]$ListModels,
@@ -115,7 +115,7 @@ function Initialize-Log {
     Set-Content -Path $LogFile -Value $header -Encoding utf8
 }
 
-function Write-Log {
+function Write-TrayLog {
     <#
     .SYNOPSIS
         Append a line to the log, and echo it to the console.
@@ -255,38 +255,38 @@ function Test-Environment {
 
     $tray = Get-TrayCommand
     if ($tray) {
-        Write-Log "Tray launcher: $($tray.File)" 'DEBUG'
+        Write-TrayLog "Tray launcher: $($tray.File)" 'DEBUG'
     } else {
-        Write-Log "Neither $TrayExeName nor $TrayScriptName found in $ScriptDir" 'ERROR'
-        Write-Log 'Run this script from the directory it was installed into.' 'ERROR'
+        Write-TrayLog "Neither $TrayExeName nor $TrayScriptName found in $ScriptDir" 'ERROR'
+        Write-TrayLog 'Run this script from the directory it was installed into.' 'ERROR'
         $ok = $false
     }
 
     $lms = Get-LmsPath
     if ($lms) {
-        Write-Log "LM Studio CLI: $lms" 'DEBUG'
+        Write-TrayLog "LM Studio CLI: $lms" 'DEBUG'
     } else {
-        Write-Log 'LM Studio CLI (lms) not found on PATH.' 'WARN'
+        Write-TrayLog 'LM Studio CLI (lms) not found on PATH.' 'WARN'
     }
 
     $llmster = Get-LlmsterPath
     if ($llmster) {
-        Write-Log "llmster daemon: $llmster" 'DEBUG'
+        Write-TrayLog "llmster daemon: $llmster" 'DEBUG'
     } else {
-        Write-Log 'llmster daemon not found; the headless daemon cannot be started.' 'WARN'
+        Write-TrayLog 'llmster daemon not found; the headless daemon cannot be started.' 'WARN'
     }
 
     $desktop = Get-LmStudioPath
     if ($desktop) {
-        Write-Log "LM Studio desktop app: $desktop" 'DEBUG'
+        Write-TrayLog "LM Studio desktop app: $desktop" 'DEBUG'
     } else {
-        Write-Log 'LM Studio desktop app not found.' 'WARN'
-        Write-Log 'Install it with:  winget install ElementLabs.LMStudio' 'WARN'
+        Write-TrayLog 'LM Studio desktop app not found.' 'WARN'
+        Write-TrayLog 'Install it with:  winget install ElementLabs.LMStudio' 'WARN'
     }
 
     if (-not $lms -and -not $llmster -and -not $desktop) {
-        Write-Log 'No LM Studio installation detected at all.' 'ERROR'
-        Write-Log 'Download it from https://lmstudio.ai/download' 'ERROR'
+        Write-TrayLog 'No LM Studio installation detected at all.' 'ERROR'
+        Write-TrayLog 'Download it from https://lmstudio.ai/download' 'ERROR'
         $ok = $false
     }
 
@@ -392,32 +392,32 @@ function Start-Daemon {
     param()
 
     if (Test-DaemonRunning) {
-        Write-Log 'llmster daemon is already running'
+        Write-TrayLog 'llmster daemon is already running'
         return $true
     }
 
     $llmster = Get-LlmsterPath
     if (-not $llmster) {
-        Write-Log 'llmster not installed; cannot start the headless daemon.' 'ERROR'
+        Write-TrayLog 'llmster not installed; cannot start the headless daemon.' 'ERROR'
         return $false
     }
 
     # lms is deliberately not tried here: where LM Studio embeds the daemon,
     # `lms daemon up` launches the desktop app instead of a headless daemon.
     foreach ($arguments in @(@('daemon', 'up'), @('daemon', 'start'), @('up'), @('start'))) {
-        Write-Log "Trying: $llmster $($arguments -join ' ')" 'DEBUG'
+        Write-TrayLog "Trying: $llmster $($arguments -join ' ')" 'DEBUG'
         & $llmster @arguments 2>$null | Out-Null
 
         for ($i = 0; $i -lt 10; $i++) {
             if (Test-DaemonRunning) {
-                Write-Log 'llmster daemon started'
+                Write-TrayLog 'llmster daemon started'
                 return $true
             }
             Start-Sleep -Milliseconds 500
         }
     }
 
-    Write-Log 'Daemon start failed' 'ERROR'
+    Write-TrayLog 'Daemon start failed' 'ERROR'
     return $false
 }
 
@@ -440,7 +440,7 @@ function Stop-Daemon {
         foreach ($arguments in @(@('daemon', 'down'), @('daemon', 'stop'))) {
             & $lms @arguments 2>$null | Out-Null
             if (-not (Test-DaemonRunning)) {
-                Write-Log 'llmster daemon stopped'
+                Write-TrayLog 'llmster daemon stopped'
                 return $true
             }
         }
@@ -449,18 +449,18 @@ function Stop-Daemon {
     & taskkill.exe /IM $DaemonImage /T 2>$null | Out-Null
     for ($i = 0; $i -lt 12; $i++) {
         if (-not (Test-DaemonRunning)) {
-            Write-Log 'llmster daemon stopped'
+            Write-TrayLog 'llmster daemon stopped'
             return $true
         }
         Start-Sleep -Milliseconds 250
     }
 
-    Write-Log 'Daemon did not stop gracefully; forcing termination' 'WARN'
+    Write-TrayLog 'Daemon did not stop gracefully; forcing termination' 'WARN'
     & taskkill.exe /IM $DaemonImage /T /F 2>$null | Out-Null
     Start-Sleep -Milliseconds 500
 
     if (Test-DaemonRunning) {
-        Write-Log 'Failed to stop the llmster daemon' 'ERROR'
+        Write-TrayLog 'Failed to stop the llmster daemon' 'ERROR'
         return $false
     }
     return $true
@@ -485,12 +485,12 @@ function Start-DesktopApp {
     }
 
     if (-not $exe) {
-        Write-Log 'LM Studio desktop app not found.' 'ERROR'
-        Write-Log 'Download it from https://lmstudio.ai/download' 'ERROR'
+        Write-TrayLog 'LM Studio desktop app not found.' 'ERROR'
+        Write-TrayLog 'Download it from https://lmstudio.ai/download' 'ERROR'
         return $false
     }
 
-    Write-Log "Starting LM Studio: $exe"
+    Write-TrayLog "Starting LM Studio: $exe"
     Start-Process -FilePath $exe | Out-Null
     return $true
 }
@@ -509,7 +509,7 @@ function Start-Tray {
 
     $tray = Get-TrayCommand
     if (-not $tray) {
-        Write-Log 'Tray monitor not found; nothing to start.' 'ERROR'
+        Write-TrayLog 'Tray monitor not found; nothing to start.' 'ERROR'
         return $false
     }
 
@@ -517,7 +517,7 @@ function Start-Tray {
     if ($Model) { $arguments += $Model }
     if ($DebugMode) { $arguments += '--debug' }
 
-    Write-Log "Starting tray monitor: $($tray.File) $($arguments -join ' ')"
+    Write-TrayLog "Starting tray monitor: $($tray.File) $($arguments -join ' ')"
     if ($arguments.Count -gt 0) {
         Start-Process -FilePath $tray.File -ArgumentList $arguments | Out-Null
     } else {
@@ -550,7 +550,7 @@ function Install-Autostart {
     #>
     $tray = Get-TrayCommand
     if (-not $tray) {
-        Write-Log 'Tray monitor not found; nothing to register.' 'ERROR'
+        Write-TrayLog 'Tray monitor not found; nothing to register.' 'ERROR'
         return 1
     }
 
@@ -563,7 +563,7 @@ function Install-Autostart {
     $shortcut.Description = "$AppName - LM Studio status in the notification area"
     $shortcut.Save()
 
-    Write-Log "Autostart enabled: $shortcutPath"
+    Write-TrayLog "Autostart enabled: $shortcutPath"
     return 0
 }
 
@@ -578,9 +578,9 @@ function Uninstall-Autostart {
     $shortcutPath = Get-StartupShortcutPath
     if (Test-Path -PathType Leaf $shortcutPath) {
         Remove-Item -Path $shortcutPath -Force
-        Write-Log "Autostart disabled: $shortcutPath"
+        Write-TrayLog "Autostart disabled: $shortcutPath"
     } else {
-        Write-Log 'Autostart was not enabled; nothing to remove.'
+        Write-TrayLog 'Autostart was not enabled; nothing to remove.'
     }
     return 0
 }
@@ -593,12 +593,12 @@ function Invoke-Main {
         Dispatch on the parameters and return the process exit code.
     #>
     if ($InstallAutostart -and $UninstallAutostart) {
-        Write-Log 'Use either -InstallAutostart or -UninstallAutostart, not both.' 'ERROR'
+        Write-TrayLog 'Use either -InstallAutostart or -UninstallAutostart, not both.' 'ERROR'
         return 2
     }
 
     Initialize-Log
-    Write-Log "Script directory: $ScriptDir" 'DEBUG'
+    Write-TrayLog "Script directory: $ScriptDir" 'DEBUG'
 
     if ($ListModels) { return Show-ModelList }
     if ($InstallAutostart) { return Install-Autostart }
@@ -610,19 +610,19 @@ function Invoke-Main {
         # The daemon and the desktop app both bind the same API port, so
         # only one of them may run.
         if (Test-DaemonRunning) {
-            Write-Log 'Stopping the daemon before starting the desktop app'
+            Write-TrayLog 'Stopping the daemon before starting the desktop app'
             if (-not (Stop-Daemon)) { return 1 }
         }
         if (-not (Start-DesktopApp)) { return 1 }
     } else {
         if (-not (Start-Daemon)) {
-            Write-Log 'Continuing without the daemon; the tray will report its status.' 'WARN'
+            Write-TrayLog 'Continuing without the daemon; the tray will report its status.' 'WARN'
         }
     }
 
     if (-not (Start-Tray)) { return 1 }
 
-    Write-Log 'Done'
+    Write-TrayLog 'Done'
     return 0
 }
 

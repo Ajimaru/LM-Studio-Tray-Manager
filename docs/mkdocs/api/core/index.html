@@ -1753,27 +1753,27 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>lmstudio_tray.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-961">961</a></span>
-<span class="normal"><a href="#__codelineno-0-962">962</a></span>
-<span class="normal"><a href="#__codelineno-0-963">963</a></span>
-<span class="normal"><a href="#__codelineno-0-964">964</a></span>
-<span class="normal"><a href="#__codelineno-0-965">965</a></span>
-<span class="normal"><a href="#__codelineno-0-966">966</a></span>
-<span class="normal"><a href="#__codelineno-0-967">967</a></span>
-<span class="normal"><a href="#__codelineno-0-968">968</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-968">968</a></span>
 <span class="normal"><a href="#__codelineno-0-969">969</a></span>
 <span class="normal"><a href="#__codelineno-0-970">970</a></span>
-<span class="normal"><a href="#__codelineno-0-971">971</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-961" name="__codelineno-0-961"></a><span class="k">class</span><span class="w"> </span><span class="nc">HomeMaskFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
-<a id="__codelineno-0-962" name="__codelineno-0-962"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Formatter replacing user&#39;s home directory with ~ in log messages.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-963" name="__codelineno-0-963"></a>
-<a id="__codelineno-0-964" name="__codelineno-0-964"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span>
-<a id="__codelineno-0-965" name="__codelineno-0-965"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span>
-<a id="__codelineno-0-966" name="__codelineno-0-966"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pragma: no cover - simple</span>
-<a id="__codelineno-0-967" name="__codelineno-0-967"></a>        <span class="n">s</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
-<a id="__codelineno-0-968" name="__codelineno-0-968"></a>        <span class="n">home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-969" name="__codelineno-0-969"></a>        <span class="k">if</span> <span class="n">home</span> <span class="ow">and</span> <span class="n">home</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
-<a id="__codelineno-0-970" name="__codelineno-0-970"></a>            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">home</span><span class="p">,</span> <span class="s2">&quot;~&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-971" name="__codelineno-0-971"></a>        <span class="k">return</span> <span class="n">s</span>
+<span class="normal"><a href="#__codelineno-0-971">971</a></span>
+<span class="normal"><a href="#__codelineno-0-972">972</a></span>
+<span class="normal"><a href="#__codelineno-0-973">973</a></span>
+<span class="normal"><a href="#__codelineno-0-974">974</a></span>
+<span class="normal"><a href="#__codelineno-0-975">975</a></span>
+<span class="normal"><a href="#__codelineno-0-976">976</a></span>
+<span class="normal"><a href="#__codelineno-0-977">977</a></span>
+<span class="normal"><a href="#__codelineno-0-978">978</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-968" name="__codelineno-0-968"></a><span class="k">class</span><span class="w"> </span><span class="nc">HomeMaskFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+<a id="__codelineno-0-969" name="__codelineno-0-969"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Formatter replacing user&#39;s home directory with ~ in log messages.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-970" name="__codelineno-0-970"></a>
+<a id="__codelineno-0-971" name="__codelineno-0-971"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span>
+<a id="__codelineno-0-972" name="__codelineno-0-972"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span>
+<a id="__codelineno-0-973" name="__codelineno-0-973"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pragma: no cover - simple</span>
+<a id="__codelineno-0-974" name="__codelineno-0-974"></a>        <span class="n">s</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+<a id="__codelineno-0-975" name="__codelineno-0-975"></a>        <span class="n">home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-976" name="__codelineno-0-976"></a>        <span class="k">if</span> <span class="n">home</span> <span class="ow">and</span> <span class="n">home</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+<a id="__codelineno-0-977" name="__codelineno-0-977"></a>            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">home</span><span class="p">,</span> <span class="s2">&quot;~&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-978" name="__codelineno-0-978"></a>        <span class="k">return</span> <span class="n">s</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1886,8 +1886,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-180">180</a></span>
-<span class="normal"><a href="#__codelineno-0-181">181</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-181">181</a></span>
 <span class="normal"><a href="#__codelineno-0-182">182</a></span>
 <span class="normal"><a href="#__codelineno-0-183">183</a></span>
 <span class="normal"><a href="#__codelineno-0-184">184</a></span>
@@ -1896,17 +1895,18 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-187">187</a></span>
 <span class="normal"><a href="#__codelineno-0-188">188</a></span>
 <span class="normal"><a href="#__codelineno-0-189">189</a></span>
-<span class="normal"><a href="#__codelineno-0-190">190</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-180" name="__codelineno-0-180"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_default_script_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">    Get script directory or current directory if unavailable.</span>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">        str: Absolute path to script directory.</span>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a>    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a>        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<span class="normal"><a href="#__codelineno-0-190">190</a></span>
+<span class="normal"><a href="#__codelineno-0-191">191</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_default_script_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">    Get script directory or current directory if unavailable.</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">        str: Absolute path to script directory.</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a>    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a>        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1987,8 +1987,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-216">216</a></span>
-<span class="normal"><a href="#__codelineno-0-217">217</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-217">217</a></span>
 <span class="normal"><a href="#__codelineno-0-218">218</a></span>
 <span class="normal"><a href="#__codelineno-0-219">219</a></span>
 <span class="normal"><a href="#__codelineno-0-220">220</a></span>
@@ -2009,29 +2008,30 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-235">235</a></span>
 <span class="normal"><a href="#__codelineno-0-236">236</a></span>
 <span class="normal"><a href="#__codelineno-0-237">237</a></span>
-<span class="normal"><a href="#__codelineno-0-238">238</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_writable_logs_dir</span><span class="p">(</span><span class="n">base_script_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="sd">    Get writable logs directory, fallback to the user data dir if needed.</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="sd">        base_script_dir (str): Script directory to check.</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">        str: Absolute path to writable logs directory.</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a>    <span class="n">logs_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_script_dir</span><span class="p">,</span> <span class="s2">&quot;.logs&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a>        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">logs_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>        <span class="n">test_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">logs_dir</span><span class="p">,</span> <span class="s1">&#39;.write_test_tmp&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">test_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a>            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a>        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">test_file</span><span class="p">)</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a>        <span class="k">return</span> <span class="n">logs_dir</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">IOError</span><span class="p">,</span> <span class="ne">PermissionError</span><span class="p">):</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a>        <span class="n">writable_logs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_get_user_data_dir</span><span class="p">(),</span> <span class="s2">&quot;logs&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a>        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">writable_logs</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a>        <span class="k">return</span> <span class="n">writable_logs</span>
+<span class="normal"><a href="#__codelineno-0-238">238</a></span>
+<span class="normal"><a href="#__codelineno-0-239">239</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_writable_logs_dir</span><span class="p">(</span><span class="n">base_script_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="sd">    Get writable logs directory, fallback to the user data dir if needed.</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">        base_script_dir (str): Script directory to check.</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">        str: Absolute path to writable logs directory.</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>    <span class="n">logs_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_script_dir</span><span class="p">,</span> <span class="s2">&quot;.logs&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a>        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">logs_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a>        <span class="n">test_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">logs_dir</span><span class="p">,</span> <span class="s1">&#39;.write_test_tmp&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">test_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a>            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a>        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">test_file</span><span class="p">)</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a>        <span class="k">return</span> <span class="n">logs_dir</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">IOError</span><span class="p">,</span> <span class="ne">PermissionError</span><span class="p">):</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a>        <span class="n">writable_logs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_get_user_data_dir</span><span class="p">(),</span> <span class="s2">&quot;logs&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a>        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">writable_logs</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a>        <span class="k">return</span> <span class="n">writable_logs</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2112,14 +2112,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-974"> 974</a></span>
-<span class="normal"><a href="#__codelineno-0-975"> 975</a></span>
-<span class="normal"><a href="#__codelineno-0-976"> 976</a></span>
-<span class="normal"><a href="#__codelineno-0-977"> 977</a></span>
-<span class="normal"><a href="#__codelineno-0-978"> 978</a></span>
-<span class="normal"><a href="#__codelineno-0-979"> 979</a></span>
-<span class="normal"><a href="#__codelineno-0-980"> 980</a></span>
-<span class="normal"><a href="#__codelineno-0-981"> 981</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-981"> 981</a></span>
 <span class="normal"><a href="#__codelineno-0-982"> 982</a></span>
 <span class="normal"><a href="#__codelineno-0-983"> 983</a></span>
 <span class="normal"><a href="#__codelineno-0-984"> 984</a></span>
@@ -2139,34 +2132,41 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-998"> 998</a></span>
 <span class="normal"><a href="#__codelineno-0-999"> 999</a></span>
 <span class="normal"><a href="#__codelineno-0-1000">1000</a></span>
-<span class="normal"><a href="#__codelineno-0-1001">1001</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-974" name="__codelineno-0-974"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_asset_path</span><span class="p">(</span><span class="o">*</span><span class="n">path_components</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-0-975" name="__codelineno-0-975"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Locate asset file in PyInstaller bundle, script_dir, or cwd.</span>
-<a id="__codelineno-0-976" name="__codelineno-0-976"></a>
-<a id="__codelineno-0-977" name="__codelineno-0-977"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-978" name="__codelineno-0-978"></a><span class="sd">        *path_components: Path components relative to assets/.</span>
-<a id="__codelineno-0-979" name="__codelineno-0-979"></a>
-<a id="__codelineno-0-980" name="__codelineno-0-980"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-981" name="__codelineno-0-981"></a><span class="sd">        str | None: Full path if found, else None.</span>
-<a id="__codelineno-0-982" name="__codelineno-0-982"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-983" name="__codelineno-0-983"></a>    <span class="n">meipass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;_MEIPASS&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-<a id="__codelineno-0-984" name="__codelineno-0-984"></a>    <span class="k">if</span> <span class="n">meipass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-985" name="__codelineno-0-985"></a>        <span class="n">meipass_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-<a id="__codelineno-0-986" name="__codelineno-0-986"></a>            <span class="n">meipass</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span>
-<a id="__codelineno-0-987" name="__codelineno-0-987"></a>        <span class="p">)</span>
-<a id="__codelineno-0-988" name="__codelineno-0-988"></a>        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">meipass_asset</span><span class="p">):</span>
-<a id="__codelineno-0-989" name="__codelineno-0-989"></a>            <span class="k">return</span> <span class="n">meipass_asset</span>
-<a id="__codelineno-0-990" name="__codelineno-0-990"></a>
-<a id="__codelineno-0-991" name="__codelineno-0-991"></a>    <span class="n">script_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-<a id="__codelineno-0-992" name="__codelineno-0-992"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span>
-<a id="__codelineno-0-993" name="__codelineno-0-993"></a>    <span class="p">)</span>
-<a id="__codelineno-0-994" name="__codelineno-0-994"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">script_asset</span><span class="p">):</span>
-<a id="__codelineno-0-995" name="__codelineno-0-995"></a>        <span class="k">return</span> <span class="n">script_asset</span>
-<a id="__codelineno-0-996" name="__codelineno-0-996"></a>
-<a id="__codelineno-0-997" name="__codelineno-0-997"></a>    <span class="n">cwd_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span><span class="p">)</span>
-<a id="__codelineno-0-998" name="__codelineno-0-998"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">cwd_asset</span><span class="p">):</span>
-<a id="__codelineno-0-999" name="__codelineno-0-999"></a>        <span class="k">return</span> <span class="n">cwd_asset</span>
-<a id="__codelineno-0-1000" name="__codelineno-0-1000"></a>
-<a id="__codelineno-0-1001" name="__codelineno-0-1001"></a>    <span class="k">return</span> <span class="kc">None</span>
+<span class="normal"><a href="#__codelineno-0-1001">1001</a></span>
+<span class="normal"><a href="#__codelineno-0-1002">1002</a></span>
+<span class="normal"><a href="#__codelineno-0-1003">1003</a></span>
+<span class="normal"><a href="#__codelineno-0-1004">1004</a></span>
+<span class="normal"><a href="#__codelineno-0-1005">1005</a></span>
+<span class="normal"><a href="#__codelineno-0-1006">1006</a></span>
+<span class="normal"><a href="#__codelineno-0-1007">1007</a></span>
+<span class="normal"><a href="#__codelineno-0-1008">1008</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-981" name="__codelineno-0-981"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_asset_path</span><span class="p">(</span><span class="o">*</span><span class="n">path_components</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<a id="__codelineno-0-982" name="__codelineno-0-982"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Locate asset file in PyInstaller bundle, script_dir, or cwd.</span>
+<a id="__codelineno-0-983" name="__codelineno-0-983"></a>
+<a id="__codelineno-0-984" name="__codelineno-0-984"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-985" name="__codelineno-0-985"></a><span class="sd">        *path_components: Path components relative to assets/.</span>
+<a id="__codelineno-0-986" name="__codelineno-0-986"></a>
+<a id="__codelineno-0-987" name="__codelineno-0-987"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-988" name="__codelineno-0-988"></a><span class="sd">        str | None: Full path if found, else None.</span>
+<a id="__codelineno-0-989" name="__codelineno-0-989"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-990" name="__codelineno-0-990"></a>    <span class="n">meipass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;_MEIPASS&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-0-991" name="__codelineno-0-991"></a>    <span class="k">if</span> <span class="n">meipass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-992" name="__codelineno-0-992"></a>        <span class="n">meipass_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+<a id="__codelineno-0-993" name="__codelineno-0-993"></a>            <span class="n">meipass</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span>
+<a id="__codelineno-0-994" name="__codelineno-0-994"></a>        <span class="p">)</span>
+<a id="__codelineno-0-995" name="__codelineno-0-995"></a>        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">meipass_asset</span><span class="p">):</span>
+<a id="__codelineno-0-996" name="__codelineno-0-996"></a>            <span class="k">return</span> <span class="n">meipass_asset</span>
+<a id="__codelineno-0-997" name="__codelineno-0-997"></a>
+<a id="__codelineno-0-998" name="__codelineno-0-998"></a>    <span class="n">script_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+<a id="__codelineno-0-999" name="__codelineno-0-999"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span>
+<a id="__codelineno-0-1000" name="__codelineno-0-1000"></a>    <span class="p">)</span>
+<a id="__codelineno-0-1001" name="__codelineno-0-1001"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">script_asset</span><span class="p">):</span>
+<a id="__codelineno-0-1002" name="__codelineno-0-1002"></a>        <span class="k">return</span> <span class="n">script_asset</span>
+<a id="__codelineno-0-1003" name="__codelineno-0-1003"></a>
+<a id="__codelineno-0-1004" name="__codelineno-0-1004"></a>    <span class="n">cwd_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span><span class="p">)</span>
+<a id="__codelineno-0-1005" name="__codelineno-0-1005"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">cwd_asset</span><span class="p">):</span>
+<a id="__codelineno-0-1006" name="__codelineno-0-1006"></a>        <span class="k">return</span> <span class="n">cwd_asset</span>
+<a id="__codelineno-0-1007" name="__codelineno-0-1007"></a>
+<a id="__codelineno-0-1008" name="__codelineno-0-1008"></a>    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2242,25 +2242,25 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-444">444</a></span>
-<span class="normal"><a href="#__codelineno-0-445">445</a></span>
-<span class="normal"><a href="#__codelineno-0-446">446</a></span>
-<span class="normal"><a href="#__codelineno-0-447">447</a></span>
-<span class="normal"><a href="#__codelineno-0-448">448</a></span>
-<span class="normal"><a href="#__codelineno-0-449">449</a></span>
-<span class="normal"><a href="#__codelineno-0-450">450</a></span>
-<span class="normal"><a href="#__codelineno-0-451">451</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-451">451</a></span>
 <span class="normal"><a href="#__codelineno-0-452">452</a></span>
-<span class="normal"><a href="#__codelineno-0-453">453</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-444" name="__codelineno-0-444"></a><span class="k">def</span><span class="w"> </span><span class="nf">_copy_to_clipboard</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-445" name="__codelineno-0-445"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-446" name="__codelineno-0-446"></a><span class="sd">    Open URL in default browser.</span>
-<a id="__codelineno-0-447" name="__codelineno-0-447"></a>
-<a id="__codelineno-0-448" name="__codelineno-0-448"></a><span class="sd">    Historically copied to clipboard, remains test-patchable.</span>
-<a id="__codelineno-0-449" name="__codelineno-0-449"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-450" name="__codelineno-0-450"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-451" name="__codelineno-0-451"></a>        <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-<a id="__codelineno-0-452" name="__codelineno-0-452"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-<a id="__codelineno-0-453" name="__codelineno-0-453"></a>        <span class="k">pass</span>
+<span class="normal"><a href="#__codelineno-0-453">453</a></span>
+<span class="normal"><a href="#__codelineno-0-454">454</a></span>
+<span class="normal"><a href="#__codelineno-0-455">455</a></span>
+<span class="normal"><a href="#__codelineno-0-456">456</a></span>
+<span class="normal"><a href="#__codelineno-0-457">457</a></span>
+<span class="normal"><a href="#__codelineno-0-458">458</a></span>
+<span class="normal"><a href="#__codelineno-0-459">459</a></span>
+<span class="normal"><a href="#__codelineno-0-460">460</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-451" name="__codelineno-0-451"></a><span class="k">def</span><span class="w"> </span><span class="nf">_copy_to_clipboard</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-452" name="__codelineno-0-452"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-453" name="__codelineno-0-453"></a><span class="sd">    Open URL in default browser.</span>
+<a id="__codelineno-0-454" name="__codelineno-0-454"></a>
+<a id="__codelineno-0-455" name="__codelineno-0-455"></a><span class="sd">    Historically copied to clipboard, remains test-patchable.</span>
+<a id="__codelineno-0-456" name="__codelineno-0-456"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-457" name="__codelineno-0-457"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-458" name="__codelineno-0-458"></a>        <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+<a id="__codelineno-0-459" name="__codelineno-0-459"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+<a id="__codelineno-0-460" name="__codelineno-0-460"></a>        <span class="k">pass</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2341,35 +2341,35 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-456">456</a></span>
-<span class="normal"><a href="#__codelineno-0-457">457</a></span>
-<span class="normal"><a href="#__codelineno-0-458">458</a></span>
-<span class="normal"><a href="#__codelineno-0-459">459</a></span>
-<span class="normal"><a href="#__codelineno-0-460">460</a></span>
-<span class="normal"><a href="#__codelineno-0-461">461</a></span>
-<span class="normal"><a href="#__codelineno-0-462">462</a></span>
-<span class="normal"><a href="#__codelineno-0-463">463</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-463">463</a></span>
 <span class="normal"><a href="#__codelineno-0-464">464</a></span>
 <span class="normal"><a href="#__codelineno-0-465">465</a></span>
 <span class="normal"><a href="#__codelineno-0-466">466</a></span>
 <span class="normal"><a href="#__codelineno-0-467">467</a></span>
 <span class="normal"><a href="#__codelineno-0-468">468</a></span>
 <span class="normal"><a href="#__codelineno-0-469">469</a></span>
-<span class="normal"><a href="#__codelineno-0-470">470</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-456" name="__codelineno-0-456"></a><span class="k">def</span><span class="w"> </span><span class="nf">_activate_link</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-457" name="__codelineno-0-457"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-458" name="__codelineno-0-458"></a><span class="sd">    Open link from GTK dialog and return True on success.</span>
-<a id="__codelineno-0-459" name="__codelineno-0-459"></a>
-<a id="__codelineno-0-460" name="__codelineno-0-460"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-461" name="__codelineno-0-461"></a><span class="sd">        url (str): URL from activate-link signal.</span>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a><span class="sd">        bool: True if opened successfully.</span>
-<a id="__codelineno-0-465" name="__codelineno-0-465"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-466" name="__codelineno-0-466"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-467" name="__codelineno-0-467"></a>        <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-<a id="__codelineno-0-468" name="__codelineno-0-468"></a>        <span class="k">return</span> <span class="kc">True</span>
-<a id="__codelineno-0-469" name="__codelineno-0-469"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>        <span class="k">return</span> <span class="kc">False</span>
+<span class="normal"><a href="#__codelineno-0-470">470</a></span>
+<span class="normal"><a href="#__codelineno-0-471">471</a></span>
+<span class="normal"><a href="#__codelineno-0-472">472</a></span>
+<span class="normal"><a href="#__codelineno-0-473">473</a></span>
+<span class="normal"><a href="#__codelineno-0-474">474</a></span>
+<span class="normal"><a href="#__codelineno-0-475">475</a></span>
+<span class="normal"><a href="#__codelineno-0-476">476</a></span>
+<span class="normal"><a href="#__codelineno-0-477">477</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-463" name="__codelineno-0-463"></a><span class="k">def</span><span class="w"> </span><span class="nf">_activate_link</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a><span class="sd">    Open link from GTK dialog and return True on success.</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a><span class="sd">        url (str): URL from activate-link signal.</span>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a><span class="sd">        bool: True if opened successfully.</span>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>        <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a>        <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2474,14 +2474,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1211">1211</a></span>
-<span class="normal"><a href="#__codelineno-0-1212">1212</a></span>
-<span class="normal"><a href="#__codelineno-0-1213">1213</a></span>
-<span class="normal"><a href="#__codelineno-0-1214">1214</a></span>
-<span class="normal"><a href="#__codelineno-0-1215">1215</a></span>
-<span class="normal"><a href="#__codelineno-0-1216">1216</a></span>
-<span class="normal"><a href="#__codelineno-0-1217">1217</a></span>
-<span class="normal"><a href="#__codelineno-0-1218">1218</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1218">1218</a></span>
 <span class="normal"><a href="#__codelineno-0-1219">1219</a></span>
 <span class="normal"><a href="#__codelineno-0-1220">1220</a></span>
 <span class="normal"><a href="#__codelineno-0-1221">1221</a></span>
@@ -2508,41 +2501,48 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-1242">1242</a></span>
 <span class="normal"><a href="#__codelineno-0-1243">1243</a></span>
 <span class="normal"><a href="#__codelineno-0-1244">1244</a></span>
-<span class="normal"><a href="#__codelineno-0-1245">1245</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1211" name="__codelineno-0-1211"></a><span class="k">def</span><span class="w"> </span><span class="nf">_validate_url_scheme</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-1212" name="__codelineno-0-1212"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate URL uses http/https and return formatted base URL.</span>
-<a id="__codelineno-0-1213" name="__codelineno-0-1213"></a>
-<a id="__codelineno-0-1214" name="__codelineno-0-1214"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-1215" name="__codelineno-0-1215"></a><span class="sd">        url: URL to validate.</span>
-<a id="__codelineno-0-1216" name="__codelineno-0-1216"></a>
-<a id="__codelineno-0-1217" name="__codelineno-0-1217"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-1218" name="__codelineno-0-1218"></a><span class="sd">        ValueError: If scheme not http/https or invalid host/port.</span>
-<a id="__codelineno-0-1219" name="__codelineno-0-1219"></a>
-<a id="__codelineno-0-1220" name="__codelineno-0-1220"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-1221" name="__codelineno-0-1221"></a><span class="sd">        str: Formatted URL.</span>
-<a id="__codelineno-0-1222" name="__codelineno-0-1222"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1223" name="__codelineno-0-1223"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-<a id="__codelineno-0-1224" name="__codelineno-0-1224"></a>    <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">):</span>
-<a id="__codelineno-0-1225" name="__codelineno-0-1225"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-1226" name="__codelineno-0-1226"></a>            <span class="sa">f</span><span class="s2">&quot;URL scheme &#39;</span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="si">}</span><span class="s2">&#39; not permitted; &quot;</span>
-<a id="__codelineno-0-1227" name="__codelineno-0-1227"></a>            <span class="sa">f</span><span class="s2">&quot;only &#39;http&#39; and &#39;https&#39; are allowed&quot;</span>
-<a id="__codelineno-0-1228" name="__codelineno-0-1228"></a>        <span class="p">)</span>
-<a id="__codelineno-0-1229" name="__codelineno-0-1229"></a>
-<a id="__codelineno-0-1230" name="__codelineno-0-1230"></a>    <span class="n">host</span> <span class="o">=</span> <span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-1231" name="__codelineno-0-1231"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">host</span><span class="p">):</span>
-<a id="__codelineno-0-1232" name="__codelineno-0-1232"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1233" name="__codelineno-0-1233"></a>
-<a id="__codelineno-0-1234" name="__codelineno-0-1234"></a>    <span class="k">if</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;#&quot;</span> <span class="ow">in</span> <span class="n">host</span><span class="p">:</span>
-<a id="__codelineno-0-1235" name="__codelineno-0-1235"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-1245">1245</a></span>
+<span class="normal"><a href="#__codelineno-0-1246">1246</a></span>
+<span class="normal"><a href="#__codelineno-0-1247">1247</a></span>
+<span class="normal"><a href="#__codelineno-0-1248">1248</a></span>
+<span class="normal"><a href="#__codelineno-0-1249">1249</a></span>
+<span class="normal"><a href="#__codelineno-0-1250">1250</a></span>
+<span class="normal"><a href="#__codelineno-0-1251">1251</a></span>
+<span class="normal"><a href="#__codelineno-0-1252">1252</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1218" name="__codelineno-0-1218"></a><span class="k">def</span><span class="w"> </span><span class="nf">_validate_url_scheme</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-1219" name="__codelineno-0-1219"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate URL uses http/https and return formatted base URL.</span>
+<a id="__codelineno-0-1220" name="__codelineno-0-1220"></a>
+<a id="__codelineno-0-1221" name="__codelineno-0-1221"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-1222" name="__codelineno-0-1222"></a><span class="sd">        url: URL to validate.</span>
+<a id="__codelineno-0-1223" name="__codelineno-0-1223"></a>
+<a id="__codelineno-0-1224" name="__codelineno-0-1224"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-1225" name="__codelineno-0-1225"></a><span class="sd">        ValueError: If scheme not http/https or invalid host/port.</span>
+<a id="__codelineno-0-1226" name="__codelineno-0-1226"></a>
+<a id="__codelineno-0-1227" name="__codelineno-0-1227"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-1228" name="__codelineno-0-1228"></a><span class="sd">        str: Formatted URL.</span>
+<a id="__codelineno-0-1229" name="__codelineno-0-1229"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1230" name="__codelineno-0-1230"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+<a id="__codelineno-0-1231" name="__codelineno-0-1231"></a>    <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">):</span>
+<a id="__codelineno-0-1232" name="__codelineno-0-1232"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-1233" name="__codelineno-0-1233"></a>            <span class="sa">f</span><span class="s2">&quot;URL scheme &#39;</span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="si">}</span><span class="s2">&#39; not permitted; &quot;</span>
+<a id="__codelineno-0-1234" name="__codelineno-0-1234"></a>            <span class="sa">f</span><span class="s2">&quot;only &#39;http&#39; and &#39;https&#39; are allowed&quot;</span>
+<a id="__codelineno-0-1235" name="__codelineno-0-1235"></a>        <span class="p">)</span>
 <a id="__codelineno-0-1236" name="__codelineno-0-1236"></a>
-<a id="__codelineno-0-1237" name="__codelineno-0-1237"></a>    <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">host</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">):</span>
-<a id="__codelineno-0-1238" name="__codelineno-0-1238"></a>        <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-1239" name="__codelineno-0-1239"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1240" name="__codelineno-0-1240"></a>        <span class="n">host</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">]&quot;</span>
-<a id="__codelineno-0-1241" name="__codelineno-0-1241"></a>
-<a id="__codelineno-0-1242" name="__codelineno-0-1242"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="p">)</span>
-<a id="__codelineno-0-1243" name="__codelineno-0-1243"></a>    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-1244" name="__codelineno-0-1244"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API port&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1245" name="__codelineno-0-1245"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-1237" name="__codelineno-0-1237"></a>    <span class="n">host</span> <span class="o">=</span> <span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-1238" name="__codelineno-0-1238"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">host</span><span class="p">):</span>
+<a id="__codelineno-0-1239" name="__codelineno-0-1239"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1240" name="__codelineno-0-1240"></a>
+<a id="__codelineno-0-1241" name="__codelineno-0-1241"></a>    <span class="k">if</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;#&quot;</span> <span class="ow">in</span> <span class="n">host</span><span class="p">:</span>
+<a id="__codelineno-0-1242" name="__codelineno-0-1242"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1243" name="__codelineno-0-1243"></a>
+<a id="__codelineno-0-1244" name="__codelineno-0-1244"></a>    <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">host</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">):</span>
+<a id="__codelineno-0-1245" name="__codelineno-0-1245"></a>        <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-1246" name="__codelineno-0-1246"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1247" name="__codelineno-0-1247"></a>        <span class="n">host</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">]&quot;</span>
+<a id="__codelineno-0-1248" name="__codelineno-0-1248"></a>
+<a id="__codelineno-0-1249" name="__codelineno-0-1249"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="p">)</span>
+<a id="__codelineno-0-1250" name="__codelineno-0-1250"></a>    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-1251" name="__codelineno-0-1251"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API port&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1252" name="__codelineno-0-1252"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2623,35 +2623,35 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1412">1412</a></span>
-<span class="normal"><a href="#__codelineno-0-1413">1413</a></span>
-<span class="normal"><a href="#__codelineno-0-1414">1414</a></span>
-<span class="normal"><a href="#__codelineno-0-1415">1415</a></span>
-<span class="normal"><a href="#__codelineno-0-1416">1416</a></span>
-<span class="normal"><a href="#__codelineno-0-1417">1417</a></span>
-<span class="normal"><a href="#__codelineno-0-1418">1418</a></span>
-<span class="normal"><a href="#__codelineno-0-1419">1419</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1419">1419</a></span>
 <span class="normal"><a href="#__codelineno-0-1420">1420</a></span>
 <span class="normal"><a href="#__codelineno-0-1421">1421</a></span>
 <span class="normal"><a href="#__codelineno-0-1422">1422</a></span>
 <span class="normal"><a href="#__codelineno-0-1423">1423</a></span>
 <span class="normal"><a href="#__codelineno-0-1424">1424</a></span>
 <span class="normal"><a href="#__codelineno-0-1425">1425</a></span>
-<span class="normal"><a href="#__codelineno-0-1426">1426</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1412" name="__codelineno-0-1412"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_allowed_update_url</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-1413" name="__codelineno-0-1413"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if URL is HTTPS GitHub API repos endpoint.</span>
-<a id="__codelineno-0-1414" name="__codelineno-0-1414"></a>
-<a id="__codelineno-0-1415" name="__codelineno-0-1415"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-1416" name="__codelineno-0-1416"></a><span class="sd">        url: URL to validate.</span>
-<a id="__codelineno-0-1417" name="__codelineno-0-1417"></a>
-<a id="__codelineno-0-1418" name="__codelineno-0-1418"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-1419" name="__codelineno-0-1419"></a><span class="sd">        bool: True if safe update URL.</span>
-<a id="__codelineno-0-1420" name="__codelineno-0-1420"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1421" name="__codelineno-0-1421"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-<a id="__codelineno-0-1422" name="__codelineno-0-1422"></a>    <span class="k">return</span> <span class="p">(</span>
-<a id="__codelineno-0-1423" name="__codelineno-0-1423"></a>        <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">&quot;https&quot;</span>
-<a id="__codelineno-0-1424" name="__codelineno-0-1424"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span> <span class="o">==</span> <span class="s2">&quot;api.github.com&quot;</span>
-<a id="__codelineno-0-1425" name="__codelineno-0-1425"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/repos/&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1426" name="__codelineno-0-1426"></a>    <span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-1426">1426</a></span>
+<span class="normal"><a href="#__codelineno-0-1427">1427</a></span>
+<span class="normal"><a href="#__codelineno-0-1428">1428</a></span>
+<span class="normal"><a href="#__codelineno-0-1429">1429</a></span>
+<span class="normal"><a href="#__codelineno-0-1430">1430</a></span>
+<span class="normal"><a href="#__codelineno-0-1431">1431</a></span>
+<span class="normal"><a href="#__codelineno-0-1432">1432</a></span>
+<span class="normal"><a href="#__codelineno-0-1433">1433</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1419" name="__codelineno-0-1419"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_allowed_update_url</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-1420" name="__codelineno-0-1420"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if URL is HTTPS GitHub API repos endpoint.</span>
+<a id="__codelineno-0-1421" name="__codelineno-0-1421"></a>
+<a id="__codelineno-0-1422" name="__codelineno-0-1422"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-1423" name="__codelineno-0-1423"></a><span class="sd">        url: URL to validate.</span>
+<a id="__codelineno-0-1424" name="__codelineno-0-1424"></a>
+<a id="__codelineno-0-1425" name="__codelineno-0-1425"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-1426" name="__codelineno-0-1426"></a><span class="sd">        bool: True if safe update URL.</span>
+<a id="__codelineno-0-1427" name="__codelineno-0-1427"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1428" name="__codelineno-0-1428"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+<a id="__codelineno-0-1429" name="__codelineno-0-1429"></a>    <span class="k">return</span> <span class="p">(</span>
+<a id="__codelineno-0-1430" name="__codelineno-0-1430"></a>        <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">&quot;https&quot;</span>
+<a id="__codelineno-0-1431" name="__codelineno-0-1431"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span> <span class="o">==</span> <span class="s2">&quot;api.github.com&quot;</span>
+<a id="__codelineno-0-1432" name="__codelineno-0-1432"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/repos/&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1433" name="__codelineno-0-1433"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2736,33 +2736,33 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-473">473</a></span>
-<span class="normal"><a href="#__codelineno-0-474">474</a></span>
-<span class="normal"><a href="#__codelineno-0-475">475</a></span>
-<span class="normal"><a href="#__codelineno-0-476">476</a></span>
-<span class="normal"><a href="#__codelineno-0-477">477</a></span>
-<span class="normal"><a href="#__codelineno-0-478">478</a></span>
-<span class="normal"><a href="#__codelineno-0-479">479</a></span>
-<span class="normal"><a href="#__codelineno-0-480">480</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-480">480</a></span>
 <span class="normal"><a href="#__codelineno-0-481">481</a></span>
 <span class="normal"><a href="#__codelineno-0-482">482</a></span>
 <span class="normal"><a href="#__codelineno-0-483">483</a></span>
 <span class="normal"><a href="#__codelineno-0-484">484</a></span>
 <span class="normal"><a href="#__codelineno-0-485">485</a></span>
-<span class="normal"><a href="#__codelineno-0-486">486</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-473" name="__codelineno-0-473"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_release_url</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-475" name="__codelineno-0-475"></a><span class="sd">    Return GitHub release URL for specified tag or latest release.</span>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a>
-<a id="__codelineno-0-477" name="__codelineno-0-477"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-478" name="__codelineno-0-478"></a><span class="sd">        tag (str, optional): Release tag name (e.g. &quot;v1.2.3&quot;).</span>
-<a id="__codelineno-0-479" name="__codelineno-0-479"></a>
-<a id="__codelineno-0-480" name="__codelineno-0-480"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="sd">        str: URL to release page.</span>
-<a id="__codelineno-0-482" name="__codelineno-0-482"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-483" name="__codelineno-0-483"></a>    <span class="n">base</span> <span class="o">=</span> <span class="n">APP_REPOSITORY</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-484" name="__codelineno-0-484"></a>    <span class="k">if</span> <span class="n">tag</span><span class="p">:</span>
-<a id="__codelineno-0-485" name="__codelineno-0-485"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/releases/tag/</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-486" name="__codelineno-0-486"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/releases/latest&quot;</span>
+<span class="normal"><a href="#__codelineno-0-486">486</a></span>
+<span class="normal"><a href="#__codelineno-0-487">487</a></span>
+<span class="normal"><a href="#__codelineno-0-488">488</a></span>
+<span class="normal"><a href="#__codelineno-0-489">489</a></span>
+<span class="normal"><a href="#__codelineno-0-490">490</a></span>
+<span class="normal"><a href="#__codelineno-0-491">491</a></span>
+<span class="normal"><a href="#__codelineno-0-492">492</a></span>
+<span class="normal"><a href="#__codelineno-0-493">493</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-480" name="__codelineno-0-480"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_release_url</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-482" name="__codelineno-0-482"></a><span class="sd">    Return GitHub release URL for specified tag or latest release.</span>
+<a id="__codelineno-0-483" name="__codelineno-0-483"></a>
+<a id="__codelineno-0-484" name="__codelineno-0-484"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="sd">        tag (str, optional): Release tag name (e.g. &quot;v1.2.3&quot;).</span>
+<a id="__codelineno-0-486" name="__codelineno-0-486"></a>
+<a id="__codelineno-0-487" name="__codelineno-0-487"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-488" name="__codelineno-0-488"></a><span class="sd">        str: URL to release page.</span>
+<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-490" name="__codelineno-0-490"></a>    <span class="n">base</span> <span class="o">=</span> <span class="n">APP_REPOSITORY</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a>    <span class="k">if</span> <span class="n">tag</span><span class="p">:</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/releases/tag/</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/releases/latest&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2804,8 +2804,7 @@ Usage:
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>lmstudio_tray.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-298">298</a></span>
-<span class="normal"><a href="#__codelineno-0-299">299</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-299">299</a></span>
 <span class="normal"><a href="#__codelineno-0-300">300</a></span>
 <span class="normal"><a href="#__codelineno-0-301">301</a></span>
 <span class="normal"><a href="#__codelineno-0-302">302</a></span>
@@ -2849,52 +2848,53 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-340">340</a></span>
 <span class="normal"><a href="#__codelineno-0-341">341</a></span>
 <span class="normal"><a href="#__codelineno-0-342">342</a></span>
-<span class="normal"><a href="#__codelineno-0-343">343</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="k">class</span><span class="w"> </span><span class="nc">_AppState</span><span class="p">:</span>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">    Mutable application state shared across the module.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-301" name="__codelineno-0-301"></a>
-<a id="__codelineno-0-302" name="__codelineno-0-302"></a>    <span class="n">MODEL</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;no-model-passed&quot;</span>
-<a id="__codelineno-0-303" name="__codelineno-0-303"></a>    <span class="n">script_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_get_default_script_dir</span><span class="p">()</span>
-<a id="__codelineno-0-304" name="__codelineno-0-304"></a>    <span class="n">DEBUG_MODE</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-305" name="__codelineno-0-305"></a>    <span class="n">GUI_MODE</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-306" name="__codelineno-0-306"></a>    <span class="n">AUTO_START_DAEMON</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-307" name="__codelineno-0-307"></a>    <span class="n">APP_VERSION</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_APP_VERSION</span>
-<a id="__codelineno-0-308" name="__codelineno-0-308"></a>    <span class="n">API_HOST</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
-<a id="__codelineno-0-309" name="__codelineno-0-309"></a>    <span class="n">API_PORT</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1234</span>
-<a id="__codelineno-0-310" name="__codelineno-0-310"></a>    <span class="n">Gtk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-311" name="__codelineno-0-311"></a>    <span class="n">GLib</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a>    <span class="n">AppIndicator3</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a>    <span class="n">GdkPixbuf</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a>
-<a id="__codelineno-0-315" name="__codelineno-0-315"></a>    <span class="nd">@classmethod</span>
-<a id="__codelineno-0-316" name="__codelineno-0-316"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">apply_cli_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="sd">        Apply parsed CLI args to app state.</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a><span class="sd">        Converts script_dir to absolute path.</span>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a><span class="sd">            args (argparse.Namespace): Parsed CLI arguments.</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">MODEL</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">script_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">script_dir</span><span class="p">)</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">DEBUG_MODE</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">gui</span>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">auto_start_daemon</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span>
-<a id="__codelineno-0-330" name="__codelineno-0-330"></a>
-<a id="__codelineno-0-331" name="__codelineno-0-331"></a>    <span class="nd">@classmethod</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_gtk_modules</span><span class="p">(</span>
-<a id="__codelineno-0-333" name="__codelineno-0-333"></a>        <span class="bp">cls</span><span class="p">,</span>
-<a id="__codelineno-0-334" name="__codelineno-0-334"></a>        <span class="n">gtk_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>        <span class="n">glib_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
-<a id="__codelineno-0-336" name="__codelineno-0-336"></a>        <span class="n">app_indicator_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
-<a id="__codelineno-0-337" name="__codelineno-0-337"></a>        <span class="n">gdk_pixbuf_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Store GTK-related module references in class attributes.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">Gtk</span> <span class="o">=</span> <span class="n">gtk_module</span>
-<a id="__codelineno-0-341" name="__codelineno-0-341"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">GLib</span> <span class="o">=</span> <span class="n">glib_module</span>
-<a id="__codelineno-0-342" name="__codelineno-0-342"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">AppIndicator3</span> <span class="o">=</span> <span class="n">app_indicator_module</span>
-<a id="__codelineno-0-343" name="__codelineno-0-343"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">GdkPixbuf</span> <span class="o">=</span> <span class="n">gdk_pixbuf_module</span>
+<span class="normal"><a href="#__codelineno-0-343">343</a></span>
+<span class="normal"><a href="#__codelineno-0-344">344</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="k">class</span><span class="w"> </span><span class="nc">_AppState</span><span class="p">:</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a><span class="sd">    Mutable application state shared across the module.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-302" name="__codelineno-0-302"></a>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a>    <span class="n">MODEL</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;no-model-passed&quot;</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a>    <span class="n">script_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_get_default_script_dir</span><span class="p">()</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a>    <span class="n">DEBUG_MODE</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-306" name="__codelineno-0-306"></a>    <span class="n">GUI_MODE</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-307" name="__codelineno-0-307"></a>    <span class="n">AUTO_START_DAEMON</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-308" name="__codelineno-0-308"></a>    <span class="n">APP_VERSION</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_APP_VERSION</span>
+<a id="__codelineno-0-309" name="__codelineno-0-309"></a>    <span class="n">API_HOST</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+<a id="__codelineno-0-310" name="__codelineno-0-310"></a>    <span class="n">API_PORT</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1234</span>
+<a id="__codelineno-0-311" name="__codelineno-0-311"></a>    <span class="n">Gtk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a>    <span class="n">GLib</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-313" name="__codelineno-0-313"></a>    <span class="n">AppIndicator3</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-314" name="__codelineno-0-314"></a>    <span class="n">GdkPixbuf</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-315" name="__codelineno-0-315"></a>
+<a id="__codelineno-0-316" name="__codelineno-0-316"></a>    <span class="nd">@classmethod</span>
+<a id="__codelineno-0-317" name="__codelineno-0-317"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">apply_cli_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a><span class="sd">        Apply parsed CLI args to app state.</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a><span class="sd">        Converts script_dir to absolute path.</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a><span class="sd">            args (argparse.Namespace): Parsed CLI arguments.</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">MODEL</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">script_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">script_dir</span><span class="p">)</span>
+<a id="__codelineno-0-328" name="__codelineno-0-328"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">DEBUG_MODE</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span>
+<a id="__codelineno-0-329" name="__codelineno-0-329"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">gui</span>
+<a id="__codelineno-0-330" name="__codelineno-0-330"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">auto_start_daemon</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span>
+<a id="__codelineno-0-331" name="__codelineno-0-331"></a>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a>    <span class="nd">@classmethod</span>
+<a id="__codelineno-0-333" name="__codelineno-0-333"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_gtk_modules</span><span class="p">(</span>
+<a id="__codelineno-0-334" name="__codelineno-0-334"></a>        <span class="bp">cls</span><span class="p">,</span>
+<a id="__codelineno-0-335" name="__codelineno-0-335"></a>        <span class="n">gtk_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
+<a id="__codelineno-0-336" name="__codelineno-0-336"></a>        <span class="n">glib_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
+<a id="__codelineno-0-337" name="__codelineno-0-337"></a>        <span class="n">app_indicator_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
+<a id="__codelineno-0-338" name="__codelineno-0-338"></a>        <span class="n">gdk_pixbuf_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
+<a id="__codelineno-0-339" name="__codelineno-0-339"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-340" name="__codelineno-0-340"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Store GTK-related module references in class attributes.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-341" name="__codelineno-0-341"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">Gtk</span> <span class="o">=</span> <span class="n">gtk_module</span>
+<a id="__codelineno-0-342" name="__codelineno-0-342"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">GLib</span> <span class="o">=</span> <span class="n">glib_module</span>
+<a id="__codelineno-0-343" name="__codelineno-0-343"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">AppIndicator3</span> <span class="o">=</span> <span class="n">app_indicator_module</span>
+<a id="__codelineno-0-344" name="__codelineno-0-344"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">GdkPixbuf</span> <span class="o">=</span> <span class="n">gdk_pixbuf_module</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3238,8 +3238,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-315">315</a></span>
-<span class="normal"><a href="#__codelineno-0-316">316</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-316">316</a></span>
 <span class="normal"><a href="#__codelineno-0-317">317</a></span>
 <span class="normal"><a href="#__codelineno-0-318">318</a></span>
 <span class="normal"><a href="#__codelineno-0-319">319</a></span>
@@ -3252,21 +3251,22 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-326">326</a></span>
 <span class="normal"><a href="#__codelineno-0-327">327</a></span>
 <span class="normal"><a href="#__codelineno-0-328">328</a></span>
-<span class="normal"><a href="#__codelineno-0-329">329</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="nd">@classmethod</span>
-<a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply_cli_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="sd">    Apply parsed CLI args to app state.</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a><span class="sd">    Converts script_dir to absolute path.</span>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a><span class="sd">        args (argparse.Namespace): Parsed CLI arguments.</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">MODEL</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">script_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">script_dir</span><span class="p">)</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">DEBUG_MODE</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">gui</span>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">auto_start_daemon</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span>
+<span class="normal"><a href="#__codelineno-0-329">329</a></span>
+<span class="normal"><a href="#__codelineno-0-330">330</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="nd">@classmethod</span>
+<a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply_cli_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a><span class="sd">    Apply parsed CLI args to app state.</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a><span class="sd">    Converts script_dir to absolute path.</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a><span class="sd">        args (argparse.Namespace): Parsed CLI arguments.</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">MODEL</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">script_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">script_dir</span><span class="p">)</span>
+<a id="__codelineno-0-328" name="__codelineno-0-328"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">DEBUG_MODE</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span>
+<a id="__codelineno-0-329" name="__codelineno-0-329"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">gui</span>
+<a id="__codelineno-0-330" name="__codelineno-0-330"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">auto_start_daemon</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">GUI_MODE</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3295,8 +3295,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-331">331</a></span>
-<span class="normal"><a href="#__codelineno-0-332">332</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-332">332</a></span>
 <span class="normal"><a href="#__codelineno-0-333">333</a></span>
 <span class="normal"><a href="#__codelineno-0-334">334</a></span>
 <span class="normal"><a href="#__codelineno-0-335">335</a></span>
@@ -3307,19 +3306,20 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-340">340</a></span>
 <span class="normal"><a href="#__codelineno-0-341">341</a></span>
 <span class="normal"><a href="#__codelineno-0-342">342</a></span>
-<span class="normal"><a href="#__codelineno-0-343">343</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-331" name="__codelineno-0-331"></a><span class="nd">@classmethod</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a><span class="k">def</span><span class="w"> </span><span class="nf">set_gtk_modules</span><span class="p">(</span>
-<a id="__codelineno-0-333" name="__codelineno-0-333"></a>    <span class="bp">cls</span><span class="p">,</span>
-<a id="__codelineno-0-334" name="__codelineno-0-334"></a>    <span class="n">gtk_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>    <span class="n">glib_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
-<a id="__codelineno-0-336" name="__codelineno-0-336"></a>    <span class="n">app_indicator_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
-<a id="__codelineno-0-337" name="__codelineno-0-337"></a>    <span class="n">gdk_pixbuf_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Store GTK-related module references in class attributes.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">Gtk</span> <span class="o">=</span> <span class="n">gtk_module</span>
-<a id="__codelineno-0-341" name="__codelineno-0-341"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">GLib</span> <span class="o">=</span> <span class="n">glib_module</span>
-<a id="__codelineno-0-342" name="__codelineno-0-342"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">AppIndicator3</span> <span class="o">=</span> <span class="n">app_indicator_module</span>
-<a id="__codelineno-0-343" name="__codelineno-0-343"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">GdkPixbuf</span> <span class="o">=</span> <span class="n">gdk_pixbuf_module</span>
+<span class="normal"><a href="#__codelineno-0-343">343</a></span>
+<span class="normal"><a href="#__codelineno-0-344">344</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-332" name="__codelineno-0-332"></a><span class="nd">@classmethod</span>
+<a id="__codelineno-0-333" name="__codelineno-0-333"></a><span class="k">def</span><span class="w"> </span><span class="nf">set_gtk_modules</span><span class="p">(</span>
+<a id="__codelineno-0-334" name="__codelineno-0-334"></a>    <span class="bp">cls</span><span class="p">,</span>
+<a id="__codelineno-0-335" name="__codelineno-0-335"></a>    <span class="n">gtk_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
+<a id="__codelineno-0-336" name="__codelineno-0-336"></a>    <span class="n">glib_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
+<a id="__codelineno-0-337" name="__codelineno-0-337"></a>    <span class="n">app_indicator_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
+<a id="__codelineno-0-338" name="__codelineno-0-338"></a>    <span class="n">gdk_pixbuf_module</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">,</span>
+<a id="__codelineno-0-339" name="__codelineno-0-339"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-340" name="__codelineno-0-340"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Store GTK-related module references in class attributes.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-341" name="__codelineno-0-341"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">Gtk</span> <span class="o">=</span> <span class="n">gtk_module</span>
+<a id="__codelineno-0-342" name="__codelineno-0-342"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">GLib</span> <span class="o">=</span> <span class="n">glib_module</span>
+<a id="__codelineno-0-343" name="__codelineno-0-343"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">AppIndicator3</span> <span class="o">=</span> <span class="n">app_indicator_module</span>
+<a id="__codelineno-0-344" name="__codelineno-0-344"></a>    <span class="bp">cls</span><span class="o">.</span><span class="n">GdkPixbuf</span> <span class="o">=</span> <span class="n">gdk_pixbuf_module</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3393,8 +3393,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-346">346</a></span>
-<span class="normal"><a href="#__codelineno-0-347">347</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-347">347</a></span>
 <span class="normal"><a href="#__codelineno-0-348">348</a></span>
 <span class="normal"><a href="#__codelineno-0-349">349</a></span>
 <span class="normal"><a href="#__codelineno-0-350">350</a></span>
@@ -3432,46 +3431,47 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-382">382</a></span>
 <span class="normal"><a href="#__codelineno-0-383">383</a></span>
 <span class="normal"><a href="#__codelineno-0-384">384</a></span>
-<span class="normal"><a href="#__codelineno-0-385">385</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="k">def</span><span class="w"> </span><span class="nf">sync_app_state_for_tests</span><span class="p">(</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a>    <span class="n">gtk_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-348" name="__codelineno-0-348"></a>    <span class="n">glib_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-349" name="__codelineno-0-349"></a>    <span class="n">app_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-350" name="__codelineno-0-350"></a>    <span class="n">gdk_pixbuf_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-351" name="__codelineno-0-351"></a>    <span class="n">script_dir_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-352" name="__codelineno-0-352"></a>    <span class="n">app_version_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-353" name="__codelineno-0-353"></a>    <span class="n">auto_start_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-354" name="__codelineno-0-354"></a>    <span class="n">gui_mode_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-355" name="__codelineno-0-355"></a>    <span class="n">api_host_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-356" name="__codelineno-0-356"></a>    <span class="n">api_port_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-357" name="__codelineno-0-357"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-358" name="__codelineno-0-358"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-359" name="__codelineno-0-359"></a><span class="sd">    Sync test mocks with _AppState and module-level variables.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-360" name="__codelineno-0-360"></a>
-<a id="__codelineno-0-361" name="__codelineno-0-361"></a>    <span class="k">if</span> <span class="n">gtk_mod</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-362" name="__codelineno-0-362"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">Gtk</span> <span class="o">=</span> <span class="n">gtk_mod</span>
-<a id="__codelineno-0-363" name="__codelineno-0-363"></a>    <span class="k">if</span> <span class="n">glib_mod</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-364" name="__codelineno-0-364"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">GLib</span> <span class="o">=</span> <span class="n">glib_mod</span>
-<a id="__codelineno-0-365" name="__codelineno-0-365"></a>    <span class="k">if</span> <span class="n">app_mod</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-366" name="__codelineno-0-366"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">AppIndicator3</span> <span class="o">=</span> <span class="n">app_mod</span>
-<a id="__codelineno-0-367" name="__codelineno-0-367"></a>    <span class="k">if</span> <span class="n">gdk_pixbuf_mod</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-368" name="__codelineno-0-368"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">GdkPixbuf</span> <span class="o">=</span> <span class="n">gdk_pixbuf_mod</span>
-<a id="__codelineno-0-369" name="__codelineno-0-369"></a>    <span class="n">module_globals</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()</span>
-<a id="__codelineno-0-370" name="__codelineno-0-370"></a>    <span class="k">if</span> <span class="n">script_dir_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-371" name="__codelineno-0-371"></a>        <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;script_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">script_dir_val</span>
-<a id="__codelineno-0-372" name="__codelineno-0-372"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span> <span class="o">=</span> <span class="n">script_dir_val</span>
-<a id="__codelineno-0-373" name="__codelineno-0-373"></a>    <span class="k">if</span> <span class="n">app_version_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-374" name="__codelineno-0-374"></a>        <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;APP_VERSION&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_version_val</span>
-<a id="__codelineno-0-375" name="__codelineno-0-375"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span> <span class="o">=</span> <span class="n">app_version_val</span>
-<a id="__codelineno-0-376" name="__codelineno-0-376"></a>    <span class="k">if</span> <span class="n">auto_start_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-377" name="__codelineno-0-377"></a>        <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;AUTO_START_DAEMON&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">auto_start_val</span>
-<a id="__codelineno-0-378" name="__codelineno-0-378"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span> <span class="o">=</span> <span class="n">auto_start_val</span>
-<a id="__codelineno-0-379" name="__codelineno-0-379"></a>    <span class="k">if</span> <span class="n">gui_mode_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-380" name="__codelineno-0-380"></a>        <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;GUI_MODE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gui_mode_val</span>
-<a id="__codelineno-0-381" name="__codelineno-0-381"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">GUI_MODE</span> <span class="o">=</span> <span class="n">gui_mode_val</span>
-<a id="__codelineno-0-382" name="__codelineno-0-382"></a>    <span class="k">if</span> <span class="n">api_host_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-383" name="__codelineno-0-383"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="o">=</span> <span class="n">api_host_val</span>
-<a id="__codelineno-0-384" name="__codelineno-0-384"></a>    <span class="k">if</span> <span class="n">api_port_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-385" name="__codelineno-0-385"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span> <span class="o">=</span> <span class="n">api_port_val</span>
+<span class="normal"><a href="#__codelineno-0-385">385</a></span>
+<span class="normal"><a href="#__codelineno-0-386">386</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="k">def</span><span class="w"> </span><span class="nf">sync_app_state_for_tests</span><span class="p">(</span>
+<a id="__codelineno-0-348" name="__codelineno-0-348"></a>    <span class="n">gtk_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-349" name="__codelineno-0-349"></a>    <span class="n">glib_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-350" name="__codelineno-0-350"></a>    <span class="n">app_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-351" name="__codelineno-0-351"></a>    <span class="n">gdk_pixbuf_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-352" name="__codelineno-0-352"></a>    <span class="n">script_dir_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-353" name="__codelineno-0-353"></a>    <span class="n">app_version_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-354" name="__codelineno-0-354"></a>    <span class="n">auto_start_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-355" name="__codelineno-0-355"></a>    <span class="n">gui_mode_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-356" name="__codelineno-0-356"></a>    <span class="n">api_host_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-357" name="__codelineno-0-357"></a>    <span class="n">api_port_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-358" name="__codelineno-0-358"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-359" name="__codelineno-0-359"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-360" name="__codelineno-0-360"></a><span class="sd">    Sync test mocks with _AppState and module-level variables.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-361" name="__codelineno-0-361"></a>
+<a id="__codelineno-0-362" name="__codelineno-0-362"></a>    <span class="k">if</span> <span class="n">gtk_mod</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-363" name="__codelineno-0-363"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">Gtk</span> <span class="o">=</span> <span class="n">gtk_mod</span>
+<a id="__codelineno-0-364" name="__codelineno-0-364"></a>    <span class="k">if</span> <span class="n">glib_mod</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-365" name="__codelineno-0-365"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">GLib</span> <span class="o">=</span> <span class="n">glib_mod</span>
+<a id="__codelineno-0-366" name="__codelineno-0-366"></a>    <span class="k">if</span> <span class="n">app_mod</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-367" name="__codelineno-0-367"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">AppIndicator3</span> <span class="o">=</span> <span class="n">app_mod</span>
+<a id="__codelineno-0-368" name="__codelineno-0-368"></a>    <span class="k">if</span> <span class="n">gdk_pixbuf_mod</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-369" name="__codelineno-0-369"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">GdkPixbuf</span> <span class="o">=</span> <span class="n">gdk_pixbuf_mod</span>
+<a id="__codelineno-0-370" name="__codelineno-0-370"></a>    <span class="n">module_globals</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()</span>
+<a id="__codelineno-0-371" name="__codelineno-0-371"></a>    <span class="k">if</span> <span class="n">script_dir_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-372" name="__codelineno-0-372"></a>        <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;script_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">script_dir_val</span>
+<a id="__codelineno-0-373" name="__codelineno-0-373"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span> <span class="o">=</span> <span class="n">script_dir_val</span>
+<a id="__codelineno-0-374" name="__codelineno-0-374"></a>    <span class="k">if</span> <span class="n">app_version_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-375" name="__codelineno-0-375"></a>        <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;APP_VERSION&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_version_val</span>
+<a id="__codelineno-0-376" name="__codelineno-0-376"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span> <span class="o">=</span> <span class="n">app_version_val</span>
+<a id="__codelineno-0-377" name="__codelineno-0-377"></a>    <span class="k">if</span> <span class="n">auto_start_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-378" name="__codelineno-0-378"></a>        <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;AUTO_START_DAEMON&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">auto_start_val</span>
+<a id="__codelineno-0-379" name="__codelineno-0-379"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span> <span class="o">=</span> <span class="n">auto_start_val</span>
+<a id="__codelineno-0-380" name="__codelineno-0-380"></a>    <span class="k">if</span> <span class="n">gui_mode_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-381" name="__codelineno-0-381"></a>        <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;GUI_MODE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gui_mode_val</span>
+<a id="__codelineno-0-382" name="__codelineno-0-382"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">GUI_MODE</span> <span class="o">=</span> <span class="n">gui_mode_val</span>
+<a id="__codelineno-0-383" name="__codelineno-0-383"></a>    <span class="k">if</span> <span class="n">api_host_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-384" name="__codelineno-0-384"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="o">=</span> <span class="n">api_host_val</span>
+<a id="__codelineno-0-385" name="__codelineno-0-385"></a>    <span class="k">if</span> <span class="n">api_port_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-386" name="__codelineno-0-386"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span> <span class="o">=</span> <span class="n">api_port_val</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
