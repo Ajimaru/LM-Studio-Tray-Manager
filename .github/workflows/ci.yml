@@ -180,14 +180,22 @@ jobs:
       # exercise the autostart helper in its read-only mode. Exit code 3
       # means "no models found", which is the expected result on a runner
       # with no LM Studio installed.
+      #
+      # The trailing "exit 0" is load-bearing. Checking $LASTEXITCODE does
+      # not clear it, and GitHub appends "exit $LASTEXITCODE" to every pwsh
+      # step - so tolerating 3 here still failed the step, with no error
+      # text and no annotation to explain it.
       - name: Run autostart script in list-models mode
         shell: pwsh
         run: |
           ./lmstudio_autostart.ps1 -ListModels
-          if ($LASTEXITCODE -notin @(0, 3)) {
-            Write-Host "::error::autostart -ListModels exited with $LASTEXITCODE"
+          $code = $LASTEXITCODE
+          Write-Host "autostart -ListModels exit code: $code"
+          if ($code -notin @(0, 3)) {
+            Write-Host "::error::autostart -ListModels exited with $code"
             exit 1
           }
+          exit 0
 
   test-windows:
     runs-on: windows-latest

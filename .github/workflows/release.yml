@@ -288,10 +288,15 @@ jobs:
             Write-Host "::error::ISCC.exe not found after installing innosetup"
             exit 1
           }
+          # Whether ISCC is there is the question, not what choco returned:
+          # it reports 3010 for "reboot pending" and other non-zero codes
+          # that are not failures. GitHub appends "exit $LASTEXITCODE" to a
+          # pwsh step, so without clearing it that code would fail the job.
           $iscc | ForEach-Object { Write-Host "Found $_" }
           # ISCC is deliberately not invoked to prove it runs: with no script
           # argument it prints usage and exits non-zero, and the pwsh shell
           # propagates the last exit code.
+          exit 0
 
       # Unsigned, unlike the macOS job: this project has no Authenticode
       # certificate, so SmartScreen will warn on first run. The checksum
