@@ -919,6 +919,10 @@ def test_namespace_fallback_to_appindicator3(monkeypatch, tmp_path):
     and other filesystem operations do not attempt to write under
     ``/usr/bin`` during the test.
     """
+    # main() dispatches on the platform flags before it reaches any GTK
+    # code, so this GTK test has to pin the platform before the import.
+    monkeypatch.setattr(sys, "platform", "linux")
+
     gi_mod = ModuleType("gi")
 
     def require_version(name, _version):
@@ -1001,6 +1005,10 @@ def test_namespace_fallback_to_appindicator3(monkeypatch, tmp_path):
 )
 def test_namespace_missing_exits(monkeypatch, capsys):
     """Fail with a clear error when no AppIndicator namespace exists."""
+    # main() dispatches on the platform flags before it reaches any GTK
+    # code, so this GTK test has to pin the platform before the import.
+    monkeypatch.setattr(sys, "platform", "linux")
+
     gi_mod = ModuleType("gi")
 
     def require_version(name, _version):
@@ -4173,6 +4181,10 @@ def test_start_daemon_fails_when_desktop_cannot_stop(tray_module, monkeypatch):
 )
 def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     """Enable warning capture when module is imported in debug mode."""
+    # main() dispatches on the platform flags before it reaches any GTK
+    # code, so this GTK test has to pin the platform before the import.
+    monkeypatch.setattr(sys, "platform", "linux")
+
     gi_mod = ModuleType("gi")
 
     def require_version(*args, **kwargs):

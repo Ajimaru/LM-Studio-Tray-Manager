@@ -1,11 +1,15 @@
 """
-Test suite for the Windows-specific behaviour of lmstudio_tray.py.
+Test suite for the Windows platform primitives in lmstudio_tray.py.
 
-The tray module decides at import time which platform it is running on and
-which optional GUI library to use.  These tests load a second copy of the
-module with ``sys.platform`` pinned to ``win32`` and with ``pystray``/``PIL``
-replaced by stubs, so the Windows branches can be exercised on any host -
-including the Linux CI runner, which has neither library installed.
+These cover the platform-neutral half of the module - paths, process
+detection and single-instance handling - as it behaves once the platform
+is Windows. The tray class itself is covered in
+``test_lmstudio_tray_windows_tray.py``.
+
+The ``windows_module`` fixture (see ``conftest.py``) imports a second copy
+of the module with ``sys.platform`` pinned to ``win32``, so these branches
+run on any host - including the Linux CI runner, which has neither
+``pystray`` nor ``Pillow`` installed.
 
 Covered here:
 - platform flag derivation (IS_WINDOWS / IS_LINUX / IS_MACOS)
@@ -15,100 +19,14 @@ Covered here:
 - single-instance handling for frozen vs. source runs
 """
 
-import importlib.util
 import os
 import signal
 import subprocess  # nosec B404
-import sys
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
 
 import pytest
 
-
-def _completed(returncode=0, stdout="", stderr=""):
-    """Create a subprocess-like completed result object."""
-    return SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
-
-
-class DummyPystrayModule(ModuleType):
-    """Minimal stand-in for the ``pystray`` package.
-
-    Only the attributes the tray module touches at import time are needed;
-    the tray class itself is covered separately.
-    """
-
-    def __init__(self, name="pystray"):
-        """Create the stub module with placeholder pystray attributes."""
-        super().__init__(name)
-        self.Icon = object
-        self.Menu = object
-        self.MenuItem = object
-
-
-class DummyPilImage(ModuleType):
-    """Minimal stand-in for ``PIL.Image``."""
-
-    def __init__(self, name="PIL.Image"):
-        """Create the stub module with a no-op ``open``."""
-        super().__init__(name)
-        self.open = lambda *_args, **_kwargs: None
-
-
-@pytest.fixture(name="windows_module")
-def windows_module_fixture(monkeypatch, tmp_path):
-    """Load lmstudio_tray as if running on Windows, with GUI stubs.
-
-    Mirrors the Linux and macOS module fixtures in
-    ``test_lmstudio_tray.py``: pin ``sys.platform`` *before* the import so
-    the module-level platform flags derive correctly, hide the other
-    platforms' GUI libraries, and keep subprocess calls inert.
-    """
-    pystray_stub = DummyPystrayModule()
-    pil_image_stub = DummyPilImage()
-    pil_pkg = ModuleType("PIL")
-    setattr(pil_pkg, "Image", pil_image_stub)
-
-    monkeypatch.setitem(sys.modules, "pystray", pystray_stub)
-    monkeypatch.setitem(sys.modules, "PIL", pil_pkg)
-    monkeypatch.setitem(sys.modules, "PIL.Image", pil_image_stub)
-    monkeypatch.setitem(sys.modules, "gi", None)
-    monkeypatch.setitem(sys.modules, "rumps", None)
-
-    def safe_run(*_args, **_kwargs):
-        """Return a safe default subprocess result during import."""
-        return _completed(returncode=1, stdout="", stderr="")
-
-    monkeypatch.setattr(subprocess, "run", safe_run)
-    monkeypatch.setattr(sys, "platform", "win32")
-    monkeypatch.setattr(os, "getpid", lambda: 99999)
-
-    home = tmp_path / "home"
-    home.mkdir()
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setenv("USERPROFILE", str(home))
-    monkeypatch.setenv("APPDATA", str(tmp_path / "AppData" / "Roaming"))
-    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "AppData" / "Local"))
-
-    module_name = "lmstudio_tray_windows"
-    sys.modules.pop(module_name, None)
-    spec = importlib.util.spec_from_file_location(
-        module_name,
-        str(Path(__file__).resolve().parents[1] / "lmstudio_tray.py"),
-    )
-    if spec is None or spec.loader is None:
-        raise RuntimeError("Failed to create module spec or loader")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-
-    monkeypatch.setattr(module, "_pystray_lib", pystray_stub)
-    monkeypatch.setattr(module, "_pil_image", pil_image_stub)
-
-    yield module
-
-    sys.modules.pop(module_name, None)
-
+from windows_stubs import completed as _completed
 
 # ---------------------------------------------------------------------
 # Platform flags
