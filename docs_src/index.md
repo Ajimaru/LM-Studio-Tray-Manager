@@ -9,11 +9,12 @@ LM Studio Tray Manager is a Python-based system tray application for managing an
 ## Key Features
 
 - **Runtime Monitoring**: Real-time monitoring of LM Studio daemon and desktop application status
-- **System Tray Integration**: GTK3-based system tray icon with status indicators
+- **System Tray Integration**: Native tray icon with status indicators - GTK3 on Linux, the menu bar on macOS, the notification area on Windows
 - **Model Management**: Detection and monitoring of loaded AI models
+- **Local or Remote**: Control the daemon and desktop app on this machine, or point the API endpoint at another host to monitor an LM Studio server elsewhere on the network. Remote endpoints are monitored rather than controlled: start and stop act on local processes, so those entries are hidden in that mode
 - **Configuration**: Flexible API endpoint configuration
 - **Update Management**: Automatic update checking with GitHub integration
-- **Cross-Platform**: Supports Linux and macOS
+- **Cross-Platform**: Supports Linux, macOS and Windows
 
 ## Documentation Structure
 
@@ -23,7 +24,7 @@ This documentation is organized into the following sections:
   - **Main Module**: Core entry points and main application logic
   - **Core Functions**: Utility functions for system operations
   - **Configuration**: Configuration loading, validation, and management
-  - **System Tray**: GTK3 system tray implementation
+  - **System Tray**: The GTK3, macOS and Windows tray implementations
   - **Updates**: Version checking and update management
 
 ## Getting Started

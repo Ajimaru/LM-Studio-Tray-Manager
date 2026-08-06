@@ -413,6 +413,7 @@ EOF</code></pre>
                 <li><code>api_host</code>: LM Studio API host (default: <code>localhost</code>)</li>
                 <li><code>api_port</code>: LM Studio API port (default: <code>1234</code>)</li>
             </ul>
+            <p><strong>Local or remote:</strong> pointing <code>api_host</code> at another machine switches the tray to remote mode. Status then comes from the LM Studio HTTP API rather than from local process detection, the menu shows the endpoint and its state, and the start/stop entries disappear — those act on local processes and cannot reach another host. A machine's own LAN address still counts as local, so entering a host's own IP on that host keeps the normal local menu.</p>
             <p><strong>Security Note:</strong> All API connections use HTTP/HTTPS schemes only. Other schemes (file://, ftp://, etc.) are rejected by the tray monitor to prevent URL scheme injection attacks. The configuration also validates that host and port values are properly formatted.</p>
 
         </section>

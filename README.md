@@ -2,7 +2,7 @@
 
 ![LM Studio Icon](assets/img/lm-studio-tray-manager.svg)
 
-Automation scripts for LM Studio & llmster - to control and monitor the applications from the system tray.
+Automation scripts for LM Studio & llmster - to control and monitor the applications from the system tray, on this machine or on an LM Studio host elsewhere on the network.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python + gi](https://img.shields.io/badge/Python-gi_compatible-blue.svg)](https://www.python.org/downloads/)
@@ -16,6 +16,7 @@ Automation scripts for LM Studio & llmster - to control and monitor the applicat
 
 - **🖥️ System Tray Monitor**: Native tray integration on Linux (GTK3), macOS (menu bar) and Windows (notification area), with live daemon/app controls and status transitions
 - **🎛️ Tray Menu Controls**: Start/stop daemon and start/stop desktop app, including conflict-safe switching between both modes
+- **🌐 Local or Remote**: Point it at `localhost` to control the daemon and desktop app on this machine, or at any other host to watch an LM Studio server elsewhere on the network over its HTTP API. Remote endpoints are **monitored, not controlled** — start/stop acts on local processes, so those entries are hidden rather than offered as buttons that cannot work. See [Monitoring a Remote Host](docs/USE.md#monitoring-a-remote-host)
 - **🚦 Icon Status Schema**: `❌` not installed, `⚠️` both stopped, `ℹ️` runtime active but no model loaded, `✅` model loaded
 - **🔎 Update Checks**: Periodic GitHub release checks with a manual "Check for updates" action under the Options menu
 

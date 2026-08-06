@@ -24,6 +24,7 @@ This guide covers how to use the LM Studio Tray Manager application after setup.
     - [Status Indicators](#status-indicators)
     - [Left-Click Menu](#left-click-menu)
     - [Menu Options](#menu-options)
+    - [Monitoring a Remote Host](#monitoring-a-remote-host)
   - [Desktop App Launch](#desktop-app-launch)
     - [How "Start Desktop App" Works](#how-start-desktop-app-works)
     - [How "Start LM Studio Daemon" Works](#how-start-lm-studio-daemon-works)
