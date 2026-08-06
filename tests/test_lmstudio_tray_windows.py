@@ -613,6 +613,48 @@ def test_kill_existing_instances_never_calls_pgrep(
 
 
 # ---------------------------------------------------------------------
+# Console-window suppression
+# ---------------------------------------------------------------------
+
+
+def test_no_window_kwargs_on_windows(windows_module):
+    """Console programs must not flash a window in a windowed build."""
+    assert windows_module._no_window_kwargs() == {  # nosec B101
+        "creationflags": windows_module.CREATE_NO_WINDOW
+    }
+    assert windows_module.CREATE_NO_WINDOW == 0x08000000  # nosec B101
+
+
+def test_run_safe_command_suppresses_the_console(
+    windows_module, monkeypatch
+):
+    """Every helper the tray runs goes through here, so the flag does too."""
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        """Record how subprocess.run was called."""
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return _completed(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(windows_module.subprocess, "run", fake_run)
+
+    windows_module._run_safe_command(["C:\\Windows\\tasklist.exe", "/NH"])
+
+    assert (  # nosec B101
+        captured["kwargs"]["creationflags"]
+        == windows_module.CREATE_NO_WINDOW
+    )
+
+
+def test_no_window_kwargs_is_empty_off_windows(windows_module, monkeypatch):
+    """POSIX subprocess rejects creationflags, so it must not be passed."""
+    monkeypatch.setattr(windows_module, "IS_WINDOWS", False)
+
+    assert windows_module._no_window_kwargs() == {}  # nosec B101
+
+
+# ---------------------------------------------------------------------
 # Autostart (Startup-folder shortcut)
 # ---------------------------------------------------------------------
 

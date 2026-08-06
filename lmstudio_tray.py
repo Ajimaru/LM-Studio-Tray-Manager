@@ -419,6 +419,12 @@ LLMSTER_IMAGE_NAME = "llmster.exe"
 LM_STUDIO_IMAGE_NAME = "LM Studio.exe"
 TRAY_IMAGE_NAME = "lmstudio-tray-manager.exe"
 
+# subprocess.CREATE_NO_WINDOW, spelled out rather than read off the module:
+# the attribute exists only on Windows, so on the Linux CI runner - where
+# the Windows code paths are unit-tested - it would silently read as 0 and
+# the tests would pass while asserting nothing.
+CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+
 # The Startup-folder shortcut is written by three separate things: this
 # module, lmstudio_autostart.ps1, and the Inno Setup installer's optional
 # autostart task. They deliberately share one file name so that whichever
@@ -2244,6 +2250,25 @@ def check_api_models() -> bool:
     return has_loaded_model
 
 
+def _no_window_kwargs() -> dict:
+    """Return the subprocess flags that suppress a console window.
+
+    A ``--windowed`` build has no console of its own, so Windows gives one
+    to every console program the tray runs - ``tasklist``, ``taskkill``,
+    ``lms``, ``powershell``. Each appears as a black window that flashes up
+    and vanishes, and the status poll alone runs one every ``INTERVAL``
+    seconds. ``CREATE_NO_WINDOW`` suppresses it while still letting the
+    pipes be read.
+
+    Returns:
+        dict: ``creationflags`` on Windows, empty elsewhere - POSIX
+        ``subprocess`` rejects the argument outright.
+    """
+    if not IS_WINDOWS:
+        return {}
+    return {"creationflags": CREATE_NO_WINDOW}
+
+
 def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
     """Run pre-validated command list.
 
@@ -2276,6 +2301,7 @@ def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
         check=False,
         shell=False,  # nosec B603 B607
         timeout=10,
+        **_no_window_kwargs(),
     )
 
 
