@@ -4,9 +4,33 @@
 # the MkDocs-based API reference documentation.
 #
 # Install with: pip install -r requirements-docs.txt
+#
+# ---------------------------------------------------------------------
+# This file is a full lock, not a shortlist.
+#
+# The docs workflow does not merely build the site - it rebuilds it and
+# fails if the result differs from the committed docs/mkdocs by a single
+# byte. A byte-exact gate needs a byte-exact input: with only the direct
+# dependencies pinned, a release of any transitive one changed the
+# generated HTML while no file in this repository changed, and the check
+# then failed on a commit that had nothing to do with the docs.
+#
+# Every version below is the newest release as of 2026-08-06, so this
+# freezes the current state rather than an old one.
+#
+# To regenerate after a deliberate upgrade:
+#   python -m venv /tmp/docs && /tmp/docs/bin/pip install mkdocs \
+#     mkdocs-material "mkdocstrings[python]" Pygments
+#   /tmp/docs/bin/pip freeze
+# then bring the versions across, keep the marker on colorama, and commit
+# the regenerated docs/mkdocs alongside.
+#
+# Resolved on Windows. Every entry is available for Linux at the same
+# version, and colorama - the one Windows-only package, required by click
+# and mkdocs - keeps its environment marker so it is not installed there.
+# ---------------------------------------------------------------------
 
-# Pin the docs toolchain so CI reproduces the committed HTML byte-for-byte.
-# The checked-in pages were generated with mkdocs 1.6.1 and mkdocs-material 9.7.7.
+# --- What the documentation is actually built with --------------------
 
 # MkDocs static site generator
 mkdocs==1.6.1
@@ -15,33 +39,55 @@ mkdocs==1.6.1
 mkdocs-material==9.7.7
 
 # Python docstring parsing plugin for MkDocs
-mkdocstrings[python]==1.0.6
+mkdocstrings==1.0.6
 
-# Keep syntax-highlighting stable for mkdocstrings source blocks.
-Pygments==2.20.0
-
-# Transitive dependencies that shape the generated HTML. Pinning only the
-# direct ones left a hole: a release of any of these changed docs/mkdocs
-# without a single repository file changing, and the workflow's
-# "Verify MkDocs output is up to date" check would fail on a commit that
-# had nothing to do with the docs.
-#
-# All four are at their newest release as of 2026-08-06, so this pins the
-# state the committed HTML was generated from rather than freezing an old
-# one. Note this narrows the hole rather than closing it - Jinja2 and
-# MarkupSafe still float, and only a full lock file would cover them.
-
-# Renders the API pages from the parsed source.
+# Renders the API pages from the parsed source (the [python] extra).
 mkdocstrings-python==2.0.5
 
-# Parses lmstudio_tray.py for mkdocstrings; produces the code listings
-# whose line numbering the verify step compares. Distributed as
-# "griffelib"; the older "griffe" name is a different project now.
+# Parses lmstudio_tray.py for mkdocstrings and produces the code
+# listings whose line numbering the verify step compares. Distributed as
+# "griffelib"; the older "griffe" name on PyPI is a different project.
 griffelib==2.1.0
 
-# Resolves the cross-references between API pages.
-mkdocs-autorefs==1.4.4
+# Syntax highlighting for those source blocks.
+Pygments==2.20.0
 
-# Markdown rendering, and the extensions the Material theme relies on.
+# Markdown rendering and the extensions the Material theme relies on.
 Markdown==3.10.3
 pymdown-extensions==11.0.1
+
+# Cross-references between API pages.
+mkdocs-autorefs==1.4.4
+
+# --- Transitive, pinned so the output cannot move on its own ----------
+#
+# Jinja2 and MarkupSafe render every page template, and babel formats the
+# dates in the Material footer, so these three reach the HTML directly.
+# The rest do not, but are pinned anyway: they are what pip resolved for
+# the committed pages, and leaving them open reintroduces the same hole
+# in a smaller form.
+
+babel==2.18.0
+backrefs==8.0
+certifi==2026.7.22
+charset-normalizer==3.4.9
+click==8.4.2
+colorama==0.4.6; platform_system == "Windows"
+ghp-import==2.1.0
+idna==3.18
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+mergedeep==1.3.4
+mkdocs-get-deps==0.2.2
+mkdocs-material-extensions==1.3.1
+packaging==26.3
+paginate==0.5.7
+pathspec==1.1.1
+platformdirs==4.11.0
+python-dateutil==2.9.0.post0
+PyYAML==6.0.3
+pyyaml_env_tag==1.1
+requests==2.34.2
+six==1.17.0
+urllib3==2.7.0
+watchdog==6.0.0
