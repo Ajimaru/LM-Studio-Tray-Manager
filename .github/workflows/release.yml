@@ -264,10 +264,26 @@ jobs:
       # The installer is optional in build_windows.ps1, but a release must
       # not silently ship without it, so it is installed up front and the
       # verification step below insists the installer exists.
+      #
+      # Chocolatey rather than winget: winget is not part of the
+      # windows-latest runner image at all, while Chocolatey is preinstalled.
+      # The README for a local build still says winget, which is the right
+      # advice on a real desktop.
       - name: Install Inno Setup
-        run: winget install --id JRSoftware.InnoSetup --exact --silent
-          --accept-package-agreements --accept-source-agreements
-          --disable-interactivity
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress --yes
+          # Chocolatey installs to Program Files (x86); build_windows.ps1
+          # already looks there, but fail loudly here rather than let the
+          # build quietly skip the installer and trip the verify step.
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path -PathType Leaf $iscc)) {
+            Write-Host "::error::ISCC.exe not found after install: $iscc"
+            exit 1
+          }
+          Write-Host "Found $iscc"
+          # No ISCC invocation here: it prints usage and exits non-zero when
+          # given no script, and the pwsh shell propagates the last exit code.
 
       # Unsigned, unlike the macOS job: this project has no Authenticode
       # certificate, so SmartScreen will warn on first run. The checksum
