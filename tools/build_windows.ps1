@@ -25,8 +25,11 @@
     .\tools\build_windows.ps1 -Clean
 
 .NOTES
-    Requires Python 3.10+ on PATH. Inno Setup 6 is optional; install it
+    Requires Python 3.10+ on PATH. Inno Setup is optional; install it
     with:  winget install JRSoftware.InnoSetup
+
+    Version 6 and 7 install side by side and the installer script compiles
+    under either; when both are present the higher one is used.
 #>
 
 [CmdletBinding()]
@@ -370,18 +373,37 @@ function New-Installer {
     }
 
     # Inno Setup does not put ISCC on PATH, and winget installs it per-user
-    # unless it is run elevated, so all three locations are checked.
+    # unless it is run elevated, so all three roots are checked.
+    #
+    # The directory carries the major version ("Inno Setup 6", "Inno Setup 7"),
+    # and 6 and 7 install side by side, so the roots are searched with a
+    # wildcard and the highest major wins. Pinning to 6 here meant a machine
+    # with only 7 installed silently produced no installer at all.
     $iscc = Get-Command 'ISCC' -CommandType Application -ErrorAction SilentlyContinue
     if (-not $iscc) {
-        foreach ($candidate in @(
-                (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 6\ISCC.exe'),
-                (Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'),
-                (Join-Path $env:ProgramFiles 'Inno Setup 6\ISCC.exe'))) {
-            if ($candidate -and (Test-Path -PathType Leaf $candidate)) {
-                $iscc = @{ Source = $candidate }
-                break
-            }
+        $roots = @(
+            (Join-Path $env:LOCALAPPDATA 'Programs'),
+            ${env:ProgramFiles(x86)},
+            $env:ProgramFiles
+        ) | Where-Object { $_ -and (Test-Path -PathType Container $_) }
+
+        $found = foreach ($root in $roots) {
+            Get-ChildItem -Path $root -Filter 'Inno Setup *' -Directory `
+                -ErrorAction SilentlyContinue |
+                ForEach-Object {
+                    $exe = Join-Path $_.FullName 'ISCC.exe'
+                    if (Test-Path -PathType Leaf $exe) {
+                        $major = 0
+                        if ($_.Name -match 'Inno Setup (\d+)') {
+                            $major = [int]$Matches[1]
+                        }
+                        [pscustomobject]@{ Major = $major; Source = $exe }
+                    }
+                }
         }
+
+        $best = $found | Sort-Object Major -Descending | Select-Object -First 1
+        if ($best) { $iscc = @{ Source = $best.Source } }
     }
 
     if (-not $iscc) {
@@ -389,6 +411,8 @@ function New-Installer {
         Write-Warn 'Install it with:  winget install JRSoftware.InnoSetup'
         return $null
     }
+
+    Write-Host "    Using $($iscc.Source)"
 
     New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
 

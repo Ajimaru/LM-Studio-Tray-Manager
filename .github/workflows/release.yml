@@ -273,17 +273,25 @@ jobs:
         shell: pwsh
         run: |
           choco install innosetup --no-progress --yes
-          # Chocolatey installs to Program Files (x86); build_windows.ps1
-          # already looks there, but fail loudly here rather than let the
-          # build quietly skip the installer and trip the verify step.
-          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
-          if (-not (Test-Path -PathType Leaf $iscc)) {
-            Write-Host "::error::ISCC.exe not found after install: $iscc"
+          # The package currently ships Inno Setup 6.7.1, so it lands in a
+          # directory named "Inno Setup 6". The major is deliberately not
+          # asserted: upstream is already on 7, the two install side by
+          # side, and tools/windows-installer.iss compiles unchanged under
+          # both. So this mirrors the wildcard search build_windows.ps1
+          # does, and only has to fail loudly now rather than let the build
+          # skip the installer and trip the verify step three steps later.
+          $iscc = Get-ChildItem -Path ${env:ProgramFiles(x86)}, $env:ProgramFiles `
+            -Filter 'Inno Setup *' -Directory -ErrorAction SilentlyContinue |
+            ForEach-Object { Join-Path $_.FullName 'ISCC.exe' } |
+            Where-Object { Test-Path -PathType Leaf $_ }
+          if (-not $iscc) {
+            Write-Host "::error::ISCC.exe not found after installing innosetup"
             exit 1
           }
-          Write-Host "Found $iscc"
-          # No ISCC invocation here: it prints usage and exits non-zero when
-          # given no script, and the pwsh shell propagates the last exit code.
+          $iscc | ForEach-Object { Write-Host "Found $_" }
+          # ISCC is deliberately not invoked to prove it runs: with no script
+          # argument it prints usage and exits non-zero, and the pwsh shell
+          # propagates the last exit code.
 
       # Unsigned, unlike the macOS job: this project has no Authenticode
       # certificate, so SmartScreen will warn on first run. The checksum
