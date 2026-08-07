@@ -45,9 +45,7 @@ def _inline_threads(windows_sync_threads):
 def test_main_dispatches_to_windows(windows_module, monkeypatch):
     """main() hands off to the Windows entry point before the GTK code."""
     called = []
-    monkeypatch.setattr(
-        windows_module, "_run_windows", lambda args: called.append(args)
-    )
+    monkeypatch.setattr(windows_module, "_run_windows", called.append)
     monkeypatch.setattr(sys, "argv", ["lmstudio_tray.py"])
 
     windows_module.main()

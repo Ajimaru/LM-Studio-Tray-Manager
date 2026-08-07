@@ -43,7 +43,6 @@ def _block_real_process_signals(monkeypatch):
     def blocked_kill(pid, sig):
         """Swallow the signal instead of delivering it to a real process."""
         _ = (pid, sig)
-        return None
 
     monkeypatch.setattr(os, "kill", blocked_kill)
     yield

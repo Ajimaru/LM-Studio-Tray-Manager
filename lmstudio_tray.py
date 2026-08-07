@@ -865,7 +865,10 @@ def _run_tk_dialog(build_dialog: Callable[[object], None]) -> bool:
             try:
                 root.destroy()
             except Exception:  # pylint: disable=broad-except
-                pass
+                # Tearing down is the last thing this thread does, so there
+                # is nothing to recover - but swallowing it silently hides a
+                # wedged Tk root, which is worth seeing in a debug log.
+                logging.debug("Could not destroy the dialog window")
 
     thread = threading.Thread(
         target=_dialog_thread, name="tk-dialog", daemon=True
