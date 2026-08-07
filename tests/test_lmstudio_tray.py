@@ -919,6 +919,10 @@ def test_namespace_fallback_to_appindicator3(monkeypatch, tmp_path):
     and other filesystem operations do not attempt to write under
     ``/usr/bin`` during the test.
     """
+    # main() dispatches on the platform flags before it reaches any GTK
+    # code, so this GTK test has to pin the platform before the import.
+    monkeypatch.setattr(sys, "platform", "linux")
+
     gi_mod = ModuleType("gi")
 
     def require_version(name, _version):
@@ -1001,6 +1005,10 @@ def test_namespace_fallback_to_appindicator3(monkeypatch, tmp_path):
 )
 def test_namespace_missing_exits(monkeypatch, capsys):
     """Fail with a clear error when no AppIndicator namespace exists."""
+    # main() dispatches on the platform flags before it reaches any GTK
+    # code, so this GTK test has to pin the platform before the import.
+    monkeypatch.setattr(sys, "platform", "linux")
+
     gi_mod = ModuleType("gi")
 
     def require_version(name, _version):
@@ -4173,6 +4181,10 @@ def test_start_daemon_fails_when_desktop_cannot_stop(tray_module, monkeypatch):
 )
 def test_debug_mode_import_enables_warning_capture(monkeypatch, tmp_path):
     """Enable warning capture when module is imported in debug mode."""
+    # main() dispatches on the platform flags before it reaches any GTK
+    # code, so this GTK test has to pin the platform before the import.
+    monkeypatch.setattr(sys, "platform", "linux")
+
     gi_mod = ModuleType("gi")
 
     def require_version(*args, **kwargs):
@@ -6001,6 +6013,14 @@ def macos_module_fixture(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(os, "getpid", lambda: 99999)
 
+    # The module derives IS_MACOS/IS_WINDOWS/IS_LINUX from sys.platform at
+    # import time, and setting IS_MACOS afterwards leaves the other two
+    # reflecting the host. On a Windows dev machine that left IS_WINDOWS
+    # true here, so process helpers took the tasklist branch and the macOS
+    # behaviour under test never ran. Pin the platform before the import,
+    # the same way the Linux fixture above does.
+    monkeypatch.setattr(sys, "platform", "darwin")
+
     module_name = "lmstudio_tray_macos"
     sys.modules.pop(module_name, None)
     spec = importlib.util.spec_from_file_location(
@@ -6014,6 +6034,8 @@ def macos_module_fixture(monkeypatch, tmp_path):
     spec.loader.exec_module(module)
 
     monkeypatch.setattr(module, "IS_MACOS", True)
+    monkeypatch.setattr(module, "IS_WINDOWS", False)
+    monkeypatch.setattr(module, "IS_LINUX", False)
     monkeypatch.setattr(module, "_rumps_lib", rumps_stub)
     monkeypatch.setattr(module, "_RumpsBase", DummyRumpsApp)
 

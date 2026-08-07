@@ -3,9 +3,10 @@ Tests for the pinned requirements files.
 
 Two things are checked here:
 
-* the top-level requirements.txt file does not contain pip hash specifiers
-  ('--hash') or line continuation backslashes ('\\'), as it is intended for
-  scanners and should remain hash-free and scanner-friendly;
+* the scanner-facing requirements files (requirements.txt and
+  requirements-windows.txt) do not contain pip hash specifiers ('--hash') or
+  line continuation backslashes ('\\'), as they are intended for scanners and
+  should remain hash-free and scanner-friendly;
 * the provenance comments ('# <package> <version> (source: ...)') still match
   the pin below them. Dependabot only rewrites the pin, so those comments go
   stale silently -- in requirements-build.txt they sit directly above the
@@ -18,7 +19,15 @@ from pathlib import Path
 
 import pytest
 
-REQUIREMENTS_FILES = ("requirements.txt", "requirements-build.txt")
+REQUIREMENTS_FILES = (
+    "requirements.txt",
+    "requirements-build.txt",
+    "requirements-windows.txt",
+)
+
+# Files that must stay parseable by vulnerability scanners, and so carry
+# pinned versions but no pip hash specifiers.
+HASH_FREE_FILES = ("requirements.txt", "requirements-windows.txt")
 
 # "# setuptools 83.0.0 (source: setuptools-83.0.0.tar.gz + py3-none-any wheel)"
 PROVENANCE_RE = re.compile(
@@ -60,13 +69,14 @@ def _provenance_entries(path):
                 pending = None
 
 
-def test_requirements_txt_no_hashes():
-    """The top-level requirements.txt is intended for scanners and should
-    not contain pip ``--hash`` specifiers or continuation backslashes.
+@pytest.mark.parametrize("filename", HASH_FREE_FILES)
+def test_scanner_facing_requirements_have_no_hashes(filename):
+    """The scanner-facing requirements files carry no pip ``--hash``
+    specifiers or continuation backslashes.
     """
-    text = Path("requirements.txt").read_text(encoding="utf-8")
-    assert "--hash" not in text, "requirements.txt still contains hash pins"
-    assert "\\" not in text, "requirements.txt still uses line continuations"
+    text = Path(filename).read_text(encoding="utf-8")
+    assert "--hash" not in text, f"{filename} still contains hash pins"
+    assert "\\" not in text, f"{filename} still uses line continuations"
 
 
 @pytest.mark.parametrize("filename", REQUIREMENTS_FILES)

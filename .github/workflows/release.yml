@@ -245,3 +245,92 @@ jobs:
             release/lmstudio-tray-manager-*-macos-*.dmg
             release/lmstudio-tray-manager-*-macos-*.tar.gz
             release/SHA256SUMS-macos.txt
+
+  build-windows:
+    runs-on: windows-latest
+    needs: build-and-release
+
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # The installer is optional in build_windows.ps1, but a release must
+      # not silently ship without it, so it is installed up front and the
+      # verification step below insists the installer exists.
+      #
+      # Chocolatey rather than winget: winget is not part of the
+      # windows-latest runner image at all, while Chocolatey is preinstalled.
+      # The README for a local build still says winget, which is the right
+      # advice on a real desktop.
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress --yes
+          # The package currently ships Inno Setup 6.7.1, so it lands in a
+          # directory named "Inno Setup 6". The major is deliberately not
+          # asserted: upstream is already on 7, the two install side by
+          # side, and tools/windows-installer.iss compiles unchanged under
+          # both. So this mirrors the wildcard search build_windows.ps1
+          # does, and only has to fail loudly now rather than let the build
+          # skip the installer and trip the verify step three steps later.
+          $iscc = Get-ChildItem -Path ${env:ProgramFiles(x86)}, $env:ProgramFiles `
+            -Filter 'Inno Setup *' -Directory -ErrorAction SilentlyContinue |
+            ForEach-Object { Join-Path $_.FullName 'ISCC.exe' } |
+            Where-Object { Test-Path -PathType Leaf $_ }
+          if (-not $iscc) {
+            Write-Host "::error::ISCC.exe not found after installing innosetup"
+            exit 1
+          }
+          # Whether ISCC is there is the question, not what choco returned:
+          # it reports 3010 for "reboot pending" and other non-zero codes
+          # that are not failures. GitHub appends "exit $LASTEXITCODE" to a
+          # pwsh step, so without clearing it that code would fail the job.
+          $iscc | ForEach-Object { Write-Host "Found $_" }
+          # ISCC is deliberately not invoked to prove it runs: with no script
+          # argument it prints usage and exits non-zero, and the pwsh shell
+          # propagates the last exit code.
+          exit 0
+
+      # Unsigned, unlike the macOS job: this project has no Authenticode
+      # certificate, so SmartScreen will warn on first run. The checksum
+      # file is what users verify against instead.
+      - name: Build Windows release artifacts
+        shell: pwsh
+        run: ./tools/build_windows.ps1 -Clean
+
+      - name: Verify Windows artifacts
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim() -replace '^v', ''
+          $expected = @(
+            "release/lmstudio-tray-manager-$version-windows-x86_64.zip",
+            "release/lmstudio-tray-manager-$version-windows-x86_64-setup.exe",
+            'release/SHA256SUMS-windows.txt'
+          )
+          foreach ($path in $expected) {
+            if (-not (Test-Path -PathType Leaf $path)) {
+              Write-Host "::error::Missing release artifact: $path"
+              exit 1
+            }
+          }
+
+          Get-ChildItem release | Format-Table Name, Length -AutoSize
+          Get-Content release/SHA256SUMS-windows.txt
+
+      - name: Upload Windows artifacts
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: false
+          files: |
+            release/lmstudio-tray-manager-*-windows-*.zip
+            release/lmstudio-tray-manager-*-windows-*-setup.exe
+            release/SHA256SUMS-windows.txt

@@ -50,6 +50,31 @@ def fixture_build_binary_module():
     return _load_build_binary_module()
 
 
+@pytest.fixture(autouse=True)
+def _pin_linux_platform(build_binary_module, monkeypatch, tmp_path):
+    """Make the module behave as if building on Linux by default.
+
+    build_binary() branches on sys.platform: the GdkPixbuf lookup is Linux
+    only, the icon is Windows only, and the produced binary gains a .exe
+    suffix on Windows. Almost every test here describes the Linux build, so
+    the platform is pinned rather than inherited from whatever host the
+    suite happens to run on.
+
+    ``tmp_path`` is requested purely for ordering. ``build_binary`` imports
+    ``sys`` normally, so patching its attribute patches the one interpreter
+    module everything shares - pytest included. On a Windows host, a
+    ``tmp_path`` created while sys.platform reads "linux" sends pytest down
+    its POSIX branch and into ``os.getuid()``, which does not exist there.
+    Naming the fixture here forces it to be built first, under the real
+    platform.
+
+    Tests that describe another platform override this with their own
+    monkeypatch call, which is applied later and therefore wins.
+    """
+    _ = tmp_path
+    monkeypatch.setattr(build_binary_module.sys, "platform", "linux")
+
+
 class _RunResult(SimpleNamespace):
     """Simple subprocess result stub."""
 
@@ -191,6 +216,59 @@ def test_get_hidden_imports_macos_bundles_pyobjc(
     assert "Foundation" in hidden
     assert "objc" in hidden
     assert not any(h.startswith("gi.") for h in hidden)
+
+
+def test_get_hidden_imports_windows_bundles_pystray(
+    build_binary_module, monkeypatch
+):
+    """Windows builds must ship pystray, Pillow and tkinter.
+
+    pystray selects its backend through a dotted module name that
+    PyInstaller's static analysis cannot follow, so pystray._win32 has to
+    be named explicitly or the frozen build has no tray at all.
+    """
+    monkeypatch.setattr(build_binary_module.sys, "platform", "win32")
+    hidden = build_binary_module.get_hidden_imports()
+    assert "pystray" in hidden
+    assert "pystray._win32" in hidden
+    assert "PIL.Image" in hidden
+    assert "tkinter" in hidden
+    assert "certifi" in hidden
+    assert not any(h.startswith("gi.") for h in hidden)
+    assert "rumps" not in hidden
+
+
+def test_get_windows_icon_none_off_windows(build_binary_module, monkeypatch):
+    """The .ico is only relevant to a Windows build."""
+    monkeypatch.setattr(build_binary_module.sys, "platform", "linux")
+    assert build_binary_module.get_windows_icon() is None
+
+
+def test_get_windows_icon_returns_generated_file(
+    build_binary_module, monkeypatch, tmp_path
+):
+    """A generated build\\windows\\app.ico is picked up."""
+    monkeypatch.setattr(build_binary_module.sys, "platform", "win32")
+    monkeypatch.setattr(
+        build_binary_module, "get_project_root", lambda: tmp_path
+    )
+    icon = tmp_path / "build" / "windows" / "app.ico"
+    icon.parent.mkdir(parents=True)
+    icon.write_bytes(b"")
+
+    assert build_binary_module.get_windows_icon() == icon
+
+
+def test_get_windows_icon_missing_is_not_fatal(
+    build_binary_module, monkeypatch, tmp_path
+):
+    """Building without an icon is allowed; it is cosmetic only."""
+    monkeypatch.setattr(build_binary_module.sys, "platform", "win32")
+    monkeypatch.setattr(
+        build_binary_module, "get_project_root", lambda: tmp_path
+    )
+
+    assert build_binary_module.get_windows_icon() is None
 
 
 def test_get_data_files(build_binary_module):

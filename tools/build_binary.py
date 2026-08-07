@@ -17,6 +17,31 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 
+def _use_utf8_output() -> None:
+    """Make the progress output survive a non-UTF-8 console.
+
+    The status lines below use "✓", "✅" and friends. A Windows console
+    defaults to a legacy code page - cp1252 on the GitHub runner - where
+    encoding U+2713 raises UnicodeEncodeError and takes the whole build
+    down after PyInstaller has already succeeded. Re-encoding as UTF-8
+    with a replacement fallback keeps the build's exit status about the
+    build.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):
+            # A redirected or already-detached stream; the glyphs are
+            # cosmetic, so carry on rather than fail the build here.
+            pass
+
+
+_use_utf8_output()
+
+
 def get_project_root() -> Path:
     """Return the repository root for this script."""
     return Path(__file__).resolve().parent.parent
@@ -136,16 +161,18 @@ def get_hidden_imports():
     """Return hidden imports for PyInstaller for the current platform.
 
     On macOS the tray needs rumps plus PyObjC's Foundation bindings, which
-    it uses to marshal AppKit calls onto the main thread.
+    it uses to marshal AppKit calls onto the main thread. On Windows it
+    needs pystray's Win32 backend and Pillow, plus tkinter for the dialogs.
 
     Note:
         The macOS branch is currently unreachable in practice. Release builds
         for macOS go through ``tools/build_macos.sh``, which invokes
         PyInstaller directly, and this module only ever runs on Linux (via
-        ``tools/Dockerfile.release`` and ``tools/build.sh``). PyInstaller's
-        static analysis already picks up Foundation and objc from the source
-        imports, so the branch is a safety net for a future switch to this
-        module rather than something the shipped bundle depends on.
+        ``tools/Dockerfile.release`` and ``tools/build.sh``) or Windows (via
+        ``tools/build_windows.ps1``). PyInstaller's static analysis already
+        picks up Foundation and objc from the source imports, so the branch
+        is a safety net for a future switch to this module rather than
+        something the shipped bundle depends on.
 
     Returns:
         list[str]: Hidden import module names.
@@ -165,6 +192,21 @@ def get_hidden_imports():
             "AppKit",
         ]
 
+    if sys.platform == "win32":
+        # pystray picks its backend at import time via a dotted module name
+        # that static analysis cannot follow, so the Win32 one is named
+        # explicitly. PIL._tkinter_finder is what lets Pillow and tkinter
+        # share a Tcl interpreter in a frozen build.
+        return common + [
+            "pystray",
+            "pystray._win32",
+            "PIL",
+            "PIL.Image",
+            "PIL._tkinter_finder",
+            "tkinter",
+            "tkinter.scrolledtext",
+        ]
+
     return common + [
         "gi",
         "gi.repository",
@@ -181,6 +223,29 @@ def get_hidden_imports():
         "gi.repository.cairo",
         "cairo",
     ]
+
+
+def get_windows_icon():
+    """Return the .ico to embed in the Windows executable, if one exists.
+
+    The icon is generated from the PNG asset by ``tools/build_windows.ps1``
+    rather than committed, so a source checkout carries no binary blob.
+    Building without it is allowed; the executable then shows the default
+    PyInstaller icon in Explorer, which is cosmetic only.
+
+    Returns:
+        pathlib.Path | None: Path to the icon, or None when absent or not
+        building for Windows.
+    """
+    if sys.platform != "win32":
+        return None
+
+    icon_path = get_project_root() / "build" / "windows" / "app.ico"
+    if icon_path.is_file():
+        return icon_path
+
+    print("⚠ No app.ico found - the executable will use the default icon\n")
+    return None
 
 
 def get_data_files():
@@ -273,7 +338,12 @@ def build_binary():
 
     check_dependencies()
 
-    loaders_dir, cache_file = get_gdk_pixbuf_loaders()
+    # GdkPixbuf is a GTK concern, and the lookup shells out to pkg-config,
+    # which does not exist on Windows.
+    if sys.platform == "linux":
+        loaders_dir, cache_file = get_gdk_pixbuf_loaders()
+    else:
+        loaders_dir, cache_file = None, None
 
     spec_dir = Path(".build-cache/spec")
     spec_dir.mkdir(parents=True, exist_ok=True)
@@ -322,8 +392,13 @@ def build_binary():
                 "⚠ loaders.cache not found - icons may not render"
                 " correctly!\n"
             )
-    else:
+    elif sys.platform == "linux":
         print("⚠ Building without GdkPixbuf loaders - icons may not work!\n")
+
+    icon_path = get_windows_icon()
+    if icon_path:
+        cmd.extend(["--icon", str(icon_path)])
+        print(f"✓ Using application icon: {icon_path}\n")
 
     cmd.append(str(get_project_root() / "lmstudio_tray.py"))
 
@@ -347,7 +422,8 @@ def build_binary():
         print("\n❌ Build failed!")
         return 1
 
-    binary_path = Path("dist/lmstudio-tray-manager")
+    suffix = ".exe" if sys.platform == "win32" else ""
+    binary_path = Path(f"dist/lmstudio-tray-manager{suffix}")
     if not binary_path.exists():
         print("\n❌ Build completed but binary not found!")
         return 1
@@ -361,8 +437,12 @@ def build_binary():
     print(f"Binary location: {binary_path}")
     print(f"Binary size: {size_mb:.2f} MB")
     print("\nNext steps:")
-    print("1. Test: ./dist/lmstudio-tray-manager --version")
-    print("2. Optimize: strip dist/lmstudio-tray-manager")
+    if sys.platform == "win32":
+        print(f"1. Test: .\\{binary_path} --version")
+        print("2. Package: .\\tools\\build_windows.ps1")
+    else:
+        print("1. Test: ./dist/lmstudio-tray-manager --version")
+        print("2. Optimize: strip dist/lmstudio-tray-manager")
     print(
     )
     return 0

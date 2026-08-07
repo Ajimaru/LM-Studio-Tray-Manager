@@ -388,6 +388,7 @@ EOF</code></pre>
                 <li><strong>Stop Daemon:</strong> Stops llmster daemon process</li>
                 <li><strong>Show Status:</strong> Displays current LM Studio status via <code>lms ps</code> output. If daemon is not running, falls back to querying the LM Studio API directly and displays loaded models. Shows "No models loaded or error." if neither succeeds.</li>
                 <li><strong>Options &gt; Configuration:</strong> Configure LM Studio API host/port endpoint. Default: <code>localhost:1234</code>. Configuration is persisted at <code>~/.config/lmstudio_tray.json</code></li>
+                <li><strong>Options &gt; Start with Windows</strong> (Windows only)<strong>:</strong> Tick to run the tray at login, untick to stop it. Writes the same Startup-folder shortcut as <code>lmstudio_autostart.ps1 -InstallAutostart</code> and the installer's autostart task, so the checkbox reports the true state however it was switched on</li>
                 <li><strong>Options &gt; Check for updates:</strong> Manual GitHub release check</li>
                 <li><strong>About:</strong> Shows version, update status, and authors</li>
                 <li><strong>Quit Tray:</strong> Terminates the tray monitor</li>
@@ -412,6 +413,7 @@ EOF</code></pre>
                 <li><code>api_host</code>: LM Studio API host (default: <code>localhost</code>)</li>
                 <li><code>api_port</code>: LM Studio API port (default: <code>1234</code>)</li>
             </ul>
+            <p><strong>Local or remote:</strong> pointing <code>api_host</code> at another machine switches the tray to remote mode. Status then comes from the LM Studio HTTP API rather than from local process detection, the menu shows the endpoint and its state, and the start/stop entries disappear — those act on local processes and cannot reach another host. A machine's own LAN address still counts as local, so entering a host's own IP on that host keeps the normal local menu.</p>
             <p><strong>Security Note:</strong> All API connections use HTTP/HTTPS schemes only. Other schemes (file://, ftp://, etc.) are rejected by the tray monitor to prevent URL scheme injection attacks. The configuration also validates that host and port values are properly formatted.</p>
 
         </section>
@@ -486,7 +488,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
 
                     Src -->|"Required: setup<br/>environment"| Setup
 
-                    Run1 -->|"Starts tray monitor"| Monitor["GTK3 System Tray<br/>Monitors daemon & API"]
+                    Run1 -->|"Starts tray monitor"| Monitor["System Tray<br/>Monitors daemon & API"]
                     Run2 -->|"Starts tray monitor"| Monitor
                     Setup -->|"Shows appropriate<br/>commands for your<br/>installation type"| Run1
                     Setup -->|"or"| Run2
@@ -578,7 +580,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     L --> I["<b>END</b>"]
             </div>
 
-            <h3>lmstudio-tray-manager - Standalone Binary (Linux & macOS)</h3>
+            <h3>lmstudio-tray-manager - Standalone Binary (Linux, macOS & Windows)</h3>
             <p>The standalone binary compiled from PyInstaller combines the tray monitor with command-line argument handling. No venv activation required.</p>
             <div class="mermaid">
                 graph TD
@@ -596,7 +598,7 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     Auto --> RunStart
                     Gui --> RunStart
                     Default --> RunStart
-                    RunStart --> E["Create GTK3/rumps<br/>tray icon"]
+                    RunStart --> E["Create GTK3/rumps/pystray<br/>tray icon"]
                     E --> F["Set up left-click<br/>menu"]
                     F --> G["Start daemon/API<br/>monitoring"]
                     G --> H{Status<br/>check}
@@ -626,12 +628,12 @@ cd lmstudio-tray-manager-${VERSION}-linux-x86_64-binary
                     W --> H
             </div>
 
-            <h3>lmstudio_tray.py - GTK3 System Tray Monitor (Python Source)</h3>
-            <p>The detailed tray monitor implementation when running from Python source. This shows the internal monitoring and status update loop.</p>
+            <h3>lmstudio_tray.py - System Tray Monitor (Python Source)</h3>
+            <p>The detailed tray monitor implementation when running from Python source. This shows the internal monitoring and status update loop. The backend is GTK3 on Linux, rumps on macOS and pystray on Windows; the monitoring loop is the same on all three.</p>
             <div class="mermaid">
                 graph TD
                     A["<b>lmstudio_tray.py</b><br/>START"] --> B[Kill existing instances]
-                    B --> C[Create GTK3 tray icon]
+                    B --> C[Create tray icon<br/>GTK3 / rumps / pystray]
                     C --> D[Set up left-click menu]
                     D --> E[Start daemon/API monitoring]
                     E --> F{Status check}

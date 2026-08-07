@@ -4,6 +4,7 @@ LM Studio Tray Icon Monitor.
 
 System tray app for monitoring LM Studio daemon and desktop app.
 Linux: GTK3 + AppIndicator3. macOS: rumps (PyObjC).
+Windows: pystray + Pillow, with tkinter for dialogs.
 Usage:
     ```text
     lmstudio_tray.py [model] [script_dir] [--debug]
@@ -12,15 +13,18 @@ Usage:
 """
 
 import argparse
+import csv
 import subprocess  # nosec B404
 import sys
 import os
+import ntpath
 import time
 import signal
 import logging
 import shutil
 import threading
 import importlib
+import io
 import json
 import re
 import socket
@@ -48,7 +52,26 @@ except ImportError:
     NSObject = None
     NSThread = None
 
+try:
+    import pystray as _pystray_lib
+except ImportError:
+    _pystray_lib = None
+
+try:
+    from PIL import Image as _pil_image
+except ImportError:
+    _pil_image = None
+
+try:
+    import tkinter as _tk_lib
+    from tkinter import scrolledtext as _tk_scrolledtext
+except ImportError:
+    _tk_lib = None
+    _tk_scrolledtext = None
+
 IS_MACOS = sys.platform == "darwin"
+IS_WINDOWS = sys.platform == "win32"
+IS_LINUX = not IS_MACOS and not IS_WINDOWS
 _RumpsBase = _rumps_lib.App if _rumps_lib is not None else object
 
 DEFAULT_APP_VERSION = "dev"
@@ -168,9 +191,32 @@ def _get_default_script_dir() -> str:
         return os.getcwd()
 
 
+def _get_user_data_dir() -> str:
+    """
+    Return the per-user directory for application data.
+
+    Windows keeps machine-local application state under ``%LOCALAPPDATA%``;
+    an installed build lives under ``Program Files`` where a normal user
+    cannot write, so the fallback location matters more there than on the
+    other platforms.
+
+    Returns:
+        str: Absolute path to the per-user data directory.
+    """
+    if IS_WINDOWS:
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if local_app_data:
+            return os.path.join(local_app_data, "lmstudio-tray-manager")
+        return os.path.expanduser(
+            "~/AppData/Local/lmstudio-tray-manager"
+        )
+
+    return os.path.expanduser("~/.local/share/lmstudio-tray-manager")
+
+
 def _get_writable_logs_dir(base_script_dir: str) -> str:
     """
-    Get writable logs directory, fallback to ~/.local/share if needed.
+    Get writable logs directory, fallback to the user data dir if needed.
 
     Args:
         base_script_dir (str): Script directory to check.
@@ -188,9 +234,7 @@ def _get_writable_logs_dir(base_script_dir: str) -> str:
         os.remove(test_file)
         return logs_dir
     except (OSError, IOError, PermissionError):
-        writable_logs = os.path.expanduser(
-            '~/.local/share/lmstudio-tray-manager/logs'
-        )
+        writable_logs = os.path.join(_get_user_data_dir(), "logs")
         os.makedirs(writable_logs, exist_ok=True)
         return writable_logs
 
@@ -368,6 +412,26 @@ LATEST_RELEASE_API_URL = (
     "/releases/latest"
 )
 
+# ---------------------------------------------------
+# === Windows process image names (tasklist etc.) ===
+# ---------------------------------------------------
+
+LLMSTER_IMAGE_NAME = "llmster.exe"
+LM_STUDIO_IMAGE_NAME = "LM Studio.exe"
+TRAY_IMAGE_NAME = "lmstudio-tray-manager.exe"
+
+# subprocess.CREATE_NO_WINDOW, spelled out rather than read off the module:
+# the attribute exists only on Windows, so on the Linux CI runner - where
+# the Windows code paths are unit-tested - it would silently read as 0 and
+# the tests would pass while asserting nothing.
+CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+
+# The Startup-folder shortcut is written by three separate things: this
+# module, lmstudio_autostart.ps1, and the Inno Setup installer's optional
+# autostart task. They deliberately share one file name so that whichever
+# enabled it, the others see it and can turn it off again.
+AUTOSTART_SHORTCUT_NAME = "LM Studio Tray Manager.lnk"
+
 
 def _ensure_gsettings_schema():
     """
@@ -433,7 +497,9 @@ def get_release_url(tag: Optional[str] = None) -> str:
 # -----------------------
 
 
-LMS_CLI = os.path.expanduser("~/.lmstudio/bin/lms")
+LMS_CLI = os.path.expanduser(
+    "~/.lmstudio/bin/lms.exe" if IS_WINDOWS else "~/.lmstudio/bin/lms"
+)
 
 
 def get_app_version() -> str:
@@ -459,6 +525,58 @@ def get_app_version() -> str:
     return load_version_from_dir(_AppState.script_dir)
 
 
+def _ensure_std_streams() -> None:
+    """Give a windowed Windows build somewhere to write ``--help`` output.
+
+    PyInstaller's ``--windowed`` bootloader starts the process with no
+    console, leaving ``sys.stdout`` and ``sys.stderr`` set to ``None``.
+    ``print()`` tolerates that and does nothing, but argparse does not: it
+    calls ``file.write()`` unconditionally, so ``--help`` died with an
+    ``AttributeError`` traceback instead of printing usage.
+
+    When the app was launched from a terminal, that terminal's console is
+    reattached so both flags print where the user typed them. Otherwise -
+    a double-click from Explorer, say - the streams are pointed at the
+    null device, which loses the text but keeps the process from crashing.
+    """
+    if sys.stdout is not None and sys.stderr is not None:
+        return
+
+    if IS_WINDOWS and _attach_parent_console():
+        return
+
+    null_stream = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115
+    if sys.stdout is None:
+        sys.stdout = null_stream
+    if sys.stderr is None:
+        sys.stderr = null_stream
+
+
+def _attach_parent_console() -> bool:
+    """Reattach the console of the process that launched this one.
+
+    Returns:
+        bool: ``True`` when a console was attached and the standard
+        streams were reopened onto it.
+    """
+    try:
+        import ctypes  # pylint: disable=import-outside-toplevel
+
+        attach_parent_process = -1
+        if not ctypes.windll.kernel32.AttachConsole(attach_parent_process):
+            return False
+
+        # CONOUT$/CONIN$ address the attached console directly, whatever
+        # the parent had its own handles redirected to.
+        if sys.stdout is None:
+            sys.stdout = open("CONOUT$", "w", encoding="utf-8")
+        if sys.stderr is None:
+            sys.stderr = open("CONOUT$", "w", encoding="utf-8")
+    except (AttributeError, OSError, ValueError):
+        return False
+    return True
+
+
 def main() -> None:
     """
     Parse CLI args, load dependencies, configure logging, and start app.
@@ -466,6 +584,8 @@ def main() -> None:
     Raises:
         SystemExit: On --version flag.
     """
+    _ensure_std_streams()
+
     args = parse_args()
 
     # -------------------------------------------
@@ -495,6 +615,10 @@ def main() -> None:
 
     if IS_MACOS:
         _run_macos(args)
+        return
+
+    if IS_WINDOWS:
+        _run_windows(args)
         return
 
     if gi is None:  # noqa: E711
@@ -552,35 +676,7 @@ def main() -> None:
         gdk_pixbuf_module,
     )
 
-    logs_dir = _get_writable_logs_dir(_AppState.script_dir)
-    log_level = (
-        logging.DEBUG if _AppState.DEBUG_MODE else logging.INFO
-    )
-    log_file = os.path.join(logs_dir, "lmstudio_tray.log")
-
-    with open(log_file, 'w', encoding='utf-8') as f:
-        f.write("="*80 + "\n")
-        f.write("LM Studio Tray Monitor Log\n")
-        f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write("="*80 + "\n")
-
-    logging.basicConfig(
-        filename=log_file,
-        level=log_level,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        filemode='a',
-        force=True,
-    )
-    root = logging.getLogger()
-    for handler in root.handlers:
-        handler.setFormatter(
-            HomeMaskFormatter(
-                "%(asctime)s - %(levelname)s - %(message)s"
-            )
-        )
-
-    if _AppState.DEBUG_MODE:
-        logging.captureWarnings(True)
+    log_file = _configure_logging()
 
     app_indicator_module = importlib.import_module(
         f"gi.repository.{app_namespace}"
@@ -591,13 +687,6 @@ def main() -> None:
         app_indicator_module,
         gdk_pixbuf_module,
     )
-
-    if _AppState.DEBUG_MODE:
-        warnings_logger = logging.getLogger('py.warnings')
-        warnings_logger.setLevel(logging.DEBUG)
-        logging.debug(
-            "Debug mode enabled - capturing warnings to log file"
-        )
 
     logging.debug("Script directory: %s", _AppState.script_dir)
     logging.debug("Log file location: %s", log_file)
@@ -618,16 +707,15 @@ def main() -> None:
     gtk.main()
 
 
-def _run_macos(_args):
-    """Set up logging and launch macOS rumps tray."""
-    if _rumps_lib is None:
-        print(
-            "Error: rumps is not installed. Install with:\n"
-            "    pip install rumps",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+def _configure_logging() -> str:
+    """Truncate the log file and install the masking handler.
 
+    Shared by all three platform entry points so the log format, level and
+    home-directory masking cannot drift between them.
+
+    Returns:
+        str: Path to the log file that was configured.
+    """
     logs_dir = _get_writable_logs_dir(_AppState.script_dir)
     log_level = (
         logging.DEBUG if _AppState.DEBUG_MODE else logging.INFO
@@ -663,6 +751,21 @@ def _run_macos(_args):
             "Debug mode enabled - capturing warnings to log file"
         )
 
+    return log_file
+
+
+def _run_macos(_args):
+    """Set up logging and launch macOS rumps tray."""
+    if _rumps_lib is None:
+        print(
+            "Error: rumps is not installed. Install with:\n"
+            "    pip install rumps",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    _configure_logging()
+
     _AppState.APP_VERSION = get_app_version()
     globals()["APP_VERSION"] = _AppState.APP_VERSION
     logging.info("App version: %s", _AppState.APP_VERSION)
@@ -678,6 +781,191 @@ def _run_macos(_args):
         )
 
     MacOSTrayIcon().run()
+
+
+def _run_windows(_args):
+    """Set up logging and launch the Windows pystray tray."""
+    missing = []
+    if _pystray_lib is None:
+        missing.append("pystray")
+    if _pil_image is None:
+        missing.append("pillow")
+    if missing:
+        verb = "is" if len(missing) == 1 else "are"
+        print(
+            f"Error: {' and '.join(missing)} {verb} not installed. "
+            f"Install with:\n"
+            f"    pip install -r requirements-windows.txt",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    _configure_logging()
+
+    _AppState.APP_VERSION = get_app_version()
+    globals()["APP_VERSION"] = _AppState.APP_VERSION
+    logging.info("App version: %s", _AppState.APP_VERSION)
+
+    kill_existing_instances()
+    logging.info("Tray script started (Windows / pystray)")
+
+    WindowsTrayIcon().run()
+
+
+def _run_tk_dialog(build_dialog: Callable[[object], None]) -> bool:
+    """Run a tkinter dialog on a dedicated thread and wait for it to close.
+
+    pystray delivers menu callbacks on its own worker thread, and every
+    tkinter call has to happen on the thread that created the root window.
+    Giving each dialog its own thread and its own short-lived root
+    satisfies both constraints without keeping a Tk instance alive for the
+    lifetime of the tray.
+
+    Args:
+        build_dialog: Callable receiving the ``Tk`` root. It populates the
+            window; the mainloop and teardown are handled here.
+
+    Returns:
+        bool: ``True`` when the dialog ran, ``False`` when tkinter is
+        unavailable or the window could not be created (for example on a
+        session with no window station).
+    """
+    if _tk_lib is None:
+        logging.error("tkinter is not available; cannot show dialog")
+        return False
+
+    outcome = {"shown": False}
+
+    def _dialog_thread() -> None:
+        """Create the root, build the dialog, and pump its event loop."""
+        try:
+            root = _tk_lib.Tk()
+        except Exception:  # pylint: disable=broad-except
+            # tkinter raises TclError for a missing display, but a frozen
+            # build with a broken Tcl data directory fails in other ways
+            # too; none of them should take the tray down with them.
+            logging.exception("Could not create the dialog window")
+            return
+        try:
+            root.title(APP_NAME)
+            icon_path = get_asset_path("img", "lm-studio-tray-manager.png")
+            if icon_path:
+                try:
+                    root.iconphoto(
+                        True, _tk_lib.PhotoImage(file=icon_path)
+                    )
+                except Exception:  # pylint: disable=broad-except
+                    logging.debug("Could not set the dialog icon")
+            build_dialog(root)
+            outcome["shown"] = True
+            root.mainloop()
+        except Exception:  # pylint: disable=broad-except
+            logging.exception("Dialog failed")
+        finally:
+            try:
+                root.destroy()
+            except Exception:  # pylint: disable=broad-except
+                # Tearing down is the last thing this thread does, so there
+                # is nothing to recover - but swallowing it silently hides a
+                # wedged Tk root, which is worth seeing in a debug log.
+                logging.debug("Could not destroy the dialog window")
+
+    thread = threading.Thread(
+        target=_dialog_thread, name="tk-dialog", daemon=True
+    )
+    thread.start()
+    thread.join()
+    return outcome["shown"]
+
+
+def _show_tk_message(title: str, message: str) -> bool:
+    """Show a read-only scrollable text dialog.
+
+    ``messagebox`` is deliberately not used: the status output is multi-line
+    and can be long enough that a fixed-size alert truncates it.
+
+    Args:
+        title: Window heading shown above the text.
+        message: Body text.
+
+    Returns:
+        bool: ``True`` when the dialog was shown.
+    """
+    def _build(root) -> None:
+        """Populate the message window."""
+        root.title(f"{APP_NAME} - {title}")
+        root.minsize(420, 220)
+
+        if _tk_scrolledtext is None:
+            text = _tk_lib.Text(root, wrap="word", height=14, width=64)
+        else:
+            text = _tk_scrolledtext.ScrolledText(
+                root, wrap="word", height=14, width=64
+            )
+        text.insert("1.0", message)
+        text.configure(state="disabled")
+        text.pack(fill="both", expand=True, padx=12, pady=(12, 6))
+
+        _tk_lib.Button(root, text="Close", command=root.quit, width=12).pack(
+            pady=(0, 12)
+        )
+        root.protocol("WM_DELETE_WINDOW", root.quit)
+
+    return _run_tk_dialog(_build)
+
+
+def _prompt_tk_endpoint(current: str) -> Optional[str]:
+    """Prompt for an ``host:port`` API endpoint.
+
+    Args:
+        current: Endpoint to pre-fill the entry with.
+
+    Returns:
+        str | None: The submitted text, or ``None`` when the dialog was
+        cancelled, closed, or could not be shown.
+    """
+    result: dict[str, Optional[str]] = {"value": None}
+
+    def _build(root) -> None:
+        """Populate the configuration window."""
+        root.title(f"{APP_NAME} - Configuration")
+        root.resizable(False, False)
+
+        _tk_lib.Label(
+            root,
+            justify="left",
+            text=(
+                "LM Studio API endpoint to monitor.\n"
+                "Enter as host:port (for example localhost:1234)."
+            ),
+        ).pack(anchor="w", padx=12, pady=(12, 6))
+
+        entry = _tk_lib.Entry(root, width=40)
+        entry.insert(0, current)
+        entry.select_range(0, "end")
+        entry.pack(fill="x", padx=12)
+        entry.focus_set()
+
+        buttons = _tk_lib.Frame(root)
+        buttons.pack(anchor="e", padx=12, pady=12)
+
+        def _save() -> None:
+            """Record the entered endpoint and close."""
+            result["value"] = entry.get()
+            root.quit()
+
+        _tk_lib.Button(buttons, text="Cancel", width=10,
+                       command=root.quit).pack(side="right", padx=(6, 0))
+        _tk_lib.Button(buttons, text="Save", width=10,
+                       command=_save).pack(side="right")
+
+        root.bind("<Return>", lambda _event: _save())
+        root.bind("<Escape>", lambda _event: root.quit())
+        root.protocol("WM_DELETE_WINDOW", root.quit)
+
+    if not _run_tk_dialog(_build):
+        return None
+    return result["value"]
 
 
 class HomeMaskFormatter(logging.Formatter):
@@ -724,8 +1012,46 @@ def get_asset_path(*path_components: str) -> Optional[str]:
 
 
 def _get_config_path() -> str:
-    """Return config file path ~/.config/lmstudio_tray.json."""
+    """Return the config file path the app writes to.
+
+    POSIX platforms use ``~/.config/lmstudio_tray.json``. Windows has no
+    ``~/.config`` convention, so roaming user settings live under
+    ``%APPDATA%`` instead - that keeps them out of the install directory,
+    which is read-only for a normal user once the installer has put the app
+    under ``Program Files``.
+
+    Returns:
+        str: Absolute path to the config file.
+    """
+    if IS_WINDOWS:
+        app_data = os.environ.get("APPDATA")
+        if app_data:
+            return os.path.join(
+                app_data, "lmstudio-tray-manager", "lmstudio_tray.json"
+            )
+        return os.path.expanduser(
+            "~/AppData/Roaming/lmstudio-tray-manager/lmstudio_tray.json"
+        )
+
     return os.path.expanduser("~/.config/lmstudio_tray.json")
+
+
+def _get_config_read_paths() -> list[str]:
+    """Return config paths to try when loading, most specific first.
+
+    Windows moved the config from ``~/.config`` to ``%APPDATA%``. Reading
+    the old location as a fallback means an existing install keeps its
+    endpoint after an upgrade; the next save migrates it to the new path.
+
+    Returns:
+        list[str]: Candidate config paths, without duplicates.
+    """
+    paths = [_get_config_path()]
+    if IS_WINDOWS:
+        legacy = os.path.expanduser("~/.config/lmstudio_tray.json")
+        if legacy not in paths:
+            paths.append(legacy)
+    return paths
 
 
 def _normalize_api_port(value: object) -> Optional[int]:
@@ -794,22 +1120,29 @@ def load_config() -> None:
 
     Updates _AppState.API_HOST and API_PORT.
     """
-    config_path = _get_config_path()
-    logging.debug("Attempting to load config from %s", config_path)
-    try:
-        with open(config_path, "r", encoding="utf-8") as config_file:
-            data = json.load(config_file)
-    except FileNotFoundError:
+    candidates = _get_config_read_paths()
+    data = None
+    for config_path in candidates:
+        logging.debug("Attempting to load config from %s", config_path)
+        try:
+            with open(config_path, "r", encoding="utf-8") as config_file:
+                data = json.load(config_file)
+        except FileNotFoundError:
+            continue
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            logging.warning(
+                "Failed to load config from %s: %s",
+                config_path,
+                exc
+            )
+            return
+        else:
+            break
+
+    if data is None:
         logging.info(
             "Config file not found at %s, using defaults",
-            config_path
-        )
-        return
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        logging.warning(
-            "Failed to load config from %s: %s",
-            config_path,
-            exc
+            candidates[0]
         )
         return
 
@@ -1173,9 +1506,30 @@ def get_latest_release_version() -> tuple[Optional[str], Optional[str]]:
         return None, "Network or parse error"
 
 
+def _is_executable_file(path: str) -> bool:
+    """Return True when ``path`` is a file this platform can execute.
+
+    NTFS carries no execute permission bit, so ``os.access(path, os.X_OK)``
+    degrades to an existence check on Windows and tells us nothing. There,
+    executability is decided by the extension, which the caller has already
+    fixed by looking for ``lms.exe`` rather than ``lms``.
+
+    Args:
+        path: Candidate file path.
+
+    Returns:
+        bool: ``True`` when the file exists and can be run.
+    """
+    if not os.path.isfile(path):
+        return False
+    if IS_WINDOWS:
+        return True
+    return os.access(path, os.X_OK)
+
+
 def get_lms_cmd() -> Optional[str]:
     """Return LM Studio CLI path if executable, else resolve from PATH."""
-    if os.path.isfile(LMS_CLI) and os.access(LMS_CLI, os.X_OK):
+    if _is_executable_file(LMS_CLI):
         return LMS_CLI
     return shutil.which("lms")
 
@@ -1199,16 +1553,18 @@ def get_llmster_cmd() -> Optional[str]:
             candidate = None
         else:
             candidates = []
+            binary_names = (
+                ("llmster.exe", "llmster") if IS_WINDOWS else ("llmster",)
+            )
             try:
                 for entry in os.listdir(llmster_root):
-                    candidate_path = os.path.join(
-                        llmster_root, entry, "llmster"
-                    )
-                    if (
-                        os.path.isfile(candidate_path)
-                        and os.access(candidate_path, os.X_OK)
-                    ):
-                        candidates.append(candidate_path)
+                    for binary_name in binary_names:
+                        candidate_path = os.path.join(
+                            llmster_root, entry, binary_name
+                        )
+                        if _is_executable_file(candidate_path):
+                            candidates.append(candidate_path)
+                            break
             except (OSError, PermissionError):
                 candidate = None
             else:
@@ -1584,6 +1940,278 @@ def get_dpkg_cmd() -> Optional[str]:
     return shutil.which("dpkg")
 
 
+def get_tasklist_cmd() -> Optional[str]:
+    """Return absolute tasklist.exe path from PATH (Windows only)."""
+    return shutil.which("tasklist")
+
+
+def get_taskkill_cmd() -> Optional[str]:
+    """Return absolute taskkill.exe path from PATH (Windows only)."""
+    return shutil.which("taskkill")
+
+
+def _parse_tasklist_csv(output: str) -> list[tuple[str, int]]:
+    """Parse ``tasklist /NH /FO CSV`` output into (image name, PID) pairs.
+
+    ``tasklist`` exits 0 even when a filter matches nothing - it prints
+    ``INFO: No tasks are running which match...`` instead - so callers have
+    to judge by the parsed rows rather than the return code. CSV is parsed
+    with :mod:`csv` rather than split by hand because image names contain
+    spaces (``LM Studio.exe``) and are therefore quoted.
+
+    Args:
+        output: Raw stdout from ``tasklist``.
+
+    Returns:
+        list[tuple[str, int]]: One entry per process row. Rows without a
+        numeric PID (the INFO line, blank lines) are skipped.
+    """
+    processes: list[tuple[str, int]] = []
+    if not output:
+        return processes
+
+    for row in csv.reader(io.StringIO(output)):
+        if len(row) < 2:
+            continue
+        image_name = row[0].strip()
+        pid_text = row[1].strip()
+        if not image_name or not pid_text.isdigit():
+            continue
+        processes.append((image_name, int(pid_text)))
+
+    return processes
+
+
+# -----------------------------------------
+# === Windows autostart (Startup folder) ===
+# -----------------------------------------
+
+
+def get_powershell_cmd() -> Optional[str]:
+    """Return absolute powershell.exe path from PATH (Windows only)."""
+    return shutil.which("powershell")
+
+
+def _get_startup_dir() -> Optional[str]:
+    """Return the current user's Startup folder.
+
+    Asks the shell rather than assuming a path, because the Start-menu
+    folders can be redirected (roaming profiles, some corporate policies)
+    and a shortcut written to the wrong place would silently never run.
+    Falls back to the default location under ``%APPDATA%`` when the shell
+    call is unavailable.
+
+    Returns:
+        Optional[str]: Absolute path, or ``None`` when it cannot be
+        determined.
+    """
+    if not IS_WINDOWS:
+        return None
+
+    csidl_startup = 7
+    max_path = 260
+    try:
+        # Imported here, like the console helper above: ctypes.windll only
+        # exists on Windows, and this module must import cleanly elsewhere.
+        import ctypes  # pylint: disable=import-outside-toplevel
+
+        buf = ctypes.create_unicode_buffer(max_path)
+        # SHGetFolderPathW returns S_OK (0) on success.
+        if ctypes.windll.shell32.SHGetFolderPathW(
+            None, csidl_startup, None, 0, buf
+        ) == 0 and buf.value:
+            return buf.value
+    except (AttributeError, ImportError, OSError) as exc:
+        logging.debug("SHGetFolderPathW failed: %s", exc)
+
+    appdata = os.environ.get("APPDATA")
+    if not appdata:
+        return None
+    return os.path.join(
+        appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup"
+    )
+
+
+def get_autostart_shortcut_path() -> Optional[str]:
+    """Return the path of this app's Startup-folder shortcut.
+
+    Returns:
+        Optional[str]: Absolute path, or ``None`` off Windows or when the
+        Startup folder cannot be located.
+    """
+    startup_dir = _get_startup_dir()
+    if not startup_dir:
+        return None
+    return os.path.join(startup_dir, AUTOSTART_SHORTCUT_NAME)
+
+
+def is_autostart_enabled() -> bool:
+    """Report whether the tray is registered to start with Windows.
+
+    Returns:
+        bool: ``True`` when the Startup-folder shortcut exists.
+    """
+    shortcut = get_autostart_shortcut_path()
+    return bool(shortcut) and os.path.isfile(shortcut)
+
+
+def _get_autostart_target() -> Optional[tuple[str, list[str], str]]:
+    """Return how Windows should relaunch this tray at login.
+
+    Mirrors ``Get-TrayCommand`` in lmstudio_autostart.ps1: a frozen build
+    points at its own executable, a source checkout at an interpreter plus
+    this script. ``pythonw.exe`` is preferred over ``python.exe`` so the
+    login does not flash a console window.
+
+    The working directory follows what is being *run*, not what runs it: a
+    source launch has to start in the repository, since the log directory
+    and the default ``script_dir`` are resolved relative to the process's
+    current directory, and the interpreter's own folder is neither.
+
+    Returns:
+        Optional[tuple[str, list[str], str]]: Executable, its arguments and
+        the working directory, or ``None`` when nothing can be resolved.
+    """
+    frozen = (
+        getattr(sys, "frozen", False)
+        or getattr(sys, "_MEIPASS", None) is not None
+    )
+    if frozen:
+        executable = os.path.abspath(sys.executable)
+        if not os.path.isfile(executable):
+            return None
+        return executable, [], os.path.dirname(executable)
+
+    script = os.path.abspath(__file__)
+    if not os.path.isfile(script):
+        return None
+
+    interpreter = os.path.abspath(sys.executable)
+    pythonw = os.path.join(os.path.dirname(interpreter), "pythonw.exe")
+    if os.path.isfile(pythonw):
+        interpreter = pythonw
+    if not os.path.isfile(interpreter):
+        return None
+    return interpreter, [script], os.path.dirname(script)
+
+
+def _ps_quote(value: str) -> str:
+    """Quote a string as a PowerShell single-quoted literal.
+
+    Inside single quotes PowerShell expands nothing, so doubling the
+    embedded quote is the whole escaping rule. Paths are system-derived
+    here, but a checkout under a directory such as ``Rob's Git`` would
+    otherwise break the generated command.
+
+    Args:
+        value: Text to quote.
+
+    Returns:
+        str: The quoted literal, apostrophes included.
+    """
+    escaped = value.replace("'", "''")
+    return f"'{escaped}'"
+
+
+def enable_autostart() -> bool:
+    """Register the tray to start with Windows.
+
+    Writes the same Startup-folder shortcut that lmstudio_autostart.ps1 and
+    the installer write. Creating a ``.lnk`` needs the Windows shell's COM
+    object, so this drives it through ``powershell.exe`` rather than adding
+    a pywin32 dependency for one call.
+
+    Returns:
+        bool: ``True`` when the shortcut now exists.
+    """
+    shortcut = get_autostart_shortcut_path()
+    if not shortcut:
+        logging.error("Cannot enable autostart: Startup folder not found")
+        return False
+
+    target = _get_autostart_target()
+    if not target:
+        logging.error("Cannot enable autostart: tray executable not found")
+        return False
+    executable, arguments, working_dir = target
+
+    powershell = get_powershell_cmd()
+    if not powershell or not _is_abs_path(powershell):
+        logging.error("Cannot enable autostart: powershell.exe not found")
+        return False
+
+    startup_dir = os.path.dirname(shortcut)
+    try:
+        os.makedirs(startup_dir, exist_ok=True)
+    except OSError as exc:
+        logging.error("Cannot create the Startup folder: %s", exc)
+        return False
+
+    script = (
+        "$s = (New-Object -ComObject WScript.Shell)"
+        f".CreateShortcut({_ps_quote(shortcut)});"
+        f"$s.TargetPath = {_ps_quote(executable)};"
+        f"$s.Arguments = {_ps_quote(' '.join(arguments))};"
+        f"$s.WorkingDirectory = {_ps_quote(working_dir)};"
+        f"$s.Description = {_ps_quote(APP_NAME)};"
+        "$s.Save()"
+    )
+
+    try:
+        result = _run_safe_command([
+            powershell,
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy", "Bypass",
+            "-Command", script,
+        ])
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        logging.error("Failed to create the autostart shortcut: %s", exc)
+        return False
+
+    if result.returncode != 0:
+        logging.error(
+            "Failed to create the autostart shortcut: %s",
+            (result.stderr or "").strip() or f"exit {result.returncode}",
+        )
+        return False
+
+    if not os.path.isfile(shortcut):
+        logging.error("Autostart shortcut was not created at %s", shortcut)
+        return False
+
+    logging.info("Autostart enabled: %s", shortcut)
+    return True
+
+
+def disable_autostart() -> bool:
+    """Remove the Startup-folder shortcut.
+
+    Succeeds when the shortcut is already absent: the requested end state
+    is "not registered", which is then already true.
+
+    Returns:
+        bool: ``True`` when the tray no longer starts with Windows.
+    """
+    shortcut = get_autostart_shortcut_path()
+    if not shortcut:
+        logging.error("Cannot disable autostart: Startup folder not found")
+        return False
+
+    if not os.path.isfile(shortcut):
+        logging.debug("Autostart was not enabled; nothing to remove")
+        return True
+
+    try:
+        os.remove(shortcut)
+    except OSError as exc:
+        logging.error("Failed to remove the autostart shortcut: %s", exc)
+        return False
+
+    logging.info("Autostart disabled: %s", shortcut)
+    return True
+
+
 def get_api_loaded_models() -> list[str]:
     """Return names of models the API reports as loaded.
 
@@ -1626,6 +2254,43 @@ def check_api_models() -> bool:
     return has_loaded_model
 
 
+def _is_abs_path(path: str) -> bool:
+    """Report whether ``path`` is absolute by the target platform's rules.
+
+    On Windows ``os.path`` *is* ``ntpath``, so in production this is
+    exactly ``os.path.isabs``. It matters when the Windows code paths are
+    exercised on a POSIX host - the Linux test job runs them - where
+    ``os.path.isabs`` calls ``C:\\Windows\\System32\\tasklist.exe``
+    relative and the caller silently takes its "not found" branch.
+
+    Args:
+        path: Path to judge.
+
+    Returns:
+        bool: ``True`` when absolute for the platform in effect.
+    """
+    return ntpath.isabs(path) if IS_WINDOWS else os.path.isabs(path)
+
+
+def _no_window_kwargs() -> dict:
+    """Return the subprocess flags that suppress a console window.
+
+    A ``--windowed`` build has no console of its own, so Windows gives one
+    to every console program the tray runs - ``tasklist``, ``taskkill``,
+    ``lms``, ``powershell``. Each appears as a black window that flashes up
+    and vanishes, and the status poll alone runs one every ``INTERVAL``
+    seconds. ``CREATE_NO_WINDOW`` suppresses it while still letting the
+    pipes be read.
+
+    Returns:
+        dict: ``creationflags`` on Windows, empty elsewhere - POSIX
+        ``subprocess`` rejects the argument outright.
+    """
+    if not IS_WINDOWS:
+        return {}
+    return {"creationflags": CREATE_NO_WINDOW}
+
+
 def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
     """Run pre-validated command list.
 
@@ -1647,7 +2312,7 @@ def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
         raise ValueError("All command arguments must be strings")
 
     exe = command[0]
-    if not os.path.isabs(exe):
+    if not _is_abs_path(exe):
         raise ValueError(f"Executable must be absolute path: {exe}")
 
     return subprocess.run(
@@ -1658,11 +2323,83 @@ def _run_safe_command(command: list[str]) -> subprocess.CompletedProcess[str]:
         check=False,
         shell=False,  # nosec B603 B607
         timeout=10,
+        **_no_window_kwargs(),
     )
+
+
+def _query_tasklist(image_name: str) -> list[tuple[str, int]]:
+    """Return processes matching ``image_name`` via ``tasklist``.
+
+    Args:
+        image_name: Executable name to filter on, e.g. ``"llmster.exe"``.
+
+    Returns:
+        list[tuple[str, int]]: Matching (image name, PID) pairs; empty when
+        tasklist is unavailable or the query fails.
+    """
+    tasklist_cmd = get_tasklist_cmd()
+    if not tasklist_cmd or not _is_abs_path(tasklist_cmd):
+        return []
+
+    try:
+        result = _run_safe_command([
+            tasklist_cmd,
+            "/FI", f"IMAGENAME eq {image_name}",
+            "/NH",
+            "/FO", "CSV",
+        ])
+    except (
+        FileNotFoundError,
+        ValueError,
+        OSError,
+        subprocess.SubprocessError,
+    ) as exc:
+        logging.debug("tasklist query for %r failed: %s", image_name, exc)
+        return []
+
+    if result.returncode != 0:
+        return []
+
+    return _parse_tasklist_csv(result.stdout)
+
+
+def _run_taskkill(args: list[str]) -> bool:
+    """Run ``taskkill`` with ``args`` appended.
+
+    Args:
+        args: Arguments following the executable, e.g.
+            ``["/IM", "llmster.exe", "/T"]``.
+
+    Returns:
+        bool: ``True`` when taskkill was invoked, ``False`` when it is
+        unavailable or the call raised. A non-zero exit is reported as
+        ``True``: taskkill returns 128 when nothing matched, which is a
+        successful no-op rather than a failure.
+    """
+    taskkill_cmd = get_taskkill_cmd()
+    if not taskkill_cmd or not _is_abs_path(taskkill_cmd):
+        logging.warning("taskkill not found; cannot stop process")
+        return False
+
+    try:
+        _run_safe_command([taskkill_cmd] + args)
+    except (
+        FileNotFoundError,
+        ValueError,
+        OSError,
+        subprocess.SubprocessError,
+    ) as exc:
+        logging.debug("taskkill %s failed: %s", args, exc)
+        return False
+
+    return True
 
 
 def is_llmster_running() -> bool:
     """Return True if llmster process running (using pgrep or ps)."""
+    if IS_WINDOWS:
+        return bool(_query_tasklist(LLMSTER_IMAGE_NAME))
+
     pgrep_cmd = get_pgrep_cmd()
     if pgrep_cmd and os.path.isabs(pgrep_cmd):
         try:
@@ -1735,11 +2472,30 @@ def _is_lm_studio_appimage_label(value):
     return True
 
 
+def _get_desktop_app_pids_windows() -> list[int]:
+    """Return PIDs of every LM Studio desktop process on Windows.
+
+    Unlike the POSIX branch this cannot exclude Electron helpers:
+    ``tasklist`` reports image names only, never a command line, so the
+    ``--type=`` renderer filter has no Windows equivalent. Both callers
+    tolerate that - the status check only asks whether the list is
+    non-empty, and stopping the app kills the whole process tree anyway.
+
+    Returns:
+        list[int]: PIDs of all ``LM Studio.exe`` processes.
+    """
+    return [pid for _name, pid in _query_tasklist(LM_STUDIO_IMAGE_NAME)]
+
+
 def get_desktop_app_pids():
     """Return PIDs of LM Studio desktop app root processes.
 
-    Excludes workers/helpers.
+    Excludes workers/helpers (POSIX only - see
+    :func:`_get_desktop_app_pids_windows`).
     """
+    if IS_WINDOWS:
+        return _get_desktop_app_pids_windows()
+
     pids = []
     ps_cmd = get_ps_cmd()
     if not ps_cmd:
@@ -1830,8 +2586,61 @@ def _existing_instance_patterns() -> list[str]:
     return patterns
 
 
+def _own_process_pids() -> set[int]:
+    """Return the PIDs belonging to this instance, which must not be killed.
+
+    A PyInstaller one-file build runs as two processes under the same image
+    name: the bootloader, which unpacks the bundle into a temporary
+    directory, and the child it spawns to run this code. Protecting only
+    ``getpid()`` therefore made the child terminate its own bootloader -
+    and the bootloader is what deletes that temporary directory on exit, so
+    every launch leaked an unpacked copy of the app.
+
+    Returns:
+        set[int]: This process and, where available, its parent.
+    """
+    pids = {os.getpid()}
+    try:
+        pids.add(os.getppid())
+    except (AttributeError, OSError):
+        # getppid is documented for Windows but guard anyway: losing the
+        # parent here only costs the leak this function exists to prevent.
+        logging.debug("Could not determine the parent process id")
+    return pids
+
+
+def _kill_existing_instances_windows() -> None:
+    """Terminate other copies of the frozen tray executable on Windows.
+
+    Only a frozen build can be identified reliably. Running from source the
+    process image is ``python.exe``, which ``tasklist`` cannot distinguish
+    from any other Python program on the machine - matching on it would
+    terminate unrelated work, so that case is skipped instead.
+    """
+    if getattr(sys, "frozen", False) is not True:
+        logging.debug(
+            "Not a frozen build; skipping single-instance check "
+            "(python.exe cannot be matched safely)"
+        )
+        return
+
+    own_pids = _own_process_pids()
+    for _name, pid in _query_tasklist(TRAY_IMAGE_NAME):
+        if pid in own_pids:
+            continue
+        try:
+            os.kill(pid, signal.SIGTERM)
+            logging.info("Terminating old instance: PID %s", pid)
+        except (OSError, ProcessLookupError, PermissionError) as exc:
+            logging.warning("Error terminating PID %s: %s", pid, exc)
+
+
 def kill_existing_instances():
     """Terminate other running copies of the tray using pgrep/SIGTERM."""
+    if IS_WINDOWS:
+        _kill_existing_instances_windows()
+        return
+
     pgrep_cmd = get_pgrep_cmd()
     if not pgrep_cmd:
         logging.warning("pgrep not found; cannot detect existing instances")
@@ -5005,6 +5814,1306 @@ class MacOSTrayIcon(_RumpsBase):
             logging.error("rumps is not installed; cannot quit application")
             return
         rumps_lib.quit_application()
+
+
+class WindowsTrayIcon:
+    """Windows notification-area tray using the ``pystray`` library.
+
+    Provides the same monitoring and daemon/desktop-app control as
+    :class:`TrayIcon` and :class:`MacOSTrayIcon`. Two things differ from the
+    macOS backend and shape the code below:
+
+    * The notification area shows an icon, never text, so the status emoji
+      goes into the tooltip rather than a menu-bar title.
+    * ``pystray`` has no timer facility and no dialogs, so periodic checks
+      run on background threads and dialogs are drawn with tkinter.
+
+    Unlike AppKit there is no main-thread restriction: ``update_menu`` and
+    the tooltip may be set from any thread, so menu rebuilds happen in
+    place rather than being marshalled.
+    """
+
+    _APP_LOCATIONS = [
+        os.path.join(
+            os.environ.get(
+                "LOCALAPPDATA",
+                os.path.expanduser("~/AppData/Local"),
+            ),
+            "Programs", "LM Studio", "LM Studio.exe",
+        ),
+        os.path.join(
+            os.environ.get("PROGRAMFILES", r"C:\Program Files"),
+            "LM Studio", "LM Studio.exe",
+        ),
+    ]
+
+    def __init__(self) -> None:
+        """Initialize the tray icon and start the monitoring threads."""
+        if _pystray_lib is None:
+            raise RuntimeError(
+                "pystray is not installed; cannot create WindowsTrayIcon"
+            )
+
+        self.last_status = None
+        self.action_lock_until = 0.0
+        self.lms_ps_resume_at = 0.0
+        self.remote_loaded_models: list[str] = []
+        self._desktop_detection = {
+            "seen_call": False,
+            "last_detection": None,
+        }
+        self.last_update_version = None
+        self.update_status = "Unknown"
+        self.latest_update_version = None
+        self.last_update_error = None
+        self._update_info = {
+            "status": "Unknown",
+            "last_error": None,
+            "latest_version": None,
+            "last_version": None,
+        }
+        self._status_emoji = "⚠️"
+        self._stop_event = threading.Event()
+
+        self.icon = _pystray_lib.Icon(
+            APP_NAME,
+            icon=self._load_icon_image(),
+            title=self._tooltip_text(),
+        )
+        self.build_menu()
+
+    # ------------------------------------------------------------------
+    # Icon and tooltip
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _load_icon_image():
+        """Return the tray image, or a plain fallback when it is missing.
+
+        A tray icon with no image is invisible in the notification area, so
+        a missing asset falls back to a solid square rather than leaving
+        the user with nothing to click.
+
+        Returns:
+            The PIL image to display.
+        """
+        if _pil_image is None:
+            raise RuntimeError("Pillow is not installed; cannot build icon")
+
+        icon_path = get_asset_path("img", "lm-studio-tray-manager.png")
+        if icon_path:
+            try:
+                return _pil_image.open(icon_path)
+            except (OSError, ValueError) as exc:
+                logging.warning(
+                    "Could not load tray icon %s: %s", icon_path, exc
+                )
+        else:
+            logging.warning("Tray icon asset not found; using a fallback")
+
+        return _pil_image.new("RGBA", (64, 64), (60, 100, 200, 255))
+
+    def _tooltip_text(self) -> str:
+        """Return the hover text for the notification-area icon.
+
+        Returns:
+            str: Status emoji followed by the application name.
+        """
+        return f"{self._status_emoji} {APP_NAME}"
+
+    @property
+    def title(self) -> str:
+        """Status emoji shown in the tooltip.
+
+        Named ``title`` so the status logic reads the same across all three
+        backends, where macOS puts this text in the menu bar itself.
+
+        Returns:
+            str: The current status emoji.
+        """
+        return self._status_emoji
+
+    @title.setter
+    def title(self, value: str) -> None:
+        """Update the status emoji and push it to the tooltip.
+
+        Args:
+            value: New status emoji.
+        """
+        self._status_emoji = value
+        icon = getattr(self, "icon", None)
+        if icon is None:
+            return
+        try:
+            icon.title = self._tooltip_text()
+        except (AttributeError, OSError, RuntimeError) as exc:
+            logging.debug("Could not update the tray tooltip: %s", exc)
+
+    # ------------------------------------------------------------------
+    # Status helpers
+    # ------------------------------------------------------------------
+
+    def get_daemon_status(self) -> str:
+        """Check if the llmster headless daemon is running.
+
+        Returns:
+            str: ``"running"``, ``"stopped"``, or ``"not_found"``.
+        """
+        try:
+            if not is_daemon_available():
+                return "not_found"
+            if is_llmster_running():
+                return "running"
+            return "stopped"
+        except (
+            OSError,
+            subprocess.SubprocessError,
+            subprocess.TimeoutExpired,
+        ):
+            return "not_found"
+
+    def get_desktop_app_status(self) -> str:
+        """Check if the LM Studio desktop app is running or installed.
+
+        Returns:
+            str: ``"running"``, ``"stopped"``, or ``"not_found"``.
+        """
+        try:
+            if get_desktop_app_pids():
+                return "running"
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+        for exe_path in self._APP_LOCATIONS:
+            if os.path.isfile(exe_path):
+                self._log_desktop_detection(f"app:{exe_path}")
+                return "stopped"
+
+        self._log_desktop_detection("none")
+        return "not_found"
+
+    def _log_desktop_detection(self, detection: str) -> None:
+        """Log where the desktop app was found, but only when it changes.
+
+        The status check runs every few seconds; logging the same result
+        each time would bury everything else in the log.
+
+        Args:
+            detection: Token describing the current detection result.
+        """
+        state = self._desktop_detection
+        if state["seen_call"] and detection == state["last_detection"]:
+            return
+
+        if detection == "none":
+            logging.debug("No LM Studio desktop app found")
+        else:
+            logging.debug(
+                "Detected LM Studio at %s", detection.split(":", 1)[1]
+            )
+        state["last_detection"] = detection
+        state["seen_call"] = True
+
+    def get_status_indicator(self, status: str) -> str:
+        """Return an emoji indicator for a status string.
+
+        Args:
+            status (str): One of ``"running"``, ``"stopped"``,
+                ``"not_found"``.
+
+        Returns:
+            str: Emoji representing the status.
+        """
+        if status == "running":
+            return "🟢"
+        if status == "stopped":
+            return "🟡"
+        return "🔴"
+
+    # ------------------------------------------------------------------
+    # Notification
+    # ------------------------------------------------------------------
+
+    def _notify(self, title: str, message: str) -> None:
+        """Show a notification balloon.
+
+        Args:
+            title: Notification title.
+            message: Notification body.
+        """
+        try:
+            self.icon.notify(message, title)
+        except (AttributeError, NotImplementedError, OSError,
+                RuntimeError) as exc:
+            # A tray notification is a courtesy, never a requirement; the
+            # log entry beside each call carries the same information.
+            logging.debug("Notification failed: %s", exc)
+
+    # ------------------------------------------------------------------
+    # Menu building
+    # ------------------------------------------------------------------
+
+    def build_menu(self) -> None:
+        """Rebuild the tray menu with the current status."""
+        self._build_menu_impl()
+
+    def _build_options_menu(self, pystray_lib):
+        """Return the shared Options submenu.
+
+        Args:
+            pystray_lib: The pystray module.
+
+        Returns:
+            The populated Options menu item.
+        """
+        return pystray_lib.MenuItem(
+            "Options",
+            pystray_lib.Menu(
+                pystray_lib.MenuItem(
+                    "Configuration", self.show_config_dialog
+                ),
+                # Unlike macOS, Windows offers no built-in per-app login
+                # item, so the setting belongs here. checked is a callable
+                # so the box reflects the Startup folder itself: whether it
+                # was the installer, the PowerShell script or this menu that
+                # registered the tray, the state shown stays truthful.
+                pystray_lib.MenuItem(
+                    "Start with Windows",
+                    self.toggle_autostart,
+                    checked=lambda _item: is_autostart_enabled(),
+                ),
+                pystray_lib.MenuItem(
+                    "Check for Updates", self.manual_check_updates
+                ),
+                pystray_lib.MenuItem("About", self.show_about_dialog),
+            ),
+        )
+
+    def toggle_autostart(self, _icon=None, _item=None) -> None:
+        """Turn "start with Windows" on or off.
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        if is_autostart_enabled():
+            if disable_autostart():
+                self._notify(
+                    "Autostart", "The tray no longer starts with Windows."
+                )
+            else:
+                _show_tk_message(
+                    "Autostart",
+                    "Could not remove the autostart entry.\n"
+                    "See the log for details.",
+                )
+        elif enable_autostart():
+            self._notify("Autostart", "The tray now starts with Windows.")
+        else:
+            _show_tk_message(
+                "Autostart",
+                "Could not register the tray to start with Windows.\n"
+                "See the log for details.",
+            )
+
+        # The checkbox is only re-evaluated when pystray rebuilds the menu.
+        self.build_menu()
+
+    def _build_remote_menu_items(self, pystray_lib) -> list:
+        """Return menu entries for a remote endpoint.
+
+        Start/stop actions operate on local processes, so they are omitted
+        here rather than offered as controls that cannot work.
+
+        Args:
+            pystray_lib: The pystray module.
+
+        Returns:
+            list: Menu items describing the remote endpoint.
+        """
+        endpoint = f"{_AppState.API_HOST}:{_AppState.API_PORT}"
+        names = getattr(self, "remote_loaded_models", []) or []
+
+        if self.last_status == "OK":
+            indicator = "🟢"
+            if len(names) == 1:
+                state = f"{_shorten_model_name(names[0])} loaded"
+            elif len(names) > 1:
+                state = f"{len(names)} models loaded"
+            else:
+                state = "Model loaded"
+        elif self.last_status == "INFO":
+            indicator, state = "🟡", "No model loaded"
+        else:
+            indicator, state = "🔴", "Unreachable"
+
+        items = [
+            self._label_item(pystray_lib, f"{indicator} Remote: {endpoint}"),
+            self._label_item(pystray_lib, f"  → {state}"),
+        ]
+        if len(names) > 1:
+            items.extend(
+                self._label_item(
+                    pystray_lib, f"     • {_shorten_model_name(name)}"
+                )
+                for name in names
+            )
+        return items
+
+    @staticmethod
+    def _label_item(pystray_lib, text):
+        """Return a non-clickable informational menu entry.
+
+        Args:
+            pystray_lib: The pystray module.
+            text: Label to display.
+
+        Returns:
+            A disabled menu item.
+        """
+        return pystray_lib.MenuItem(text, None, enabled=False)
+
+    def _build_menu_impl(self) -> None:
+        """Assemble the menu and hand it to pystray."""
+        pystray_lib = _pystray_lib
+        if pystray_lib is None:
+            raise RuntimeError("pystray is not installed")
+
+        if is_remote_endpoint():
+            items = self._build_remote_menu_items(pystray_lib)
+        else:
+            items = self._build_local_menu_items(pystray_lib)
+
+        items.append(pystray_lib.Menu.SEPARATOR)
+        items.append(
+            pystray_lib.MenuItem("Show Status", self.show_status_dialog)
+        )
+        items.append(self._build_options_menu(pystray_lib))
+        items.append(pystray_lib.Menu.SEPARATOR)
+        items.append(pystray_lib.MenuItem("Quit Tray", self.quit_app))
+
+        self.icon.menu = pystray_lib.Menu(*items)
+        try:
+            self.icon.update_menu()
+        except (AttributeError, RuntimeError) as exc:
+            # Before icon.run() there is no live menu to refresh yet.
+            logging.debug("Menu update skipped: %s", exc)
+
+    def _build_local_menu_items(self, pystray_lib) -> list:
+        """Return the daemon and desktop-app entries for a local endpoint.
+
+        Args:
+            pystray_lib: The pystray module.
+
+        Returns:
+            list: Menu items reflecting the current local status.
+        """
+        daemon_status = self.get_daemon_status()
+        app_status = self.get_desktop_app_status()
+        d_ind = self.get_status_indicator(daemon_status)
+        a_ind = self.get_status_indicator(app_status)
+
+        items = []
+
+        if daemon_status == "running":
+            items.append(
+                self._label_item(pystray_lib, f"{d_ind} Daemon (Running)")
+            )
+            items.append(
+                pystray_lib.MenuItem("  → Stop Daemon", self.stop_daemon)
+            )
+        elif daemon_status == "stopped":
+            items.append(
+                pystray_lib.MenuItem(
+                    f"{d_ind} Start Daemon (Headless)", self.start_daemon
+                )
+            )
+        else:
+            items.append(
+                self._label_item(
+                    pystray_lib, f"{d_ind} Daemon (Not Installed)"
+                )
+            )
+
+        if app_status == "running":
+            items.append(
+                self._label_item(
+                    pystray_lib, f"{a_ind} Desktop App (Running)"
+                )
+            )
+            items.append(
+                pystray_lib.MenuItem(
+                    "  → Stop Desktop App", self.stop_desktop_app
+                )
+            )
+        elif app_status == "stopped":
+            items.append(
+                pystray_lib.MenuItem(
+                    f"{a_ind} Start Desktop App", self.start_desktop_app
+                )
+            )
+        else:
+            items.append(
+                self._label_item(
+                    pystray_lib, f"{a_ind} Desktop App (Not Installed)"
+                )
+            )
+
+        return items
+
+    # ------------------------------------------------------------------
+    # Monitoring threads
+    # ------------------------------------------------------------------
+
+    def _status_loop(self) -> None:
+        """Re-check status every ``INTERVAL`` seconds until quit."""
+        while not self._stop_event.wait(INTERVAL):
+            try:
+                self.check_model()
+            except Exception:  # pylint: disable=broad-except
+                # An unhandled error here would silently end the thread and
+                # freeze the tray on its last status.
+                logging.exception("Status check failed")
+
+    def _update_loop(self) -> None:
+        """Check for updates shortly after start, then daily until quit."""
+        if self._stop_event.wait(5):
+            return
+        while True:
+            try:
+                self.check_updates()
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("Update check failed")
+            if self._stop_event.wait(UPDATE_CHECK_INTERVAL):
+                return
+
+    def _start_background_threads(self) -> None:
+        """Start the monitoring threads and any auto-start actions."""
+        threading.Thread(
+            target=self._status_loop, daemon=True, name="windows-status"
+        ).start()
+        threading.Thread(
+            target=self._update_loop, daemon=True, name="windows-updates"
+        ).start()
+
+        if _AppState.AUTO_START_DAEMON:
+            threading.Thread(
+                target=self._maybe_auto_start_daemon,
+                daemon=True,
+                name="windows-auto-start",
+            ).start()
+        if _AppState.GUI_MODE:
+            threading.Thread(
+                target=self._maybe_start_gui,
+                daemon=True,
+                name="windows-auto-gui",
+            ).start()
+
+    def run(self) -> None:
+        """Show the tray icon and block until the user quits."""
+        self.icon.run(setup=lambda _icon: self._on_icon_ready())
+
+    def _on_icon_ready(self) -> None:
+        """Run once the icon is visible: first status check, then timers.
+
+        pystray calls this on its own thread after the notification-area
+        icon exists, which is the first moment a menu refresh can take
+        effect.
+        """
+        try:
+            self.icon.visible = True
+        except (AttributeError, OSError, RuntimeError) as exc:
+            logging.debug("Could not set icon visibility: %s", exc)
+
+        try:
+            self.check_model()
+        except Exception:  # pylint: disable=broad-except
+            logging.exception("Initial status check failed")
+
+        self._start_background_threads()
+
+    def _schedule_menu_refresh(self, delay_seconds: float = 2) -> None:
+        """Schedule a delayed menu rebuild.
+
+        Start and stop commands return before the process has finished
+        appearing or disappearing, so the menu is rebuilt once more a
+        moment later.
+
+        Args:
+            delay_seconds: Seconds to wait before rebuilding.
+        """
+        timer = threading.Timer(delay_seconds, self.build_menu)
+        timer.daemon = True
+        timer.start()
+
+    # ------------------------------------------------------------------
+    # Action cooldown
+    # ------------------------------------------------------------------
+
+    def begin_action_cooldown(
+        self, action_name: str, seconds: float = 2.0
+    ) -> bool:
+        """Prevent rapid double-triggering of tray actions.
+
+        Args:
+            action_name (str): Name used for logging.
+            seconds (float): Cooldown duration in seconds.
+
+        Returns:
+            bool: ``True`` when the action may proceed.
+        """
+        now = time.monotonic()
+        if now < self.action_lock_until:
+            remaining = self.action_lock_until - now
+            logging.info(
+                "Action blocked by cooldown: %s (%.1fs remaining)",
+                action_name,
+                remaining,
+            )
+            return False
+        self.action_lock_until = now + seconds
+        return True
+
+    # ------------------------------------------------------------------
+    # Status / model check
+    # ------------------------------------------------------------------
+
+    def _check_remote_status(self) -> tuple[str, str]:
+        """Determine status for a remote endpoint via the HTTP API.
+
+        Returns:
+            tuple[str, str]: ``(status, reason)`` where status is one of
+            ``"OK"``, ``"INFO"`` or ``"WARN"``.
+        """
+        reachable, names = query_api_models()
+        self.remote_loaded_models = names
+        if not reachable:
+            self.title = "⚠️"
+            return ("WARN", "remote endpoint unreachable")
+        if names:
+            self.title = "✅"
+            return ("OK", "remote API reported models loaded")
+        self.title = "ℹ️"
+        return ("INFO", "remote API reachable, no model loaded")
+
+    def _finish_status_check(
+        self, current_status: Optional[str], reason: str
+    ) -> None:
+        """Emit transition notifications and refresh the menu.
+
+        Args:
+            current_status: Newly determined status, or ``None``.
+            reason: Human-readable explanation used for logging.
+        """
+        if (
+            self.last_status != current_status
+            and self.last_status is not None
+        ):
+            logging.debug(
+                "Status change: %s -> %s (%s)",
+                self.last_status,
+                current_status,
+                reason,
+            )
+            remote = is_remote_endpoint()
+            if current_status == "OK":
+                self._notify("LM Studio", "✅ A model is loaded")
+            elif current_status == "INFO":
+                self._notify(
+                    "LM Studio",
+                    "ℹ️ Runtime active, no model loaded",
+                )
+            elif current_status == "WARN":
+                self._notify(
+                    "LM Studio",
+                    "⚠️ Remote endpoint is unreachable"
+                    if remote
+                    else "⚠️ Neither daemon nor desktop app is running",
+                )
+            elif current_status == "FAIL":
+                self._notify(
+                    "LM Studio",
+                    "❌ Daemon and desktop app are not installed",
+                )
+            logging.info(
+                "Status change: %s -> %s",
+                self.last_status,
+                current_status,
+            )
+
+        self.last_status = current_status
+        self.build_menu()
+
+    def check_model(self) -> bool:
+        """Check LM Studio status and update the tooltip indicator.
+
+        Returns:
+            bool: Always ``True`` (keeps the monitoring loop going).
+        """
+        try:
+            lms_cmd = get_lms_cmd()
+
+            if is_remote_endpoint():
+                current_status, reason = self._check_remote_status()
+                self._finish_status_check(current_status, reason)
+                return True
+
+            daemon_status = self.get_daemon_status()
+            app_status = self.get_desktop_app_status()
+
+            daemon_running = daemon_status == "running"
+            app_running = app_status == "running"
+            any_running = daemon_running or app_running
+            both_missing = (
+                daemon_status == "not_found"
+                and app_status == "not_found"
+            )
+
+            if both_missing:
+                current_status = "FAIL"
+                reason = "daemon and desktop app not installed"
+                self.title = "❌"
+            elif not any_running:
+                current_status = "WARN"
+                reason = "daemon and desktop app stopped"
+                self.title = "⚠️"
+            else:
+                current_status, reason = self._check_loaded_model(
+                    lms_cmd, daemon_running, any_running
+                )
+
+            self._finish_status_check(current_status, reason)
+
+        except subprocess.TimeoutExpired:
+            logging.debug("Timeout in status check (keeping status)")
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            self.title = "❌"
+            logging.error("Error in status check: %s", e)
+            self.build_menu()
+        return True
+
+    def _check_loaded_model(
+        self, lms_cmd: Optional[str], daemon_running: bool,
+        any_running: bool,
+    ) -> tuple[str, str]:
+        """Determine whether a model is loaded on a running runtime.
+
+        Args:
+            lms_cmd: Resolved ``lms`` path, or ``None``.
+            daemon_running: Whether the headless daemon is up.
+            any_running: Whether daemon or desktop app is up.
+
+        Returns:
+            tuple[str, str]: ``(status, reason)``.
+        """
+        now = time.monotonic()
+        can_use_lms_ps = daemon_running or now >= self.lms_ps_resume_at
+
+        if lms_cmd and can_use_lms_ps:
+            result = _run_safe_command([lms_cmd, "ps"])
+            if result.returncode == 0:
+                if _has_loaded_model(result.stdout):
+                    self.title = "✅"
+                    return ("OK", "lms ps indicates model loaded")
+                self.title = "ℹ️"
+                return ("INFO", "lms ps indicates no model")
+            if check_api_models():
+                self.title = "✅"
+                return ("OK", "API reported models loaded")
+            self.title = "ℹ️"
+            return ("INFO", "API reported no models")
+
+        if any_running and check_api_models():
+            self.title = "✅"
+            return ("OK", "API reported models loaded")
+
+        self.title = "ℹ️"
+        return ("INFO", "running, no model via API")
+
+    # ------------------------------------------------------------------
+    # Daemon control helpers
+    # ------------------------------------------------------------------
+
+    def _build_daemon_attempts(self, action: str) -> list[list[str]]:
+        """Return ordered CLI command lists for daemon start or stop.
+
+        Args:
+            action (str): ``"start"`` or ``"stop"``.
+
+        Returns:
+            list[list[str]]: Ordered list of commands to try.
+        """
+        lms_cmd = get_lms_cmd()
+        llmster_cmd = get_llmster_cmd()
+        attempts = []
+        if action == "start":
+            # lms is deliberately absent here: where LM Studio embeds the
+            # daemon, `lms daemon up` launches the desktop app rather than
+            # a headless daemon, so a menu entry promising a daemon would
+            # start a GUI instead. lms still serves status and stop.
+            if llmster_cmd:
+                attempts.extend([
+                    [llmster_cmd, "daemon", "up"],
+                    [llmster_cmd, "daemon", "start"],
+                    [llmster_cmd, "up"],
+                    [llmster_cmd, "start"],
+                ])
+        elif action == "stop":
+            if lms_cmd:
+                attempts.extend([
+                    [lms_cmd, "daemon", "down"],
+                    [lms_cmd, "daemon", "stop"],
+                    [lms_cmd, "down"],
+                    [lms_cmd, "stop"],
+                ])
+            if llmster_cmd:
+                attempts.extend([
+                    [llmster_cmd, "daemon", "down"],
+                    [llmster_cmd, "daemon", "stop"],
+                    [llmster_cmd, "down"],
+                    [llmster_cmd, "stop"],
+                ])
+        return attempts
+
+    def _force_stop_llmster(self) -> None:
+        """Force-stop llmster, escalating to a forced kill if needed.
+
+        ``taskkill /T`` ends the process tree the way ``pkill`` does on
+        POSIX; ``/F`` is the equivalent of the SIGKILL escalation.
+        """
+        if not _run_taskkill(["/IM", LLMSTER_IMAGE_NAME, "/T"]):
+            return
+
+        for _ in range(12):
+            if not is_llmster_running():
+                return
+            time.sleep(0.25)
+
+        logging.warning(
+            "llmster did not stop gracefully; forcing termination"
+        )
+        _run_taskkill(["/IM", LLMSTER_IMAGE_NAME, "/T", "/F"])
+        for _ in range(8):
+            if not is_llmster_running():
+                return
+            time.sleep(0.25)
+
+    def _stop_daemon_with_notification(
+        self,
+    ) -> tuple[bool, Optional[subprocess.CompletedProcess[str]]]:
+        """Stop the daemon and notify about the outcome.
+
+        Returns:
+            tuple[bool, object]: ``(stopped, last_result)``
+        """
+        stop_attempts = self._build_daemon_attempts("stop")
+        if not stop_attempts:
+            logging.error("llmster not found")
+            self._notify(
+                "Error", "llmster/lms not found. Nothing to stop."
+            )
+            return (False, None)
+
+        result = None
+        for attempt in stop_attempts:
+            try:
+                result = _run_safe_command(attempt)
+                if not is_llmster_running():
+                    break
+            except (OSError, subprocess.SubprocessError):
+                pass
+
+        self._force_stop_llmster()
+        stopped = not is_llmster_running()
+
+        if stopped:
+            logging.info("llmster daemon stopped")
+            self._notify(
+                "LLMster",
+                "Daemon stopped. You can now start the desktop app.",
+            )
+        else:
+            err = "llmster process is still running"
+            if result is not None:
+                detail = result.stderr.strip() or result.stdout.strip()
+                if detail:
+                    err = f"{err}: {detail}"
+            logging.error("Failed to stop daemon: %s", err)
+            self._notify("Error", "Daemon stop failed: " + str(err))
+
+        return (stopped, result)
+
+    def _stop_desktop_app_processes(self) -> bool:
+        """Stop the LM Studio desktop app, escalating to a forced kill.
+
+        Returns:
+            bool: ``True`` when the desktop app is no longer running.
+        """
+        if not _run_taskkill(["/IM", LM_STUDIO_IMAGE_NAME, "/T"]):
+            return self.get_desktop_app_status() != "running"
+
+        for _ in range(8):
+            if self.get_desktop_app_status() != "running":
+                return True
+            time.sleep(0.25)
+
+        _run_taskkill(["/IM", LM_STUDIO_IMAGE_NAME, "/T", "/F"])
+        for _ in range(8):
+            if self.get_desktop_app_status() != "running":
+                break
+            time.sleep(0.25)
+
+        return self.get_desktop_app_status() != "running"
+
+    # ------------------------------------------------------------------
+    # Daemon start / stop
+    # ------------------------------------------------------------------
+
+    def start_daemon(self, _icon=None, _item=None) -> None:
+        """Start the llmster headless daemon (menu callback).
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        if not self.begin_action_cooldown("start_daemon"):
+            return
+        threading.Thread(
+            target=self._start_daemon_body,
+            daemon=True,
+            name="windows-start-daemon",
+        ).start()
+
+    def _start_daemon_body(self) -> None:
+        """Background thread body for :meth:`start_daemon`.
+
+        Wrapped so an unexpected error still reaches the user: a bare
+        exception in a worker thread would otherwise kill it silently,
+        leaving the click with no feedback at all.
+        """
+        try:
+            self._start_daemon_body_impl()
+        except Exception:  # pylint: disable=broad-except
+            logging.exception("Daemon start failed unexpectedly")
+            self._notify("Error", "Daemon start failed. See the log.")
+
+    def _start_daemon_body_impl(self) -> None:
+        """Do the actual daemon start work."""
+        if self.get_desktop_app_status() == "running":
+            if not self._stop_desktop_app_processes():
+                self._notify(
+                    "Error",
+                    "Failed to stop desktop app. Please stop it first.",
+                )
+                return
+
+        start_attempts = self._build_daemon_attempts("start")
+        if not start_attempts:
+            self._notify(
+                "Daemon",
+                "llmster not installed. Install LM Studio from "
+                "https://lmstudio.ai/download",
+            )
+            return
+
+        for attempt in start_attempts:
+            try:
+                _run_safe_command(attempt)
+                for _ in range(10):
+                    if is_llmster_running():
+                        break
+                    time.sleep(0.5)
+                if is_llmster_running():
+                    logging.info("llmster daemon started")
+                    self._notify("LLMster", "llmster daemon is running")
+                    self.build_menu()
+                    self._schedule_menu_refresh()
+                    return
+            except (OSError, subprocess.SubprocessError) as e:
+                logging.error("Daemon start attempt failed: %s", e)
+
+        logging.error("Daemon start failed")
+        self._notify("Error", "Daemon start failed")
+        self.build_menu()
+
+    def stop_daemon(self, _icon=None, _item=None) -> None:
+        """Stop the llmster headless daemon (menu callback).
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        if not self.begin_action_cooldown("stop_daemon"):
+            return
+        threading.Thread(
+            target=self._stop_daemon_body,
+            daemon=True,
+            name="windows-stop-daemon",
+        ).start()
+
+    def _stop_daemon_body(self) -> None:
+        """Background thread body for :meth:`stop_daemon`."""
+        try:
+            self._stop_daemon_with_notification()
+            self.build_menu()
+            self._schedule_menu_refresh()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            logging.error("Error stopping daemon: %s", e)
+            self._notify("Error", str(e))
+            self.build_menu()
+        except Exception:  # pylint: disable=broad-except
+            logging.exception("Daemon stop failed unexpectedly")
+            self._notify("Error", "Daemon stop failed. See the log.")
+
+    # ------------------------------------------------------------------
+    # Desktop app start / stop
+    # ------------------------------------------------------------------
+
+    def start_desktop_app(self, _icon=None, _item=None) -> None:
+        """Start the LM Studio desktop app (menu callback).
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        if not self.begin_action_cooldown("start_desktop_app"):
+            return
+        threading.Thread(
+            target=self._start_desktop_app_body,
+            daemon=True,
+            name="windows-start-app",
+        ).start()
+
+    def _start_desktop_app_body(self) -> None:
+        """Background thread body for :meth:`start_desktop_app`.
+
+        Stops the daemon first - the two compete for the same port - then
+        launches the installed executable directly.
+        """
+        if is_llmster_running():
+            self._stop_daemon_with_notification()
+
+        for exe_path in self._APP_LOCATIONS:
+            if not os.path.isfile(exe_path):
+                continue
+            try:
+                subprocess.Popen(  # nosec B603
+                    [exe_path],
+                    close_fds=True,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=getattr(
+                        subprocess, "DETACHED_PROCESS", 0
+                    ),
+                )
+                # The desktop app boots its own runtime; querying `lms ps`
+                # during that window would wake a second service.
+                self.lms_ps_resume_at = time.monotonic() + 12.0
+                logging.info("Started LM Studio: %s", exe_path)
+                self._notify("LM Studio", "LM Studio is starting...")
+                self.build_menu()
+                self._schedule_menu_refresh()
+                return
+            except (OSError, subprocess.SubprocessError) as e:
+                logging.error("Failed to start desktop app: %s", e)
+                self._notify("Error", "Failed to start app: " + str(e))
+                return
+
+        self._notify(
+            "Error",
+            "LM Studio was not found.\n"
+            "Please install it from https://lmstudio.ai/download",
+        )
+        self.build_menu()
+
+    def stop_desktop_app(self, _icon=None, _item=None) -> None:
+        """Stop the LM Studio desktop app (menu callback).
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        if not self.begin_action_cooldown("stop_desktop_app"):
+            return
+        if not get_desktop_app_pids():
+            self.build_menu()
+            return
+
+        if self._stop_desktop_app_processes():
+            logging.info("LM Studio desktop app stopped")
+            self._notify("LM Studio", "Desktop app stopped")
+        else:
+            logging.error("Could not stop the desktop app")
+            self._notify("Error", "Could not stop the desktop app")
+        self.build_menu()
+        self._schedule_menu_refresh()
+
+    # ------------------------------------------------------------------
+    # Dialogs
+    # ------------------------------------------------------------------
+
+    def _collect_status_text(self) -> str:
+        """Return status text without starting anything.
+
+        ``lms ps`` is not a read-only command: with no service running it
+        prints "Waking up LM Studio service..." and boots LM Studio. It is
+        therefore only invoked when something is already running locally.
+
+        Returns:
+            str: Human-readable status description.
+        """
+        endpoint = f"{_AppState.API_HOST}:{_AppState.API_PORT}"
+
+        if is_remote_endpoint():
+            reachable, has_model = check_api_reachable()
+            if not reachable:
+                return f"Remote endpoint {endpoint} is not reachable."
+            if not has_model:
+                return f"Connected to {endpoint}.\nNo model is loaded."
+            names = get_api_loaded_models()
+            if not names:
+                return f"Connected to {endpoint}.\nA model is loaded."
+            listed = "\n".join(f"  • {name}" for name in names)
+            label = "Loaded model" if len(names) == 1 else "Loaded models"
+            return f"Connected to {endpoint}.\n\n{label}:\n{listed}"
+
+        daemon_running = self.get_daemon_status() == "running"
+        app_running = self.get_desktop_app_status() == "running"
+        if not (daemon_running or app_running):
+            return (
+                "Neither the daemon nor the desktop app is running.\n"
+                "Start one of them to query the model status."
+            )
+
+        lms_cmd = get_lms_cmd()
+        if not lms_cmd:
+            return "LM Studio CLI (lms) not found."
+
+        try:
+            result = _run_safe_command([lms_cmd, "ps"])
+        except (OSError, subprocess.SubprocessError) as exc:
+            return f"Error running lms ps: {exc}"
+
+        if result.returncode == 0 and result.stdout.strip():
+            return _format_lms_ps_output(result.stdout.strip())
+        return "No model loaded (lms ps returned no output)."
+
+    def show_status_dialog(self, _icon=None, _item=None) -> None:
+        """Show the current LM Studio status in a dialog.
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        _show_tk_message("Status", self._collect_status_text())
+
+    def show_config_dialog(self, _icon=None, _item=None) -> None:
+        """Prompt for the LM Studio API endpoint and persist it.
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        current = f"{_AppState.API_HOST}:{_AppState.API_PORT}"
+        response = _prompt_tk_endpoint(current)
+        if response is None:
+            return
+
+        parsed = parse_host_port(response)
+        if parsed is None:
+            logging.warning(
+                "Rejected invalid API endpoint input: %r", response
+            )
+            _show_tk_message(
+                "Configuration",
+                "Could not read that endpoint.\n"
+                "Expected host:port, for example localhost:1234.",
+            )
+            return
+
+        host, port = parsed
+        try:
+            save_config(host, port)
+        except (OSError, ValueError) as exc:
+            logging.error("Failed to save configuration: %s", exc)
+            _show_tk_message(
+                "Configuration",
+                f"Could not save the configuration:\n{exc}",
+            )
+            return
+
+        _AppState.API_HOST = host
+        _AppState.API_PORT = port
+        logging.info("Updated API endpoint to http://%s:%s", host, port)
+        self._notify(
+            "Configuration", f"API endpoint set to {host}:{port}"
+        )
+        self.build_menu()
+
+    def show_about_dialog(self, _icon=None, _item=None) -> None:
+        """Show basic application information.
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        # APP_VERSION already carries its own "v" prefix when it comes from
+        # the VERSION file, and is the bare word "dev" otherwise - so no
+        # prefix is added here.
+        _show_tk_message(
+            "About",
+            f"LM Studio Tray Manager {_AppState.APP_VERSION}\n"
+            f"Maintainer: {APP_MAINTAINER}\n"
+            f"{APP_REPOSITORY}\n"
+            f"{APP_DOCUMENTATION}\n"
+            f"\n"
+            f"This program comes WITHOUT ANY WARRANTY.",
+        )
+
+    # ------------------------------------------------------------------
+    # Update check
+    # ------------------------------------------------------------------
+
+    def check_updates(self) -> bool:
+        """Check GitHub for a newer release and notify if found.
+
+        Returns:
+            bool: ``True`` when an update notification was sent.
+        """
+        if _AppState.APP_VERSION == DEFAULT_APP_VERSION:
+            self._update_info["status"] = "Dev build"
+            self.update_status = "Dev build"
+            logging.debug("Update check skipped: dev build")
+            return False
+
+        latest, error = get_latest_release_version()
+        self._update_info["last_error"] = error
+        self.last_update_error = error
+        if not latest:
+            self._update_info["status"] = "Unknown"
+            self.update_status = "Unknown"
+            logging.debug("Update check failed: %s", error)
+            return False
+
+        self._update_info["latest_version"] = latest
+        self.latest_update_version = latest
+        self._update_info["last_error"] = None
+        self.last_update_error = None
+
+        newer = is_newer_version(_AppState.APP_VERSION, latest)
+        current_parts = parse_version(_AppState.APP_VERSION)
+        latest_parts = parse_version(latest)
+        is_ahead = (
+            current_parts > latest_parts
+            if current_parts and latest_parts
+            else False
+        )
+
+        if newer:
+            self._update_info["status"] = "Update available"
+            self.update_status = "Update available"
+        elif is_ahead:
+            self._update_info["status"] = "Ahead of release"
+            self.update_status = "Ahead of release"
+        else:
+            self._update_info["status"] = "Up to date"
+            self.update_status = "Up to date"
+
+        logging.debug(
+            "Update check: %s (latest %s)",
+            self._update_info["status"],
+            latest,
+        )
+
+        if not newer:
+            return False
+        if self._update_info["last_version"] == latest:
+            return False
+
+        self._update_info["last_version"] = latest
+        self.last_update_version = latest
+        url = get_release_url(latest)
+        self._notify(
+            "Update Available",
+            f"New version available: {latest} "
+            f"(current {_AppState.APP_VERSION})\n{url}",
+        )
+        return True
+
+    def manual_check_updates(self, _icon=None, _item=None) -> None:
+        """Run an on-demand update check and show the result.
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        notified = self.check_updates()
+        if notified:
+            return
+
+        status = self.update_status or "Unknown"
+        latest = self.latest_update_version
+        error = self.last_update_error
+        if status == "Update available" and latest:
+            url = get_release_url(latest)
+            msg = (
+                f"New version available: {latest} "
+                f"(current {_AppState.APP_VERSION})\n{url}"
+            )
+        elif status == "Up to date":
+            msg = f"You are up to date ({_AppState.APP_VERSION})"
+        elif status == "Dev build":
+            msg = "Dev build: update checks disabled"
+        elif status == "Ahead of release":
+            msg = (
+                f"Ahead of release "
+                f"(current {_AppState.APP_VERSION}, latest {latest})"
+            )
+        else:
+            detail = f" ({error})" if error else ""
+            msg = "Unable to check for updates." + detail
+
+        _show_tk_message("Update Check", msg)
+
+    # ------------------------------------------------------------------
+    # Auto-start helpers
+    # ------------------------------------------------------------------
+
+    def _maybe_auto_start_daemon(self) -> None:
+        """Start the daemon at launch when --auto-start-daemon is set."""
+        logging.info(
+            "Auto-starting daemon (--auto-start-daemon) with fresh passkey"
+        )
+        try:
+            self._stop_daemon_with_notification()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
+            logging.error("Error stopping llmster: %s", e)
+        self.action_lock_until = 0.0
+        self.start_daemon()
+
+    def _maybe_start_gui(self) -> None:
+        """Start the desktop app at launch when --gui is set."""
+        logging.info("Auto-starting GUI (--gui)")
+        self.start_desktop_app()
+
+    # ------------------------------------------------------------------
+    # Quit
+    # ------------------------------------------------------------------
+
+    def quit_app(self, _icon=None, _item=None) -> None:
+        """Quit the tray application (menu callback).
+
+        Args:
+            _icon: pystray icon (unused).
+            _item: pystray menu item (unused).
+        """
+        logging.info("Tray icon terminated")
+        self._stop_event.set()
+        try:
+            self.icon.stop()
+        except (AttributeError, RuntimeError) as exc:
+            logging.debug("Could not stop the tray icon: %s", exc)
 
 
 if __name__ == "__main__":

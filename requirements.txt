@@ -28,9 +28,9 @@ pyinstaller-hooks-contrib==2026.6
 # Required by PyInstaller (>=42.0.0)
 setuptools==83.0.0
 
-# packaging 26.2 (source: packaging-26.2-py3-none-any.whl)
+# packaging 26.3 (source: packaging-26.3-py3-none-any.whl)
 # Required by PyInstaller (>=22.0)
-packaging==26.2
+packaging==26.3
 
 # certifi 2026.7.22 (source: certifi-2026.7.22-py3-none-any.whl)
 # Runtime dependency, bundled into the binary. A frozen app ships libssl but
