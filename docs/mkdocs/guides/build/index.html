@@ -908,6 +908,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#why-inno-setup-and-not-an-msi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Inno Setup and not an MSI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#code-signing-windows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1789,6 +1800,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#why-inno-setup-and-not-an-msi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Inno Setup and not an MSI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#code-signing-windows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2119,6 +2141,7 @@
 <li><a href="#requirements-windows-build">Requirements (Windows build)</a></li>
 <li><a href="#release-artifacts-windows">Release artifacts (Windows)</a></li>
 <li><a href="#console-output-from-a-windowed-build">Console output from a windowed build</a></li>
+<li><a href="#why-inno-setup-and-not-an-msi">Why Inno Setup and not an MSI</a></li>
 <li><a href="#code-signing-windows">Code signing (Windows)</a></li>
 <li><a href="#github-actions-windows-release">GitHub Actions Windows release</a></li>
 </ul>
@@ -2497,14 +2520,16 @@ integrity‑checked installs.</p>
 <li>Windows 10 or 11, x64</li>
 <li>Python 3.10+ from <a href="https://www.python.org/downloads/">python.org</a> (the
   Microsoft Store build works too, but the alias caveat above applies)</li>
-<li>Inno Setup 6, only for the installer:</li>
+<li>Inno Setup, only for the installer:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">winget</span> <span class="n">install</span> <span class="n">JRSoftware</span><span class="p">.</span><span class="n">InnoSetup</span>
 </code></pre></div>
-<p>The build script finds <code>ISCC.exe</code> under <code>%LOCALAPPDATA%\Programs\Inno Setup 6</code>
-as well as both <code>Program Files</code> locations — winget installs per-user unless it
-is run elevated. Without Inno Setup the build still succeeds and simply skips
-the installer.</p>
+<p>Version 6 and 7 install side by side and <code>windows-installer.iss</code> compiles
+under either. The build script searches <code>%LOCALAPPDATA%\Programs</code> and both
+<code>Program Files</code> locations for a directory matching <code>Inno Setup *</code> — winget
+installs per-user unless run elevated — and takes the highest major version it
+finds. Without Inno Setup the build still succeeds and simply skips the
+installer.</p>
 <h3 id="release-artifacts-windows">Release artifacts (Windows)<a class="headerlink" href="#release-artifacts-windows" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2538,13 +2563,43 @@ the installer.</p>
 terminal's console when there is one, so <code>--version</code> and <code>--help</code> print
 normally from PowerShell, and falls back to the null device otherwise —
 argparse writes to <code>stderr</code> unconditionally and would otherwise raise.</p>
-<p>One consequence when scripting against it: PowerShell does not wait for a
-GUI-subsystem process, so <code>$LASTEXITCODE</code> is never set. Use <code>Start-Process</code>
-to get a real exit code:</p>
+<p>One consequence when scripting against it: because the process is
+GUI-subsystem, PowerShell is not guaranteed to wait for it. Measured on
+Windows 11 it does, and <code>$LASTEXITCODE</code> is correct — the console reattach
+above is why — but that holds only where the caller has a console to attach
+to. <code>Start-Process -Wait -PassThru</code> is reliable regardless, and is what both
+the build script and CI use:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nv">$p</span> <span class="p">=</span> <span class="nb">Start-Process</span> <span class="p">.\</span><span class="n">dist</span><span class="p">\</span><span class="n">lmstudio-tray-manager</span><span class="p">.</span><span class="n">exe</span> <span class="n">-ArgumentList</span> <span class="s1">&#39;--version&#39;</span> <span class="p">`</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="n">-Wait</span> <span class="n">-PassThru</span> <span class="n">-NoNewWindow</span>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="nv">$p</span><span class="p">.</span><span class="n">ExitCode</span>
 </code></pre></div>
+<h3 id="why-inno-setup-and-not-an-msi">Why Inno Setup and not an MSI<a class="headerlink" href="#why-inno-setup-and-not-an-msi" title="Permanent link">&para;</a></h3>
+<p>The tray is deliberately a per-user application: its config lives in
+<code>%APPDATA%</code>, its logs in <code>%LOCALAPPDATA%</code>, and autostart is a shortcut in the
+user's Startup folder. Nothing it does needs administrator rights, which is
+why the installer sets <code>PrivilegesRequired=lowest</code>.</p>
+<p>That is exactly where MSI is weakest. Windows Installer is built around
+per-machine installation; its per-user mode (<code>ALLUSERS=2</code> together with
+<code>MSIINSTALLPERUSER</code>) is awkward enough that you end up working against the
+format rather than with it. The cost is real too — WiX instead of a single
+<code>.iss</code> file, meaning XML with Components, Features and a GUID per file, plus a
+.NET toolchain in CI, all for six files landing in one directory and two
+shortcuts.</p>
+<p>What MSI would genuinely buy is enterprise deployment: Group Policy, Intune,
+SCCM, <code>msiexec /i /qn</code> as the standard silent invocation, and transactional
+rollback. None of that is lost on a tray icon accompanying a locally installed
+desktop app, and the parts users actually notice — the entry under Apps &amp;
+Features, the uninstaller, and clean upgrades over a fixed <code>AppId</code> — Inno Setup
+already provides.</p>
+<p>One point argues against MSI here specifically: these artifacts are not signed.
+An unsigned <code>.exe</code> trips SmartScreen, which users get past via <em>More info →
+Run anyway</em>. A per-machine MSI instead raises a UAC prompt reading <em>Unknown
+publisher</em> — the same missing signature, at a point where people are rightly
+more suspicious.</p>
+<p>Worth revisiting if someone asks for Group Policy or Intune rollout, or for a
+per-machine install shared by several users of one PC. The answer then is not
+MSI <em>instead of</em> Inno Setup but <em>in addition</em>: Inno Setup cannot emit an MSI,
+so it would be a separate WiX build alongside the existing one.</p>
 <h3 id="code-signing-windows">Code signing (Windows)<a class="headerlink" href="#code-signing-windows" title="Permanent link">&para;</a></h3>
 <p>The Windows artifacts are <strong>not signed</strong> — the project has no Authenticode
 certificate, so SmartScreen warns on first run. This is the one place the
@@ -2552,9 +2607,12 @@ Windows release is weaker than the macOS one, which is signed and notarized.
 Users verify against <code>SHA256SUMS-windows.txt</code> instead.</p>
 <h3 id="github-actions-windows-release">GitHub Actions Windows release<a class="headerlink" href="#github-actions-windows-release" title="Permanent link">&para;</a></h3>
 <p>The <code>build-windows</code> job in <code>.github/workflows/release.yml</code> runs on
-<code>windows-latest</code>, installs Inno Setup via winget, runs
+<code>windows-latest</code>, installs Inno Setup via Chocolatey, runs
 <code>tools/build_windows.ps1 -Clean</code>, insists that all three artifacts exist, and
 uploads them to the release on a tag push.</p>
+<p>Chocolatey rather than winget: winget is not part of the <code>windows-latest</code>
+runner image at all, while Chocolatey is preinstalled. The advice above to use
+winget is aimed at a real desktop, where it is the better option.</p>
 <h2 id="optimization">Optimization<a class="headerlink" href="#optimization" title="Permanent link">&para;</a></h2>
 <h3 id="size-reduction">Size Reduction<a class="headerlink" href="#size-reduction" title="Permanent link">&para;</a></h3>
 <ol>

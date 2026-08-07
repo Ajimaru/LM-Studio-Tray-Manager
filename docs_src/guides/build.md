@@ -36,6 +36,7 @@ This document describes how to build standalone releases of LM Studio Tray Manag
     - [Requirements (Windows build)](#requirements-windows-build)
     - [Release artifacts (Windows)](#release-artifacts-windows)
     - [Console output from a windowed build](#console-output-from-a-windowed-build)
+    - [Why Inno Setup and not an MSI](#why-inno-setup-and-not-an-msi)
     - [Code signing (Windows)](#code-signing-windows)
     - [GitHub Actions Windows release](#github-actions-windows-release)
   - [Optimization](#optimization)
@@ -499,16 +500,18 @@ See [macOS Code Signing Guide](https://developer.apple.com/documentation/securit
 - Windows 10 or 11, x64
 - Python 3.10+ from [python.org](https://www.python.org/downloads/) (the
   Microsoft Store build works too, but the alias caveat above applies)
-- Inno Setup 6, only for the installer:
+- Inno Setup, only for the installer:
 
 ```powershell
 winget install JRSoftware.InnoSetup
 ```
 
-The build script finds `ISCC.exe` under `%LOCALAPPDATA%\Programs\Inno Setup 6`
-as well as both `Program Files` locations — winget installs per-user unless it
-is run elevated. Without Inno Setup the build still succeeds and simply skips
-the installer.
+Version 6 and 7 install side by side and `windows-installer.iss` compiles
+under either. The build script searches `%LOCALAPPDATA%\Programs` and both
+`Program Files` locations for a directory matching `Inno Setup *` — winget
+installs per-user unless run elevated — and takes the highest major version it
+finds. Without Inno Setup the build still succeeds and simply skips the
+installer.
 
 ### Release artifacts (Windows)
 
@@ -527,15 +530,51 @@ terminal's console when there is one, so `--version` and `--help` print
 normally from PowerShell, and falls back to the null device otherwise —
 argparse writes to `stderr` unconditionally and would otherwise raise.
 
-One consequence when scripting against it: PowerShell does not wait for a
-GUI-subsystem process, so `$LASTEXITCODE` is never set. Use `Start-Process`
-to get a real exit code:
+One consequence when scripting against it: because the process is
+GUI-subsystem, PowerShell is not guaranteed to wait for it. Measured on
+Windows 11 it does, and `$LASTEXITCODE` is correct — the console reattach
+above is why — but that holds only where the caller has a console to attach
+to. `Start-Process -Wait -PassThru` is reliable regardless, and is what both
+the build script and CI use:
 
 ```powershell
 $p = Start-Process .\dist\lmstudio-tray-manager.exe -ArgumentList '--version' `
     -Wait -PassThru -NoNewWindow
 $p.ExitCode
 ```
+
+### Why Inno Setup and not an MSI
+
+The tray is deliberately a per-user application: its config lives in
+`%APPDATA%`, its logs in `%LOCALAPPDATA%`, and autostart is a shortcut in the
+user's Startup folder. Nothing it does needs administrator rights, which is
+why the installer sets `PrivilegesRequired=lowest`.
+
+That is exactly where MSI is weakest. Windows Installer is built around
+per-machine installation; its per-user mode (`ALLUSERS=2` together with
+`MSIINSTALLPERUSER`) is awkward enough that you end up working against the
+format rather than with it. The cost is real too — WiX instead of a single
+`.iss` file, meaning XML with Components, Features and a GUID per file, plus a
+.NET toolchain in CI, all for six files landing in one directory and two
+shortcuts.
+
+What MSI would genuinely buy is enterprise deployment: Group Policy, Intune,
+SCCM, `msiexec /i /qn` as the standard silent invocation, and transactional
+rollback. None of that is lost on a tray icon accompanying a locally installed
+desktop app, and the parts users actually notice — the entry under Apps &
+Features, the uninstaller, and clean upgrades over a fixed `AppId` — Inno Setup
+already provides.
+
+One point argues against MSI here specifically: these artifacts are not signed.
+An unsigned `.exe` trips SmartScreen, which users get past via *More info →
+Run anyway*. A per-machine MSI instead raises a UAC prompt reading *Unknown
+publisher* — the same missing signature, at a point where people are rightly
+more suspicious.
+
+Worth revisiting if someone asks for Group Policy or Intune rollout, or for a
+per-machine install shared by several users of one PC. The answer then is not
+MSI *instead of* Inno Setup but *in addition*: Inno Setup cannot emit an MSI,
+so it would be a separate WiX build alongside the existing one.
 
 ### Code signing (Windows)
 
@@ -547,9 +586,13 @@ Users verify against `SHA256SUMS-windows.txt` instead.
 ### GitHub Actions Windows release
 
 The `build-windows` job in `.github/workflows/release.yml` runs on
-`windows-latest`, installs Inno Setup via winget, runs
+`windows-latest`, installs Inno Setup via Chocolatey, runs
 `tools/build_windows.ps1 -Clean`, insists that all three artifacts exist, and
 uploads them to the release on a tag push.
+
+Chocolatey rather than winget: winget is not part of the `windows-latest`
+runner image at all, while Chocolatey is preinstalled. The advice above to use
+winget is aimed at a real desktop, where it is the better option.
 
 ## Optimization
 
