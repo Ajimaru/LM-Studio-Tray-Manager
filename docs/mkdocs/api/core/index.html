@@ -1753,27 +1753,27 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>lmstudio_tray.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-968">968</a></span>
-<span class="normal"><a href="#__codelineno-0-969">969</a></span>
-<span class="normal"><a href="#__codelineno-0-970">970</a></span>
-<span class="normal"><a href="#__codelineno-0-971">971</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-971">971</a></span>
 <span class="normal"><a href="#__codelineno-0-972">972</a></span>
 <span class="normal"><a href="#__codelineno-0-973">973</a></span>
 <span class="normal"><a href="#__codelineno-0-974">974</a></span>
 <span class="normal"><a href="#__codelineno-0-975">975</a></span>
 <span class="normal"><a href="#__codelineno-0-976">976</a></span>
 <span class="normal"><a href="#__codelineno-0-977">977</a></span>
-<span class="normal"><a href="#__codelineno-0-978">978</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-968" name="__codelineno-0-968"></a><span class="k">class</span><span class="w"> </span><span class="nc">HomeMaskFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
-<a id="__codelineno-0-969" name="__codelineno-0-969"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Formatter replacing user&#39;s home directory with ~ in log messages.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-970" name="__codelineno-0-970"></a>
-<a id="__codelineno-0-971" name="__codelineno-0-971"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span>
-<a id="__codelineno-0-972" name="__codelineno-0-972"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span>
-<a id="__codelineno-0-973" name="__codelineno-0-973"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pragma: no cover - simple</span>
-<a id="__codelineno-0-974" name="__codelineno-0-974"></a>        <span class="n">s</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
-<a id="__codelineno-0-975" name="__codelineno-0-975"></a>        <span class="n">home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-976" name="__codelineno-0-976"></a>        <span class="k">if</span> <span class="n">home</span> <span class="ow">and</span> <span class="n">home</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
-<a id="__codelineno-0-977" name="__codelineno-0-977"></a>            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">home</span><span class="p">,</span> <span class="s2">&quot;~&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-978" name="__codelineno-0-978"></a>        <span class="k">return</span> <span class="n">s</span>
+<span class="normal"><a href="#__codelineno-0-978">978</a></span>
+<span class="normal"><a href="#__codelineno-0-979">979</a></span>
+<span class="normal"><a href="#__codelineno-0-980">980</a></span>
+<span class="normal"><a href="#__codelineno-0-981">981</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-971" name="__codelineno-0-971"></a><span class="k">class</span><span class="w"> </span><span class="nc">HomeMaskFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+<a id="__codelineno-0-972" name="__codelineno-0-972"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Formatter replacing user&#39;s home directory with ~ in log messages.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-973" name="__codelineno-0-973"></a>
+<a id="__codelineno-0-974" name="__codelineno-0-974"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span>
+<a id="__codelineno-0-975" name="__codelineno-0-975"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span>
+<a id="__codelineno-0-976" name="__codelineno-0-976"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pragma: no cover - simple</span>
+<a id="__codelineno-0-977" name="__codelineno-0-977"></a>        <span class="n">s</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+<a id="__codelineno-0-978" name="__codelineno-0-978"></a>        <span class="n">home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-979" name="__codelineno-0-979"></a>        <span class="k">if</span> <span class="n">home</span> <span class="ow">and</span> <span class="n">home</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+<a id="__codelineno-0-980" name="__codelineno-0-980"></a>            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">home</span><span class="p">,</span> <span class="s2">&quot;~&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-981" name="__codelineno-0-981"></a>        <span class="k">return</span> <span class="n">s</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2112,10 +2112,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-981"> 981</a></span>
-<span class="normal"><a href="#__codelineno-0-982"> 982</a></span>
-<span class="normal"><a href="#__codelineno-0-983"> 983</a></span>
-<span class="normal"><a href="#__codelineno-0-984"> 984</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-984"> 984</a></span>
 <span class="normal"><a href="#__codelineno-0-985"> 985</a></span>
 <span class="normal"><a href="#__codelineno-0-986"> 986</a></span>
 <span class="normal"><a href="#__codelineno-0-987"> 987</a></span>
@@ -2139,34 +2136,37 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-1005">1005</a></span>
 <span class="normal"><a href="#__codelineno-0-1006">1006</a></span>
 <span class="normal"><a href="#__codelineno-0-1007">1007</a></span>
-<span class="normal"><a href="#__codelineno-0-1008">1008</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-981" name="__codelineno-0-981"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_asset_path</span><span class="p">(</span><span class="o">*</span><span class="n">path_components</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-0-982" name="__codelineno-0-982"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Locate asset file in PyInstaller bundle, script_dir, or cwd.</span>
-<a id="__codelineno-0-983" name="__codelineno-0-983"></a>
-<a id="__codelineno-0-984" name="__codelineno-0-984"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-985" name="__codelineno-0-985"></a><span class="sd">        *path_components: Path components relative to assets/.</span>
+<span class="normal"><a href="#__codelineno-0-1008">1008</a></span>
+<span class="normal"><a href="#__codelineno-0-1009">1009</a></span>
+<span class="normal"><a href="#__codelineno-0-1010">1010</a></span>
+<span class="normal"><a href="#__codelineno-0-1011">1011</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-984" name="__codelineno-0-984"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_asset_path</span><span class="p">(</span><span class="o">*</span><span class="n">path_components</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<a id="__codelineno-0-985" name="__codelineno-0-985"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Locate asset file in PyInstaller bundle, script_dir, or cwd.</span>
 <a id="__codelineno-0-986" name="__codelineno-0-986"></a>
-<a id="__codelineno-0-987" name="__codelineno-0-987"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-988" name="__codelineno-0-988"></a><span class="sd">        str | None: Full path if found, else None.</span>
-<a id="__codelineno-0-989" name="__codelineno-0-989"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-990" name="__codelineno-0-990"></a>    <span class="n">meipass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;_MEIPASS&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-<a id="__codelineno-0-991" name="__codelineno-0-991"></a>    <span class="k">if</span> <span class="n">meipass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-992" name="__codelineno-0-992"></a>        <span class="n">meipass_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-<a id="__codelineno-0-993" name="__codelineno-0-993"></a>            <span class="n">meipass</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span>
-<a id="__codelineno-0-994" name="__codelineno-0-994"></a>        <span class="p">)</span>
-<a id="__codelineno-0-995" name="__codelineno-0-995"></a>        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">meipass_asset</span><span class="p">):</span>
-<a id="__codelineno-0-996" name="__codelineno-0-996"></a>            <span class="k">return</span> <span class="n">meipass_asset</span>
-<a id="__codelineno-0-997" name="__codelineno-0-997"></a>
-<a id="__codelineno-0-998" name="__codelineno-0-998"></a>    <span class="n">script_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-<a id="__codelineno-0-999" name="__codelineno-0-999"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span>
-<a id="__codelineno-0-1000" name="__codelineno-0-1000"></a>    <span class="p">)</span>
-<a id="__codelineno-0-1001" name="__codelineno-0-1001"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">script_asset</span><span class="p">):</span>
-<a id="__codelineno-0-1002" name="__codelineno-0-1002"></a>        <span class="k">return</span> <span class="n">script_asset</span>
-<a id="__codelineno-0-1003" name="__codelineno-0-1003"></a>
-<a id="__codelineno-0-1004" name="__codelineno-0-1004"></a>    <span class="n">cwd_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span><span class="p">)</span>
-<a id="__codelineno-0-1005" name="__codelineno-0-1005"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">cwd_asset</span><span class="p">):</span>
-<a id="__codelineno-0-1006" name="__codelineno-0-1006"></a>        <span class="k">return</span> <span class="n">cwd_asset</span>
-<a id="__codelineno-0-1007" name="__codelineno-0-1007"></a>
-<a id="__codelineno-0-1008" name="__codelineno-0-1008"></a>    <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-987" name="__codelineno-0-987"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-988" name="__codelineno-0-988"></a><span class="sd">        *path_components: Path components relative to assets/.</span>
+<a id="__codelineno-0-989" name="__codelineno-0-989"></a>
+<a id="__codelineno-0-990" name="__codelineno-0-990"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-991" name="__codelineno-0-991"></a><span class="sd">        str | None: Full path if found, else None.</span>
+<a id="__codelineno-0-992" name="__codelineno-0-992"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-993" name="__codelineno-0-993"></a>    <span class="n">meipass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;_MEIPASS&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-0-994" name="__codelineno-0-994"></a>    <span class="k">if</span> <span class="n">meipass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-995" name="__codelineno-0-995"></a>        <span class="n">meipass_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+<a id="__codelineno-0-996" name="__codelineno-0-996"></a>            <span class="n">meipass</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span>
+<a id="__codelineno-0-997" name="__codelineno-0-997"></a>        <span class="p">)</span>
+<a id="__codelineno-0-998" name="__codelineno-0-998"></a>        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">meipass_asset</span><span class="p">):</span>
+<a id="__codelineno-0-999" name="__codelineno-0-999"></a>            <span class="k">return</span> <span class="n">meipass_asset</span>
+<a id="__codelineno-0-1000" name="__codelineno-0-1000"></a>
+<a id="__codelineno-0-1001" name="__codelineno-0-1001"></a>    <span class="n">script_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+<a id="__codelineno-0-1002" name="__codelineno-0-1002"></a>        <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span>
+<a id="__codelineno-0-1003" name="__codelineno-0-1003"></a>    <span class="p">)</span>
+<a id="__codelineno-0-1004" name="__codelineno-0-1004"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">script_asset</span><span class="p">):</span>
+<a id="__codelineno-0-1005" name="__codelineno-0-1005"></a>        <span class="k">return</span> <span class="n">script_asset</span>
+<a id="__codelineno-0-1006" name="__codelineno-0-1006"></a>
+<a id="__codelineno-0-1007" name="__codelineno-0-1007"></a>    <span class="n">cwd_asset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">&quot;assets&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">path_components</span><span class="p">)</span>
+<a id="__codelineno-0-1008" name="__codelineno-0-1008"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">cwd_asset</span><span class="p">):</span>
+<a id="__codelineno-0-1009" name="__codelineno-0-1009"></a>        <span class="k">return</span> <span class="n">cwd_asset</span>
+<a id="__codelineno-0-1010" name="__codelineno-0-1010"></a>
+<a id="__codelineno-0-1011" name="__codelineno-0-1011"></a>    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2474,10 +2474,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1218">1218</a></span>
-<span class="normal"><a href="#__codelineno-0-1219">1219</a></span>
-<span class="normal"><a href="#__codelineno-0-1220">1220</a></span>
-<span class="normal"><a href="#__codelineno-0-1221">1221</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1221">1221</a></span>
 <span class="normal"><a href="#__codelineno-0-1222">1222</a></span>
 <span class="normal"><a href="#__codelineno-0-1223">1223</a></span>
 <span class="normal"><a href="#__codelineno-0-1224">1224</a></span>
@@ -2508,41 +2505,44 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-1249">1249</a></span>
 <span class="normal"><a href="#__codelineno-0-1250">1250</a></span>
 <span class="normal"><a href="#__codelineno-0-1251">1251</a></span>
-<span class="normal"><a href="#__codelineno-0-1252">1252</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1218" name="__codelineno-0-1218"></a><span class="k">def</span><span class="w"> </span><span class="nf">_validate_url_scheme</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-1219" name="__codelineno-0-1219"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate URL uses http/https and return formatted base URL.</span>
-<a id="__codelineno-0-1220" name="__codelineno-0-1220"></a>
-<a id="__codelineno-0-1221" name="__codelineno-0-1221"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-1222" name="__codelineno-0-1222"></a><span class="sd">        url: URL to validate.</span>
+<span class="normal"><a href="#__codelineno-0-1252">1252</a></span>
+<span class="normal"><a href="#__codelineno-0-1253">1253</a></span>
+<span class="normal"><a href="#__codelineno-0-1254">1254</a></span>
+<span class="normal"><a href="#__codelineno-0-1255">1255</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1221" name="__codelineno-0-1221"></a><span class="k">def</span><span class="w"> </span><span class="nf">_validate_url_scheme</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-1222" name="__codelineno-0-1222"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate URL uses http/https and return formatted base URL.</span>
 <a id="__codelineno-0-1223" name="__codelineno-0-1223"></a>
-<a id="__codelineno-0-1224" name="__codelineno-0-1224"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-1225" name="__codelineno-0-1225"></a><span class="sd">        ValueError: If scheme not http/https or invalid host/port.</span>
+<a id="__codelineno-0-1224" name="__codelineno-0-1224"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-1225" name="__codelineno-0-1225"></a><span class="sd">        url: URL to validate.</span>
 <a id="__codelineno-0-1226" name="__codelineno-0-1226"></a>
-<a id="__codelineno-0-1227" name="__codelineno-0-1227"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-1228" name="__codelineno-0-1228"></a><span class="sd">        str: Formatted URL.</span>
-<a id="__codelineno-0-1229" name="__codelineno-0-1229"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1230" name="__codelineno-0-1230"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-<a id="__codelineno-0-1231" name="__codelineno-0-1231"></a>    <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">):</span>
-<a id="__codelineno-0-1232" name="__codelineno-0-1232"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-1233" name="__codelineno-0-1233"></a>            <span class="sa">f</span><span class="s2">&quot;URL scheme &#39;</span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="si">}</span><span class="s2">&#39; not permitted; &quot;</span>
-<a id="__codelineno-0-1234" name="__codelineno-0-1234"></a>            <span class="sa">f</span><span class="s2">&quot;only &#39;http&#39; and &#39;https&#39; are allowed&quot;</span>
-<a id="__codelineno-0-1235" name="__codelineno-0-1235"></a>        <span class="p">)</span>
-<a id="__codelineno-0-1236" name="__codelineno-0-1236"></a>
-<a id="__codelineno-0-1237" name="__codelineno-0-1237"></a>    <span class="n">host</span> <span class="o">=</span> <span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-1238" name="__codelineno-0-1238"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">host</span><span class="p">):</span>
-<a id="__codelineno-0-1239" name="__codelineno-0-1239"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1240" name="__codelineno-0-1240"></a>
-<a id="__codelineno-0-1241" name="__codelineno-0-1241"></a>    <span class="k">if</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;#&quot;</span> <span class="ow">in</span> <span class="n">host</span><span class="p">:</span>
+<a id="__codelineno-0-1227" name="__codelineno-0-1227"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-1228" name="__codelineno-0-1228"></a><span class="sd">        ValueError: If scheme not http/https or invalid host/port.</span>
+<a id="__codelineno-0-1229" name="__codelineno-0-1229"></a>
+<a id="__codelineno-0-1230" name="__codelineno-0-1230"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-1231" name="__codelineno-0-1231"></a><span class="sd">        str: Formatted URL.</span>
+<a id="__codelineno-0-1232" name="__codelineno-0-1232"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1233" name="__codelineno-0-1233"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+<a id="__codelineno-0-1234" name="__codelineno-0-1234"></a>    <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">):</span>
+<a id="__codelineno-0-1235" name="__codelineno-0-1235"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-1236" name="__codelineno-0-1236"></a>            <span class="sa">f</span><span class="s2">&quot;URL scheme &#39;</span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="si">}</span><span class="s2">&#39; not permitted; &quot;</span>
+<a id="__codelineno-0-1237" name="__codelineno-0-1237"></a>            <span class="sa">f</span><span class="s2">&quot;only &#39;http&#39; and &#39;https&#39; are allowed&quot;</span>
+<a id="__codelineno-0-1238" name="__codelineno-0-1238"></a>        <span class="p">)</span>
+<a id="__codelineno-0-1239" name="__codelineno-0-1239"></a>
+<a id="__codelineno-0-1240" name="__codelineno-0-1240"></a>    <span class="n">host</span> <span class="o">=</span> <span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_HOST</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-1241" name="__codelineno-0-1241"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">host</span><span class="p">):</span>
 <a id="__codelineno-0-1242" name="__codelineno-0-1242"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-1243" name="__codelineno-0-1243"></a>
-<a id="__codelineno-0-1244" name="__codelineno-0-1244"></a>    <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">host</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">):</span>
-<a id="__codelineno-0-1245" name="__codelineno-0-1245"></a>        <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-1246" name="__codelineno-0-1246"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1247" name="__codelineno-0-1247"></a>        <span class="n">host</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">]&quot;</span>
-<a id="__codelineno-0-1248" name="__codelineno-0-1248"></a>
-<a id="__codelineno-0-1249" name="__codelineno-0-1249"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="p">)</span>
-<a id="__codelineno-0-1250" name="__codelineno-0-1250"></a>    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-1251" name="__codelineno-0-1251"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API port&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1252" name="__codelineno-0-1252"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-1244" name="__codelineno-0-1244"></a>    <span class="k">if</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;#&quot;</span> <span class="ow">in</span> <span class="n">host</span><span class="p">:</span>
+<a id="__codelineno-0-1245" name="__codelineno-0-1245"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1246" name="__codelineno-0-1246"></a>
+<a id="__codelineno-0-1247" name="__codelineno-0-1247"></a>    <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">host</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">host</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">):</span>
+<a id="__codelineno-0-1248" name="__codelineno-0-1248"></a>        <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-1249" name="__codelineno-0-1249"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API host&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1250" name="__codelineno-0-1250"></a>        <span class="n">host</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">]&quot;</span>
+<a id="__codelineno-0-1251" name="__codelineno-0-1251"></a>
+<a id="__codelineno-0-1252" name="__codelineno-0-1252"></a>    <span class="n">port</span> <span class="o">=</span> <span class="n">_normalize_api_port</span><span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">API_PORT</span><span class="p">)</span>
+<a id="__codelineno-0-1253" name="__codelineno-0-1253"></a>    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-1254" name="__codelineno-0-1254"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid API port&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1255" name="__codelineno-0-1255"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2623,10 +2623,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1419">1419</a></span>
-<span class="normal"><a href="#__codelineno-0-1420">1420</a></span>
-<span class="normal"><a href="#__codelineno-0-1421">1421</a></span>
-<span class="normal"><a href="#__codelineno-0-1422">1422</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1422">1422</a></span>
 <span class="normal"><a href="#__codelineno-0-1423">1423</a></span>
 <span class="normal"><a href="#__codelineno-0-1424">1424</a></span>
 <span class="normal"><a href="#__codelineno-0-1425">1425</a></span>
@@ -2637,21 +2634,24 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-1430">1430</a></span>
 <span class="normal"><a href="#__codelineno-0-1431">1431</a></span>
 <span class="normal"><a href="#__codelineno-0-1432">1432</a></span>
-<span class="normal"><a href="#__codelineno-0-1433">1433</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1419" name="__codelineno-0-1419"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_allowed_update_url</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-1420" name="__codelineno-0-1420"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if URL is HTTPS GitHub API repos endpoint.</span>
-<a id="__codelineno-0-1421" name="__codelineno-0-1421"></a>
-<a id="__codelineno-0-1422" name="__codelineno-0-1422"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-1423" name="__codelineno-0-1423"></a><span class="sd">        url: URL to validate.</span>
+<span class="normal"><a href="#__codelineno-0-1433">1433</a></span>
+<span class="normal"><a href="#__codelineno-0-1434">1434</a></span>
+<span class="normal"><a href="#__codelineno-0-1435">1435</a></span>
+<span class="normal"><a href="#__codelineno-0-1436">1436</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1422" name="__codelineno-0-1422"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_allowed_update_url</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-1423" name="__codelineno-0-1423"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if URL is HTTPS GitHub API repos endpoint.</span>
 <a id="__codelineno-0-1424" name="__codelineno-0-1424"></a>
-<a id="__codelineno-0-1425" name="__codelineno-0-1425"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-1426" name="__codelineno-0-1426"></a><span class="sd">        bool: True if safe update URL.</span>
-<a id="__codelineno-0-1427" name="__codelineno-0-1427"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1428" name="__codelineno-0-1428"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-<a id="__codelineno-0-1429" name="__codelineno-0-1429"></a>    <span class="k">return</span> <span class="p">(</span>
-<a id="__codelineno-0-1430" name="__codelineno-0-1430"></a>        <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">&quot;https&quot;</span>
-<a id="__codelineno-0-1431" name="__codelineno-0-1431"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span> <span class="o">==</span> <span class="s2">&quot;api.github.com&quot;</span>
-<a id="__codelineno-0-1432" name="__codelineno-0-1432"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/repos/&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1433" name="__codelineno-0-1433"></a>    <span class="p">)</span>
+<a id="__codelineno-0-1425" name="__codelineno-0-1425"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-1426" name="__codelineno-0-1426"></a><span class="sd">        url: URL to validate.</span>
+<a id="__codelineno-0-1427" name="__codelineno-0-1427"></a>
+<a id="__codelineno-0-1428" name="__codelineno-0-1428"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-1429" name="__codelineno-0-1429"></a><span class="sd">        bool: True if safe update URL.</span>
+<a id="__codelineno-0-1430" name="__codelineno-0-1430"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1431" name="__codelineno-0-1431"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+<a id="__codelineno-0-1432" name="__codelineno-0-1432"></a>    <span class="k">return</span> <span class="p">(</span>
+<a id="__codelineno-0-1433" name="__codelineno-0-1433"></a>        <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">&quot;https&quot;</span>
+<a id="__codelineno-0-1434" name="__codelineno-0-1434"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span> <span class="o">==</span> <span class="s2">&quot;api.github.com&quot;</span>
+<a id="__codelineno-0-1435" name="__codelineno-0-1435"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/repos/&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1436" name="__codelineno-0-1436"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
