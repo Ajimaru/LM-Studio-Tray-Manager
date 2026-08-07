@@ -67,7 +67,7 @@ These packages are used to create the standalone binary via PyInstaller.
   - Website: <https://github.com/pypa/setuptools>
   - License: MIT License
 
-- **packaging 26.2**
+- **packaging 26.3**
   - Website: <https://github.com/pypa/packaging>
   - License: Apache-2.0 OR BSD-2-Clause
 

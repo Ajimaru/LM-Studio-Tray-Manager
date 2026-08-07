@@ -156,9 +156,11 @@ jobs:
           if (-not (Test-Path dist/lmstudio-tray-manager.exe)) { exit 1 }
         shell: pwsh
 
-      # A --windowed build detaches from the console, so PowerShell does not
-      # wait for it and $LASTEXITCODE is never set. Start-Process -Wait is
-      # the only way to get a real exit code back.
+      # Start-Process -Wait rather than calling the exe directly. Measured on
+      # Windows 11, the direct form does report the right code here, because
+      # the app reattaches the caller's console - but a GUI-subsystem process
+      # launched from a session without a console has nothing to attach to,
+      # and the wait is then not guaranteed. -Wait -PassThru always is.
       - name: Smoke-run built executable
         shell: pwsh
         run: |

@@ -246,18 +246,25 @@ function New-AppIcon {
 
     New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
 
-    $generator = @"
+    # A literal here-string, with the paths handed over as arguments. They
+    # used to be interpolated into Python string literals, which a checkout
+    # under a path like "C:\User's Git" turned into a SyntaxError.
+    $generator = @'
+"""Generate a multi-resolution .ico from a PNG. Written by build_windows.ps1."""
+
+import sys
+
 from PIL import Image
 
-source = Image.open(r'$IconSource').convert('RGBA')
+source = Image.open(sys.argv[1]).convert('RGBA')
 sizes = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
-source.save(r'$IconPath', format='ICO', sizes=sizes)
-"@
+source.save(sys.argv[2], format='ICO', sizes=sizes)
+'@
 
     $generatorPath = Join-Path $BuildDir 'make_icon.py'
     Set-Content -Path $generatorPath -Value $generator -Encoding utf8
 
-    & $VenvPython $generatorPath
+    & $VenvPython $generatorPath $IconSource $IconPath
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -PathType Leaf $IconPath)) {
         Write-Warn 'Icon generation failed - building without a custom icon'
         return
@@ -300,12 +307,19 @@ function Test-BuiltExe {
         A windowed build has no console, so --version writes nowhere unless
         it can reattach the caller's console. The exit code is the reliable
         signal and is what is asserted here.
+
+        Start-Process -Wait rather than calling the exe directly: the direct
+        form does return the right code when this script runs in a console,
+        but a GUI-subsystem process started from a session without one has
+        nothing to attach to, and the wait is then not guaranteed. This also
+        matches how the CI workflow smoke-tests the same binary.
     #>
     Write-Step 'Smoke-testing the executable'
 
-    & $BuiltExe --version | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        throw "The built executable exited with $LASTEXITCODE for --version"
+    $process = Start-Process -FilePath $BuiltExe -ArgumentList '--version' `
+        -Wait -PassThru -NoNewWindow
+    if ($process.ExitCode -ne 0) {
+        throw "The built executable exited with $($process.ExitCode) for --version"
     }
 
     Write-Ok 'Executable starts and exits cleanly'
