@@ -14,7 +14,7 @@
 # in-place, which is what crashed the app and wedged the WindowServer.
 
 # PyInstaller 6.21.0 (source: pyinstaller-6.21.0.tar.gz)
-pyinstaller==6.21.0
+pyinstaller==6.22.2
 
 # altgraph 0.17.5 (source: altgraph-0.17.5-py2.py3-none-any.whl)
 # Transitive dependency used by PyInstaller
@@ -22,7 +22,7 @@ altgraph==0.17.5
 
 # pyinstaller-hooks-contrib 2026.6 (source: pyinstaller_hooks_contrib-2026.6-py3-none-any.whl)
 # Transitive dependency for PyInstaller hooks
-pyinstaller-hooks-contrib==2026.6
+pyinstaller-hooks-contrib==2026.7
 
 # setuptools 83.0.0 (source: setuptools-83.0.0-py3-none-any.whl)
 # Required by PyInstaller (>=42.0.0)
