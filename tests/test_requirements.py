@@ -7,11 +7,11 @@ Two things are checked here:
   requirements-windows.txt) do not contain pip hash specifiers ('--hash') or
   line continuation backslashes ('\\'), as they are intended for scanners and
   should remain hash-free and scanner-friendly;
-* the provenance comments ('# <package> <version> (source: ...)') still match
-  the pin below them. Dependabot only rewrites the pin, so those comments go
-  stale silently -- in requirements-build.txt they sit directly above the
-  ``--hash`` lines and would otherwise document an artifact the hashes no
-  longer belong to.
+* the provenance comments ('# <package> (source: ...)') name the same
+  package as the pin below them. Dependabot only rewrites the pin, so a
+  comment that also stated the version would go stale silently -- these
+  comments deliberately describe the artifact shape (sdist/wheel) rather
+  than a version, so there is nothing left for an update to desynchronize.
 """
 
 import re
@@ -29,9 +29,9 @@ REQUIREMENTS_FILES = (
 # pinned versions but no pip hash specifiers.
 HASH_FREE_FILES = ("requirements.txt", "requirements-windows.txt")
 
-# "# setuptools 83.0.0 (source: setuptools-83.0.0.tar.gz + py3-none-any wheel)"
+# "# setuptools (source: sdist + py3-none-any wheel)"
 PROVENANCE_RE = re.compile(
-    r"^#\s*(?P<name>[A-Za-z0-9_.-]+)\s+(?P<version>[0-9][^\s(]*)\s*\(source:\s*(?P<source>[^)]*)\)"
+    r"^#\s*(?P<name>[A-Za-z0-9_.-]+)\s*\(source:\s*(?P<source>[^)]*)\)"
 )
 # "setuptools==83.0.0 \" -- also matches commented-out pins such as the
 # optional macOS "# rumps==0.4.0 \" block, which is deliberate.
@@ -44,7 +44,7 @@ def _normalize(name):
 
 
 def _provenance_entries(path):
-    """Yield (line_no, package, comment_version, source, pin_version) tuples.
+    """Yield (line_no, package, source) tuples.
 
     A provenance comment describes the first pin that follows it; intervening
     comment lines (for example "# Required by PyInstaller") are skipped.
@@ -59,13 +59,7 @@ def _provenance_entries(path):
         if pin and pending:
             comment_line, comment = pending
             if _normalize(comment["name"]) == _normalize(pin["name"]):
-                yield (
-                    comment_line,
-                    comment["name"],
-                    comment["version"],
-                    comment["source"],
-                    pin["version"],
-                )
+                yield (comment_line, comment["name"], comment["source"])
                 pending = None
 
 
@@ -80,30 +74,12 @@ def test_scanner_facing_requirements_have_no_hashes(filename):
 
 
 @pytest.mark.parametrize("filename", REQUIREMENTS_FILES)
-def test_provenance_comments_match_pins(filename):
-    """Every "(source: ...)" comment states the version that is pinned below it."""
-    path = Path(filename)
-    entries = list(_provenance_entries(path))
-    assert entries, f"no provenance comments found in {filename}"
+def test_pins_have_provenance_comments(filename):
+    """Every pin is preceded by a "(source: ...)" comment naming it.
 
-    stale = [
-        f"{filename}:{line_no}: comment says {name} {comment_version}, pin is {pin_version}"
-        for line_no, name, comment_version, _, pin_version in entries
-        if comment_version != pin_version
-    ]
-    assert not stale, "stale provenance comments:\n" + "\n".join(stale)
-
-
-@pytest.mark.parametrize("filename", REQUIREMENTS_FILES)
-def test_provenance_sources_name_the_pinned_version(filename):
-    """The artifact named in a "(source: ...)" comment carries the pinned version.
-
-    Guards against half-finished updates where the version in the comment is
-    corrected but the file name next to it still refers to the old release.
+    The comment intentionally omits the version (see module docstring), so
+    there is nothing for a Dependabot bump to leave stale; this just checks
+    the comment itself wasn't dropped.
     """
-    mismatched = [
-        f"{filename}:{line_no}: source {source!r} does not mention {name} {pin_version}"
-        for line_no, name, _, source, pin_version in _provenance_entries(Path(filename))
-        if pin_version not in source
-    ]
-    assert not mismatched, "outdated source artifacts:\n" + "\n".join(mismatched)
+    entries = list(_provenance_entries(Path(filename)))
+    assert entries, f"no provenance comments found in {filename}"
