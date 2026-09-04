@@ -30,4 +30,9 @@ updates:
           - "*"
         update-types:
           - minor
-          - patch
+    # Patch bumps are ignored to keep PR volume low; security fixes still
+    # arrive through Dependabot security alerts, which ignore this filter.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-patch
