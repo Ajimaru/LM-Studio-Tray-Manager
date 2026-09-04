@@ -58,7 +58,7 @@ pyinstaller-hooks-contrib==2026.6 \
     --hash=sha256:bef5002c32f4f50bd55b005da12cff64eca8783e7eaf86a06a62410164bab725 \
     --hash=sha256:fd13b8ac126b35361175edacd41a0d97080b75dd5f4b594ecefefff969509dd3
 
-# setuptools 83.0.0 (source: setuptools-83.0.0.tar.gz + py3-none-any wheel)
+# setuptools 84.0.0 (source: setuptools-84.0.0.tar.gz + py3-none-any wheel)
 # Required by PyInstaller (>=42.0.0)
 setuptools==84.0.0 \
     --hash=sha256:51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670 \
