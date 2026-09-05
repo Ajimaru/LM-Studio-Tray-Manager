@@ -243,11 +243,17 @@ Expand-Archive lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip -DestinationPath .
   writable
 
 **Start with Windows:** tick **Options → Start with Windows** in the tray
-menu. The installer offers the same box, and it can be set from PowerShell:
+menu. The installer offers the same box, and the ZIP and installer builds
+also ship a script that does it from PowerShell:
 
 ```powershell
 .\lmstudio_autostart.ps1 -InstallAutostart    # undo with -UninstallAutostart
 ```
+
+On the Store build this is unreliable: the shortcut points into
+`WindowsApps`, whose path carries the version number, so it stops working
+after an update. Re-tick the box to repair it, or install from the release
+page if you rely on autostart. Tracked as a known limitation.
 
 All three write the same Startup‑folder shortcut, so the tray's checkbox
 shows the true state whichever route you took.
