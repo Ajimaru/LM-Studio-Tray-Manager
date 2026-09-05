@@ -430,12 +430,15 @@ function New-Installer {
 
     New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
 
+    # Piped to Write-Host rather than left on the pipeline: this function
+    # returns the installer path, and ISCC's console output would otherwise
+    # be part of that return value.
     & $iscc.Source `
         "/DAppVersion=$Version" `
         "/DProjectRoot=$ProjectRoot" `
         "/DArchitecture=$Architecture" `
         "/O$ReleaseDir" `
-        $InstallerScript
+        $InstallerScript | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup build failed' }
 
     $installerPath = Join-Path $ReleaseDir "lmstudio-tray-manager-$Version-windows-$Architecture-setup.exe"

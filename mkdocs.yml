@@ -88,3 +88,4 @@ nav:
       - Configuration: api/config.md
       - System Tray: api/tray.md
       - Updates: api/updates.md
+  - Privacy Policy: privacy.md

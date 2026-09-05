@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSIX manifest for a Desktop Bridge package wrapping the existing
+  PyInstaller Win32 exe - not a UWP rewrite.
+
+  The Identity values below are assigned by Partner Center and must match
+  the reserved app exactly, or the package is rejected on upload. They are
+  fixed for the lifetime of the app: changing them makes it a different
+  product, so installed copies would stop receiving updates.
+
+  Built by tools\build_msix.ps1, which fills in Version from the VERSION
+  file and generates the required Assets\*.png sizes from
+  assets\img\lm-studio-tray-manager.png.
+-->
+<Package
+    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+    IgnorableNamespaces="uap rescap">
+
+  <Identity
+      Name="AjimaruGDR.LMStudioTrayManager"
+      Publisher="CN=F6AF88DA-1808-483A-A674-7254155172E7"
+      Version="0.0.0.0" />
+
+  <Properties>
+    <DisplayName>LM Studio Tray Manager</DisplayName>
+    <PublisherDisplayName>Ajimaru Resry</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="LMStudioTrayManager" Executable="lmstudio-tray-manager.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+          DisplayName="LM Studio Tray Manager"
+          Description="Shows LM Studio daemon and desktop app status in the notification area."
+          BackgroundColor="transparent"
+          Square150x150Logo="Assets\Square150x150Logo.png"
+          Square44x44Logo="Assets\Square44x44Logo.png">
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

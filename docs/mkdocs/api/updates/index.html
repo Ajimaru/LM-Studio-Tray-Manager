@@ -18,6 +18,8 @@
         <link rel="prev" href="../tray/">
       
       
+        <link rel="next" href="../../privacy/">
+      
       
         
       
@@ -279,6 +281,25 @@
         </a>
       </li>
     
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../privacy/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Privacy Policy
+
+      </a>
+    </li>
   
 
       
@@ -962,6 +983,33 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1338,7 +1386,7 @@ disables update checks.</p>
 <span class="normal"><a href="#__codelineno-0-523">523</a></span>
 <span class="normal"><a href="#__codelineno-0-524">524</a></span>
 <span class="normal"><a href="#__codelineno-0-525">525</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-505" name="__codelineno-0-505"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_app_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-506" name="__codelineno-0-506"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-0-507" name="__codelineno-0-507"></a><span class="sd">    Load app version from the bundled VERSION file.</span>
 <a id="__codelineno-0-508" name="__codelineno-0-508"></a>
 <a id="__codelineno-0-509" name="__codelineno-0-509"></a><span class="sd">    In a PyInstaller bundle the executable sits in ``Contents/MacOS`` while</span>
@@ -1350,8 +1398,8 @@ disables update checks.</p>
 <a id="__codelineno-0-515" name="__codelineno-0-515"></a>
 <a id="__codelineno-0-516" name="__codelineno-0-516"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-0-517" name="__codelineno-0-517"></a><span class="sd">        str: Version string.</span>
-<a id="__codelineno-0-518" name="__codelineno-0-518"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-519" name="__codelineno-0-519"></a>    <span class="n">meipass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;_MEIPASS&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-0-518" name="__codelineno-0-518"></a><span class="sd">    """</span>
+<a id="__codelineno-0-519" name="__codelineno-0-519"></a>    <span class="n">meipass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">"_MEIPASS"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 <a id="__codelineno-0-520" name="__codelineno-0-520"></a>    <span class="k">if</span> <span class="n">meipass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-521" name="__codelineno-0-521"></a>        <span class="n">version</span> <span class="o">=</span> <span class="n">load_version_from_dir</span><span class="p">(</span><span class="n">meipass</span><span class="p">)</span>
 <a id="__codelineno-0-522" name="__codelineno-0-522"></a>        <span class="k">if</span> <span class="n">version</span> <span class="o">!=</span> <span class="n">DEFAULT_APP_VERSION</span><span class="p">:</span>
@@ -1401,15 +1449,15 @@ disables update checks.</p>
 <span class="normal"><a href="#__codelineno-0-1408">1408</a></span>
 <span class="normal"><a href="#__codelineno-0-1409">1409</a></span>
 <span class="normal"><a href="#__codelineno-0-1410">1410</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1392" name="__codelineno-0-1392"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse_version</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<a id="__codelineno-0-1393" name="__codelineno-0-1393"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse version string to tuple of integers for comparison.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-1393" name="__codelineno-0-1393"></a><span class="w">    </span><span class="sd">"""Parse version string to tuple of integers for comparison."""</span>
 <a id="__codelineno-0-1394" name="__codelineno-0-1394"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">version</span><span class="p">:</span>
 <a id="__codelineno-0-1395" name="__codelineno-0-1395"></a>        <span class="k">return</span> <span class="p">()</span>
 <a id="__codelineno-0-1396" name="__codelineno-0-1396"></a>    <span class="n">cleaned</span> <span class="o">=</span> <span class="n">version</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-1397" name="__codelineno-0-1397"></a>    <span class="k">if</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">):</span>
+<a id="__codelineno-0-1397" name="__codelineno-0-1397"></a>    <span class="k">if</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"v"</span><span class="p">):</span>
 <a id="__codelineno-0-1398" name="__codelineno-0-1398"></a>        <span class="n">cleaned</span> <span class="o">=</span> <span class="n">cleaned</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 <a id="__codelineno-0-1399" name="__codelineno-0-1399"></a>    <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-1400" name="__codelineno-0-1400"></a>    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
-<a id="__codelineno-0-1401" name="__codelineno-0-1401"></a>        <span class="n">digits</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<a id="__codelineno-0-1400" name="__codelineno-0-1400"></a>    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">):</span>
+<a id="__codelineno-0-1401" name="__codelineno-0-1401"></a>        <span class="n">digits</span> <span class="o">=</span> <span class="s2">""</span>
 <a id="__codelineno-0-1402" name="__codelineno-0-1402"></a>        <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">part</span><span class="p">:</span>
 <a id="__codelineno-0-1403" name="__codelineno-0-1403"></a>            <span class="k">if</span> <span class="n">char</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
 <a id="__codelineno-0-1404" name="__codelineno-0-1404"></a>                <span class="n">digits</span> <span class="o">+=</span> <span class="n">char</span>
@@ -1450,7 +1498,7 @@ disables update checks.</p>
 <span class="normal"><a href="#__codelineno-0-1417">1417</a></span>
 <span class="normal"><a href="#__codelineno-0-1418">1418</a></span>
 <span class="normal"><a href="#__codelineno-0-1419">1419</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1413" name="__codelineno-0-1413"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_newer_version</span><span class="p">(</span><span class="n">current</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">latest</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-1414" name="__codelineno-0-1414"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if latest version &gt; current version.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-1414" name="__codelineno-0-1414"></a><span class="w">    </span><span class="sd">"""Return True if latest version &gt; current version."""</span>
 <a id="__codelineno-0-1415" name="__codelineno-0-1415"></a>    <span class="n">current_parts</span> <span class="o">=</span> <span class="n">parse_version</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
 <a id="__codelineno-0-1416" name="__codelineno-0-1416"></a>    <span class="n">latest_parts</span> <span class="o">=</span> <span class="n">parse_version</span><span class="p">(</span><span class="n">latest</span><span class="p">)</span>
 <a id="__codelineno-0-1417" name="__codelineno-0-1417"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">current_parts</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">latest_parts</span><span class="p">:</span>
@@ -1573,17 +1621,17 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-1504">1504</a></span>
 <span class="normal"><a href="#__codelineno-0-1505">1505</a></span>
 <span class="normal"><a href="#__codelineno-0-1506">1506</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1464" name="__codelineno-0-1464"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_latest_release_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<a id="__codelineno-0-1465" name="__codelineno-0-1465"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch latest GitHub release tag, return (tag, error_msg) tuple.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-1465" name="__codelineno-0-1465"></a><span class="w">    </span><span class="sd">"""Fetch latest GitHub release tag, return (tag, error_msg) tuple."""</span>
 <a id="__codelineno-0-1466" name="__codelineno-0-1466"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_allowed_update_url</span><span class="p">(</span><span class="n">LATEST_RELEASE_API_URL</span><span class="p">):</span>
-<a id="__codelineno-0-1467" name="__codelineno-0-1467"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update check: invalid update URL&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1468" name="__codelineno-0-1468"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Invalid update URL&quot;</span>
+<a id="__codelineno-0-1467" name="__codelineno-0-1467"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Update check: invalid update URL"</span><span class="p">)</span>
+<a id="__codelineno-0-1468" name="__codelineno-0-1468"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"Invalid update URL"</span>
 <a id="__codelineno-0-1469" name="__codelineno-0-1469"></a>
 <a id="__codelineno-0-1470" name="__codelineno-0-1470"></a>    <span class="n">request</span> <span class="o">=</span> <span class="n">urllib_request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span>
 <a id="__codelineno-0-1471" name="__codelineno-0-1471"></a>        <span class="n">LATEST_RELEASE_API_URL</span><span class="p">,</span>
-<a id="__codelineno-0-1472" name="__codelineno-0-1472"></a>        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="s2">&quot;LM-Studio-Tray-Manager&quot;</span><span class="p">},</span>
+<a id="__codelineno-0-1472" name="__codelineno-0-1472"></a>        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="s2">"LM-Studio-Tray-Manager"</span><span class="p">},</span>
 <a id="__codelineno-0-1473" name="__codelineno-0-1473"></a>    <span class="p">)</span>
 <a id="__codelineno-0-1474" name="__codelineno-0-1474"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-<a id="__codelineno-0-1475" name="__codelineno-0-1475"></a>        <span class="s2">&quot;Update check: requesting </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-1475" name="__codelineno-0-1475"></a>        <span class="s2">"Update check: requesting </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
 <a id="__codelineno-0-1476" name="__codelineno-0-1476"></a>        <span class="n">LATEST_RELEASE_API_URL</span><span class="p">,</span>
 <a id="__codelineno-0-1477" name="__codelineno-0-1477"></a>    <span class="p">)</span>
 <a id="__codelineno-0-1478" name="__codelineno-0-1478"></a>    <span class="k">try</span><span class="p">:</span>
@@ -1593,28 +1641,28 @@ Usage:
 <a id="__codelineno-0-1482" name="__codelineno-0-1482"></a>        <span class="n">opener</span> <span class="o">=</span> <span class="n">urllib_request</span><span class="o">.</span><span class="n">build_opener</span><span class="p">(</span><span class="n">https_handler</span><span class="p">)</span>
 <a id="__codelineno-0-1483" name="__codelineno-0-1483"></a>
 <a id="__codelineno-0-1484" name="__codelineno-0-1484"></a>        <span class="k">with</span> <span class="n">opener</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
-<a id="__codelineno-0-1485" name="__codelineno-0-1485"></a>            <span class="n">payload</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1485" name="__codelineno-0-1485"></a>            <span class="n">payload</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
 <a id="__codelineno-0-1486" name="__codelineno-0-1486"></a>            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-<a id="__codelineno-0-1487" name="__codelineno-0-1487"></a>            <span class="n">tag</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tag_name&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1488" name="__codelineno-0-1488"></a>            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update check: latest tag </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-<a id="__codelineno-0-1489" name="__codelineno-0-1489"></a>            <span class="k">return</span> <span class="p">(</span><span class="n">tag</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">tag</span> <span class="k">else</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;No tag found&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1487" name="__codelineno-0-1487"></a>            <span class="n">tag</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tag_name"</span><span class="p">)</span>
+<a id="__codelineno-0-1488" name="__codelineno-0-1488"></a>            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Update check: latest tag </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+<a id="__codelineno-0-1489" name="__codelineno-0-1489"></a>            <span class="k">return</span> <span class="p">(</span><span class="n">tag</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">tag</span> <span class="k">else</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">"No tag found"</span><span class="p">)</span>
 <a id="__codelineno-0-1490" name="__codelineno-0-1490"></a>    <span class="k">except</span> <span class="n">urllib_error</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-<a id="__codelineno-0-1491" name="__codelineno-0-1491"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update check: HTTP error </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="p">)</span>
-<a id="__codelineno-0-1492" name="__codelineno-0-1492"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;HTTP </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-1491" name="__codelineno-0-1491"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Update check: HTTP error </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="p">)</span>
+<a id="__codelineno-0-1492" name="__codelineno-0-1492"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"HTTP </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">"</span>
 <a id="__codelineno-0-1493" name="__codelineno-0-1493"></a>    <span class="k">except</span> <span class="p">(</span><span class="n">ssl</span><span class="o">.</span><span class="n">SSLCertVerificationError</span><span class="p">,</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
 <a id="__codelineno-0-1494" name="__codelineno-0-1494"></a>        <span class="c1"># Reported separately: a missing trust store is a packaging bug, and</span>
 <a id="__codelineno-0-1495" name="__codelineno-0-1495"></a>        <span class="c1"># folding it into the generic branch below hides that entirely.</span>
-<a id="__codelineno-0-1496" name="__codelineno-0-1496"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update check: TLS error </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-<a id="__codelineno-0-1497" name="__codelineno-0-1497"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;TLS certificate error&quot;</span>
+<a id="__codelineno-0-1496" name="__codelineno-0-1496"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Update check: TLS error </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+<a id="__codelineno-0-1497" name="__codelineno-0-1497"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"TLS certificate error"</span>
 <a id="__codelineno-0-1498" name="__codelineno-0-1498"></a>    <span class="k">except</span> <span class="p">(</span><span class="n">urllib_error</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
 <a id="__codelineno-0-1499" name="__codelineno-0-1499"></a>        <span class="c1"># URLError wraps the original failure, so a TLS problem reaches this</span>
 <a id="__codelineno-0-1500" name="__codelineno-0-1500"></a>        <span class="c1"># branch too unless it is unwrapped here.</span>
-<a id="__codelineno-0-1501" name="__codelineno-0-1501"></a>        <span class="n">reason</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s2">&quot;reason&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-0-1501" name="__codelineno-0-1501"></a>        <span class="n">reason</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 <a id="__codelineno-0-1502" name="__codelineno-0-1502"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reason</span><span class="p">,</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">):</span>
-<a id="__codelineno-0-1503" name="__codelineno-0-1503"></a>            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update check: TLS error </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
-<a id="__codelineno-0-1504" name="__codelineno-0-1504"></a>            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;TLS certificate error&quot;</span>
-<a id="__codelineno-0-1505" name="__codelineno-0-1505"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update check: network or parse error: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-<a id="__codelineno-0-1506" name="__codelineno-0-1506"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Network or parse error&quot;</span>
+<a id="__codelineno-0-1503" name="__codelineno-0-1503"></a>            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Update check: TLS error </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
+<a id="__codelineno-0-1504" name="__codelineno-0-1504"></a>            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"TLS certificate error"</span>
+<a id="__codelineno-0-1505" name="__codelineno-0-1505"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Update check: network or parse error: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+<a id="__codelineno-0-1506" name="__codelineno-0-1506"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"Network or parse error"</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1710,19 +1758,19 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-1434">1434</a></span>
 <span class="normal"><a href="#__codelineno-0-1435">1435</a></span>
 <span class="normal"><a href="#__codelineno-0-1436">1436</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1422" name="__codelineno-0-1422"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_allowed_update_url</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-1423" name="__codelineno-0-1423"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if URL is HTTPS GitHub API repos endpoint.</span>
+<a id="__codelineno-0-1423" name="__codelineno-0-1423"></a><span class="w">    </span><span class="sd">"""Return True if URL is HTTPS GitHub API repos endpoint.</span>
 <a id="__codelineno-0-1424" name="__codelineno-0-1424"></a>
 <a id="__codelineno-0-1425" name="__codelineno-0-1425"></a><span class="sd">    Args:</span>
 <a id="__codelineno-0-1426" name="__codelineno-0-1426"></a><span class="sd">        url: URL to validate.</span>
 <a id="__codelineno-0-1427" name="__codelineno-0-1427"></a>
 <a id="__codelineno-0-1428" name="__codelineno-0-1428"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-0-1429" name="__codelineno-0-1429"></a><span class="sd">        bool: True if safe update URL.</span>
-<a id="__codelineno-0-1430" name="__codelineno-0-1430"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1430" name="__codelineno-0-1430"></a><span class="sd">    """</span>
 <a id="__codelineno-0-1431" name="__codelineno-0-1431"></a>    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urllib_parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 <a id="__codelineno-0-1432" name="__codelineno-0-1432"></a>    <span class="k">return</span> <span class="p">(</span>
-<a id="__codelineno-0-1433" name="__codelineno-0-1433"></a>        <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">&quot;https&quot;</span>
-<a id="__codelineno-0-1434" name="__codelineno-0-1434"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span> <span class="o">==</span> <span class="s2">&quot;api.github.com&quot;</span>
-<a id="__codelineno-0-1435" name="__codelineno-0-1435"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/repos/&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1433" name="__codelineno-0-1433"></a>        <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">"https"</span>
+<a id="__codelineno-0-1434" name="__codelineno-0-1434"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span> <span class="o">==</span> <span class="s2">"api.github.com"</span>
+<a id="__codelineno-0-1435" name="__codelineno-0-1435"></a>        <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"/repos/"</span><span class="p">)</span>
 <a id="__codelineno-0-1436" name="__codelineno-0-1436"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1822,19 +1870,19 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-491">491</a></span>
 <span class="normal"><a href="#__codelineno-0-492">492</a></span>
 <span class="normal"><a href="#__codelineno-0-493">493</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-480" name="__codelineno-0-480"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_release_url</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-0-482" name="__codelineno-0-482"></a><span class="sd">    Return GitHub release URL for specified tag or latest release.</span>
 <a id="__codelineno-0-483" name="__codelineno-0-483"></a>
 <a id="__codelineno-0-484" name="__codelineno-0-484"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="sd">        tag (str, optional): Release tag name (e.g. &quot;v1.2.3&quot;).</span>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="sd">        tag (str, optional): Release tag name (e.g. "v1.2.3").</span>
 <a id="__codelineno-0-486" name="__codelineno-0-486"></a>
 <a id="__codelineno-0-487" name="__codelineno-0-487"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-0-488" name="__codelineno-0-488"></a><span class="sd">        str: URL to release page.</span>
-<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-490" name="__codelineno-0-490"></a>    <span class="n">base</span> <span class="o">=</span> <span class="n">APP_REPOSITORY</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">    """</span>
+<a id="__codelineno-0-490" name="__codelineno-0-490"></a>    <span class="n">base</span> <span class="o">=</span> <span class="n">APP_REPOSITORY</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
 <a id="__codelineno-0-491" name="__codelineno-0-491"></a>    <span class="k">if</span> <span class="n">tag</span><span class="p">:</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/releases/tag/</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-493" name="__codelineno-0-493"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/releases/latest&quot;</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/releases/tag/</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/releases/latest"</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1968,30 +2016,30 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-1387">1387</a></span>
 <span class="normal"><a href="#__codelineno-0-1388">1388</a></span>
 <span class="normal"><a href="#__codelineno-0-1389">1389</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1360" name="__codelineno-0-1360"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_authors</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-0-1361" name="__codelineno-0-1361"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse AUTHORS file from script_dir.</span>
+<a id="__codelineno-0-1361" name="__codelineno-0-1361"></a><span class="w">    </span><span class="sd">"""Parse AUTHORS file from script_dir.</span>
 <a id="__codelineno-0-1362" name="__codelineno-0-1362"></a>
 <a id="__codelineno-0-1363" name="__codelineno-0-1363"></a><span class="sd">    Returns list or [APP_MAINTAINER] fallback.</span>
 <a id="__codelineno-0-1364" name="__codelineno-0-1364"></a>
 <a id="__codelineno-0-1365" name="__codelineno-0-1365"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-0-1366" name="__codelineno-0-1366"></a><span class="sd">        list: Author names.</span>
-<a id="__codelineno-0-1367" name="__codelineno-0-1367"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-1368" name="__codelineno-0-1368"></a>    <span class="n">authors_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">,</span> <span class="s2">&quot;AUTHORS&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1367" name="__codelineno-0-1367"></a><span class="sd">    """</span>
+<a id="__codelineno-0-1368" name="__codelineno-0-1368"></a>    <span class="n">authors_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">,</span> <span class="s2">"AUTHORS"</span><span class="p">)</span>
 <a id="__codelineno-0-1369" name="__codelineno-0-1369"></a>    <span class="n">authors</span> <span class="o">=</span> <span class="p">[]</span>
 <a id="__codelineno-0-1370" name="__codelineno-0-1370"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-1371" name="__codelineno-0-1371"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">authors_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">authors_file</span><span class="p">:</span>
+<a id="__codelineno-0-1371" name="__codelineno-0-1371"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">authors_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">authors_file</span><span class="p">:</span>
 <a id="__codelineno-0-1372" name="__codelineno-0-1372"></a>            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">authors_file</span><span class="p">:</span>
 <a id="__codelineno-0-1373" name="__codelineno-0-1373"></a>                <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 <a id="__codelineno-0-1374" name="__codelineno-0-1374"></a>                <span class="k">if</span> <span class="p">(</span>
 <a id="__codelineno-0-1375" name="__codelineno-0-1375"></a>                    <span class="n">line</span>
-<a id="__codelineno-0-1376" name="__codelineno-0-1376"></a>                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1377" name="__codelineno-0-1377"></a>                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;&lt;!--&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-1378" name="__codelineno-0-1378"></a>                    <span class="ow">and</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1376" name="__codelineno-0-1376"></a>                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span>
+<a id="__codelineno-0-1377" name="__codelineno-0-1377"></a>                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"&lt;!--"</span><span class="p">)</span>
+<a id="__codelineno-0-1378" name="__codelineno-0-1378"></a>                    <span class="ow">and</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"-"</span><span class="p">)</span>
 <a id="__codelineno-0-1379" name="__codelineno-0-1379"></a>                <span class="p">):</span>
 <a id="__codelineno-0-1380" name="__codelineno-0-1380"></a>                    <span class="n">author</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-1381" name="__codelineno-0-1381"></a>                    <span class="k">if</span> <span class="s2">&quot; - &quot;</span> <span class="ow">in</span> <span class="n">author</span><span class="p">:</span>
-<a id="__codelineno-0-1382" name="__codelineno-0-1382"></a>                        <span class="n">author</span> <span class="o">=</span> <span class="n">author</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; - &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-1383" name="__codelineno-0-1383"></a>                    <span class="k">if</span> <span class="s2">&quot;(@&quot;</span> <span class="ow">in</span> <span class="n">author</span><span class="p">:</span>
-<a id="__codelineno-0-1384" name="__codelineno-0-1384"></a>                        <span class="n">author</span> <span class="o">=</span> <span class="n">author</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; (@&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-1381" name="__codelineno-0-1381"></a>                    <span class="k">if</span> <span class="s2">" - "</span> <span class="ow">in</span> <span class="n">author</span><span class="p">:</span>
+<a id="__codelineno-0-1382" name="__codelineno-0-1382"></a>                        <span class="n">author</span> <span class="o">=</span> <span class="n">author</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" - "</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-1383" name="__codelineno-0-1383"></a>                    <span class="k">if</span> <span class="s2">"(@"</span> <span class="ow">in</span> <span class="n">author</span><span class="p">:</span>
+<a id="__codelineno-0-1384" name="__codelineno-0-1384"></a>                        <span class="n">author</span> <span class="o">=</span> <span class="n">author</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" (@"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 <a id="__codelineno-0-1385" name="__codelineno-0-1385"></a>                    <span class="k">if</span> <span class="n">author</span><span class="p">:</span>
 <a id="__codelineno-0-1386" name="__codelineno-0-1386"></a>                        <span class="n">authors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">author</span><span class="p">)</span>
 <a id="__codelineno-0-1387" name="__codelineno-0-1387"></a>    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
