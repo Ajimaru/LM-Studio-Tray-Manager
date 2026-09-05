@@ -11,6 +11,13 @@
   Built by tools\build_msix.ps1, which fills in Version from the VERSION
   file and generates the required Assets\*.png sizes from
   assets\img\lm-studio-tray-manager.png.
+
+  Known limitation: the tray's "Start with Windows" option writes a Startup
+  folder shortcut pointing at sys.executable, which under MSIX resolves to a
+  versioned WindowsApps path and therefore breaks on the next update. The
+  fix is a windows.startupTask extension declared here, with
+  enable_autostart() in lmstudio_tray.py reading and writing that state
+  instead of the shortcut when running packaged.
 -->
 <Package
     xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"

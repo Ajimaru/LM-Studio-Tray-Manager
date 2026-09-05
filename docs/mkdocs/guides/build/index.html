@@ -2711,6 +2711,12 @@ one, since Windows refuses to install an unsigned package. Pass a script
 that signs the file with a certificate trusted on that machine:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">.\</span><span class="n">tools</span><span class="p">\</span><span class="n">build_msix</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-SignScript</span> <span class="n">C</span><span class="p">:\</span><span class="n">path</span><span class="p">\</span><span class="n">to</span><span class="p">\</span><span class="n">sign</span><span class="p">.</span><span class="n">ps1</span>
 </code></pre></div>
+<p><strong>Known limitation:</strong> the tray's <em>Start with Windows</em> option writes a Startup
+folder shortcut pointing at <code>sys.executable</code>. Under MSIX that resolves to a
+versioned path under <code>WindowsApps</code>, so the shortcut breaks on the next
+update. Fixing it properly means declaring a <code>windows.startupTask</code> extension
+in the manifest and having <code>enable_autostart()</code> in <code>lmstudio_tray.py</code> read
+and write that state when running packaged.</p>
 <h3 id="github-actions-windows-release">GitHub Actions Windows release<a class="headerlink" href="#github-actions-windows-release" title="Permanent link">&para;</a></h3>
 <p>The <code>build-windows</code> job in <code>.github/workflows/release.yml</code> runs on
 <code>windows-latest</code>, installs Inno Setup via Chocolatey, runs

@@ -633,6 +633,13 @@ that signs the file with a certificate trusted on that machine:
 .\tools\build_msix.ps1 -SignScript C:\path\to\sign.ps1
 ```
 
+**Known limitation:** the tray's *Start with Windows* option writes a Startup
+folder shortcut pointing at `sys.executable`. Under MSIX that resolves to a
+versioned path under `WindowsApps`, so the shortcut breaks on the next
+update. Fixing it properly means declaring a `windows.startupTask` extension
+in the manifest and having `enable_autostart()` in `lmstudio_tray.py` read
+and write that state when running packaged.
+
 ### GitHub Actions Windows release
 
 The `build-windows` job in `.github/workflows/release.yml` runs on
