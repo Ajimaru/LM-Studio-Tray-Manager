@@ -38,6 +38,7 @@ This document describes how to build standalone releases of LM Studio Tray Manag
     - [Console output from a windowed build](#console-output-from-a-windowed-build)
     - [Why Inno Setup and not an MSI](#why-inno-setup-and-not-an-msi)
     - [Code signing (Windows)](#code-signing-windows)
+    - [Microsoft Store packaging (MSIX)](#microsoft-store-packaging-msix)
     - [GitHub Actions Windows release](#github-actions-windows-release)
   - [Optimization](#optimization)
     - [Size Reduction](#size-reduction)
@@ -109,7 +110,8 @@ Native Windows build produced with PyInstaller:
 - ✅ Bundles tkinter for the status, about and configuration dialogs
 - ✅ ~17 MB as a one-file build, ~19 MB as an installer
 - ✅ Works on Windows 10 and 11 (x64)
-- ❌ Not code-signed: SmartScreen warns on first run
+- ❌ Not code-signed: SmartScreen warns on first run (the Microsoft Store
+  build is signed by the Store and does not)
 
 **Build method:** `.\tools\build_windows.ps1` (local) or GitHub Actions `build-windows` job (CI/CD)
 
@@ -578,17 +580,66 @@ so it would be a separate WiX build alongside the existing one.
 
 ### Code signing (Windows)
 
-The Windows artifacts are **not signed** — the project has no Authenticode
-certificate, so SmartScreen warns on first run. This is the one place the
-Windows release is weaker than the macOS one, which is signed and notarized.
-Users verify against `SHA256SUMS-windows.txt` instead.
+The artifacts published on GitHub are **not signed** — the project has no
+Authenticode certificate, so SmartScreen warns on first run. Users verify
+against `SHA256SUMS-windows.txt` instead.
+
+The Microsoft Store build avoids this entirely: the Store signs the package
+during certification, so an install from there raises no warning. See
+[Microsoft Store packaging (MSIX)](#microsoft-store-packaging-msix) below.
+
+Signing the GitHub artifacts too would need a certificate. The realistic
+options are [Azure Trusted Signing](https://learn.microsoft.com/azure/trusted-signing/overview)
+(~$10/month, plus an identity validation that takes days) or a traditional
+OV/EV certificate from a CA. Neither is set up, and for a project whose
+signed distribution channel is the Store, the recurring cost has not been
+worth it.
+
+### Microsoft Store packaging (MSIX)
+
+An alternative to a signed installer: the Store re-signs and distributes the
+app itself, so no personal certificate is needed for end users. This is a
+separate, currently unused path — `tools/build_msix.ps1` packages the
+already-built exe into an `.msix`, but is not part of the automatic release
+pipeline, since Store submission is a manual [Partner
+Center](https://partner.microsoft.com/dashboard) action.
+
+The package identity in `tools/windows-msix/Package.appxmanifest` is already
+set to the values Partner Center assigned to the reserved app. They are
+fixed for the app's lifetime — changing `Identity/Name` or
+`Identity/Publisher` would make it a different product, and installed copies
+would stop receiving updates.
+
+**Building:**
+
+```powershell
+.\tools\build_windows.ps1 -Clean   # produces dist\lmstudio-tray-manager.exe
+.\tools\build_msix.ps1
+```
+
+This generates the required `Square44x44Logo.png`, `Square150x150Logo.png`
+and `StoreLogo.png` assets from `assets/img/lm-studio-tray-manager.png`,
+stages the manifest and exe, and calls `makeappx.exe` from the Windows SDK
+(`winget install Microsoft.WindowsSDK.10.0.22621` if missing). The result,
+`release/lmstudio-tray-manager-X.Y.Z-windows-x86_64.msix`, is uploaded
+directly to Partner Center — the Store signs it during certification, so the
+package needs no signature of its own to be submitted.
+
+To sideload-test the package locally with `Add-AppxPackage` it does need
+one, since Windows refuses to install an unsigned package. Pass a script
+that signs the file with a certificate trusted on that machine:
+
+```powershell
+.\tools\build_msix.ps1 -SignScript C:\path\to\sign.ps1
+```
 
 ### GitHub Actions Windows release
 
 The `build-windows` job in `.github/workflows/release.yml` runs on
 `windows-latest`, installs Inno Setup via Chocolatey, runs
 `tools/build_windows.ps1 -Clean`, insists that all three artifacts exist, and
-uploads them to the release on a tag push.
+uploads them to the release on a tag push. The MSIX path is not part of this
+job: Store submission is a manual Partner Center action.
 
 Chocolatey rather than winget: winget is not part of the `windows-latest`
 runner image at all, while Chocolatey is preinstalled. The advice above to use

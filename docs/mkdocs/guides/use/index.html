@@ -284,6 +284,25 @@
   
 
       
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../privacy/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Privacy Policy
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -1285,6 +1304,33 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -2020,7 +2066,7 @@
 <h3 id="autostart-on-login">Autostart on Login<a class="headerlink" href="#autostart-on-login" title="Permanent link">&para;</a></h3>
 <p>For automatic startup on login, create a desktop entry:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.config/autostart/
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>~/.config/autostart/lmstudio-daemon.desktop<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>~/.config/autostart/lmstudio-daemon.desktop<span class="w"> </span><span class="s">&lt;&lt; 'EOF'</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s">[Desktop Entry]</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s">Type=Application</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s">Name=LM Studio Daemon</span>
@@ -2103,10 +2149,10 @@ on Linux, macOS and Windows.</p>
 <a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>./lmstudio-tray-manager<span class="w"> </span>-dg<span class="w">      </span><span class="c1"># debug + gui</span>
 <a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>
 <a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="c1"># With model name and custom log directory</span>
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>./lmstudio-tray-manager<span class="w"> </span><span class="s2">&quot;my-model-name&quot;</span><span class="w"> </span><span class="s2">&quot;/path/to/logs&quot;</span>
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>./lmstudio-tray-manager<span class="w"> </span><span class="s2">"my-model-name"</span><span class="w"> </span><span class="s2">"/path/to/logs"</span>
 <a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>
 <a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a><span class="c1"># Model name with auto-start and debug</span>
-<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>./lmstudio-tray-manager<span class="w"> </span>-da<span class="w"> </span><span class="s2">&quot;llama-model&quot;</span>
+<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>./lmstudio-tray-manager<span class="w"> </span>-da<span class="w"> </span><span class="s2">"llama-model"</span>
 </code></pre></div>
 <h2 id="system-tray-interface">System Tray Interface<a class="headerlink" href="#system-tray-interface" title="Permanent link">&para;</a></h2>
 <p>The application displays a system tray icon with status indicators and a context menu.</p>
@@ -2302,11 +2348,11 @@ have opened.</p>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Load a specific model into the daemon</span>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>lms<span class="w"> </span>load<span class="w"> </span>&lt;model-name-or-id&gt;
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1"># Verify it&#39;s set</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1"># Verify it's set</span>
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>lms<span class="w"> </span>ps
 </code></pre></div>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>lms<span class="w"> </span>load<span class="w"> </span><span class="s2">&quot;meta-llama/llama-2-7b-hf&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>lms<span class="w"> </span>load<span class="w"> </span><span class="s2">"meta-llama/llama-2-7b-hf"</span>
 </code></pre></div>
 <h4 id="option-2-via-lm-studio-gui">Option 2: Via LM Studio GUI<a class="headerlink" href="#option-2-via-lm-studio-gui" title="Permanent link">&para;</a></h4>
 <ol>
@@ -2318,7 +2364,7 @@ have opened.</p>
 <p>The LM Studio daemon stores its configuration in <code>~/.lmstudio/config.json</code>. You can manually edit this file and set the default model key to <code>"default_model": "&lt;model-id&gt;"</code>.</p>
 <p>Example configuration snippet (add the <code>"default_model"</code> key to your existing config file, don't replace the entire file):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">&quot;default_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;meta-llama/llama-2-7b-hf&quot;</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">"default_model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"meta-llama/llama-2-7b-hf"</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="p">}</span>
 </code></pre></div>
 <p><strong>Note</strong>: After setting a default model with any method, the next time the daemon starts (via <code>lmstudio_autostart.sh</code> or <code>lms daemon up</code>), it will automatically load your configured model.</p>
@@ -2479,8 +2525,8 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Kill all LM Studio daemon processes:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;lms&quot;</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;llmster&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">"lms"</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">"llmster"</span>
 </code></pre></div>
 <ol>
 <li>Clear authentication tokens:</li>
@@ -2511,12 +2557,12 @@ applications (like VSCode) that inject incompatible library paths. See
 <a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>dpkg<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>lm-studio
 <a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a>
 <a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="c1"># Check for AppImage</span>
-<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>find<span class="w"> </span>~<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;LM-Studio*.AppImage&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>find<span class="w"> </span>~<span class="w"> </span>-name<span class="w"> </span><span class="s2">"LM-Studio*.AppImage"</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null
 </code></pre></div>
 <ol>
 <li>Check tray logs:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;desktop&quot;</span><span class="w"> </span>.logs/lmstudio_tray.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">"desktop"</span><span class="w"> </span>.logs/lmstudio_tray.log
 </code></pre></div>
 <ol>
 <li>Disable daemon first (they conflict):</li>
@@ -2545,7 +2591,7 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Check for GTK3 issues:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>./venv/bin/python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import gi; gi.require_version(&#39;Gtk&#39;, &#39;3.0&#39;); from gi.repository import Gtk; print(&#39;GTK3 OK&#39;)&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>./venv/bin/python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import gi; gi.require_version('Gtk', '3.0'); from gi.repository import Gtk; print('GTK3 OK')"</span>
 </code></pre></div>
 <ol>
 <li>Install missing GTK packages.  The tray uses
@@ -2561,7 +2607,7 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Check logs:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|icon\|tray&quot;</span><span class="w"> </span>.logs/lmstudio_tray.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">"error\|icon\|tray"</span><span class="w"> </span>.logs/lmstudio_tray.log
 </code></pre></div>
 <ol>
 <li>Try debug mode:</li>
@@ -2592,12 +2638,12 @@ applications (like VSCode) that inject incompatible library paths. See
 <ol>
 <li>Check logs for errors:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>tail<span class="w"> </span>-100<span class="w"> </span>.logs/lmstudio_tray.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>tail<span class="w"> </span>-100<span class="w"> </span>.logs/lmstudio_tray.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">"error"</span>
 </code></pre></div>
 <ol>
 <li>Monitor in real-time:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="s1">&#39;ps aux | grep lmstudio&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="s1">'ps aux | grep lmstudio'</span>
 </code></pre></div>
 
 

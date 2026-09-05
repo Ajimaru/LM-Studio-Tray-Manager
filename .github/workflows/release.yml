@@ -81,12 +81,24 @@ jobs:
           ls -lh "$APPIMAGE" "$SOURCE_TAR" "$BINARY_TAR" | awk '{print $9, "("$5")"}'
 
       # A manual run must not create a release named after the branch.
+      #
+      # body is placed above the generated notes, so the Store link appears
+      # on every release without having to be pasted in by hand. The
+      # artifacts attached here are unsigned, which is what makes pointing
+      # Windows users at the Store worth doing prominently.
       - name: Create GitHub release
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: ${{ github.ref_name }}
           generate_release_notes: true
+          body: |
+            **Windows users:** installing from the
+            [Microsoft Store](https://apps.microsoft.com/detail/9NC63J47B5C5)
+            is recommended - that build is signed by Microsoft, so it
+            installs without a SmartScreen warning and updates itself. The
+            `.exe` and `.zip` below are unsigned; verify them against
+            `SHA256SUMS-windows.txt`.
           files: |
             dist/*.tar.gz
             dist/*.AppImage
@@ -237,7 +249,7 @@ jobs:
 
       - name: Upload macOS artifacts
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: ${{ github.ref_name }}
           generate_release_notes: false
@@ -326,7 +338,7 @@ jobs:
 
       - name: Upload Windows artifacts
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: ${{ github.ref_name }}
           generate_release_notes: false

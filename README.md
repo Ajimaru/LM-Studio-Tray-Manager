@@ -201,13 +201,19 @@ signing identity was passed - those do need `xattr -cr` before launching.
 </details>
 <!-- markdownlint-enable MD033 -->
 
-#### Path 4 : Windows installer or portable .exe
+#### Path 4 : Windows - Microsoft Store, installer, or portable .exe
 
 <!-- markdownlint-disable MD033 -->
 <details>
 <summary>Show Windows install steps</summary>
 
-**Download:**
+**Microsoft Store (recommended):**
+[apps.microsoft.com/detail/9NC63J47B5C5](https://apps.microsoft.com/detail/9NC63J47B5C5)
+
+The Store build is signed by Microsoft, so it installs without a SmartScreen
+warning and updates itself.
+
+**Download (from the release page):**
 
 - `lmstudio-tray-manager-X.Y.Z-windows-x86_64-setup.exe` — installer with a
   Start‑menu entry and an optional *start with Windows* checkbox
@@ -246,10 +252,10 @@ menu. The installer offers the same box, and it can be set from PowerShell:
 All three write the same Startup‑folder shortcut, so the tray's checkbox
 shows the true state whichever route you took.
 
-**Note:** the builds are **not code‑signed** — this project has no
-Authenticode certificate. SmartScreen will warn on first run; choose *More
-info → Run anyway*, or verify the download against
-`SHA256SUMS-windows.txt` first:
+**Note:** the builds published here are **not code‑signed** — this project
+has no Authenticode certificate, so SmartScreen warns on first run. Install
+from the Microsoft Store above to avoid that, or choose *More info → Run
+anyway* and verify the download against `SHA256SUMS-windows.txt` first:
 
 ```powershell
 Get-FileHash .\lmstudio-tray-manager-X.Y.Z-windows-x86_64.zip -Algorithm SHA256

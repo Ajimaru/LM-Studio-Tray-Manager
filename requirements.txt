@@ -13,26 +13,26 @@
 # work onto the main thread; without them menu rebuilds fall back to running
 # in-place, which is what crashed the app and wedged the WindowServer.
 
-# PyInstaller 6.21.0 (source: pyinstaller-6.21.0.tar.gz)
-pyinstaller==6.21.0
+# PyInstaller (source: sdist)
+pyinstaller==6.22.2
 
-# altgraph 0.17.5 (source: altgraph-0.17.5-py2.py3-none-any.whl)
+# altgraph (source: py2.py3-none-any wheel)
 # Transitive dependency used by PyInstaller
 altgraph==0.17.5
 
-# pyinstaller-hooks-contrib 2026.6 (source: pyinstaller_hooks_contrib-2026.6-py3-none-any.whl)
+# pyinstaller-hooks-contrib (source: py3-none-any wheel)
 # Transitive dependency for PyInstaller hooks
-pyinstaller-hooks-contrib==2026.6
+pyinstaller-hooks-contrib==2026.7
 
-# setuptools 83.0.0 (source: setuptools-83.0.0-py3-none-any.whl)
+# setuptools (source: py3-none-any wheel)
 # Required by PyInstaller (>=42.0.0)
-setuptools==83.0.0
+setuptools==84.0.0
 
-# packaging 26.3 (source: packaging-26.3-py3-none-any.whl)
+# packaging (source: py3-none-any wheel)
 # Required by PyInstaller (>=22.0)
 packaging==26.3
 
-# certifi 2026.7.22 (source: certifi-2026.7.22-py3-none-any.whl)
+# certifi (source: py3-none-any wheel)
 # Runtime dependency, bundled into the binary. A frozen app ships libssl but
 # not the CA store it was built against, so HTTPS (the GitHub update check)
 # fails with CERTIFICATE_VERIFY_FAILED on machines that lack the build host's

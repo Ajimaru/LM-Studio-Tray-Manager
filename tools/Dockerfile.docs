@@ -1,0 +1,37 @@
+# Docs build container (mimics GitHub Actions ubuntu-24.04, see docs.yml).
+#
+# The Docs workflow fails a PR if `mkdocs build` produces anything different
+# from what's committed under docs/mkdocs. That comparison is sensitive to
+# transitive dependency and platform differences (see docs_src/guides/build.md
+# history), so this container matches the CI base image and Python version
+# exactly rather than using a generic python:3.12 image.
+#
+# Usage (from the repository root):
+#   docker build -f tools/Dockerfile.docs -t lmstudio-docs .
+#   docker create --name docs-build lmstudio-docs
+#   docker cp docs-build:/work/docs/mkdocs ./docs/mkdocs
+#   docker rm docs-build
+#
+# Then `git diff docs/mkdocs` to review what changed. docs/BUILD.md is not
+# produced here - it is a hand-maintained copy of docs_src/guides/build.md.
+
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 \
+    python3.12-venv \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /work
+COPY . /work
+
+RUN python3.12 -m venv /venv
+ENV PATH="/venv/bin:${PATH}"
+RUN pip install --upgrade pip --quiet \
+    && pip install -r requirements-docs.txt --quiet
+
+RUN mkdocs build
