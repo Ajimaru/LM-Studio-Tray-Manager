@@ -24,6 +24,9 @@
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
     'PSAvoidUsingWriteHost', '',
     Justification = 'Build progress is meant for a human watching a terminal, not for the pipeline.')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+    'PSReviewUnusedParameter', '',
+    Justification = 'SignScript is read inside Invoke-CodeSign below, which the analyzer does not follow.')]
 param(
     [string]$SignScript
 )
@@ -53,7 +56,7 @@ function Get-ProjectVersion {
     return (Get-Content $versionFile -Raw).Trim() -replace '^v', ''
 }
 
-function New-MsixAssets {
+function New-MsixAssetSet {
     <#
     .SYNOPSIS
         Generate the fixed-size PNGs an MSIX manifest requires, from the
@@ -63,6 +66,9 @@ function New-MsixAssets {
     .PARAMETER VenvPython
         Interpreter with Pillow installed.
     #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSUseShouldProcessForStateChangingFunctions', '',
+        Justification = 'Build-script step writing to its own build directory; -WhatIf on a build has no meaning.')]
     param([Parameter(Mandatory = $true)][string]$VenvPython)
 
     Write-Step 'Generating MSIX icon assets'
@@ -181,7 +187,7 @@ if (-not (Test-Path -PathType Leaf $venvPython)) {
     & $venvPython -m pip install --require-hashes -r (Join-Path $ProjectRoot 'requirements-build.txt') --quiet
 }
 
-New-MsixAssets -VenvPython $venvPython
+New-MsixAssetSet -VenvPython $venvPython
 
 Write-Step 'Staging package contents'
 Copy-Item $builtExe -Destination $StageDir

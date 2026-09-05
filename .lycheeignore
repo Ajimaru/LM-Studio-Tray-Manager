@@ -4,3 +4,14 @@
 # with this one.
 https://github.com/.*/stargazers
 https://github.com/.*/watchers
+
+# The Store listing answers 410 until the app passes certification and is
+# published. The product ID is already assigned and the link is the one
+# users will follow, so it stays in the README rather than being removed
+# and added back.
+https://apps\.microsoft\.com/detail/9NC63J47B5C5
+
+# Partner Center serves a certificate chain the checker does not trust,
+# while browsers accept it. The link is a reference for the maintainer, not
+# something a reader follows.
+https://partner\.microsoft\.com/dashboard
