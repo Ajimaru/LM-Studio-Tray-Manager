@@ -54,7 +54,7 @@ Pygments==2.21.0
 
 # Markdown rendering and the extensions the Material theme relies on.
 Markdown==3.11
-pymdown-extensions==11.0.1
+pymdown-extensions==12.1
 
 # Cross-references between API pages.
 mkdocs-autorefs==1.4.4
