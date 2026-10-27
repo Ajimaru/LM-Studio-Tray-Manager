@@ -19,7 +19,7 @@ pystray==0.19.5
 
 # pillow (source: cp312-cp312-win_amd64 wheel)
 # Required by pystray: the tray icon is handed over as a PIL image.
-pillow==12.3.0
+pillow==13.0.0
 
 # six (source: py2.py3-none-any wheel)
 # Transitive dependency of pystray.
