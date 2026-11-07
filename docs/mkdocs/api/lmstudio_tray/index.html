@@ -1155,36 +1155,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-580">580</a></span>
-<span class="normal"><a href="#__codelineno-0-581">581</a></span>
-<span class="normal"><a href="#__codelineno-0-582">582</a></span>
-<span class="normal"><a href="#__codelineno-0-583">583</a></span>
-<span class="normal"><a href="#__codelineno-0-584">584</a></span>
-<span class="normal"><a href="#__codelineno-0-585">585</a></span>
-<span class="normal"><a href="#__codelineno-0-586">586</a></span>
-<span class="normal"><a href="#__codelineno-0-587">587</a></span>
-<span class="normal"><a href="#__codelineno-0-588">588</a></span>
-<span class="normal"><a href="#__codelineno-0-589">589</a></span>
-<span class="normal"><a href="#__codelineno-0-590">590</a></span>
-<span class="normal"><a href="#__codelineno-0-591">591</a></span>
-<span class="normal"><a href="#__codelineno-0-592">592</a></span>
-<span class="normal"><a href="#__codelineno-0-593">593</a></span>
-<span class="normal"><a href="#__codelineno-0-594">594</a></span>
-<span class="normal"><a href="#__codelineno-0-595">595</a></span>
-<span class="normal"><a href="#__codelineno-0-596">596</a></span>
-<span class="normal"><a href="#__codelineno-0-597">597</a></span>
-<span class="normal"><a href="#__codelineno-0-598">598</a></span>
-<span class="normal"><a href="#__codelineno-0-599">599</a></span>
-<span class="normal"><a href="#__codelineno-0-600">600</a></span>
-<span class="normal"><a href="#__codelineno-0-601">601</a></span>
-<span class="normal"><a href="#__codelineno-0-602">602</a></span>
-<span class="normal"><a href="#__codelineno-0-603">603</a></span>
-<span class="normal"><a href="#__codelineno-0-604">604</a></span>
-<span class="normal"><a href="#__codelineno-0-605">605</a></span>
-<span class="normal"><a href="#__codelineno-0-606">606</a></span>
-<span class="normal"><a href="#__codelineno-0-607">607</a></span>
-<span class="normal"><a href="#__codelineno-0-608">608</a></span>
-<span class="normal"><a href="#__codelineno-0-609">609</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-609">609</a></span>
 <span class="normal"><a href="#__codelineno-0-610">610</a></span>
 <span class="normal"><a href="#__codelineno-0-611">611</a></span>
 <span class="normal"><a href="#__codelineno-0-612">612</a></span>
@@ -1282,134 +1253,163 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-704">704</a></span>
 <span class="normal"><a href="#__codelineno-0-705">705</a></span>
 <span class="normal"><a href="#__codelineno-0-706">706</a></span>
-<span class="normal"><a href="#__codelineno-0-707">707</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-580" name="__codelineno-0-580"></a><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-581" name="__codelineno-0-581"></a><span class="w">    </span><span class="sd">"""</span>
-<a id="__codelineno-0-582" name="__codelineno-0-582"></a><span class="sd">    Parse CLI args, load dependencies, configure logging, and start app.</span>
-<a id="__codelineno-0-583" name="__codelineno-0-583"></a>
-<a id="__codelineno-0-584" name="__codelineno-0-584"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-585" name="__codelineno-0-585"></a><span class="sd">        SystemExit: On --version flag.</span>
-<a id="__codelineno-0-586" name="__codelineno-0-586"></a><span class="sd">    """</span>
-<a id="__codelineno-0-587" name="__codelineno-0-587"></a>    <span class="n">_ensure_std_streams</span><span class="p">()</span>
-<a id="__codelineno-0-588" name="__codelineno-0-588"></a>
-<a id="__codelineno-0-589" name="__codelineno-0-589"></a>    <span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
-<a id="__codelineno-0-590" name="__codelineno-0-590"></a>
-<a id="__codelineno-0-591" name="__codelineno-0-591"></a>    <span class="c1"># -------------------------------------------</span>
-<a id="__codelineno-0-592" name="__codelineno-0-592"></a>    <span class="c1"># === Model name from argument or default ===</span>
-<a id="__codelineno-0-593" name="__codelineno-0-593"></a>    <span class="c1"># -------------------------------------------</span>
-<a id="__codelineno-0-594" name="__codelineno-0-594"></a>
-<a id="__codelineno-0-595" name="__codelineno-0-595"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">apply_cli_args</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-<a id="__codelineno-0-596" name="__codelineno-0-596"></a>
-<a id="__codelineno-0-597" name="__codelineno-0-597"></a>    <span class="n">load_config</span><span class="p">()</span>
-<a id="__codelineno-0-598" name="__codelineno-0-598"></a>
-<a id="__codelineno-0-599" name="__codelineno-0-599"></a>    <span class="n">module_globals</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()</span>
-<a id="__codelineno-0-600" name="__codelineno-0-600"></a>    <span class="n">module_globals</span><span class="p">[</span><span class="s2">"script_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span>
-<a id="__codelineno-0-601" name="__codelineno-0-601"></a>    <span class="n">module_globals</span><span class="p">[</span><span class="s2">"AUTO_START_DAEMON"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span>
-<a id="__codelineno-0-602" name="__codelineno-0-602"></a>    <span class="n">module_globals</span><span class="p">[</span><span class="s2">"GUI_MODE"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">GUI_MODE</span>
-<a id="__codelineno-0-603" name="__codelineno-0-603"></a>    <span class="n">module_globals</span><span class="p">[</span><span class="s2">"APP_VERSION"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span>
-<a id="__codelineno-0-604" name="__codelineno-0-604"></a>
-<a id="__codelineno-0-605" name="__codelineno-0-605"></a>    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">auto_start_daemon</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">gui</span><span class="p">:</span>
-<a id="__codelineno-0-606" name="__codelineno-0-606"></a>        <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-0-607" name="__codelineno-0-607"></a>            <span class="s2">"Warning: --auto-start-daemon and --gui are mutually exclusive; "</span>
-<a id="__codelineno-0-608" name="__codelineno-0-608"></a>            <span class="s2">"--gui takes precedence."</span><span class="p">,</span>
-<a id="__codelineno-0-609" name="__codelineno-0-609"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
-<a id="__codelineno-0-610" name="__codelineno-0-610"></a>        <span class="p">)</span>
-<a id="__codelineno-0-611" name="__codelineno-0-611"></a>
-<a id="__codelineno-0-612" name="__codelineno-0-612"></a>    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">version</span><span class="p">:</span>
-<a id="__codelineno-0-613" name="__codelineno-0-613"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">get_app_version</span><span class="p">())</span>
-<a id="__codelineno-0-614" name="__codelineno-0-614"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-615" name="__codelineno-0-615"></a>
-<a id="__codelineno-0-616" name="__codelineno-0-616"></a>    <span class="k">if</span> <span class="n">IS_MACOS</span><span class="p">:</span>
-<a id="__codelineno-0-617" name="__codelineno-0-617"></a>        <span class="n">_run_macos</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-<a id="__codelineno-0-618" name="__codelineno-0-618"></a>        <span class="k">return</span>
+<span class="normal"><a href="#__codelineno-0-707">707</a></span>
+<span class="normal"><a href="#__codelineno-0-708">708</a></span>
+<span class="normal"><a href="#__codelineno-0-709">709</a></span>
+<span class="normal"><a href="#__codelineno-0-710">710</a></span>
+<span class="normal"><a href="#__codelineno-0-711">711</a></span>
+<span class="normal"><a href="#__codelineno-0-712">712</a></span>
+<span class="normal"><a href="#__codelineno-0-713">713</a></span>
+<span class="normal"><a href="#__codelineno-0-714">714</a></span>
+<span class="normal"><a href="#__codelineno-0-715">715</a></span>
+<span class="normal"><a href="#__codelineno-0-716">716</a></span>
+<span class="normal"><a href="#__codelineno-0-717">717</a></span>
+<span class="normal"><a href="#__codelineno-0-718">718</a></span>
+<span class="normal"><a href="#__codelineno-0-719">719</a></span>
+<span class="normal"><a href="#__codelineno-0-720">720</a></span>
+<span class="normal"><a href="#__codelineno-0-721">721</a></span>
+<span class="normal"><a href="#__codelineno-0-722">722</a></span>
+<span class="normal"><a href="#__codelineno-0-723">723</a></span>
+<span class="normal"><a href="#__codelineno-0-724">724</a></span>
+<span class="normal"><a href="#__codelineno-0-725">725</a></span>
+<span class="normal"><a href="#__codelineno-0-726">726</a></span>
+<span class="normal"><a href="#__codelineno-0-727">727</a></span>
+<span class="normal"><a href="#__codelineno-0-728">728</a></span>
+<span class="normal"><a href="#__codelineno-0-729">729</a></span>
+<span class="normal"><a href="#__codelineno-0-730">730</a></span>
+<span class="normal"><a href="#__codelineno-0-731">731</a></span>
+<span class="normal"><a href="#__codelineno-0-732">732</a></span>
+<span class="normal"><a href="#__codelineno-0-733">733</a></span>
+<span class="normal"><a href="#__codelineno-0-734">734</a></span>
+<span class="normal"><a href="#__codelineno-0-735">735</a></span>
+<span class="normal"><a href="#__codelineno-0-736">736</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-609" name="__codelineno-0-609"></a><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-610" name="__codelineno-0-610"></a><span class="w">    </span><span class="sd">"""</span>
+<a id="__codelineno-0-611" name="__codelineno-0-611"></a><span class="sd">    Parse CLI args, load dependencies, configure logging, and start app.</span>
+<a id="__codelineno-0-612" name="__codelineno-0-612"></a>
+<a id="__codelineno-0-613" name="__codelineno-0-613"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-614" name="__codelineno-0-614"></a><span class="sd">        SystemExit: On --version flag.</span>
+<a id="__codelineno-0-615" name="__codelineno-0-615"></a><span class="sd">    """</span>
+<a id="__codelineno-0-616" name="__codelineno-0-616"></a>    <span class="n">_ensure_std_streams</span><span class="p">()</span>
+<a id="__codelineno-0-617" name="__codelineno-0-617"></a>
+<a id="__codelineno-0-618" name="__codelineno-0-618"></a>    <span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
 <a id="__codelineno-0-619" name="__codelineno-0-619"></a>
-<a id="__codelineno-0-620" name="__codelineno-0-620"></a>    <span class="k">if</span> <span class="n">IS_WINDOWS</span><span class="p">:</span>
-<a id="__codelineno-0-621" name="__codelineno-0-621"></a>        <span class="n">_run_windows</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-<a id="__codelineno-0-622" name="__codelineno-0-622"></a>        <span class="k">return</span>
+<a id="__codelineno-0-620" name="__codelineno-0-620"></a>    <span class="c1"># -------------------------------------------</span>
+<a id="__codelineno-0-621" name="__codelineno-0-621"></a>    <span class="c1"># === Model name from argument or default ===</span>
+<a id="__codelineno-0-622" name="__codelineno-0-622"></a>    <span class="c1"># -------------------------------------------</span>
 <a id="__codelineno-0-623" name="__codelineno-0-623"></a>
-<a id="__codelineno-0-624" name="__codelineno-0-624"></a>    <span class="k">if</span> <span class="n">gi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: E711</span>
-<a id="__codelineno-0-625" name="__codelineno-0-625"></a>        <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-0-626" name="__codelineno-0-626"></a>            <span class="s2">"Error: PyGObject (gi) is not installed."</span><span class="p">,</span>
-<a id="__codelineno-0-627" name="__codelineno-0-627"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-<a id="__codelineno-0-628" name="__codelineno-0-628"></a>        <span class="p">)</span>
-<a id="__codelineno-0-629" name="__codelineno-0-629"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-0-630" name="__codelineno-0-630"></a>
-<a id="__codelineno-0-631" name="__codelineno-0-631"></a>    <span class="n">_ensure_gsettings_schema</span><span class="p">()</span>
-<a id="__codelineno-0-632" name="__codelineno-0-632"></a>    <span class="n">gi</span><span class="o">.</span><span class="n">require_version</span><span class="p">(</span><span class="s2">"Gtk"</span><span class="p">,</span> <span class="s2">"3.0"</span><span class="p">)</span>
-<a id="__codelineno-0-633" name="__codelineno-0-633"></a>    <span class="n">app_namespace</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-634" name="__codelineno-0-634"></a>    <span class="k">for</span> <span class="n">ns</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"AyatanaAppIndicator3"</span><span class="p">,</span> <span class="s2">"AppIndicator3"</span><span class="p">):</span>
-<a id="__codelineno-0-635" name="__codelineno-0-635"></a>        <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-636" name="__codelineno-0-636"></a>            <span class="n">gi</span><span class="o">.</span><span class="n">require_version</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="s2">"0.1"</span><span class="p">)</span>
-<a id="__codelineno-0-637" name="__codelineno-0-637"></a>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-<a id="__codelineno-0-638" name="__codelineno-0-638"></a>            <span class="k">continue</span>
-<a id="__codelineno-0-639" name="__codelineno-0-639"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-640" name="__codelineno-0-640"></a>            <span class="n">app_namespace</span> <span class="o">=</span> <span class="n">ns</span>
-<a id="__codelineno-0-641" name="__codelineno-0-641"></a>            <span class="k">break</span>
-<a id="__codelineno-0-642" name="__codelineno-0-642"></a>
-<a id="__codelineno-0-643" name="__codelineno-0-643"></a>    <span class="k">if</span> <span class="n">app_namespace</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-644" name="__codelineno-0-644"></a>        <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-0-645" name="__codelineno-0-645"></a>            <span class="s2">"Error: could not find a suitable AppIndicator3 namespace "</span>
-<a id="__codelineno-0-646" name="__codelineno-0-646"></a>            <span class="s2">"(tried AyatanaAppIndicator3 and AppIndicator3)."</span><span class="p">,</span>
-<a id="__codelineno-0-647" name="__codelineno-0-647"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-<a id="__codelineno-0-648" name="__codelineno-0-648"></a>        <span class="p">)</span>
-<a id="__codelineno-0-649" name="__codelineno-0-649"></a>        <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-0-650" name="__codelineno-0-650"></a>            <span class="s2">"Please install the required packages for your distribution."</span><span class="p">,</span>
-<a id="__codelineno-0-651" name="__codelineno-0-651"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-<a id="__codelineno-0-652" name="__codelineno-0-652"></a>        <span class="p">)</span>
-<a id="__codelineno-0-653" name="__codelineno-0-653"></a>        <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-0-654" name="__codelineno-0-654"></a>            <span class="s2">"See installation instructions at:"</span><span class="p">,</span>
-<a id="__codelineno-0-655" name="__codelineno-0-655"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-<a id="__codelineno-0-656" name="__codelineno-0-656"></a>        <span class="p">)</span>
-<a id="__codelineno-0-657" name="__codelineno-0-657"></a>        <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-0-658" name="__codelineno-0-658"></a>            <span class="s2">"https://github.com/Ajimaru/LM-Studio-Tray-Manager/"</span>
-<a id="__codelineno-0-659" name="__codelineno-0-659"></a>            <span class="s2">"blob/main/docs/SETUP.md"</span><span class="p">,</span>
-<a id="__codelineno-0-660" name="__codelineno-0-660"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-<a id="__codelineno-0-661" name="__codelineno-0-661"></a>        <span class="p">)</span>
-<a id="__codelineno-0-662" name="__codelineno-0-662"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-0-663" name="__codelineno-0-663"></a>
-<a id="__codelineno-0-664" name="__codelineno-0-664"></a>    <span class="n">gtk_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">"gi.repository.Gtk"</span><span class="p">)</span>
-<a id="__codelineno-0-665" name="__codelineno-0-665"></a>    <span class="n">glib_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">"gi.repository.GLib"</span><span class="p">)</span>
-<a id="__codelineno-0-666" name="__codelineno-0-666"></a>    <span class="n">gdk_pixbuf_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span>
-<a id="__codelineno-0-667" name="__codelineno-0-667"></a>        <span class="s2">"gi.repository.GdkPixbuf"</span>
-<a id="__codelineno-0-668" name="__codelineno-0-668"></a>    <span class="p">)</span>
-<a id="__codelineno-0-669" name="__codelineno-0-669"></a>    <span class="n">app_indicator_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span>
-<a id="__codelineno-0-670" name="__codelineno-0-670"></a>        <span class="sa">f</span><span class="s2">"gi.repository.</span><span class="si">{</span><span class="n">app_namespace</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-671" name="__codelineno-0-671"></a>    <span class="p">)</span>
-<a id="__codelineno-0-672" name="__codelineno-0-672"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">set_gtk_modules</span><span class="p">(</span>
-<a id="__codelineno-0-673" name="__codelineno-0-673"></a>        <span class="n">gtk_module</span><span class="p">,</span>
-<a id="__codelineno-0-674" name="__codelineno-0-674"></a>        <span class="n">glib_module</span><span class="p">,</span>
-<a id="__codelineno-0-675" name="__codelineno-0-675"></a>        <span class="n">app_indicator_module</span><span class="p">,</span>
-<a id="__codelineno-0-676" name="__codelineno-0-676"></a>        <span class="n">gdk_pixbuf_module</span><span class="p">,</span>
-<a id="__codelineno-0-677" name="__codelineno-0-677"></a>    <span class="p">)</span>
-<a id="__codelineno-0-678" name="__codelineno-0-678"></a>
-<a id="__codelineno-0-679" name="__codelineno-0-679"></a>    <span class="n">log_file</span> <span class="o">=</span> <span class="n">_configure_logging</span><span class="p">()</span>
-<a id="__codelineno-0-680" name="__codelineno-0-680"></a>
-<a id="__codelineno-0-681" name="__codelineno-0-681"></a>    <span class="n">app_indicator_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span>
-<a id="__codelineno-0-682" name="__codelineno-0-682"></a>        <span class="sa">f</span><span class="s2">"gi.repository.</span><span class="si">{</span><span class="n">app_namespace</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-683" name="__codelineno-0-683"></a>    <span class="p">)</span>
-<a id="__codelineno-0-684" name="__codelineno-0-684"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">set_gtk_modules</span><span class="p">(</span>
-<a id="__codelineno-0-685" name="__codelineno-0-685"></a>        <span class="n">gtk_module</span><span class="p">,</span>
-<a id="__codelineno-0-686" name="__codelineno-0-686"></a>        <span class="n">glib_module</span><span class="p">,</span>
-<a id="__codelineno-0-687" name="__codelineno-0-687"></a>        <span class="n">app_indicator_module</span><span class="p">,</span>
-<a id="__codelineno-0-688" name="__codelineno-0-688"></a>        <span class="n">gdk_pixbuf_module</span><span class="p">,</span>
-<a id="__codelineno-0-689" name="__codelineno-0-689"></a>    <span class="p">)</span>
-<a id="__codelineno-0-690" name="__codelineno-0-690"></a>
-<a id="__codelineno-0-691" name="__codelineno-0-691"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Script directory: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">)</span>
-<a id="__codelineno-0-692" name="__codelineno-0-692"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Log file location: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">log_file</span><span class="p">)</span>
-<a id="__codelineno-0-693" name="__codelineno-0-693"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"sys.argv[0]: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="k">else</span> <span class="s2">"N/A"</span><span class="p">)</span>
-<a id="__codelineno-0-694" name="__codelineno-0-694"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"os.getcwd(): </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
-<a id="__codelineno-0-695" name="__codelineno-0-695"></a>
-<a id="__codelineno-0-696" name="__codelineno-0-696"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span> <span class="o">=</span> <span class="n">get_app_version</span><span class="p">()</span>
-<a id="__codelineno-0-697" name="__codelineno-0-697"></a>    <span class="nb">globals</span><span class="p">()[</span><span class="s2">"APP_VERSION"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span>
-<a id="__codelineno-0-698" name="__codelineno-0-698"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"App version: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span><span class="p">)</span>
-<a id="__codelineno-0-699" name="__codelineno-0-699"></a>
-<a id="__codelineno-0-700" name="__codelineno-0-700"></a>    <span class="n">kill_existing_instances</span><span class="p">()</span>
-<a id="__codelineno-0-701" name="__codelineno-0-701"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Tray script started"</span><span class="p">)</span>
-<a id="__codelineno-0-702" name="__codelineno-0-702"></a>
-<a id="__codelineno-0-703" name="__codelineno-0-703"></a>    <span class="n">TrayIcon</span><span class="p">()</span>
-<a id="__codelineno-0-704" name="__codelineno-0-704"></a>    <span class="n">gtk</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">Gtk</span>
-<a id="__codelineno-0-705" name="__codelineno-0-705"></a>    <span class="k">if</span> <span class="n">gtk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-706" name="__codelineno-0-706"></a>        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"GTK module is not initialized"</span><span class="p">)</span>
-<a id="__codelineno-0-707" name="__codelineno-0-707"></a>    <span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+<a id="__codelineno-0-624" name="__codelineno-0-624"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">apply_cli_args</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+<a id="__codelineno-0-625" name="__codelineno-0-625"></a>
+<a id="__codelineno-0-626" name="__codelineno-0-626"></a>    <span class="n">load_config</span><span class="p">()</span>
+<a id="__codelineno-0-627" name="__codelineno-0-627"></a>
+<a id="__codelineno-0-628" name="__codelineno-0-628"></a>    <span class="n">module_globals</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()</span>
+<a id="__codelineno-0-629" name="__codelineno-0-629"></a>    <span class="n">module_globals</span><span class="p">[</span><span class="s2">"script_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span>
+<a id="__codelineno-0-630" name="__codelineno-0-630"></a>    <span class="n">module_globals</span><span class="p">[</span><span class="s2">"AUTO_START_DAEMON"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">AUTO_START_DAEMON</span>
+<a id="__codelineno-0-631" name="__codelineno-0-631"></a>    <span class="n">module_globals</span><span class="p">[</span><span class="s2">"GUI_MODE"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">GUI_MODE</span>
+<a id="__codelineno-0-632" name="__codelineno-0-632"></a>    <span class="n">module_globals</span><span class="p">[</span><span class="s2">"APP_VERSION"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span>
+<a id="__codelineno-0-633" name="__codelineno-0-633"></a>
+<a id="__codelineno-0-634" name="__codelineno-0-634"></a>    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">auto_start_daemon</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">gui</span><span class="p">:</span>
+<a id="__codelineno-0-635" name="__codelineno-0-635"></a>        <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-636" name="__codelineno-0-636"></a>            <span class="s2">"Warning: --auto-start-daemon and --gui are mutually exclusive; "</span>
+<a id="__codelineno-0-637" name="__codelineno-0-637"></a>            <span class="s2">"--gui takes precedence."</span><span class="p">,</span>
+<a id="__codelineno-0-638" name="__codelineno-0-638"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
+<a id="__codelineno-0-639" name="__codelineno-0-639"></a>        <span class="p">)</span>
+<a id="__codelineno-0-640" name="__codelineno-0-640"></a>
+<a id="__codelineno-0-641" name="__codelineno-0-641"></a>    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">version</span><span class="p">:</span>
+<a id="__codelineno-0-642" name="__codelineno-0-642"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">get_app_version</span><span class="p">())</span>
+<a id="__codelineno-0-643" name="__codelineno-0-643"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-644" name="__codelineno-0-644"></a>
+<a id="__codelineno-0-645" name="__codelineno-0-645"></a>    <span class="k">if</span> <span class="n">IS_MACOS</span><span class="p">:</span>
+<a id="__codelineno-0-646" name="__codelineno-0-646"></a>        <span class="n">_run_macos</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+<a id="__codelineno-0-647" name="__codelineno-0-647"></a>        <span class="k">return</span>
+<a id="__codelineno-0-648" name="__codelineno-0-648"></a>
+<a id="__codelineno-0-649" name="__codelineno-0-649"></a>    <span class="k">if</span> <span class="n">IS_WINDOWS</span><span class="p">:</span>
+<a id="__codelineno-0-650" name="__codelineno-0-650"></a>        <span class="n">_run_windows</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+<a id="__codelineno-0-651" name="__codelineno-0-651"></a>        <span class="k">return</span>
+<a id="__codelineno-0-652" name="__codelineno-0-652"></a>
+<a id="__codelineno-0-653" name="__codelineno-0-653"></a>    <span class="k">if</span> <span class="n">gi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: E711</span>
+<a id="__codelineno-0-654" name="__codelineno-0-654"></a>        <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-655" name="__codelineno-0-655"></a>            <span class="s2">"Error: PyGObject (gi) is not installed."</span><span class="p">,</span>
+<a id="__codelineno-0-656" name="__codelineno-0-656"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+<a id="__codelineno-0-657" name="__codelineno-0-657"></a>        <span class="p">)</span>
+<a id="__codelineno-0-658" name="__codelineno-0-658"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-659" name="__codelineno-0-659"></a>
+<a id="__codelineno-0-660" name="__codelineno-0-660"></a>    <span class="n">_ensure_gsettings_schema</span><span class="p">()</span>
+<a id="__codelineno-0-661" name="__codelineno-0-661"></a>    <span class="n">gi</span><span class="o">.</span><span class="n">require_version</span><span class="p">(</span><span class="s2">"Gtk"</span><span class="p">,</span> <span class="s2">"3.0"</span><span class="p">)</span>
+<a id="__codelineno-0-662" name="__codelineno-0-662"></a>    <span class="n">app_namespace</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-663" name="__codelineno-0-663"></a>    <span class="k">for</span> <span class="n">ns</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"AyatanaAppIndicator3"</span><span class="p">,</span> <span class="s2">"AppIndicator3"</span><span class="p">):</span>
+<a id="__codelineno-0-664" name="__codelineno-0-664"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-665" name="__codelineno-0-665"></a>            <span class="n">gi</span><span class="o">.</span><span class="n">require_version</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="s2">"0.1"</span><span class="p">)</span>
+<a id="__codelineno-0-666" name="__codelineno-0-666"></a>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+<a id="__codelineno-0-667" name="__codelineno-0-667"></a>            <span class="k">continue</span>
+<a id="__codelineno-0-668" name="__codelineno-0-668"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-669" name="__codelineno-0-669"></a>            <span class="n">app_namespace</span> <span class="o">=</span> <span class="n">ns</span>
+<a id="__codelineno-0-670" name="__codelineno-0-670"></a>            <span class="k">break</span>
+<a id="__codelineno-0-671" name="__codelineno-0-671"></a>
+<a id="__codelineno-0-672" name="__codelineno-0-672"></a>    <span class="k">if</span> <span class="n">app_namespace</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-673" name="__codelineno-0-673"></a>        <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-674" name="__codelineno-0-674"></a>            <span class="s2">"Error: could not find a suitable AppIndicator3 namespace "</span>
+<a id="__codelineno-0-675" name="__codelineno-0-675"></a>            <span class="s2">"(tried AyatanaAppIndicator3 and AppIndicator3)."</span><span class="p">,</span>
+<a id="__codelineno-0-676" name="__codelineno-0-676"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+<a id="__codelineno-0-677" name="__codelineno-0-677"></a>        <span class="p">)</span>
+<a id="__codelineno-0-678" name="__codelineno-0-678"></a>        <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-679" name="__codelineno-0-679"></a>            <span class="s2">"Please install the required packages for your distribution."</span><span class="p">,</span>
+<a id="__codelineno-0-680" name="__codelineno-0-680"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+<a id="__codelineno-0-681" name="__codelineno-0-681"></a>        <span class="p">)</span>
+<a id="__codelineno-0-682" name="__codelineno-0-682"></a>        <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-683" name="__codelineno-0-683"></a>            <span class="s2">"See installation instructions at:"</span><span class="p">,</span>
+<a id="__codelineno-0-684" name="__codelineno-0-684"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+<a id="__codelineno-0-685" name="__codelineno-0-685"></a>        <span class="p">)</span>
+<a id="__codelineno-0-686" name="__codelineno-0-686"></a>        <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-687" name="__codelineno-0-687"></a>            <span class="s2">"https://github.com/Ajimaru/LM-Studio-Tray-Manager/"</span>
+<a id="__codelineno-0-688" name="__codelineno-0-688"></a>            <span class="s2">"blob/main/docs/SETUP.md"</span><span class="p">,</span>
+<a id="__codelineno-0-689" name="__codelineno-0-689"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+<a id="__codelineno-0-690" name="__codelineno-0-690"></a>        <span class="p">)</span>
+<a id="__codelineno-0-691" name="__codelineno-0-691"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-692" name="__codelineno-0-692"></a>
+<a id="__codelineno-0-693" name="__codelineno-0-693"></a>    <span class="n">gtk_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">"gi.repository.Gtk"</span><span class="p">)</span>
+<a id="__codelineno-0-694" name="__codelineno-0-694"></a>    <span class="n">glib_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">"gi.repository.GLib"</span><span class="p">)</span>
+<a id="__codelineno-0-695" name="__codelineno-0-695"></a>    <span class="n">gdk_pixbuf_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span>
+<a id="__codelineno-0-696" name="__codelineno-0-696"></a>        <span class="s2">"gi.repository.GdkPixbuf"</span>
+<a id="__codelineno-0-697" name="__codelineno-0-697"></a>    <span class="p">)</span>
+<a id="__codelineno-0-698" name="__codelineno-0-698"></a>    <span class="n">app_indicator_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span>
+<a id="__codelineno-0-699" name="__codelineno-0-699"></a>        <span class="sa">f</span><span class="s2">"gi.repository.</span><span class="si">{</span><span class="n">app_namespace</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-700" name="__codelineno-0-700"></a>    <span class="p">)</span>
+<a id="__codelineno-0-701" name="__codelineno-0-701"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">set_gtk_modules</span><span class="p">(</span>
+<a id="__codelineno-0-702" name="__codelineno-0-702"></a>        <span class="n">gtk_module</span><span class="p">,</span>
+<a id="__codelineno-0-703" name="__codelineno-0-703"></a>        <span class="n">glib_module</span><span class="p">,</span>
+<a id="__codelineno-0-704" name="__codelineno-0-704"></a>        <span class="n">app_indicator_module</span><span class="p">,</span>
+<a id="__codelineno-0-705" name="__codelineno-0-705"></a>        <span class="n">gdk_pixbuf_module</span><span class="p">,</span>
+<a id="__codelineno-0-706" name="__codelineno-0-706"></a>    <span class="p">)</span>
+<a id="__codelineno-0-707" name="__codelineno-0-707"></a>
+<a id="__codelineno-0-708" name="__codelineno-0-708"></a>    <span class="n">log_file</span> <span class="o">=</span> <span class="n">_configure_logging</span><span class="p">()</span>
+<a id="__codelineno-0-709" name="__codelineno-0-709"></a>
+<a id="__codelineno-0-710" name="__codelineno-0-710"></a>    <span class="n">app_indicator_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span>
+<a id="__codelineno-0-711" name="__codelineno-0-711"></a>        <span class="sa">f</span><span class="s2">"gi.repository.</span><span class="si">{</span><span class="n">app_namespace</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-712" name="__codelineno-0-712"></a>    <span class="p">)</span>
+<a id="__codelineno-0-713" name="__codelineno-0-713"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">set_gtk_modules</span><span class="p">(</span>
+<a id="__codelineno-0-714" name="__codelineno-0-714"></a>        <span class="n">gtk_module</span><span class="p">,</span>
+<a id="__codelineno-0-715" name="__codelineno-0-715"></a>        <span class="n">glib_module</span><span class="p">,</span>
+<a id="__codelineno-0-716" name="__codelineno-0-716"></a>        <span class="n">app_indicator_module</span><span class="p">,</span>
+<a id="__codelineno-0-717" name="__codelineno-0-717"></a>        <span class="n">gdk_pixbuf_module</span><span class="p">,</span>
+<a id="__codelineno-0-718" name="__codelineno-0-718"></a>    <span class="p">)</span>
+<a id="__codelineno-0-719" name="__codelineno-0-719"></a>
+<a id="__codelineno-0-720" name="__codelineno-0-720"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Script directory: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">)</span>
+<a id="__codelineno-0-721" name="__codelineno-0-721"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Log file location: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">log_file</span><span class="p">)</span>
+<a id="__codelineno-0-722" name="__codelineno-0-722"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"sys.argv[0]: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="k">else</span> <span class="s2">"N/A"</span><span class="p">)</span>
+<a id="__codelineno-0-723" name="__codelineno-0-723"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"os.getcwd(): </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+<a id="__codelineno-0-724" name="__codelineno-0-724"></a>
+<a id="__codelineno-0-725" name="__codelineno-0-725"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span> <span class="o">=</span> <span class="n">get_app_version</span><span class="p">()</span>
+<a id="__codelineno-0-726" name="__codelineno-0-726"></a>    <span class="nb">globals</span><span class="p">()[</span><span class="s2">"APP_VERSION"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span>
+<a id="__codelineno-0-727" name="__codelineno-0-727"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"App version: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span><span class="p">)</span>
+<a id="__codelineno-0-728" name="__codelineno-0-728"></a>
+<a id="__codelineno-0-729" name="__codelineno-0-729"></a>    <span class="n">kill_existing_instances</span><span class="p">()</span>
+<a id="__codelineno-0-730" name="__codelineno-0-730"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Tray script started"</span><span class="p">)</span>
+<a id="__codelineno-0-731" name="__codelineno-0-731"></a>
+<a id="__codelineno-0-732" name="__codelineno-0-732"></a>    <span class="n">TrayIcon</span><span class="p">()</span>
+<a id="__codelineno-0-733" name="__codelineno-0-733"></a>    <span class="n">gtk</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">Gtk</span>
+<a id="__codelineno-0-734" name="__codelineno-0-734"></a>    <span class="k">if</span> <span class="n">gtk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-735" name="__codelineno-0-735"></a>        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"GTK module is not initialized"</span><span class="p">)</span>
+<a id="__codelineno-0-736" name="__codelineno-0-736"></a>    <span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1482,36 +1482,7 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-242">242</a></span>
-<span class="normal"><a href="#__codelineno-0-243">243</a></span>
-<span class="normal"><a href="#__codelineno-0-244">244</a></span>
-<span class="normal"><a href="#__codelineno-0-245">245</a></span>
-<span class="normal"><a href="#__codelineno-0-246">246</a></span>
-<span class="normal"><a href="#__codelineno-0-247">247</a></span>
-<span class="normal"><a href="#__codelineno-0-248">248</a></span>
-<span class="normal"><a href="#__codelineno-0-249">249</a></span>
-<span class="normal"><a href="#__codelineno-0-250">250</a></span>
-<span class="normal"><a href="#__codelineno-0-251">251</a></span>
-<span class="normal"><a href="#__codelineno-0-252">252</a></span>
-<span class="normal"><a href="#__codelineno-0-253">253</a></span>
-<span class="normal"><a href="#__codelineno-0-254">254</a></span>
-<span class="normal"><a href="#__codelineno-0-255">255</a></span>
-<span class="normal"><a href="#__codelineno-0-256">256</a></span>
-<span class="normal"><a href="#__codelineno-0-257">257</a></span>
-<span class="normal"><a href="#__codelineno-0-258">258</a></span>
-<span class="normal"><a href="#__codelineno-0-259">259</a></span>
-<span class="normal"><a href="#__codelineno-0-260">260</a></span>
-<span class="normal"><a href="#__codelineno-0-261">261</a></span>
-<span class="normal"><a href="#__codelineno-0-262">262</a></span>
-<span class="normal"><a href="#__codelineno-0-263">263</a></span>
-<span class="normal"><a href="#__codelineno-0-264">264</a></span>
-<span class="normal"><a href="#__codelineno-0-265">265</a></span>
-<span class="normal"><a href="#__codelineno-0-266">266</a></span>
-<span class="normal"><a href="#__codelineno-0-267">267</a></span>
-<span class="normal"><a href="#__codelineno-0-268">268</a></span>
-<span class="normal"><a href="#__codelineno-0-269">269</a></span>
-<span class="normal"><a href="#__codelineno-0-270">270</a></span>
-<span class="normal"><a href="#__codelineno-0-271">271</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-271">271</a></span>
 <span class="normal"><a href="#__codelineno-0-272">272</a></span>
 <span class="normal"><a href="#__codelineno-0-273">273</a></span>
 <span class="normal"><a href="#__codelineno-0-274">274</a></span>
@@ -1536,61 +1507,90 @@ Usage:
 <span class="normal"><a href="#__codelineno-0-293">293</a></span>
 <span class="normal"><a href="#__codelineno-0-294">294</a></span>
 <span class="normal"><a href="#__codelineno-0-295">295</a></span>
-<span class="normal"><a href="#__codelineno-0-296">296</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-242" name="__codelineno-0-242"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">:</span>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a><span class="w">    </span><span class="sd">"""</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a><span class="sd">    Parse command-line arguments and return namespace.</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="sd">        argparse.Namespace: Parsed arguments.</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">        SystemExit: On --help, --version, or invalid arguments.</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">    """</span>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a>    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">"LM Studio Tray Monitor"</span><span class="p">,</span>
-<a id="__codelineno-0-254" name="__codelineno-0-254"></a>        <span class="n">add_help</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-0-255" name="__codelineno-0-255"></a>    <span class="p">)</span>
-<a id="__codelineno-0-256" name="__codelineno-0-256"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-<a id="__codelineno-0-257" name="__codelineno-0-257"></a>        <span class="s2">"model"</span><span class="p">,</span>
-<a id="__codelineno-0-258" name="__codelineno-0-258"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">"no-model-passed"</span><span class="p">,</span>
-<a id="__codelineno-0-260" name="__codelineno-0-260"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Model name to monitor"</span>
-<a id="__codelineno-0-261" name="__codelineno-0-261"></a>    <span class="p">)</span>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a>        <span class="s2">"script_dir"</span><span class="p">,</span>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a>        <span class="n">default</span><span class="o">=</span><span class="n">_get_default_script_dir</span><span class="p">(),</span>
-<a id="__codelineno-0-266" name="__codelineno-0-266"></a>        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-0-267" name="__codelineno-0-267"></a>            <span class="s2">"Script directory for logs and VERSION file. If a relative path "</span>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a>            <span class="s2">"is provided it will be resolved to an absolute path when "</span>
-<a id="__codelineno-0-269" name="__codelineno-0-269"></a>            <span class="s2">"arguments are applied to the application state."</span>
-<a id="__codelineno-0-270" name="__codelineno-0-270"></a>        <span class="p">),</span>
-<a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="p">)</span>
-<a id="__codelineno-0-272" name="__codelineno-0-272"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-<a id="__codelineno-0-273" name="__codelineno-0-273"></a>        <span class="s2">"--debug"</span><span class="p">,</span>
-<a id="__codelineno-0-274" name="__codelineno-0-274"></a>        <span class="s2">"-d"</span><span class="p">,</span>
-<a id="__codelineno-0-275" name="__codelineno-0-275"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-<a id="__codelineno-0-276" name="__codelineno-0-276"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Enable debug logging"</span>
-<a id="__codelineno-0-277" name="__codelineno-0-277"></a>    <span class="p">)</span>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-<a id="__codelineno-0-279" name="__codelineno-0-279"></a>        <span class="s2">"--auto-start-daemon"</span><span class="p">,</span>
-<a id="__codelineno-0-280" name="__codelineno-0-280"></a>        <span class="s2">"-a"</span><span class="p">,</span>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Start llmster daemon on launch"</span>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a>    <span class="p">)</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a>        <span class="s2">"--gui"</span><span class="p">,</span>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a>        <span class="s2">"-g"</span><span class="p">,</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Start LM Studio GUI on launch (stops daemon first)"</span>
-<a id="__codelineno-0-289" name="__codelineno-0-289"></a>    <span class="p">)</span>
-<a id="__codelineno-0-290" name="__codelineno-0-290"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-<a id="__codelineno-0-291" name="__codelineno-0-291"></a>        <span class="s2">"--version"</span><span class="p">,</span>
-<a id="__codelineno-0-292" name="__codelineno-0-292"></a>        <span class="s2">"-v"</span><span class="p">,</span>
-<a id="__codelineno-0-293" name="__codelineno-0-293"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-<a id="__codelineno-0-294" name="__codelineno-0-294"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Print version and exit"</span>
-<a id="__codelineno-0-295" name="__codelineno-0-295"></a>    <span class="p">)</span>
-<a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span>
+<span class="normal"><a href="#__codelineno-0-299">299</a></span>
+<span class="normal"><a href="#__codelineno-0-300">300</a></span>
+<span class="normal"><a href="#__codelineno-0-301">301</a></span>
+<span class="normal"><a href="#__codelineno-0-302">302</a></span>
+<span class="normal"><a href="#__codelineno-0-303">303</a></span>
+<span class="normal"><a href="#__codelineno-0-304">304</a></span>
+<span class="normal"><a href="#__codelineno-0-305">305</a></span>
+<span class="normal"><a href="#__codelineno-0-306">306</a></span>
+<span class="normal"><a href="#__codelineno-0-307">307</a></span>
+<span class="normal"><a href="#__codelineno-0-308">308</a></span>
+<span class="normal"><a href="#__codelineno-0-309">309</a></span>
+<span class="normal"><a href="#__codelineno-0-310">310</a></span>
+<span class="normal"><a href="#__codelineno-0-311">311</a></span>
+<span class="normal"><a href="#__codelineno-0-312">312</a></span>
+<span class="normal"><a href="#__codelineno-0-313">313</a></span>
+<span class="normal"><a href="#__codelineno-0-314">314</a></span>
+<span class="normal"><a href="#__codelineno-0-315">315</a></span>
+<span class="normal"><a href="#__codelineno-0-316">316</a></span>
+<span class="normal"><a href="#__codelineno-0-317">317</a></span>
+<span class="normal"><a href="#__codelineno-0-318">318</a></span>
+<span class="normal"><a href="#__codelineno-0-319">319</a></span>
+<span class="normal"><a href="#__codelineno-0-320">320</a></span>
+<span class="normal"><a href="#__codelineno-0-321">321</a></span>
+<span class="normal"><a href="#__codelineno-0-322">322</a></span>
+<span class="normal"><a href="#__codelineno-0-323">323</a></span>
+<span class="normal"><a href="#__codelineno-0-324">324</a></span>
+<span class="normal"><a href="#__codelineno-0-325">325</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-271" name="__codelineno-0-271"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">:</span>
+<a id="__codelineno-0-272" name="__codelineno-0-272"></a><span class="w">    </span><span class="sd">"""</span>
+<a id="__codelineno-0-273" name="__codelineno-0-273"></a><span class="sd">    Parse command-line arguments and return namespace.</span>
+<a id="__codelineno-0-274" name="__codelineno-0-274"></a>
+<a id="__codelineno-0-275" name="__codelineno-0-275"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="sd">        argparse.Namespace: Parsed arguments.</span>
+<a id="__codelineno-0-277" name="__codelineno-0-277"></a>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="sd">        SystemExit: On --help, --version, or invalid arguments.</span>
+<a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="sd">    """</span>
+<a id="__codelineno-0-281" name="__codelineno-0-281"></a>    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+<a id="__codelineno-0-282" name="__codelineno-0-282"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">"LM Studio Tray Monitor"</span><span class="p">,</span>
+<a id="__codelineno-0-283" name="__codelineno-0-283"></a>        <span class="n">add_help</span><span class="o">=</span><span class="kc">True</span>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a>    <span class="p">)</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a>        <span class="s2">"model"</span><span class="p">,</span>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">"no-model-passed"</span><span class="p">,</span>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Model name to monitor"</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>    <span class="p">)</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a>        <span class="s2">"script_dir"</span><span class="p">,</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>        <span class="n">nargs</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a>        <span class="n">default</span><span class="o">=</span><span class="n">_get_default_script_dir</span><span class="p">(),</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a>            <span class="s2">"Script directory for logs and VERSION file. If a relative path "</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a>            <span class="s2">"is provided it will be resolved to an absolute path when "</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a>            <span class="s2">"arguments are applied to the application state."</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a>        <span class="p">),</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a>    <span class="p">)</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<a id="__codelineno-0-302" name="__codelineno-0-302"></a>        <span class="s2">"--debug"</span><span class="p">,</span>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a>        <span class="s2">"-d"</span><span class="p">,</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Enable debug logging"</span>
+<a id="__codelineno-0-306" name="__codelineno-0-306"></a>    <span class="p">)</span>
+<a id="__codelineno-0-307" name="__codelineno-0-307"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<a id="__codelineno-0-308" name="__codelineno-0-308"></a>        <span class="s2">"--auto-start-daemon"</span><span class="p">,</span>
+<a id="__codelineno-0-309" name="__codelineno-0-309"></a>        <span class="s2">"-a"</span><span class="p">,</span>
+<a id="__codelineno-0-310" name="__codelineno-0-310"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+<a id="__codelineno-0-311" name="__codelineno-0-311"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Start llmster daemon on launch"</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a>    <span class="p">)</span>
+<a id="__codelineno-0-313" name="__codelineno-0-313"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<a id="__codelineno-0-314" name="__codelineno-0-314"></a>        <span class="s2">"--gui"</span><span class="p">,</span>
+<a id="__codelineno-0-315" name="__codelineno-0-315"></a>        <span class="s2">"-g"</span><span class="p">,</span>
+<a id="__codelineno-0-316" name="__codelineno-0-316"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+<a id="__codelineno-0-317" name="__codelineno-0-317"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Start LM Studio GUI on launch (stops daemon first)"</span>
+<a id="__codelineno-0-318" name="__codelineno-0-318"></a>    <span class="p">)</span>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a>        <span class="s2">"--version"</span><span class="p">,</span>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a>        <span class="s2">"-v"</span><span class="p">,</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a>        <span class="n">help</span><span class="o">=</span><span class="s2">"Print version and exit"</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a>    <span class="p">)</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a>    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1671,43 +1671,43 @@ Usage:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-160">160</a></span>
-<span class="normal"><a href="#__codelineno-0-161">161</a></span>
-<span class="normal"><a href="#__codelineno-0-162">162</a></span>
-<span class="normal"><a href="#__codelineno-0-163">163</a></span>
-<span class="normal"><a href="#__codelineno-0-164">164</a></span>
-<span class="normal"><a href="#__codelineno-0-165">165</a></span>
-<span class="normal"><a href="#__codelineno-0-166">166</a></span>
-<span class="normal"><a href="#__codelineno-0-167">167</a></span>
-<span class="normal"><a href="#__codelineno-0-168">168</a></span>
-<span class="normal"><a href="#__codelineno-0-169">169</a></span>
-<span class="normal"><a href="#__codelineno-0-170">170</a></span>
-<span class="normal"><a href="#__codelineno-0-171">171</a></span>
-<span class="normal"><a href="#__codelineno-0-172">172</a></span>
-<span class="normal"><a href="#__codelineno-0-173">173</a></span>
-<span class="normal"><a href="#__codelineno-0-174">174</a></span>
-<span class="normal"><a href="#__codelineno-0-175">175</a></span>
-<span class="normal"><a href="#__codelineno-0-176">176</a></span>
-<span class="normal"><a href="#__codelineno-0-177">177</a></span>
-<span class="normal"><a href="#__codelineno-0-178">178</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_version_from_dir</span><span class="p">(</span><span class="n">base_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="w">    </span><span class="sd">"""</span>
-<a id="__codelineno-0-162" name="__codelineno-0-162"></a><span class="sd">    Load version from VERSION file in base_dir, or default if missing.</span>
-<a id="__codelineno-0-163" name="__codelineno-0-163"></a>
-<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">        base_dir (str): Directory containing VERSION file.</span>
-<a id="__codelineno-0-166" name="__codelineno-0-166"></a>
-<a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">        str: Version string or DEFAULT_APP_VERSION.</span>
-<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">    """</span>
-<a id="__codelineno-0-170" name="__codelineno-0-170"></a>    <span class="n">version_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="s2">"VERSION"</span><span class="p">)</span>
-<a id="__codelineno-0-171" name="__codelineno-0-171"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-172" name="__codelineno-0-172"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">version_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">version_file</span><span class="p">:</span>
-<a id="__codelineno-0-173" name="__codelineno-0-173"></a>            <span class="n">version</span> <span class="o">=</span> <span class="n">version_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-174" name="__codelineno-0-174"></a>            <span class="k">if</span> <span class="n">version</span><span class="p">:</span>
-<a id="__codelineno-0-175" name="__codelineno-0-175"></a>                <span class="k">return</span> <span class="n">version</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a>    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-<a id="__codelineno-0-177" name="__codelineno-0-177"></a>        <span class="k">pass</span>
-<a id="__codelineno-0-178" name="__codelineno-0-178"></a>    <span class="k">return</span> <span class="n">DEFAULT_APP_VERSION</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-189">189</a></span>
+<span class="normal"><a href="#__codelineno-0-190">190</a></span>
+<span class="normal"><a href="#__codelineno-0-191">191</a></span>
+<span class="normal"><a href="#__codelineno-0-192">192</a></span>
+<span class="normal"><a href="#__codelineno-0-193">193</a></span>
+<span class="normal"><a href="#__codelineno-0-194">194</a></span>
+<span class="normal"><a href="#__codelineno-0-195">195</a></span>
+<span class="normal"><a href="#__codelineno-0-196">196</a></span>
+<span class="normal"><a href="#__codelineno-0-197">197</a></span>
+<span class="normal"><a href="#__codelineno-0-198">198</a></span>
+<span class="normal"><a href="#__codelineno-0-199">199</a></span>
+<span class="normal"><a href="#__codelineno-0-200">200</a></span>
+<span class="normal"><a href="#__codelineno-0-201">201</a></span>
+<span class="normal"><a href="#__codelineno-0-202">202</a></span>
+<span class="normal"><a href="#__codelineno-0-203">203</a></span>
+<span class="normal"><a href="#__codelineno-0-204">204</a></span>
+<span class="normal"><a href="#__codelineno-0-205">205</a></span>
+<span class="normal"><a href="#__codelineno-0-206">206</a></span>
+<span class="normal"><a href="#__codelineno-0-207">207</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_version_from_dir</span><span class="p">(</span><span class="n">base_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="w">    </span><span class="sd">"""</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="sd">    Load version from VERSION file in base_dir, or default if missing.</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="sd">        base_dir (str): Directory containing VERSION file.</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">        str: Version string or DEFAULT_APP_VERSION.</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">    """</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>    <span class="n">version_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="s2">"VERSION"</span><span class="p">)</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">version_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">version_file</span><span class="p">:</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a>            <span class="n">version</span> <span class="o">=</span> <span class="n">version_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a>            <span class="k">if</span> <span class="n">version</span><span class="p">:</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a>                <span class="k">return</span> <span class="n">version</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>        <span class="k">pass</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="k">return</span> <span class="n">DEFAULT_APP_VERSION</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1765,47 +1765,47 @@ disables update checks.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-505">505</a></span>
-<span class="normal"><a href="#__codelineno-0-506">506</a></span>
-<span class="normal"><a href="#__codelineno-0-507">507</a></span>
-<span class="normal"><a href="#__codelineno-0-508">508</a></span>
-<span class="normal"><a href="#__codelineno-0-509">509</a></span>
-<span class="normal"><a href="#__codelineno-0-510">510</a></span>
-<span class="normal"><a href="#__codelineno-0-511">511</a></span>
-<span class="normal"><a href="#__codelineno-0-512">512</a></span>
-<span class="normal"><a href="#__codelineno-0-513">513</a></span>
-<span class="normal"><a href="#__codelineno-0-514">514</a></span>
-<span class="normal"><a href="#__codelineno-0-515">515</a></span>
-<span class="normal"><a href="#__codelineno-0-516">516</a></span>
-<span class="normal"><a href="#__codelineno-0-517">517</a></span>
-<span class="normal"><a href="#__codelineno-0-518">518</a></span>
-<span class="normal"><a href="#__codelineno-0-519">519</a></span>
-<span class="normal"><a href="#__codelineno-0-520">520</a></span>
-<span class="normal"><a href="#__codelineno-0-521">521</a></span>
-<span class="normal"><a href="#__codelineno-0-522">522</a></span>
-<span class="normal"><a href="#__codelineno-0-523">523</a></span>
-<span class="normal"><a href="#__codelineno-0-524">524</a></span>
-<span class="normal"><a href="#__codelineno-0-525">525</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-505" name="__codelineno-0-505"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_app_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-506" name="__codelineno-0-506"></a><span class="w">    </span><span class="sd">"""</span>
-<a id="__codelineno-0-507" name="__codelineno-0-507"></a><span class="sd">    Load app version from the bundled VERSION file.</span>
-<a id="__codelineno-0-508" name="__codelineno-0-508"></a>
-<a id="__codelineno-0-509" name="__codelineno-0-509"></a><span class="sd">    In a PyInstaller bundle the executable sits in ``Contents/MacOS`` while</span>
-<a id="__codelineno-0-510" name="__codelineno-0-510"></a><span class="sd">    the data files are unpacked elsewhere, so ``script_dir`` alone finds no</span>
-<a id="__codelineno-0-511" name="__codelineno-0-511"></a><span class="sd">    VERSION and the app would report itself as a dev build - which also</span>
-<a id="__codelineno-0-512" name="__codelineno-0-512"></a><span class="sd">    disables update checks.</span>
-<a id="__codelineno-0-513" name="__codelineno-0-513"></a>
-<a id="__codelineno-0-514" name="__codelineno-0-514"></a><span class="sd">    Falls back to DEFAULT_APP_VERSION.</span>
-<a id="__codelineno-0-515" name="__codelineno-0-515"></a>
-<a id="__codelineno-0-516" name="__codelineno-0-516"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-517" name="__codelineno-0-517"></a><span class="sd">        str: Version string.</span>
-<a id="__codelineno-0-518" name="__codelineno-0-518"></a><span class="sd">    """</span>
-<a id="__codelineno-0-519" name="__codelineno-0-519"></a>    <span class="n">meipass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">"_MEIPASS"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-<a id="__codelineno-0-520" name="__codelineno-0-520"></a>    <span class="k">if</span> <span class="n">meipass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-521" name="__codelineno-0-521"></a>        <span class="n">version</span> <span class="o">=</span> <span class="n">load_version_from_dir</span><span class="p">(</span><span class="n">meipass</span><span class="p">)</span>
-<a id="__codelineno-0-522" name="__codelineno-0-522"></a>        <span class="k">if</span> <span class="n">version</span> <span class="o">!=</span> <span class="n">DEFAULT_APP_VERSION</span><span class="p">:</span>
-<a id="__codelineno-0-523" name="__codelineno-0-523"></a>            <span class="k">return</span> <span class="n">version</span>
-<a id="__codelineno-0-524" name="__codelineno-0-524"></a>
-<a id="__codelineno-0-525" name="__codelineno-0-525"></a>    <span class="k">return</span> <span class="n">load_version_from_dir</span><span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-534">534</a></span>
+<span class="normal"><a href="#__codelineno-0-535">535</a></span>
+<span class="normal"><a href="#__codelineno-0-536">536</a></span>
+<span class="normal"><a href="#__codelineno-0-537">537</a></span>
+<span class="normal"><a href="#__codelineno-0-538">538</a></span>
+<span class="normal"><a href="#__codelineno-0-539">539</a></span>
+<span class="normal"><a href="#__codelineno-0-540">540</a></span>
+<span class="normal"><a href="#__codelineno-0-541">541</a></span>
+<span class="normal"><a href="#__codelineno-0-542">542</a></span>
+<span class="normal"><a href="#__codelineno-0-543">543</a></span>
+<span class="normal"><a href="#__codelineno-0-544">544</a></span>
+<span class="normal"><a href="#__codelineno-0-545">545</a></span>
+<span class="normal"><a href="#__codelineno-0-546">546</a></span>
+<span class="normal"><a href="#__codelineno-0-547">547</a></span>
+<span class="normal"><a href="#__codelineno-0-548">548</a></span>
+<span class="normal"><a href="#__codelineno-0-549">549</a></span>
+<span class="normal"><a href="#__codelineno-0-550">550</a></span>
+<span class="normal"><a href="#__codelineno-0-551">551</a></span>
+<span class="normal"><a href="#__codelineno-0-552">552</a></span>
+<span class="normal"><a href="#__codelineno-0-553">553</a></span>
+<span class="normal"><a href="#__codelineno-0-554">554</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-534" name="__codelineno-0-534"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_app_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-535" name="__codelineno-0-535"></a><span class="w">    </span><span class="sd">"""</span>
+<a id="__codelineno-0-536" name="__codelineno-0-536"></a><span class="sd">    Load app version from the bundled VERSION file.</span>
+<a id="__codelineno-0-537" name="__codelineno-0-537"></a>
+<a id="__codelineno-0-538" name="__codelineno-0-538"></a><span class="sd">    In a PyInstaller bundle the executable sits in ``Contents/MacOS`` while</span>
+<a id="__codelineno-0-539" name="__codelineno-0-539"></a><span class="sd">    the data files are unpacked elsewhere, so ``script_dir`` alone finds no</span>
+<a id="__codelineno-0-540" name="__codelineno-0-540"></a><span class="sd">    VERSION and the app would report itself as a dev build - which also</span>
+<a id="__codelineno-0-541" name="__codelineno-0-541"></a><span class="sd">    disables update checks.</span>
+<a id="__codelineno-0-542" name="__codelineno-0-542"></a>
+<a id="__codelineno-0-543" name="__codelineno-0-543"></a><span class="sd">    Falls back to DEFAULT_APP_VERSION.</span>
+<a id="__codelineno-0-544" name="__codelineno-0-544"></a>
+<a id="__codelineno-0-545" name="__codelineno-0-545"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-546" name="__codelineno-0-546"></a><span class="sd">        str: Version string.</span>
+<a id="__codelineno-0-547" name="__codelineno-0-547"></a><span class="sd">    """</span>
+<a id="__codelineno-0-548" name="__codelineno-0-548"></a>    <span class="n">meipass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">"_MEIPASS"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-0-549" name="__codelineno-0-549"></a>    <span class="k">if</span> <span class="n">meipass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-550" name="__codelineno-0-550"></a>        <span class="n">version</span> <span class="o">=</span> <span class="n">load_version_from_dir</span><span class="p">(</span><span class="n">meipass</span><span class="p">)</span>
+<a id="__codelineno-0-551" name="__codelineno-0-551"></a>        <span class="k">if</span> <span class="n">version</span> <span class="o">!=</span> <span class="n">DEFAULT_APP_VERSION</span><span class="p">:</span>
+<a id="__codelineno-0-552" name="__codelineno-0-552"></a>            <span class="k">return</span> <span class="n">version</span>
+<a id="__codelineno-0-553" name="__codelineno-0-553"></a>
+<a id="__codelineno-0-554" name="__codelineno-0-554"></a>    <span class="k">return</span> <span class="n">load_version_from_dir</span><span class="p">(</span><span class="n">_AppState</span><span class="o">.</span><span class="n">script_dir</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1830,59 +1830,59 @@ disables update checks.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-757">757</a></span>
-<span class="normal"><a href="#__codelineno-0-758">758</a></span>
-<span class="normal"><a href="#__codelineno-0-759">759</a></span>
-<span class="normal"><a href="#__codelineno-0-760">760</a></span>
-<span class="normal"><a href="#__codelineno-0-761">761</a></span>
-<span class="normal"><a href="#__codelineno-0-762">762</a></span>
-<span class="normal"><a href="#__codelineno-0-763">763</a></span>
-<span class="normal"><a href="#__codelineno-0-764">764</a></span>
-<span class="normal"><a href="#__codelineno-0-765">765</a></span>
-<span class="normal"><a href="#__codelineno-0-766">766</a></span>
-<span class="normal"><a href="#__codelineno-0-767">767</a></span>
-<span class="normal"><a href="#__codelineno-0-768">768</a></span>
-<span class="normal"><a href="#__codelineno-0-769">769</a></span>
-<span class="normal"><a href="#__codelineno-0-770">770</a></span>
-<span class="normal"><a href="#__codelineno-0-771">771</a></span>
-<span class="normal"><a href="#__codelineno-0-772">772</a></span>
-<span class="normal"><a href="#__codelineno-0-773">773</a></span>
-<span class="normal"><a href="#__codelineno-0-774">774</a></span>
-<span class="normal"><a href="#__codelineno-0-775">775</a></span>
-<span class="normal"><a href="#__codelineno-0-776">776</a></span>
-<span class="normal"><a href="#__codelineno-0-777">777</a></span>
-<span class="normal"><a href="#__codelineno-0-778">778</a></span>
-<span class="normal"><a href="#__codelineno-0-779">779</a></span>
-<span class="normal"><a href="#__codelineno-0-780">780</a></span>
-<span class="normal"><a href="#__codelineno-0-781">781</a></span>
-<span class="normal"><a href="#__codelineno-0-782">782</a></span>
-<span class="normal"><a href="#__codelineno-0-783">783</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-757" name="__codelineno-0-757"></a><span class="k">def</span><span class="w"> </span><span class="nf">_run_macos</span><span class="p">(</span><span class="n">_args</span><span class="p">):</span>
-<a id="__codelineno-0-758" name="__codelineno-0-758"></a><span class="w">    </span><span class="sd">"""Set up logging and launch macOS rumps tray."""</span>
-<a id="__codelineno-0-759" name="__codelineno-0-759"></a>    <span class="k">if</span> <span class="n">_rumps_lib</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-760" name="__codelineno-0-760"></a>        <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-0-761" name="__codelineno-0-761"></a>            <span class="s2">"Error: rumps is not installed. Install with:</span><span class="se">\n</span><span class="s2">"</span>
-<a id="__codelineno-0-762" name="__codelineno-0-762"></a>            <span class="s2">"    pip install rumps"</span><span class="p">,</span>
-<a id="__codelineno-0-763" name="__codelineno-0-763"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-<a id="__codelineno-0-764" name="__codelineno-0-764"></a>        <span class="p">)</span>
-<a id="__codelineno-0-765" name="__codelineno-0-765"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-0-766" name="__codelineno-0-766"></a>
-<a id="__codelineno-0-767" name="__codelineno-0-767"></a>    <span class="n">_configure_logging</span><span class="p">()</span>
-<a id="__codelineno-0-768" name="__codelineno-0-768"></a>
-<a id="__codelineno-0-769" name="__codelineno-0-769"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span> <span class="o">=</span> <span class="n">get_app_version</span><span class="p">()</span>
-<a id="__codelineno-0-770" name="__codelineno-0-770"></a>    <span class="nb">globals</span><span class="p">()[</span><span class="s2">"APP_VERSION"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span>
-<a id="__codelineno-0-771" name="__codelineno-0-771"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"App version: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span><span class="p">)</span>
-<a id="__codelineno-0-772" name="__codelineno-0-772"></a>
-<a id="__codelineno-0-773" name="__codelineno-0-773"></a>    <span class="n">kill_existing_instances</span><span class="p">()</span>
-<a id="__codelineno-0-774" name="__codelineno-0-774"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Tray script started (macOS / rumps)"</span><span class="p">)</span>
-<a id="__codelineno-0-775" name="__codelineno-0-775"></a>
-<a id="__codelineno-0-776" name="__codelineno-0-776"></a>    <span class="k">if</span> <span class="n">_main_thread_dispatcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-777" name="__codelineno-0-777"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-<a id="__codelineno-0-778" name="__codelineno-0-778"></a>            <span class="s2">"PyObjC (Foundation) unavailable: AppKit calls will run on "</span>
-<a id="__codelineno-0-779" name="__codelineno-0-779"></a>            <span class="s2">"whichever thread triggers them. Menu rebuilds from background "</span>
-<a id="__codelineno-0-780" name="__codelineno-0-780"></a>            <span class="s2">"threads may crash the app. Install with: pip install rumps"</span>
-<a id="__codelineno-0-781" name="__codelineno-0-781"></a>        <span class="p">)</span>
-<a id="__codelineno-0-782" name="__codelineno-0-782"></a>
-<a id="__codelineno-0-783" name="__codelineno-0-783"></a>    <span class="n">MacOSTrayIcon</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-786">786</a></span>
+<span class="normal"><a href="#__codelineno-0-787">787</a></span>
+<span class="normal"><a href="#__codelineno-0-788">788</a></span>
+<span class="normal"><a href="#__codelineno-0-789">789</a></span>
+<span class="normal"><a href="#__codelineno-0-790">790</a></span>
+<span class="normal"><a href="#__codelineno-0-791">791</a></span>
+<span class="normal"><a href="#__codelineno-0-792">792</a></span>
+<span class="normal"><a href="#__codelineno-0-793">793</a></span>
+<span class="normal"><a href="#__codelineno-0-794">794</a></span>
+<span class="normal"><a href="#__codelineno-0-795">795</a></span>
+<span class="normal"><a href="#__codelineno-0-796">796</a></span>
+<span class="normal"><a href="#__codelineno-0-797">797</a></span>
+<span class="normal"><a href="#__codelineno-0-798">798</a></span>
+<span class="normal"><a href="#__codelineno-0-799">799</a></span>
+<span class="normal"><a href="#__codelineno-0-800">800</a></span>
+<span class="normal"><a href="#__codelineno-0-801">801</a></span>
+<span class="normal"><a href="#__codelineno-0-802">802</a></span>
+<span class="normal"><a href="#__codelineno-0-803">803</a></span>
+<span class="normal"><a href="#__codelineno-0-804">804</a></span>
+<span class="normal"><a href="#__codelineno-0-805">805</a></span>
+<span class="normal"><a href="#__codelineno-0-806">806</a></span>
+<span class="normal"><a href="#__codelineno-0-807">807</a></span>
+<span class="normal"><a href="#__codelineno-0-808">808</a></span>
+<span class="normal"><a href="#__codelineno-0-809">809</a></span>
+<span class="normal"><a href="#__codelineno-0-810">810</a></span>
+<span class="normal"><a href="#__codelineno-0-811">811</a></span>
+<span class="normal"><a href="#__codelineno-0-812">812</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-786" name="__codelineno-0-786"></a><span class="k">def</span><span class="w"> </span><span class="nf">_run_macos</span><span class="p">(</span><span class="n">_args</span><span class="p">):</span>
+<a id="__codelineno-0-787" name="__codelineno-0-787"></a><span class="w">    </span><span class="sd">"""Set up logging and launch macOS rumps tray."""</span>
+<a id="__codelineno-0-788" name="__codelineno-0-788"></a>    <span class="k">if</span> <span class="n">_rumps_lib</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-789" name="__codelineno-0-789"></a>        <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-790" name="__codelineno-0-790"></a>            <span class="s2">"Error: rumps is not installed. Install with:</span><span class="se">\n</span><span class="s2">"</span>
+<a id="__codelineno-0-791" name="__codelineno-0-791"></a>            <span class="s2">"    pip install rumps"</span><span class="p">,</span>
+<a id="__codelineno-0-792" name="__codelineno-0-792"></a>            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+<a id="__codelineno-0-793" name="__codelineno-0-793"></a>        <span class="p">)</span>
+<a id="__codelineno-0-794" name="__codelineno-0-794"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-795" name="__codelineno-0-795"></a>
+<a id="__codelineno-0-796" name="__codelineno-0-796"></a>    <span class="n">_configure_logging</span><span class="p">()</span>
+<a id="__codelineno-0-797" name="__codelineno-0-797"></a>
+<a id="__codelineno-0-798" name="__codelineno-0-798"></a>    <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span> <span class="o">=</span> <span class="n">get_app_version</span><span class="p">()</span>
+<a id="__codelineno-0-799" name="__codelineno-0-799"></a>    <span class="nb">globals</span><span class="p">()[</span><span class="s2">"APP_VERSION"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span>
+<a id="__codelineno-0-800" name="__codelineno-0-800"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"App version: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">_AppState</span><span class="o">.</span><span class="n">APP_VERSION</span><span class="p">)</span>
+<a id="__codelineno-0-801" name="__codelineno-0-801"></a>
+<a id="__codelineno-0-802" name="__codelineno-0-802"></a>    <span class="n">kill_existing_instances</span><span class="p">()</span>
+<a id="__codelineno-0-803" name="__codelineno-0-803"></a>    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Tray script started (macOS / rumps)"</span><span class="p">)</span>
+<a id="__codelineno-0-804" name="__codelineno-0-804"></a>
+<a id="__codelineno-0-805" name="__codelineno-0-805"></a>    <span class="k">if</span> <span class="n">_main_thread_dispatcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-806" name="__codelineno-0-806"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+<a id="__codelineno-0-807" name="__codelineno-0-807"></a>            <span class="s2">"PyObjC (Foundation) unavailable: AppKit calls will run on "</span>
+<a id="__codelineno-0-808" name="__codelineno-0-808"></a>            <span class="s2">"whichever thread triggers them. Menu rebuilds from background "</span>
+<a id="__codelineno-0-809" name="__codelineno-0-809"></a>            <span class="s2">"threads may crash the app. Install with: pip install rumps"</span>
+<a id="__codelineno-0-810" name="__codelineno-0-810"></a>        <span class="p">)</span>
+<a id="__codelineno-0-811" name="__codelineno-0-811"></a>
+<a id="__codelineno-0-812" name="__codelineno-0-812"></a>    <span class="n">MacOSTrayIcon</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1908,31 +1908,31 @@ disables update checks.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>lmstudio_tray.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-436">436</a></span>
-<span class="normal"><a href="#__codelineno-0-437">437</a></span>
-<span class="normal"><a href="#__codelineno-0-438">438</a></span>
-<span class="normal"><a href="#__codelineno-0-439">439</a></span>
-<span class="normal"><a href="#__codelineno-0-440">440</a></span>
-<span class="normal"><a href="#__codelineno-0-441">441</a></span>
-<span class="normal"><a href="#__codelineno-0-442">442</a></span>
-<span class="normal"><a href="#__codelineno-0-443">443</a></span>
-<span class="normal"><a href="#__codelineno-0-444">444</a></span>
-<span class="normal"><a href="#__codelineno-0-445">445</a></span>
-<span class="normal"><a href="#__codelineno-0-446">446</a></span>
-<span class="normal"><a href="#__codelineno-0-447">447</a></span>
-<span class="normal"><a href="#__codelineno-0-448">448</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-436" name="__codelineno-0-436"></a><span class="k">def</span><span class="w"> </span><span class="nf">_ensure_gsettings_schema</span><span class="p">():</span>
-<a id="__codelineno-0-437" name="__codelineno-0-437"></a><span class="w">    </span><span class="sd">"""</span>
-<a id="__codelineno-0-438" name="__codelineno-0-438"></a><span class="sd">    Set GSETTINGS_SCHEMA_DIR if not set and schemas exist.</span>
-<a id="__codelineno-0-439" name="__codelineno-0-439"></a>
-<a id="__codelineno-0-440" name="__codelineno-0-440"></a><span class="sd">    Prevents PyInstaller crashes.</span>
-<a id="__codelineno-0-441" name="__codelineno-0-441"></a><span class="sd">    """</span>
-<a id="__codelineno-0-442" name="__codelineno-0-442"></a>    <span class="k">if</span> <span class="s2">"GSETTINGS_SCHEMA_DIR"</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
-<a id="__codelineno-0-443" name="__codelineno-0-443"></a>        <span class="k">return</span>
-<a id="__codelineno-0-444" name="__codelineno-0-444"></a>
-<a id="__codelineno-0-445" name="__codelineno-0-445"></a>    <span class="n">schema_dir</span> <span class="o">=</span> <span class="s2">"/usr/share/glib-2.0/schemas"</span>
-<a id="__codelineno-0-446" name="__codelineno-0-446"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">schema_dir</span><span class="p">):</span>
-<a id="__codelineno-0-447" name="__codelineno-0-447"></a>        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"GSETTINGS_SCHEMA_DIR"</span><span class="p">]</span> <span class="o">=</span> <span class="n">schema_dir</span>
-<a id="__codelineno-0-448" name="__codelineno-0-448"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Set GSETTINGS_SCHEMA_DIR to </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">schema_dir</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-465">465</a></span>
+<span class="normal"><a href="#__codelineno-0-466">466</a></span>
+<span class="normal"><a href="#__codelineno-0-467">467</a></span>
+<span class="normal"><a href="#__codelineno-0-468">468</a></span>
+<span class="normal"><a href="#__codelineno-0-469">469</a></span>
+<span class="normal"><a href="#__codelineno-0-470">470</a></span>
+<span class="normal"><a href="#__codelineno-0-471">471</a></span>
+<span class="normal"><a href="#__codelineno-0-472">472</a></span>
+<span class="normal"><a href="#__codelineno-0-473">473</a></span>
+<span class="normal"><a href="#__codelineno-0-474">474</a></span>
+<span class="normal"><a href="#__codelineno-0-475">475</a></span>
+<span class="normal"><a href="#__codelineno-0-476">476</a></span>
+<span class="normal"><a href="#__codelineno-0-477">477</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-465" name="__codelineno-0-465"></a><span class="k">def</span><span class="w"> </span><span class="nf">_ensure_gsettings_schema</span><span class="p">():</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a><span class="w">    </span><span class="sd">"""</span>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a><span class="sd">    Set GSETTINGS_SCHEMA_DIR if not set and schemas exist.</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a><span class="sd">    Prevents PyInstaller crashes.</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a><span class="sd">    """</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>    <span class="k">if</span> <span class="s2">"GSETTINGS_SCHEMA_DIR"</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a>        <span class="k">return</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>    <span class="n">schema_dir</span> <span class="o">=</span> <span class="s2">"/usr/share/glib-2.0/schemas"</span>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">schema_dir</span><span class="p">):</span>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"GSETTINGS_SCHEMA_DIR"</span><span class="p">]</span> <span class="o">=</span> <span class="n">schema_dir</span>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Set GSETTINGS_SCHEMA_DIR to </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">schema_dir</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
