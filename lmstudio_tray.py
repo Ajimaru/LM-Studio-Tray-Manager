@@ -157,6 +157,34 @@ def run_on_main_thread(func: Callable[[], None], wait: bool = False) -> bool:
     return True
 
 
+def _run_off_main_thread(func: Callable[[], None], name: str) -> bool:
+    """Run ``func`` on a worker thread unless nothing can block AppKit.
+
+    Blocking work - ``lms ps`` (10 s timeout), HTTP requests, ``osascript`` -
+    must never run on the AppKit main thread: rumps timers and menu callbacks
+    execute there, so a slow command freezes the menu bar and clicks on the
+    tray icon appear to be ignored while it runs.
+
+    When no main-thread dispatcher exists there is no AppKit run loop to
+    protect (non-macOS hosts and unit tests), so the callable runs inline.
+    That keeps behaviour deterministic where marshalling is impossible
+    anyway.
+
+    Args:
+        func: Zero-argument callable to run.
+        name: Thread name used in logs and crash reports.
+
+    Returns:
+        bool: ``True`` when a worker thread was started, ``False`` when the
+        callable ran inline.
+    """
+    if _main_thread_dispatcher is None:
+        func()
+        return False
+    threading.Thread(target=func, daemon=True, name=name).start()
+    return True
+
+
 def load_version_from_dir(base_dir: str) -> str:
     """
     Load version from VERSION file in base_dir, or default if missing.
@@ -4526,6 +4554,20 @@ class MacOSTrayIcon(_RumpsBase):
         self.action_lock_until = 0.0
         self.lms_ps_resume_at = 0.0
         self.remote_loaded_models: list[str] = []
+        # Guards against overlapping status polls: each poll runs
+        # subprocesses and HTTP requests, and they must not pile up when a
+        # slow one outlives the 10 s timer interval.
+        self._status_check_lock = threading.Lock()
+        # Latest human-readable status, refreshed by every poll. Show Status
+        # renders it directly so opening the dialog never waits for a
+        # subprocess or an HTTP request.
+        self._status_text: Optional[str] = None
+        # AppKit dialogs are application-modal: a second ``runModal`` from
+        # inside the first one leaves the first window unresponsive until
+        # the nested dialog closes. Reminder dialogs are therefore queued
+        # while one is open.
+        self._dialog_active = False
+        self._pending_alert: Optional[tuple[str, str]] = None
         self._seen_desktop_call = False
         self._last_desktop_detection = None
         self._desktop_detection = {
@@ -4546,17 +4588,17 @@ class MacOSTrayIcon(_RumpsBase):
         self.build_menu()
 
         self._status_timer = _rumps_lib.Timer(
-            self._check_model_tick, INTERVAL
+            self._background_status_tick, INTERVAL
         )
         self._status_timer.start()
 
         self._update_timer = _rumps_lib.Timer(
-            self._update_check_tick, UPDATE_CHECK_INTERVAL
+            self._background_update_tick, UPDATE_CHECK_INTERVAL
         )
         self._update_timer.start()
 
         self._initial_timer = _rumps_lib.Timer(
-            self._initial_update_check_once, 5
+            self._background_initial_update_once, 5
         )
         self._initial_timer.start()
 
@@ -4763,14 +4805,25 @@ class MacOSTrayIcon(_RumpsBase):
     def build_menu(self) -> None:
         """Rebuild the macOS menu-bar menu with current status.
 
-        Safe to call from any thread: the actual AppKit mutation is
-        marshalled onto the main thread, since touching ``NSMenu`` from a
-        worker thread crashes the app and can wedge the WindowServer.
+        Safe to call from any thread. Called from a worker, the process scan
+        happens there and only the ``NSMenu`` mutation is marshalled onto the
+        main thread: touching AppKit from a worker crashes the app and can
+        wedge the WindowServer, while scanning the process table on the main
+        thread stalls menu tracking for as long as the scan takes.
         """
-        if not is_main_thread():
-            if run_on_main_thread(self._build_menu_impl):
-                return
-        self._build_menu_impl()
+        if is_main_thread():
+            self._build_menu_impl()
+            return
+
+        daemon_status = None
+        app_status = None
+        if not is_remote_endpoint():
+            daemon_status = self.get_daemon_status()
+            app_status = self.get_desktop_app_status()
+        if not run_on_main_thread(
+            lambda: self._build_menu_impl(daemon_status, app_status)
+        ):
+            self._build_menu_impl(daemon_status, app_status)
 
     def _build_options_menu(self, rumps_lib):
         """Return the shared Options submenu.
@@ -4795,7 +4848,7 @@ class MacOSTrayIcon(_RumpsBase):
         options.add(
             rumps_lib.MenuItem(
                 "Check for Updates",
-                callback=self.manual_check_updates,
+                callback=self._menu_check_updates,
             )
         )
         options.add(
@@ -4845,8 +4898,19 @@ class MacOSTrayIcon(_RumpsBase):
             )
         return items
 
-    def _build_menu_impl(self) -> None:
-        """Rebuild the menu. Must run on the main thread."""
+    def _build_menu_impl(
+        self,
+        daemon_status: Optional[str] = None,
+        app_status: Optional[str] = None,
+    ) -> None:
+        """Rebuild the menu. Must run on the main thread.
+
+        Args:
+            daemon_status: Pre-computed daemon state, or ``None`` to scan the
+                process table here.
+            app_status: Pre-computed desktop-app state, or ``None`` to scan
+                the process table here.
+        """
         rumps_lib = _rumps_lib
         if rumps_lib is None:
             raise RuntimeError("rumps is not installed")
@@ -4857,7 +4921,7 @@ class MacOSTrayIcon(_RumpsBase):
             items.append(
                 rumps_lib.MenuItem(
                     "Show Status",
-                    callback=self.show_status_dialog,
+                    callback=self._menu_show_status,
                 )
             )
             items.append(self._build_options_menu(rumps_lib))
@@ -4869,8 +4933,10 @@ class MacOSTrayIcon(_RumpsBase):
             self.menu.update(items)
             return
 
-        daemon_status = self.get_daemon_status()
-        app_status = self.get_desktop_app_status()
+        if daemon_status is None:
+            daemon_status = self.get_daemon_status()
+        if app_status is None:
+            app_status = self.get_desktop_app_status()
         d_ind = self.get_status_indicator(daemon_status)
         a_ind = self.get_status_indicator(app_status)
 
@@ -4929,7 +4995,7 @@ class MacOSTrayIcon(_RumpsBase):
         items.append(
             rumps_lib.MenuItem(
                 "Show Status",
-                callback=self.show_status_dialog,
+                callback=self._menu_show_status,
             )
         )
 
@@ -4963,6 +5029,88 @@ class MacOSTrayIcon(_RumpsBase):
         """One-shot timer: run update check then stop the timer."""
         self.check_updates()
         sender.stop()
+
+    # ------------------------------------------------------------------
+    # Background wrappers
+    #
+    # rumps timers and menu callbacks run on the AppKit main thread, and
+    # every call below can take seconds: `lms ps` has a 10 s timeout, HTTP
+    # requests 3-10 s, and the process scans spawn pgrep/ps. Running them on
+    # the main thread blocks menu tracking, which is what made clicks on the
+    # status icon feel ignored until the work finished.
+    # ------------------------------------------------------------------
+
+    def _background_status_tick(self, _sender: object) -> None:
+        """Timer callback: poll the status on a worker thread.
+
+        Overlapping polls are skipped while the previous one is still
+        running, so a slow ``lms ps`` cannot queue up work faster than it
+        completes.
+        """
+        if not self._status_check_lock.acquire(blocking=False):
+            logging.debug("Status check still running; skipping this tick")
+            return
+        try:
+            _run_off_main_thread(
+                self._status_check_body, "macos-status-check"
+            )
+        except RuntimeError:
+            # Thread creation failed; do not leave the tick guard latched.
+            self._status_check_lock.release()
+            raise
+
+    def _status_check_body(self) -> None:
+        """Run :meth:`check_model` and release the tick guard."""
+        try:
+            self.check_model()
+        except Exception:  # pylint: disable=broad-except
+            logging.exception("Status check failed unexpectedly")
+        finally:
+            self._status_check_lock.release()
+
+    def _background_update_tick(self, _sender: object) -> None:
+        """Timer callback: run the periodic update check off-main."""
+        _run_off_main_thread(self.check_updates, "macos-update-check")
+
+    def _background_initial_update_once(self, sender: object) -> None:
+        """One-shot timer callback: stop the timer, then check off-main.
+
+        The timer is stopped first so it cannot fire again while the GitHub
+        request is still in flight on the worker thread.
+        """
+        sender.stop()
+        _run_off_main_thread(
+            self.check_updates, "macos-initial-update-check"
+        )
+
+    def _menu_show_status(self, _sender: object) -> None:
+        """Menu callback: show the status dialog without any slow work.
+
+        The text comes from the cache the periodic poll keeps warm, so the
+        dialog appears immediately even while a poll is in flight. Only the
+        first seconds after launch, before any poll completed, need to
+        collect the status on a worker thread.
+        """
+        if self._status_text is not None:
+            self.show_status_dialog(None)
+            return
+        _run_off_main_thread(
+            self._present_status_dialog, "macos-status-dialog"
+        )
+
+    def _present_status_dialog(self) -> None:
+        """Collect the status text and present it as an alert."""
+        self.show_status_dialog(None)
+
+    def _menu_check_updates(self, _sender: object) -> None:
+        """Menu callback: run the manual update check off-main."""
+        _run_off_main_thread(
+            self._present_update_result, "macos-manual-update-check"
+        )
+
+    def _present_update_result(self) -> None:
+        """Run the update check and present its result."""
+        self.manual_check_updates(None)
 
     def _schedule_menu_refresh(self, delay_seconds: float = 2) -> None:
         """Schedule a delayed menu rebuild using a background thread.
@@ -5023,6 +5171,9 @@ class MacOSTrayIcon(_RumpsBase):
         # Cached so the menu can name the model without re-querying on
         # every rebuild.
         self.remote_loaded_models = names
+        self._status_text = self._compose_remote_status_text(
+            reachable, names
+        )
         if not reachable:
             self.title = "⚠️"
             return ("WARN", "remote endpoint unreachable")
@@ -5076,8 +5227,9 @@ class MacOSTrayIcon(_RumpsBase):
                 self.last_status,
                 current_status,
             )
-            self.build_menu()
 
+        # One rebuild per poll: every rebuild re-scans the process table, and
+        # the previous code ran it twice whenever the status changed.
         self.last_status = current_status
         self.build_menu()
 
@@ -5103,6 +5255,7 @@ class MacOSTrayIcon(_RumpsBase):
 
             daemon_status = self.get_daemon_status()
             app_status = self.get_desktop_app_status()
+            lms_stdout: Optional[str] = None
 
             daemon_running = daemon_status == "running"
             app_running = app_status == "running"
@@ -5129,6 +5282,7 @@ class MacOSTrayIcon(_RumpsBase):
                 if lms_cmd and can_use_lms_ps:
                     result = _run_safe_command([lms_cmd, "ps"])
                     if result.returncode == 0:
+                        lms_stdout = result.stdout
                         if _has_loaded_model(result.stdout):
                             current_status = "OK"
                             reason = "lms ps indicates model loaded"
@@ -5154,6 +5308,9 @@ class MacOSTrayIcon(_RumpsBase):
                     reason = "running, no model via API"
                     self.title = "ℹ️"
 
+            self._status_text = self._compose_local_status_text(
+                daemon_status, app_status, lms_stdout
+            )
             self._finish_status_check(current_status, reason)
 
         except subprocess.TimeoutExpired:
@@ -5566,17 +5723,120 @@ class MacOSTrayIcon(_RumpsBase):
     def show_status_dialog(self, sender: object) -> None:
         """Show a rumps alert with the current LM Studio CLI status.
 
+        The collection may run ``lms ps`` (10 s timeout) and HTTP requests.
+        Menu callbacks therefore enter through :meth:`_menu_show_status`,
+        which runs this method on a worker thread; the alert itself is
+        marshalled back onto the AppKit main thread.
+
         Args:
             sender: rumps sender object (unused).
         """
         _ = sender
-        text = self._collect_status_text()
+        text = (
+            self._status_text
+            if self._status_text is not None
+            else self._collect_status_text()
+        )
+        self._present_alert("LM Studio Status", text)
+
+    def _compose_local_status_text(
+        self,
+        daemon_status: str,
+        app_status: str,
+        lms_stdout: Optional[str],
+    ) -> str:
+        """Build the status text from data a poll already collected.
+
+        Mirrors :meth:`_collect_status_text` without spawning anything, so
+        the dialog can reuse poll results instead of paying for a second
+        scan.
+
+        Args:
+            daemon_status: Result of :meth:`get_daemon_status`.
+            app_status: Result of :meth:`get_desktop_app_status`.
+            lms_stdout: Raw ``lms ps`` output from the poll, or ``None``.
+
+        Returns:
+            str: Human-readable status description.
+        """
+        if daemon_status != "running" and app_status != "running":
+            return (
+                "Neither the daemon nor the desktop app is running.\n"
+                "Start one of them to query the model status."
+            )
+
+        if lms_stdout and lms_stdout.strip():
+            return _format_lms_ps_output(lms_stdout.strip())
+
+        if not get_lms_cmd():
+            return "LM Studio CLI (lms) not found."
+        return "No model loaded (lms ps returned no output)."
+
+    def _compose_remote_status_text(
+        self, reachable: bool, names: list[str]
+    ) -> str:
+        """Build the status text for a remote endpoint.
+
+        Args:
+            reachable: Whether the API answered.
+            names: Loaded model names reported by the API.
+
+        Returns:
+            str: Human-readable status description.
+        """
+        endpoint = f"{_AppState.API_HOST}:{_AppState.API_PORT}"
+        if not reachable:
+            return f"Remote endpoint {endpoint} is not reachable."
+        if not names:
+            return f"Connected to {endpoint}.\nNo model is loaded."
+        listed = "\n".join(f"  • {name}" for name in names)
+        label = "Loaded model" if len(names) == 1 else "Loaded models"
+        return f"Connected to {endpoint}.\n\n{label}:\n{listed}"
+
+    def _present_alert(self, title: str, message: str) -> None:
+        """Show a modal alert without nesting modal loops.
+
+        ``rumps.alert`` runs ``NSAlert.runModal()``, which blocks the app for
+        every other window. When a second alert is requested while one is
+        already open - the About window is open and a slow status poll
+        finishes - starting another modal loop leaves the visible window
+        frozen until the queued one appears. Such alerts are queued and
+        shown once the current dialog has been dismissed.
+
+        Must run on the AppKit main thread; calls from a worker are
+        marshalled first.
+
+        Args:
+            title: Alert title.
+            message: Alert body text.
+        """
+        if not is_main_thread():
+            if run_on_main_thread(
+                lambda: self._present_alert(title, message)
+            ):
+                return
 
         rumps_lib = _rumps_lib
         if rumps_lib is None:
-            logging.error("rumps is not installed; cannot show status dialog")
+            logging.error("rumps is not installed; cannot show alert")
             return
-        rumps_lib.alert(title="LM Studio Status", message=text)
+
+        while True:
+            if self._dialog_active:
+                logging.debug("Alert %r queued; dialog already open", title)
+                self._pending_alert = (title, message)
+                return
+            self._dialog_active = True
+            try:
+                rumps_lib.alert(title=title, message=message)
+            finally:
+                self._dialog_active = False
+
+            queued = self._pending_alert
+            self._pending_alert = None
+            if queued is None:
+                return
+            title, message = queued
 
     def show_config_dialog(self, sender: object) -> None:
         """Prompt for the LM Studio API endpoint and persist it.
@@ -5607,7 +5867,16 @@ class MacOSTrayIcon(_RumpsBase):
             dimensions=(260, 24),
         )
 
-        response = window.run()
+        if self._dialog_active:
+            logging.debug(
+                "Modal dialog already open; ignoring config request"
+            )
+            return
+        self._dialog_active = True
+        try:
+            response = window.run()
+        finally:
+            self._dialog_active = False
         if not response.clicked:
             return
 
@@ -5616,12 +5885,10 @@ class MacOSTrayIcon(_RumpsBase):
             logging.warning(
                 "Rejected invalid API endpoint input: %r", response.text
             )
-            rumps_lib.alert(
-                title="Configuration",
-                message=(
-                    "Could not read that endpoint.\n"
-                    "Expected host:port, for example localhost:1234."
-                ),
+            self._present_alert(
+                "Configuration",
+                "Could not read that endpoint.\n"
+                "Expected host:port, for example localhost:1234.",
             )
             return
 
@@ -5630,9 +5897,9 @@ class MacOSTrayIcon(_RumpsBase):
             save_config(host, port)
         except (OSError, ValueError) as exc:
             logging.error("Failed to save configuration: %s", exc)
-            rumps_lib.alert(
-                title="Configuration",
-                message=f"Could not save the configuration:\n{exc}",
+            self._present_alert(
+                "Configuration",
+                f"Could not save the configuration:\n{exc}",
             )
             return
 
@@ -5665,7 +5932,7 @@ class MacOSTrayIcon(_RumpsBase):
         if rumps_lib is None:
             logging.error("rumps is not installed; cannot show about dialog")
             return
-        rumps_lib.alert(title=APP_NAME, message=msg)
+        self._present_alert(APP_NAME, msg)
 
     # ------------------------------------------------------------------
     # Update check
@@ -5740,6 +6007,10 @@ class MacOSTrayIcon(_RumpsBase):
     def manual_check_updates(self, _sender: object) -> None:
         """Run an on-demand update check and show result via alert.
 
+        The GitHub request can take up to 10 s. Menu callbacks therefore
+        enter through :meth:`_menu_check_updates`, which runs this method on
+        a worker thread; only the alert is marshalled back.
+
         Args:
             _sender: rumps sender object (unused).
         """
@@ -5773,7 +6044,7 @@ class MacOSTrayIcon(_RumpsBase):
         if rumps_lib is None:
             logging.error("rumps is not installed; cannot show update dialog")
             return
-        rumps_lib.alert(title="Update Check", message=msg)
+        self._present_alert("Update Check", msg)
 
     # ------------------------------------------------------------------
     # Auto-start helpers

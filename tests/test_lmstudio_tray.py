@@ -6060,6 +6060,12 @@ def _make_macos_tray(module):
     tray.last_status = None
     tray.action_lock_until = 0.0
     tray.lms_ps_resume_at = 0.0
+    _call_member(
+        tray, "__setattr__", "_status_check_lock", threading.Lock()
+    )
+    _call_member(tray, "__setattr__", "_status_text", None)
+    _call_member(tray, "__setattr__", "_dialog_active", False)
+    _call_member(tray, "__setattr__", "_pending_alert", None)
     _call_member(tray, "__setattr__", "_seen_desktop_call", False)
     _call_member(tray, "__setattr__", "_last_desktop_detection", None)
     _call_member(tray, "__setattr__", "_desktop_detection", {
@@ -7327,6 +7333,223 @@ def test_macos_timer_callbacks(macos_module, monkeypatch):
     assert not sender.running  # noqa: SLF001 (stopped after initial)
 
 
+def _run_background_inline(func, _name):
+    """Run a background task inline and report synchronous execution.
+
+    Args:
+        func: Zero-argument callable to run.
+        _name: Thread name (unused).
+
+    Returns:
+        bool: Always ``False`` - nothing was dispatched.
+    """
+    func()
+    return False
+
+
+def test_macos_background_status_tick_delegates(macos_module, monkeypatch):
+    """The timer wrapper runs check_model and releases the tick guard."""
+    tray = _make_macos_tray(macos_module)
+    called = []
+    monkeypatch.setattr(
+        macos_module, "_run_off_main_thread", _run_background_inline
+    )
+    monkeypatch.setattr(
+        tray, "check_model", lambda: called.append("model") or True
+    )
+    _call_member(tray, "_background_status_tick", None)
+    assert called == ["model"]  # nosec B101
+    lock = _call_member(tray, "__getattribute__", "_status_check_lock")
+    assert lock.acquire(blocking=False)  # nosec B101
+    lock.release()
+
+
+def test_macos_background_status_tick_skips_overlap(
+    macos_module, monkeypatch
+):
+    """A running poll keeps the next tick from queueing up more work."""
+    tray = _make_macos_tray(macos_module)
+    called = []
+    monkeypatch.setattr(
+        macos_module, "_run_off_main_thread", _run_background_inline
+    )
+    monkeypatch.setattr(
+        tray, "check_model", lambda: called.append("model") or True
+    )
+    lock = _call_member(tray, "__getattribute__", "_status_check_lock")
+    lock.acquire()
+    try:
+        _call_member(tray, "_background_status_tick", None)
+    finally:
+        lock.release()
+    assert not called  # nosec B101
+
+
+def test_macos_background_update_tick_delegates(
+    macos_module, monkeypatch
+):
+    """The periodic update timer runs its check off the main thread."""
+    tray = _make_macos_tray(macos_module)
+    called = []
+    monkeypatch.setattr(
+        macos_module, "_run_off_main_thread", _run_background_inline
+    )
+    monkeypatch.setattr(
+        tray, "check_updates", lambda: called.append("updates") or False
+    )
+    _call_member(tray, "_background_update_tick", None)
+    assert called == ["updates"]  # nosec B101
+
+
+def test_macos_background_initial_update_once(
+    macos_module, monkeypatch
+):
+    """The one-shot timer stops first, then runs the check."""
+    tray = _make_macos_tray(macos_module)
+    called = []
+    monkeypatch.setattr(
+        macos_module, "_run_off_main_thread", _run_background_inline
+    )
+    monkeypatch.setattr(
+        tray, "check_updates", lambda: called.append("updates") or False
+    )
+    sender = DummyRumpsTimer(None, 5)
+    sender.start()
+    _call_member(tray, "_background_initial_update_once", sender)
+    assert called == ["updates"]  # nosec B101
+    assert not sender.running  # noqa: SLF001 (stopped before the check)
+
+
+def test_macos_menu_show_status_delegates(macos_module, monkeypatch):
+    """The Show Status menu callback enters the background wrapper."""
+    tray = _make_macos_tray(macos_module)
+    called = []
+    monkeypatch.setattr(
+        macos_module, "_run_off_main_thread", _run_background_inline
+    )
+    monkeypatch.setattr(
+        tray, "show_status_dialog", lambda _sender: called.append("status")
+    )
+    _call_member(tray, "_menu_show_status", None)
+    assert called == ["status"]  # nosec B101
+
+
+def test_macos_menu_check_updates_delegates(macos_module, monkeypatch):
+    """The Check for Updates menu callback enters the background wrapper."""
+    tray = _make_macos_tray(macos_module)
+    called = []
+    monkeypatch.setattr(
+        macos_module, "_run_off_main_thread", _run_background_inline
+    )
+    monkeypatch.setattr(
+        tray,
+        "manual_check_updates",
+        lambda _sender: called.append("updates"),
+    )
+    _call_member(tray, "_menu_check_updates", None)
+    assert called == ["updates"]  # nosec B101
+
+
+def test_macos_menu_show_status_uses_cached_text(
+    macos_module, monkeypatch
+):
+    """Show Status renders the cached text without any slow work."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    _call_member(tray, "__setattr__", "_status_text", "cached status")
+
+    def _fail_collect():
+        raise AssertionError("collector must not run")
+
+    def _fail_dispatch(_func, _name):
+        raise AssertionError("background dispatch must not run")
+
+    monkeypatch.setattr(tray, "_collect_status_text", _fail_collect)
+    monkeypatch.setattr(
+        macos_module, "_run_off_main_thread", _fail_dispatch
+    )
+    _call_member(tray, "_menu_show_status", None)
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert alerts[0][1] == "cached status"  # nosec B101
+
+
+def test_macos_menu_show_status_without_cache_dispatches(
+    macos_module, monkeypatch
+):
+    """Before the first poll the dialog still gathers in the background."""
+    tray = _make_macos_tray(macos_module)
+    called = []
+    monkeypatch.setattr(
+        macos_module, "_run_off_main_thread", _run_background_inline
+    )
+    monkeypatch.setattr(
+        tray,
+        "_collect_status_text",
+        lambda: called.append("collect") or "fresh status",
+    )
+    DummyRumpsModule.reset()
+    _call_member(tray, "_menu_show_status", None)
+    assert called == ["collect"]  # nosec B101
+    alerts = DummyRumpsModule.get_alerts()
+    assert alerts  # nosec B101
+    assert alerts[0][1] == "fresh status"  # nosec B101
+
+
+def test_macos_present_alert_queues_while_modal_open(
+    macos_module, monkeypatch
+):
+    """A second alert is queued instead of nesting runModal loops."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    _call_member(tray, "__setattr__", "_dialog_active", True)
+
+    macos_module.MacOSTrayIcon._present_alert(tray, "Status", "later")
+
+    assert DummyRumpsModule.get_alerts() == []  # nosec B101
+    pending = _call_member(tray, "__getattribute__", "_pending_alert")
+    assert pending == ("Status", "later")  # nosec B101
+
+    _call_member(tray, "__setattr__", "_dialog_active", False)
+    macos_module.MacOSTrayIcon._present_alert(tray, "About", "now")
+
+    titles = [alert[0] for alert in DummyRumpsModule.get_alerts()]
+    assert titles == ["About", "Status"]  # nosec B101
+
+
+def test_macos_about_is_queued_while_dialog_open(macos_module):
+    """About never starts a nested modal loop."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+    _call_member(tray, "__setattr__", "_dialog_active", True)
+
+    tray.show_about_dialog(None)
+
+    assert DummyRumpsModule.get_alerts() == []  # nosec B101
+    pending = _call_member(tray, "__getattribute__", "_pending_alert")
+    assert pending is not None  # nosec B101
+
+
+def test_macos_show_status_menu_binds_background_callback(
+    macos_module, monkeypatch
+):
+    """Show Status is wired to the wrapper, not the blocking method."""
+    tray = _make_macos_tray(macos_module)
+    tray.build_menu = lambda: macos_module.MacOSTrayIcon.build_menu(tray)
+    monkeypatch.setattr(tray, "get_daemon_status", lambda: "not_found")
+    monkeypatch.setattr(tray, "get_desktop_app_status", lambda: "not_found")
+    tray.build_menu()
+    items = [
+        item for item in tray.menu
+        if isinstance(item, DummyRumpsMenuItem)
+        and item.title == "Show Status"
+    ]
+    assert items  # nosec B101
+    assert items[0].callback == _call_member(
+        tray, "__getattribute__", "_menu_show_status"
+    )  # nosec B101
+
+
 def test_macos_schedule_menu_refresh(macos_module, monkeypatch):
     """_schedule_menu_refresh schedules a delayed rebuild via threading."""
     tray = _make_macos_tray(macos_module)
@@ -8303,7 +8526,7 @@ def test_macos_build_menu_marshals_off_main_thread(
     )
     impl_calls = []
     monkeypatch.setattr(
-        tray, "_build_menu_impl", lambda: impl_calls.append(1)
+        tray, "_build_menu_impl", lambda *_args: impl_calls.append(1)
     )
 
     macos_module.MacOSTrayIcon.build_menu(tray)
@@ -8323,7 +8546,7 @@ def test_macos_build_menu_runs_inline_on_main_thread(
     monkeypatch.setattr(macos_module, "is_main_thread", lambda: True)
     impl_calls = []
     monkeypatch.setattr(
-        tray, "_build_menu_impl", lambda: impl_calls.append(1)
+        tray, "_build_menu_impl", lambda *_args: impl_calls.append(1)
     )
 
     macos_module.MacOSTrayIcon.build_menu(tray)
@@ -8341,7 +8564,7 @@ def test_macos_build_menu_runs_inline_without_dispatcher(
     )
     impl_calls = []
     monkeypatch.setattr(
-        tray, "_build_menu_impl", lambda: impl_calls.append(1)
+        tray, "_build_menu_impl", lambda *_args: impl_calls.append(1)
     )
 
     macos_module.MacOSTrayIcon.build_menu(tray)
