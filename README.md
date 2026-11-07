@@ -1,16 +1,30 @@
-# LM-Studio-Tray-Manager
+<!-- markdownlint-disable MD033 MD041 -->
+<p align="center">
+  <img
+    src="https://github.com/Ajimaru/LM-Studio-Tray-Manager/raw/main/assets/img/lm-studio-tray-manager.svg"
+    alt="LM Studio Tray Manager Logo"
+    width="96"
+    height="96"
+  />
+</p>
+<h1 align="center">LM-Studio-Tray-Manager</h1>
+<!-- markdownlint-enable MD033 MD041 -->
 
-![LM Studio Icon](assets/img/lm-studio-tray-manager.svg)
+[![Latest release][badge-release]](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
+[![Downloads][badge-downloads]](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases)
+[![CI][badge-ci]](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml?query=branch%3Adev)
+[![CodeQL][badge-codeql]](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/codeql.yml?query=branch%3Adev)
+[![Docs][badge-docs]](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml?query=branch%3Adev)
+[![Last commit][badge-last-commit]](https://github.com/Ajimaru/LM-Studio-Tray-Manager/commits/dev)
+[![License][badge-license]](https://github.com/Ajimaru/LM-Studio-Tray-Manager/blob/main/LICENSE)
+
+[![Platform][badge-platform]](https://en.wikipedia.org/wiki/List_of_operating_systems)
+[![Python][badge-python]](https://www.python.org/downloads/)
+[![LM Studio][badge-lmstudio]](https://lmstudio.ai/download)
+[![llmster][badge-llmster]](https://lmstudio.ai)
+[![PRs welcome][badge-prs]](https://github.com/Ajimaru/LM-Studio-Tray-Manager/pulls)
 
 Automation scripts for LM Studio & llmster - to control and monitor the applications from the system tray, on this machine or on an LM Studio host elsewhere on the network.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python + gi](https://img.shields.io/badge/Python-gi_compatible-blue.svg)](https://www.python.org/downloads/)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-orange.svg)](https://en.wikipedia.org/wiki/List_of_operating_systems)
-[![LM Studio App v0.4.20+](https://img.shields.io/badge/LM_Studio_App-v0.4.20+-green.svg)](https://lmstudio.ai/download)
-[![llmster v0.0.20+](https://img.shields.io/badge/llmster-v0.0.20+-green.svg)](https://lmstudio.ai)
-[![Release](https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/Ajimaru/LM-Studio-Tray-Manager/total.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/releases)
 
 ## Features
 
@@ -416,8 +430,6 @@ Get-Content "$env:LOCALAPPDATA\lmstudio-tray-manager\logs\lmstudio_autostart.log
 - [Readme](docs/README.md) - Documentation overview and quick links
 - [Docs Landing Page](docs/index.html) - GitHub Pages entry point with links to all docs
 
-[![Docs](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/docs.yml)
-
 ## Security & Community
 
 - [Security Policy](SECURITY.md) - Supported versions, reporting, and response process
@@ -425,10 +437,8 @@ Get-Content "$env:LOCALAPPDATA\lmstudio-tray-manager\logs\lmstudio_autostart.log
 - [Third-Party Licenses](THIRD_PARTY_LICENSES.md) - Overview of external runtime and CI dependencies
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/008764f58bb046ef886c86bccd336b85)](https://app.codacy.com/gh/Ajimaru/LM-Studio-Tray-Manager/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![CI](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/ci.yml)
 [![Security](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/security.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/security.yml)
 [![Bandit](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/bandit.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/bandit.yml)
-[![CodeQL](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/actions/workflows/codeql.yml)
 
 ## Project Meta
 
@@ -456,3 +466,18 @@ MIT License - See [LICENSE](LICENSE) file for details
 [![Forks](https://img.shields.io/github/forks/Ajimaru/LM-Studio-Tray-Manager?style=social)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/network/members)
 [![Watchers](https://img.shields.io/github/watchers/Ajimaru/LM-Studio-Tray-Manager?style=social)](https://github.com/Ajimaru/LM-Studio-Tray-Manager/watchers)
 [![Made with Love in 🇪🇺](https://img.shields.io/badge/Made_with_❤️_in_🇪🇺-gray.svg)](https://european-union.europa.eu/)
+
+<!-- Badge link definitions -->
+
+[badge-release]: https://img.shields.io/github/v/release/Ajimaru/LM-Studio-Tray-Manager?sort=semver&style=flat-square&logo=github&logoColor=white
+[badge-downloads]: https://img.shields.io/github/downloads/Ajimaru/LM-Studio-Tray-Manager/total?style=flat-square&logo=github&logoColor=white&label=downloads
+[badge-ci]: https://img.shields.io/github/actions/workflow/status/Ajimaru/LM-Studio-Tray-Manager/ci.yml?branch=dev&style=flat-square&logo=githubactions&logoColor=white&label=CI
+[badge-codeql]: https://img.shields.io/github/actions/workflow/status/Ajimaru/LM-Studio-Tray-Manager/codeql.yml?branch=dev&style=flat-square&logo=githubactions&logoColor=white&label=CodeQL
+[badge-docs]: https://img.shields.io/github/actions/workflow/status/Ajimaru/LM-Studio-Tray-Manager/docs.yml?branch=dev&style=flat-square&logo=githubactions&logoColor=white&label=Docs
+[badge-last-commit]: https://img.shields.io/github/last-commit/Ajimaru/LM-Studio-Tray-Manager?style=flat-square&logo=github&logoColor=white
+[badge-license]: https://img.shields.io/github/license/Ajimaru/LM-Studio-Tray-Manager?style=flat-square&logo=opensourceinitiative&logoColor=white
+[badge-platform]: https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-orange?style=flat-square&logo=linux&logoColor=white
+[badge-python]: https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white
+[badge-lmstudio]: https://img.shields.io/badge/LM_Studio-0.4.20%2B-green?style=flat-square
+[badge-llmster]: https://img.shields.io/badge/llmster-0.0.20%2B-green?style=flat-square
+[badge-prs]: https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square
