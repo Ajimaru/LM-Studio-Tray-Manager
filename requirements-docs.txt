@@ -39,7 +39,12 @@ mkdocs==1.6.1
 mkdocs-material==9.8.0
 
 # Python docstring parsing plugin for MkDocs
-mkdocstrings==1.0.6
+#
+# 1.0.8 is the first release that adapts to pymdown-extensions 12.3, where
+# Highlight.__init__ gained a required ``md`` argument. 1.0.6 passes its
+# options straight to super().__init__() and dies with
+# "Highlight.__init__() missing 1 required positional argument: 'md'".
+mkdocstrings==1.0.8
 
 # Renders the API pages from the parsed source (the [python] extra).
 mkdocstrings-python==2.0.5
