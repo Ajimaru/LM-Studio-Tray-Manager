@@ -14,6 +14,7 @@ Usage:
 
 import argparse
 import csv
+from collections import deque
 import subprocess  # nosec B404
 import sys
 import os
@@ -4567,7 +4568,7 @@ class MacOSTrayIcon(_RumpsBase):
         # the nested dialog closes. Reminder dialogs are therefore queued
         # while one is open.
         self._dialog_active = False
-        self._pending_alert: Optional[tuple[str, str]] = None
+        self._pending_alerts: deque[tuple[str, str]] = deque()
         self._seen_desktop_call = False
         self._last_desktop_detection = None
         self._desktop_detection = {
@@ -5509,6 +5510,7 @@ class MacOSTrayIcon(_RumpsBase):
 
     def _start_daemon_body_impl(self) -> None:
         """Do the actual daemon start work."""
+        self._status_text = None
         if self.get_desktop_app_status() == "running":
             if not self._stop_desktop_app_processes():
                 self._notify(
@@ -5561,6 +5563,7 @@ class MacOSTrayIcon(_RumpsBase):
 
     def _stop_daemon_body(self) -> None:
         """Background thread body for :meth:`stop_daemon`."""
+        self._status_text = None
         try:
             self._stop_daemon_with_notification()
             self.build_menu()
@@ -5598,6 +5601,7 @@ class MacOSTrayIcon(_RumpsBase):
         Stops the daemon first, then launches LM Studio via the system
         ``open`` command.
         """
+        self._status_text = None
         if is_llmster_running():
             self._stop_daemon_with_notification()
 
@@ -5649,6 +5653,7 @@ class MacOSTrayIcon(_RumpsBase):
         """
         if not self.begin_action_cooldown("stop_desktop_app"):
             return
+        self._status_text = None
         desktop_pids = get_desktop_app_pids()
         if not desktop_pids:
             self.build_menu()
@@ -5821,22 +5826,20 @@ class MacOSTrayIcon(_RumpsBase):
             logging.error("rumps is not installed; cannot show alert")
             return
 
-        while True:
-            if self._dialog_active:
-                logging.debug("Alert %r queued; dialog already open", title)
-                self._pending_alert = (title, message)
-                return
+        self._pending_alerts.append((title, message))
+        self._drain_pending_alerts()
+
+    def _drain_pending_alerts(self) -> None:
+        """Present queued alerts in order after the active dialog closes."""
+        if self._dialog_active or _rumps_lib is None:
+            return
+        while self._pending_alerts:
+            title, message = self._pending_alerts.popleft()
             self._dialog_active = True
             try:
-                rumps_lib.alert(title=title, message=message)
+                _rumps_lib.alert(title=title, message=message)
             finally:
                 self._dialog_active = False
-
-            queued = self._pending_alert
-            self._pending_alert = None
-            if queued is None:
-                return
-            title, message = queued
 
     def show_config_dialog(self, sender: object) -> None:
         """Prompt for the LM Studio API endpoint and persist it.
@@ -5877,6 +5880,7 @@ class MacOSTrayIcon(_RumpsBase):
             response = window.run()
         finally:
             self._dialog_active = False
+            self._drain_pending_alerts()
         if not response.clicked:
             return
 
@@ -5905,6 +5909,7 @@ class MacOSTrayIcon(_RumpsBase):
 
         _AppState.API_HOST = host
         _AppState.API_PORT = port
+        self._status_text = None
         logging.info("Updated API endpoint to http://%s:%s", host, port)
         self._notify("Configuration", f"API endpoint set to {host}:{port}")
         self.build_menu()

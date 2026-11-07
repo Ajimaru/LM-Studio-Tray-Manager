@@ -29,6 +29,7 @@ from email.message import Message
 from pathlib import Path
 from types import ModuleType, SimpleNamespace, MethodType
 import pytest
+from collections import deque
 
 
 @pytest.fixture(autouse=True)
@@ -6065,7 +6066,7 @@ def _make_macos_tray(module):
     )
     _call_member(tray, "__setattr__", "_status_text", None)
     _call_member(tray, "__setattr__", "_dialog_active", False)
-    _call_member(tray, "__setattr__", "_pending_alert", None)
+    _call_member(tray, "__setattr__", "_pending_alerts", deque())
     _call_member(tray, "__setattr__", "_seen_desktop_call", False)
     _call_member(tray, "__setattr__", "_last_desktop_detection", None)
     _call_member(tray, "__setattr__", "_desktop_detection", {
@@ -6858,6 +6859,7 @@ def test_macos_start_daemon_body_no_cmd(macos_module, monkeypatch):
 def test_macos_start_daemon_body_success(macos_module, monkeypatch):
     """_start_daemon_body notifies when daemon starts."""
     tray = _make_macos_tray(macos_module)
+    _call_member(tray, "__setattr__", "_status_text", "old state")
     DummyRumpsModule.reset()
     monkeypatch.setattr(
         macos_module, "get_lms_cmd", lambda: "/usr/local/bin/lms"
@@ -6880,6 +6882,7 @@ def test_macos_start_daemon_body_success(macos_module, monkeypatch):
         "running" in n[2].lower()
         for n in notifications
     )  # nosec B101
+    assert _call_member(tray, "__getattribute__", "_status_text") is None
 
 
 def test_macos_start_daemon_body_fail(macos_module, monkeypatch):
@@ -6928,6 +6931,7 @@ def test_macos_start_daemon_cooldown(macos_module, monkeypatch):
 def test_macos_stop_daemon_body_success(macos_module, monkeypatch):
     """_stop_daemon_body calls stop and refreshes menu on success."""
     tray = _make_macos_tray(macos_module)
+    _call_member(tray, "__setattr__", "_status_text", "old state")
     DummyRumpsModule.reset()
     refreshed = []
     monkeypatch.setattr(
@@ -6939,6 +6943,7 @@ def test_macos_stop_daemon_body_success(macos_module, monkeypatch):
     monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
     _call_member(tray, "_stop_daemon_body")
     assert refreshed  # nosec B101
+    assert _call_member(tray, "__getattribute__", "_status_text") is None
 
 
 def test_macos_start_desktop_app_body_no_open(
@@ -6983,6 +6988,7 @@ def test_macos_start_desktop_app_body_success(
 ):
     """_start_desktop_app_body launches the app and notifies success."""
     tray = _make_macos_tray(macos_module)
+    _call_member(tray, "__setattr__", "_status_text", "old state")
     DummyRumpsModule.reset()
     app_dir = tmp_path / "LM Studio.app"
     app_dir.mkdir()
@@ -7010,6 +7016,7 @@ def test_macos_start_desktop_app_body_success(
         "starting" in n[2].lower()
         for n in notifications
     )  # nosec B101
+    assert _call_member(tray, "__getattribute__", "_status_text") is None
 
 
 def test_macos_stop_desktop_app_no_pids(macos_module, monkeypatch):
@@ -7030,6 +7037,7 @@ def test_macos_stop_desktop_app_sends_sigterm(
 ):
     """stop_desktop_app sends SIGTERM to desktop app PIDs."""
     tray = _make_macos_tray(macos_module)
+    _call_member(tray, "__setattr__", "_status_text", "old state")
     tray.action_lock_until = 0.0
     monkeypatch.setattr(
         macos_module, "get_desktop_app_pids", lambda: [4321]
@@ -7041,6 +7049,7 @@ def test_macos_stop_desktop_app_sends_sigterm(
     monkeypatch.setattr(tray, "_schedule_menu_refresh", lambda *_: None)
     tray.stop_desktop_app(None)
     assert (4321, signal.SIGTERM) in kills  # nosec B101
+    assert _call_member(tray, "__getattribute__", "_status_text") is None
 
 
 def test_macos_show_status_dialog_lms_ps_success(
@@ -7507,14 +7516,76 @@ def test_macos_present_alert_queues_while_modal_open(
     macos_module.MacOSTrayIcon._present_alert(tray, "Status", "later")
 
     assert DummyRumpsModule.get_alerts() == []  # nosec B101
-    pending = _call_member(tray, "__getattribute__", "_pending_alert")
-    assert pending == ("Status", "later")  # nosec B101
+    pending = _call_member(tray, "__getattribute__", "_pending_alerts")
+    assert list(pending) == [("Status", "later")]  # nosec B101
 
     _call_member(tray, "__setattr__", "_dialog_active", False)
     macos_module.MacOSTrayIcon._present_alert(tray, "About", "now")
 
     titles = [alert[0] for alert in DummyRumpsModule.get_alerts()]
-    assert titles == ["About", "Status"]  # nosec B101
+    assert titles == ["Status", "About"]  # nosec B101
+
+
+def test_macos_alerts_arriving_during_drain_keep_fifo_order(
+    macos_module, monkeypatch
+):
+    """Alerts from modal callbacks are retained without nested dialogs."""
+    tray = _make_macos_tray(macos_module)
+    shown = []
+
+    def alert(*, title, message):
+        assert _call_member(tray, "__getattribute__", "_dialog_active")
+        shown.append((title, message))
+        if title == "first":
+            tray._present_alert("second", "2")
+            tray._present_alert("third", "3")
+        elif title == "second":
+            tray._present_alert("fourth", "4")
+
+    rumps_lib = _call_member(macos_module, "__getattribute__", "_rumps_lib")
+    monkeypatch.setattr(rumps_lib, "alert", alert)
+    tray._present_alert("first", "1")
+    assert shown == [
+        ("first", "1"), ("second", "2"), ("third", "3"), ("fourth", "4")
+    ]
+    assert not _call_member(tray, "__getattribute__", "_pending_alerts")
+    assert not _call_member(tray, "__getattribute__", "_dialog_active")
+
+
+@pytest.mark.parametrize("outcome", ["save", "cancel", "error"])
+def test_macos_config_drains_alerts_on_close(
+    macos_module, monkeypatch, outcome
+):
+    """Every configuration exit drains alerts after its modal loop ends."""
+    tray = _make_macos_tray(macos_module)
+    DummyRumpsModule.reset()
+
+    class FakeWindow:
+        """Simulate alerts arriving during a configuration modal loop."""
+
+        def __init__(self, **_kwargs):
+            pass
+
+        def run(self):
+            tray._present_alert("first", "1")
+            tray._present_alert("second", "2")
+            assert DummyRumpsModule.get_alerts() == []
+            if outcome == "error":
+                raise RuntimeError("window failed")
+            return SimpleNamespace(
+                clicked=outcome == "save", text="localhost:1234"
+            )
+
+    rumps_lib = _call_member(macos_module, "__getattribute__", "_rumps_lib")
+    monkeypatch.setattr(rumps_lib, "Window", FakeWindow, raising=False)
+    monkeypatch.setattr(macos_module, "save_config", lambda *_args: None)
+    if outcome == "error":
+        with pytest.raises(RuntimeError, match="window failed"):
+            tray.show_config_dialog(None)
+    else:
+        tray.show_config_dialog(None)
+    assert [a[0] for a in DummyRumpsModule.get_alerts()] == ["first", "second"]
+    assert not _call_member(tray, "__getattribute__", "_dialog_active")
 
 
 def test_macos_about_is_queued_while_dialog_open(macos_module):
@@ -7526,8 +7597,8 @@ def test_macos_about_is_queued_while_dialog_open(macos_module):
     tray.show_about_dialog(None)
 
     assert DummyRumpsModule.get_alerts() == []  # nosec B101
-    pending = _call_member(tray, "__getattribute__", "_pending_alert")
-    assert pending is not None  # nosec B101
+    pending = _call_member(tray, "__getattribute__", "_pending_alerts")
+    assert list(pending)  # nosec B101
 
 
 def test_macos_show_status_menu_binds_background_callback(
@@ -8820,6 +8891,7 @@ def test_macos_config_dialog_saves_endpoint(macos_module, monkeypatch):
     tray = _make_macos_tray(macos_module)
     DummyRumpsModule.reset()
 
+    _call_member(tray, "__setattr__", "_status_text", "old endpoint")
     saved = {}
     monkeypatch.setattr(
         macos_module,
@@ -8846,6 +8918,7 @@ def test_macos_config_dialog_saves_endpoint(macos_module, monkeypatch):
 
     macos_module.MacOSTrayIcon.show_config_dialog(tray, None)
 
+    assert _call_member(tray, "__getattribute__", "_status_text") is None
     assert saved == {"host": "10.0.0.5", "port": 4321}  # nosec B101
     app_state = _call_member(macos_module, "__getattribute__", "_AppState")
     assert app_state.API_HOST == "10.0.0.5"  # nosec B101
